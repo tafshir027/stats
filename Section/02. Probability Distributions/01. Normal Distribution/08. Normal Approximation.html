@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নরমাল অ্যাপ্রক্সিমেশন টুল | Normal Approximation Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #2196F3;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --success: #8BC34A;
+            --purple: #9C27B0;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --binomial-bar: #2196F3;
+            --normal-curve: #4CAF50;
+            --approx-area: rgba(76, 175, 80, 0.3);
+            --exact-bar: #FF9800;
+            --error-indicator: #F44336;
+            --continuity-correction: #9C27B0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent), var(--purple));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Distribution Type Selection */
+        .distribution-type-selection {
+            margin-bottom: 2rem;
+        }
+
+        .distribution-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-type-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .distribution-type-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .distribution-type-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+        }
+
+        .distribution-type-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .distribution-type-card.selected {
+            border-color: var(--primary);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .distribution-type-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .distribution-type-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .distribution-type-description {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Parameter Groups */
+        .parameter-group {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .parameter-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .parameter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Approximation Settings */
+        .approximation-settings {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .checkbox-input.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-input.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .checkbox-description {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.3rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .action-btn.warning:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            margin-bottom: 2rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .binomial-bar-legend { background: var(--binomial-bar); }
+        .normal-curve-legend { background: var(--normal-curve); }
+        .approx-area-legend { background: var(--approx-area); }
+        .exact-bar-legend { background: var(--exact-bar); }
+        .error-indicator-legend { background: var(--error-indicator); }
+        .continuity-correction-legend { background: var(--continuity-correction); }
+
+        /* Results Display */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.exact::before { background: var(--exact-bar); }
+        .result-card.approx::before { background: var(--normal-curve); }
+        .result-card.error::before { background: var(--error-indicator); }
+        .result-card.conditions::before { background: var(--primary); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.exact .result-icon { color: var(--exact-bar); }
+        .result-card.approx .result-icon { color: var(--normal-curve); }
+        .result-card.error .result-icon { color: var(--error-indicator); }
+        .result-card.conditions .result-icon { color: var(--primary); }
+
+        .result-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-unit {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.3rem;
+        }
+
+        /* Central Limit Theorem Section */
+        .clt-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .clt-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .clt-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .clt-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .clt-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .clt-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .clt-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .clt-content {
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .clt-formula {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Approximation Accuracy Section */
+        .accuracy-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .accuracy-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .accuracy-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .accuracy-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .metric-bar {
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .metric-fill.good { background: var(--success); }
+        .metric-fill.fair { background: var(--warning); }
+        .metric-fill.poor { background: var(--danger); }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.3rem;
+        }
+
+        /* Conditions Check */
+        .conditions-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .conditions-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1.5rem;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .condition-item.satisfied {
+            border-color: var(--success);
+            background: rgba(139, 195, 74, 0.1);
+        }
+
+        .condition-item.unsatisfied {
+            border-color: var(--danger);
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .condition-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .condition-item.satisfied .condition-icon {
+            background: var(--success);
+            color: white;
+        }
+
+        .condition-item.unsatisfied .condition-icon {
+            background: var(--danger);
+            color: white;
+        }
+
+        .condition-content {
+            flex: 1;
+        }
+
+        .condition-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--dark);
+        }
+
+        .condition-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .results-section,
+            .clt-section,
+            .accuracy-section,
+            .conditions-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { background-color: rgba(76, 175, 80, 0.1); }
+            100% { background-color: transparent; }
+        }
+
+        .highlight {
+            animation: highlight 1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Normal Approximation Tool" data-bn="নরমাল অ্যাপ্রক্সিমেশন টুল">নরমাল অ্যাপ্রক্সিমেশন টুল</h1>
+            <p class="subtitle" data-en="Apply normal approximation to binomial and other distributions with continuity correction, Central Limit Theorem, and approximation accuracy analysis" data-bন="কন্টিনিউটি করেকশন, সেন্ট্রাল লিমিট থিওরেম এবং অ্যাপ্রক্সিমেশন অ্যাকুরেসি অ্যানালাইসিস সহ বাইনোমিয়াল এবং অন্যান্য ডিস্ট্রিবিউশনে নরমাল অ্যাপ্রক্সিমেশন প্রয়োগ করুন">
+                কন্টিনিউটি করেকশন, সেন্ট্রাল লিমিট থিওরেম এবং অ্যাপ্রক্সিমেশন অ্যাকুরেসি অ্যানালাইসিস সহ বাইনোমিয়াল এবং অন্যান্য ডিস্ট্রিবিউশনে নরমাল অ্যাপ্রক্সিমেশন প্রয়োগ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Distribution Parameters" data-bn="ডিস্ট্রিবিউশন প্যারামিটার">ডিস্ট্রিবিউশন প্যারামিটার</span>
+                </h2>
+                
+                <!-- Distribution Type Selection -->
+                <div class="distribution-type-selection">
+                    <div class="distribution-type-grid">
+                        <div class="distribution-type-card selected" id="binomialCard">
+                            <div class="distribution-type-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="distribution-type-title" data-en="Binomial" data-bন="বাইনোমিয়াল">বাইনোমিয়াল</div>
+                            <div class="distribution-type-description" data-en="X ~ Bin(n, p)" data-bন="X ~ Bin(n, p)">X ~ Bin(n, p)</div>
+                        </div>
+                        
+                        <div class="distribution-type-card" id="poissonCard">
+                            <div class="distribution-type-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="distribution-type-title" data-en="Poisson" data-bন="পয়সন">পয়সন</div>
+                            <div class="distribution-type-description" data-en="X ~ Pois(λ)" data-bন="X ~ Pois(λ)">X ~ Pois(λ)</div>
+                        </div>
+                        
+                        <div class="distribution-type-card" id="sampleMeanCard">
+                            <div class="distribution-type-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="distribution-type-title" data-en="Sample Mean" data-bন="স্যাম্পল মিন">স্যাম্পল মিন</div>
+                            <div class="distribution-type-description" data-en="CLT Application" data-bন="CLT প্রয়োগ">CLT প্রয়োগ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Binomial Parameters -->
+                <div class="parameter-group" id="binomialParams">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Binomial Parameters" data-bন="বাইনোমিয়াল প্যারামিটার">বাইনোমিয়াল প্যারামিটার</h3>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label" data-en="Number of trials (n)" data-bন="ট্রায়াল সংখ্যা (n)">ট্রায়াল সংখ্যা (n)</label>
+                        <input type="number" class="number-input" id="nInput" min="1" max="1000" value="50">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label" data-en="Success probability (p)" data-bন="সাকসেস প্রোবাবিলিটি (p)">সাকসেস প্রোবাবিলিটি (p)</label>
+                        <input type="number" class="number-input" id="pInput" min="0.01" max="0.99" step="0.01" value="0.5">
+                    </div>
+                </div>
+
+                <!-- Probability Range -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Probability Calculation" data-bন="প্রোবাবিলিটি গণনা">প্রোবাবিলিটি গণনা</h3>
+                    </div>
+                    
+                    <div class="range-inputs">
+                        <div class="input-group">
+                            <label class="input-label" data-en="Lower bound (a)" data-bন="নিম্ন সীমা (a)">নিম্ন সীমা (a)</label>
+                            <input type="number" class="number-input" id="lowerBoundInput" min="0" value="20">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label" data-en="Upper bound (b)" data-bন="উচ্চ সীমা (b)">উচ্চ সীমা (b)</label>
+                            <input type="number" class="number-input" id="upperBoundInput" min="0" value="30">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label" data-en="Probability Type" data-bন="প্রোবাবিলিটি ধরন">প্রোবাবিলিটি ধরন</label>
+                        <select class="number-input" id="probabilityType">
+                            <option value="between" data-en="Between a and b" data-bন="a এবং b এর মধ্যে">a এবং b এর মধ্যে</option>
+                            <option value="lessThan" data-en="Less than or equal to a" data-bন="a এর সমান বা কম">a এর সমান বা কম</option>
+                            <option value="greaterThan" data-en="Greater than or equal to a" data-bন="a এর সমান বা বেশি">a এর সমান বা বেশি</option>
+                            <option value="exact" data-en="Exactly a" data-bন="ঠিক a">ঠিক a</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Approximation Settings -->
+                <div class="approximation-settings">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Approximation Settings" data-bন="অ্যাপ্রক্সিমেশন সেটিংস">অ্যাপ্রক্সিমেশন সেটিংস</h3>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="checkbox-group" id="continuityCorrectionCheckbox">
+                            <div class="checkbox-input checked"></div>
+                            <div>
+                                <div class="checkbox-label" data-en="Continuity Correction" data-bন="কন্টিনিউটি করেকশন">কন্টিনিউটি করেকশন</div>
+                                <div class="checkbox-description" data-en="Improves accuracy for discrete distributions" data-bন="ডিসক্রিট ডিস্ট্রিবিউশনের জন্য অ্যাকুরেসি উন্নত করে">
+                                    ডিসক্রিট ডিস্ট্রিবিউশনের জন্য অ্যাকুরেসি উন্নত করে
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="checkbox-group" id="showExactCheckbox">
+                            <div class="checkbox-input checked"></div>
+                            <div>
+                                <div class="checkbox-label" data-en="Show Exact Distribution" data-bন="সঠিক ডিস্ট্রিবিউশন দেখান">সঠিক ডিস্ট্রিবিউশন দেখান</div>
+                                <div class="checkbox-description" data-en="Display exact binomial/Poisson probabilities" data-bন="সঠিক বাইনোমিয়াল/পয়সন প্রোবাবিলিটি প্রদর্শন করুন">
+                                    সঠিক বাইনোমিয়াল/পয়সন প্রোবাবিলিটি প্রদর্শন করুন
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate" data-bন="গণনা করুন">গণনা করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট করুন">রিসেট করুন</span>
+                    </button>
+                    <button class="action-btn warning" id="cltDemoBtn">
+                        <i class="fas fa-infinity"></i>
+                        <span data-en="CLT Demo" data-bন="CLT ডেমো">CLT ডেমো</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-area"></i>
+                    <span data-en="Distribution Comparison" data-bন="ডিস্ট্রিবিউশন তুলনা">ডিস্ট্রিবিউশন তুলনা</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color binomial-bar-legend"></div>
+                        <span data-en="Binomial Distribution" data-bন="বাইনোমিয়াল ডিস্ট্রিবিউশন">বাইনোমিয়াল ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color normal-curve-legend"></div>
+                        <span data-en="Normal Approximation" data-bন="নরমাল অ্যাপ্রক্সিমেশন">নরমাল অ্যাপ্রক্সিমেশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color approx-area-legend"></div>
+                        <span data-en="Approximation Area" data-bন="অ্যাপ্রক্সিমেশন এলাকা">অ্যাপ্রক্সিমেশন এলাকা</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color continuity-correction-legend"></div>
+                        <span data-en="Continuity Correction" data-bন="কন্টিনিউটি করেকশন">কন্টিনিউটি করেকশন</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="results-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Approximation Results" data-bন="অ্যাপ্রক্সিমেশন ফলাফল">অ্যাপ্রক্সিমেশন ফলাফল</span>
+            </h2>
+            
+            <div class="results-grid">
+                <div class="result-card exact">
+                    <div class="result-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="result-title" data-en="Exact Probability" data-bন="সঠিক প্রোবাবিলিটি">সঠিক প্রোবাবিলিটি</div>
+                    <div class="result-value" id="exactProbability">0.7287</div>
+                    <div class="result-unit">from Binomial</div>
+                </div>
+                
+                <div class="result-card approx">
+                    <div class="result-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="result-title" data-en="Normal Approximation" data-bন="নরমাল অ্যাপ্রক্সিমেশন">নরমাল অ্যাপ্রক্সিমেশন</div>
+                    <div class="result-value" id="approxProbability">0.7287</div>
+                    <div class="result-unit">from Normal</div>
+                </div>
+                
+                <div class="result-card error">
+                    <div class="result-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="result-title" data-en="Absolute Error" data-bন="পরম ত্রুটি">পরম ত্রুটি</div>
+                    <div class="result-value" id="absoluteError">0.0000</div>
+                    <div class="result-unit">difference</div>
+                </div>
+                
+                <div class="result-card conditions">
+                    <div class="result-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="result-title" data-en="Approximation Quality" data-bন="অ্যাপ্রক্সিমেশন গুণমান">অ্যাপ্রক্সিমেশন গুণমান</div>
+                    <div class="result-value" id="approximationQuality">Excellent</div>
+                    <div class="result-unit">based on np & n(1-p)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Central Limit Theorem Section -->
+        <div class="clt-section">
+            <h2 class="section-title">
+                <i class="fas fa-infinity"></i>
+                <span data-en="Central Limit Theorem (CLT)" data-bন="সেন্ট্রাল লিমিট থিওরেম (CLT)">সেন্ট্রাল লিমিট থিওরেম (CLT)</span>
+            </h2>
+            
+            <div class="clt-grid">
+                <div class="clt-card">
+                    <div class="clt-header">
+                        <div class="clt-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="clt-title" data-en="Theorem Statement" data-bন="উপপাদ্য বিবৃতি">উপপাদ্য বিবৃতি</h3>
+                    </div>
+                    <div class="clt-content">
+                        <p data-en="For any population with mean μ and variance σ², the sampling distribution of the sample mean approaches a normal distribution as the sample size n increases, regardless of the shape of the population distribution." data-bন="যে কোন পপুলেশনের জন্য যার মিন μ এবং ভ্যারিয়েন্স σ², স্যাম্পল মিনের স্যাম্পলিং ডিস্ট্রিবিউশন, পপুলেশন ডিস্ট্রিবিউশনের আকৃতি নির্বিশেষে, স্যাম্পল সাইজ n বৃদ্ধির সাথে সাথে একটি নরমাল ডিস্ট্রিবিউশনের কাছাকাছি আসে।">
+                            যে কোন পপুলেশনের জন্য যার মিন μ এবং ভ্যারিয়েন্স σ², স্যাম্পল মিনের স্যাম্পলিং ডিস্ট্রিবিউশন, পপুলেশন ডিস্ট্রিবিউশনের আকৃতি নির্বিশেষে, স্যাম্পল সাইজ n বৃদ্ধির সাথে সাথে একটি নরমাল ডিস্ট্রিবিউশনের কাছাকাছি আসে।
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="clt-card">
+                    <div class="clt-header">
+                        <div class="clt-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="clt-title" data-en="Normal Approximation Formula" data-bন="নরমাল অ্যাপ্রক্সিমেশন সূত্র">নরমাল অ্যাপ্রক্সিমেশন সূত্র</h3>
+                    </div>
+                    <div class="clt-content">
+                        <div class="clt-formula">
+                            <p>For Binomial: X ~ Bin(n, p)</p>
+                            <p>Normal Approximation: X ≈ N(μ, σ²)</p>
+                            <p>where: μ = np, σ² = np(1-p)</p>
+                        </div>
+                        <div class="clt-formula" style="margin-top: 1rem;">
+                            <p>With Continuity Correction:</p>
+                            <p>P(a ≤ X ≤ b) ≈ Φ((b+0.5-μ)/σ) - Φ((a-0.5-μ)/σ)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approximation Accuracy Section -->
+        <div class="accuracy-section">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Approximation Accuracy Metrics" data-bন="অ্যাপ্রক্সিমেশন অ্যাকুরেসি মেট্রিক্স">অ্যাপ্রক্সিমেশন অ্যাকুরেসি মেট্রিক্স</span>
+            </h2>
+            
+            <div class="accuracy-metrics">
+                <div class="metric-card">
+                    <div class="metric-title" data-en="np Condition" data-bন="np শর্ত">np শর্ত</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill good" id="npBar" style="width: 95%"></div>
+                    </div>
+                    <div class="metric-value" id="npValue">25.0</div>
+                    <div class="metric-label" data-en="Should be ≥ 5" data-bন="≥ ৫ হতে হবে">≥ ৫ হতে হবে</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title" data-en="n(1-p) Condition" data-bন="n(1-p) শর্ত">n(1-p) শর্ত</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill good" id="nqBar" style="width: 95%"></div>
+                    </div>
+                    <div class="metric-value" id="nqValue">25.0</div>
+                    <div class="metric-label" data-en="Should be ≥ 5" data-bন="≥ ৫ হতে হবে">≥ ৫ হতে হবে</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title" data-en="Approximation Error" data-bন="অ্যাপ্রক্সিমেশন ত্রুটি">অ্যাপ্রক্সিমেশন ত্রুটি</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill good" id="errorBar" style="width: 2%"></div>
+                    </div>
+                    <div class="metric-value" id="errorValue">0.02%</div>
+                    <div class="metric-label" data-en="Lower is better" data-bন="যত কম তত ভাল">যত কম তত ভাল</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions Check Section -->
+        <div class="conditions-section">
+            <h2 class="section-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span data-en="Approximation Conditions Check" data-bন="অ্যাপ্রক্সিমেশন শর্ত পরীক্ষা">অ্যাপ্রক্সিমেশন শর্ত পরীক্ষা</span>
+            </h2>
+            
+            <ul class="conditions-list" id="conditionsList">
+                <!-- Conditions will be populated by JavaScript -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let chart = null;
+            
+            // Current settings
+            let distributionType = 'binomial';
+            let n = 50;
+            let p = 0.5;
+            let lowerBound = 20;
+            let upperBound = 30;
+            let probabilityType = 'between';
+            let useContinuityCorrection = true;
+            let showExactDistribution = true;
+            
+            // Initialize Chart.js
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            // Initialize application
+            initApproximationTool();
+            
+            function initApproximationTool() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Distribution type selection
+                document.getElementById('binomialCard').addEventListener('click', () => selectDistributionType('binomial'));
+                document.getElementById('poissonCard').addEventListener('click', () => selectDistributionType('poisson'));
+                document.getElementById('sampleMeanCard').addEventListener('click', () => selectDistributionType('sampleMean'));
+                
+                // Input event listeners
+                document.getElementById('nInput').addEventListener('input', updateN);
+                document.getElementById('pInput').addEventListener('input', updateP);
+                document.getElementById('lowerBoundInput').addEventListener('input', updateLowerBound);
+                document.getElementById('upperBoundInput').addEventListener('input', updateUpperBound);
+                document.getElementById('probabilityType').addEventListener('change', updateProbabilityType);
+                
+                // Checkbox event listeners
+                document.getElementById('continuityCorrectionCheckbox').addEventListener('click', toggleContinuityCorrection);
+                document.getElementById('showExactCheckbox').addEventListener('click', toggleShowExact);
+                
+                // Button event listeners
+                document.getElementById('calculateBtn').addEventListener('click', calculateApproximation);
+                document.getElementById('resetBtn').addEventListener('click', resetValues);
+                document.getElementById('cltDemoBtn').addEventListener('click', showCLTDemo);
+                
+                // Initialize chart
+                initializeChart();
+                
+                // Perform initial calculation
+                setTimeout(() => {
+                    calculateApproximation();
+                }, 500);
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+                
+                // Update distribution type labels
+                updateDistributionTypeUI();
+                
+                // Update conditions list
+                updateConditionsList();
+                
+                // Update chart if it exists
+                if (chart) {
+                    updateChartLanguage();
+                }
+            }
+            
+            function selectDistributionType(type) {
+                distributionType = type;
+                updateDistributionTypeUI();
+                calculateApproximation();
+            }
+            
+            function updateDistributionTypeUI() {
+                // Update UI for selected distribution type
+                document.querySelectorAll('.distribution-type-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                if (distributionType === 'binomial') {
+                    document.getElementById('binomialCard').classList.add('selected');
+                    document.getElementById('binomialParams').style.display = 'block';
+                } else if (distributionType === 'poisson') {
+                    document.getElementById('poissonCard').classList.add('selected');
+                    document.getElementById('binomialParams').style.display = 'block';
+                    // Change labels for Poisson
+                    document.querySelector('#binomialParams .parameter-title').textContent = 
+                        currentLanguage === 'bn' ? 'পয়সন প্যারামিটার' : 'Poisson Parameters';
+                    document.querySelector('#binomialParams .input-group:nth-child(2) label').textContent = 
+                        currentLanguage === 'bn' ? 'ল্যাম্বডা (λ)' : 'Lambda (λ)';
+                } else {
+                    document.getElementById('sampleMeanCard').classList.add('selected');
+                    document.getElementById('binomialParams').style.display = 'block';
+                }
+            }
+            
+            function updateN() {
+                n = parseInt(document.getElementById('nInput').value) || 50;
+                n = Math.max(1, Math.min(1000, n)); // Clamp between 1 and 1000
+            }
+            
+            function updateP() {
+                p = parseFloat(document.getElementById('pInput').value) || 0.5;
+                p = Math.max(0.01, Math.min(0.99, p)); // Clamp between 0.01 and 0.99
+            }
+            
+            function updateLowerBound() {
+                lowerBound = parseInt(document.getElementById('lowerBoundInput').value) || 20;
+            }
+            
+            function updateUpperBound() {
+                upperBound = parseInt(document.getElementById('upperBoundInput').value) || 30;
+            }
+            
+            function updateProbabilityType() {
+                probabilityType = document.getElementById('probabilityType').value;
+            }
+            
+            function toggleContinuityCorrection() {
+                const checkbox = document.getElementById('continuityCorrectionCheckbox');
+                const checkboxInput = checkbox.querySelector('.checkbox-input');
+                
+                useContinuityCorrection = !useContinuityCorrection;
+                checkboxInput.classList.toggle('checked');
+            }
+            
+            function toggleShowExact() {
+                const checkbox = document.getElementById('showExactCheckbox');
+                const checkboxInput = checkbox.querySelector('.checkbox-input');
+                
+                showExactDistribution = !showExactDistribution;
+                checkboxInput.classList.toggle('checked');
+                
+                // Update chart
+                updateChart();
+            }
+            
+            function calculateApproximation() {
+                // Get current values
+                updateN();
+                updateP();
+                updateLowerBound();
+                updateUpperBound();
+                updateProbabilityType();
+                
+                // Calculate exact and approximate probabilities
+                const exactProb = calculateExactProbability();
+                const approxProb = calculateApproximateProbability();
+                const absoluteError = Math.abs(exactProb - approxProb);
+                const relativeError = exactProb > 0 ? (absoluteError / exactProb) * 100 : 0;
+                
+                // Calculate quality metrics
+                const npValue = n * p;
+                const nqValue = n * (1 - p);
+                
+                // Update results
+                document.getElementById('exactProbability').textContent = exactProb.toFixed(4);
+                document.getElementById('approxProbability').textContent = approxProb.toFixed(4);
+                document.getElementById('absoluteError').textContent = absoluteError.toFixed(4);
+                
+                // Update approximation quality
+                let quality = '';
+                let qualityColor = '';
+                
+                if (npValue >= 10 && nqValue >= 10) {
+                    quality = currentLanguage === 'bn' ? 'চমৎকার' : 'Excellent';
+                    qualityColor = 'var(--success)';
+                } else if (npValue >= 5 && nqValue >= 5) {
+                    quality = currentLanguage === 'bn' ? 'ভাল' : 'Good';
+                    qualityColor = 'var(--warning)';
+                } else {
+                    quality = currentLanguage === 'bn' ? 'দুর্বল' : 'Poor';
+                    qualityColor = 'var(--danger)';
+                }
+                
+                document.getElementById('approximationQuality').textContent = quality;
+                document.getElementById('approximationQuality').style.color = qualityColor;
+                
+                // Update accuracy metrics
+                updateAccuracyMetrics(npValue, nqValue, relativeError);
+                
+                // Update conditions list
+                updateConditionsList();
+                
+                // Update chart
+                updateChart();
+                
+                // Add animation effect
+                document.getElementById('calculateBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('calculateBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function calculateExactProbability() {
+                if (distributionType === 'binomial') {
+                    return calculateBinomialProbability();
+                } else if (distributionType === 'poisson') {
+                    return calculatePoissonProbability();
+                } else {
+                    return calculateSampleMeanProbability();
+                }
+            }
+            
+            function calculateBinomialProbability() {
+                let total = 0;
+                
+                switch (probabilityType) {
+                    case 'between':
+                        for (let k = lowerBound; k <= upperBound; k++) {
+                            total += binomialPMF(k, n, p);
+                        }
+                        break;
+                        
+                    case 'lessThan':
+                        for (let k = 0; k <= lowerBound; k++) {
+                            total += binomialPMF(k, n, p);
+                        }
+                        break;
+                        
+                    case 'greaterThan':
+                        for (let k = lowerBound; k <= n; k++) {
+                            total += binomialPMF(k, n, p);
+                        }
+                        break;
+                        
+                    case 'exact':
+                        total = binomialPMF(lowerBound, n, p);
+                        break;
+                }
+                
+                return total;
+            }
+            
+            function binomialPMF(k, n, p) {
+                // Calculate binomial coefficient C(n, k)
+                const coeff = binomialCoefficient(n, k);
+                return coeff * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+            
+            function binomialCoefficient(n, k) {
+                if (k < 0 || k > n) return 0;
+                if (k === 0 || k === n) return 1;
+                
+                k = Math.min(k, n - k);
+                let result = 1;
+                for (let i = 1; i <= k; i++) {
+                    result *= (n - i + 1) / i;
+                }
+                return result;
+            }
+            
+            function calculateApproximateProbability() {
+                const mu = n * p;
+                const sigma = Math.sqrt(n * p * (1 - p));
+                
+                let a, b;
+                
+                // Apply continuity correction if enabled
+                if (useContinuityCorrection) {
+                    switch (probabilityType) {
+                        case 'between':
+                            a = lowerBound - 0.5;
+                            b = upperBound + 0.5;
+                            break;
+                            
+                        case 'lessThan':
+                            a = -Infinity;
+                            b = lowerBound + 0.5;
+                            break;
+                            
+                        case 'greaterThan':
+                            a = lowerBound - 0.5;
+                            b = Infinity;
+                            break;
+                            
+                        case 'exact':
+                            a = lowerBound - 0.5;
+                            b = lowerBound + 0.5;
+                            break;
+                    }
+                } else {
+                    switch (probabilityType) {
+                        case 'between':
+                            a = lowerBound;
+                            b = upperBound;
+                            break;
+                            
+                        case 'lessThan':
+                            a = -Infinity;
+                            b = lowerBound;
+                            break;
+                            
+                        case 'greaterThan':
+                            a = lowerBound;
+                            b = Infinity;
+                            break;
+                            
+                        case 'exact':
+                            // For exact without continuity correction, use point approximation
+                            return normalPDF(lowerBound, mu, sigma);
+                    }
+                }
+                
+                // Calculate normal approximation using CDF
+                const cdfA = a === -Infinity ? 0 : normalCDF(a, mu, sigma);
+                const cdfB = b === Infinity ? 1 : normalCDF(b, mu, sigma);
+                
+                return cdfB - cdfA;
+            }
+            
+            function normalCDF(x, mu, sigma) {
+                const z = (x - mu) / (sigma * Math.SQRT2);
+                return 0.5 * (1 + erf(z));
+            }
+            
+            function normalPDF(x, mu, sigma) {
+                const variance = sigma * sigma;
+                const exponent = -Math.pow(x - mu, 2) / (2 * variance);
+                const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+                return coefficient * Math.exp(exponent);
+            }
+            
+            function erf(x) {
+                const sign = x < 0 ? -1 : 1;
+                x = Math.abs(x);
+                
+                const a1 = 0.254829592;
+                const a2 = -0.284496736;
+                const a3 = 1.421413741;
+                const a4 = -1.453152027;
+                const a5 = 1.061405429;
+                const p = 0.3275911;
+                
+                const t = 1.0 / (1.0 + p * x);
+                const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+                
+                return sign * y;
+            }
+            
+            function calculatePoissonProbability() {
+                // Placeholder for Poisson calculation
+                return 0.5;
+            }
+            
+            function calculateSampleMeanProbability() {
+                // Placeholder for sample mean calculation
+                return 0.5;
+            }
+            
+            function updateAccuracyMetrics(npValue, nqValue, relativeError) {
+                // Update np condition
+                const npPercentage = Math.min(100, (npValue / 10) * 100);
+                document.getElementById('npBar').style.width = npPercentage + '%';
+                document.getElementById('npValue').textContent = npValue.toFixed(1);
+                document.getElementById('npBar').className = `metric-fill ${npValue >= 5 ? 'good' : npValue >= 2.5 ? 'fair' : 'poor'}`;
+                
+                // Update nq condition
+                const nqPercentage = Math.min(100, (nqValue / 10) * 100);
+                document.getElementById('nqBar').style.width = nqPercentage + '%';
+                document.getElementById('nqValue').textContent = nqValue.toFixed(1);
+                document.getElementById('nqBar').className = `metric-fill ${nqValue >= 5 ? 'good' : nqValue >= 2.5 ? 'fair' : 'poor'}`;
+                
+                // Update error metric
+                const errorPercentage = Math.min(100, relativeError * 2); // Scale for visualization
+                document.getElementById('errorBar').style.width = errorPercentage + '%';
+                document.getElementById('errorValue').textContent = relativeError.toFixed(2) + '%';
+                document.getElementById('errorBar').className = `metric-fill ${relativeError < 1 ? 'good' : relativeError < 5 ? 'fair' : 'poor'}`;
+            }
+            
+            function updateConditionsList() {
+                const conditionsList = document.getElementById('conditionsList');
+                const npValue = n * p;
+                const nqValue = n * (1 - p);
+                
+                const conditions = [
+                    {
+                        title: currentLanguage === 'bn' ? 'np ≥ 5' : 'np ≥ 5',
+                        description: currentLanguage === 'bn' 
+                            ? `np = ${npValue.toFixed(2)}` 
+                            : `np = ${npValue.toFixed(2)}`,
+                        satisfied: npValue >= 5
+                    },
+                    {
+                        title: currentLanguage === 'bn' ? 'n(1-p) ≥ 5' : 'n(1-p) ≥ 5',
+                        description: currentLanguage === 'bn' 
+                            ? `n(1-p) = ${nqValue.toFixed(2)}` 
+                            : `n(1-p) = ${nqValue.toFixed(2)}`,
+                        satisfied: nqValue >= 5
+                    },
+                    {
+                        title: currentLanguage === 'bn' ? 'n যথেষ্ট বড়' : 'n is sufficiently large',
+                        description: currentLanguage === 'bn' 
+                            ? `n = ${n}` 
+                            : `n = ${n}`,
+                        satisfied: n >= 30
+                    },
+                    {
+                        title: currentLanguage === 'bn' ? 'p যুক্তিসঙ্গত' : 'p is reasonable',
+                        description: currentLanguage === 'bn' 
+                            ? `p = ${p.toFixed(3)} (0.05 থেকে 0.95 এর মধ্যে)` 
+                            : `p = ${p.toFixed(3)} (between 0.05 and 0.95)`,
+                        satisfied: p >= 0.05 && p <= 0.95
+                    }
+                ];
+                
+                conditionsList.innerHTML = '';
+                
+                conditions.forEach(condition => {
+                    const li = document.createElement('li');
+                    li.className = `condition-item ${condition.satisfied ? 'satisfied' : 'unsatisfied'}`;
+                    
+                    li.innerHTML = `
+                        <div class="condition-icon">
+                            <i class="fas fa-${condition.satisfied ? 'check' : 'times'}"></i>
+                        </div>
+                        <div class="condition-content">
+                            <div class="condition-title">${condition.title}</div>
+                            <div class="condition-description">${condition.description}</div>
+                        </div>
+                    `;
+                    
+                    conditionsList.appendChild(li);
+                });
+            }
+            
+            function initializeChart() {
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সাকসেস সংখ্যা (k)' : 'Number of Successes (k)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'প্রোবাবিলিটি' : 'Probability',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function updateChart() {
+                if (!chart) return;
+                
+                // Clear existing datasets
+                chart.data.datasets = [];
+                
+                // Create binomial distribution data
+                if (showExactDistribution) {
+                    const binomialData = createBinomialData();
+                    chart.data.datasets.push({
+                        label: currentLanguage === 'bn' ? 'বাইনোমিয়াল ডিস্ট্রিবিউশন' : 'Binomial Distribution',
+                        data: binomialData,
+                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                        borderColor: 'rgba(33, 150, 243, 1)',
+                        borderWidth: 1,
+                        type: 'bar',
+                        order: 1
+                    });
+                }
+                
+                // Create normal approximation curve
+                const normalData = createNormalCurveData();
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'নরমাল অ্যাপ্রক্সিমেশন' : 'Normal Approximation',
+                    data: normalData,
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    type: 'line',
+                    order: 0
+                });
+                
+                // Create approximation area
+                if (useContinuityCorrection) {
+                    const areaData = createApproximationAreaData();
+                    chart.data.datasets.push({
+                        label: currentLanguage === 'bn' ? 'অ্যাপ্রক্সিমেশন এলাকা' : 'Approximation Area',
+                        data: areaData,
+                        borderColor: 'rgba(76, 175, 80, 0.3)',
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        borderWidth: 1,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        type: 'line',
+                        order: 2
+                    });
+                }
+                
+                // Add continuity correction lines if enabled
+                if (useContinuityCorrection && probabilityType !== 'exact') {
+                    const ccData = createContinuityCorrectionData();
+                    chart.data.datasets.push({
+                        label: currentLanguage === 'bn' ? 'কন্টিনিউটি করেকশন' : 'Continuity Correction',
+                        data: ccData,
+                        borderColor: 'rgba(156, 39, 176, 1)',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        type: 'line',
+                        order: 3
+                    });
+                }
+                
+                // Update x-axis labels
+                const labels = [];
+                for (let k = 0; k <= n; k++) {
+                    labels.push(k.toString());
+                }
+                chart.data.labels = labels;
+                
+                chart.update();
+            }
+            
+            function createBinomialData() {
+                const data = [];
+                for (let k = 0; k <= n; k++) {
+                    data.push({
+                        x: k.toString(),
+                        y: binomialPMF(k, n, p)
+                    });
+                }
+                return data;
+            }
+            
+            function createNormalCurveData() {
+                const data = [];
+                const mu = n * p;
+                const sigma = Math.sqrt(n * p * (1 - p));
+                
+                for (let x = 0; x <= n; x += 0.1) {
+                    data.push({
+                        x: x.toFixed(1),
+                        y: normalPDF(x, mu, sigma)
+                    });
+                }
+                return data;
+            }
+            
+            function createApproximationAreaData() {
+                const data = [];
+                const mu = n * p;
+                const sigma = Math.sqrt(n * p * (1 - p));
+                
+                let startX, endX;
+                
+                // Determine area bounds based on probability type and continuity correction
+                if (useContinuityCorrection) {
+                    switch (probabilityType) {
+                        case 'between':
+                            startX = lowerBound - 0.5;
+                            endX = upperBound + 0.5;
+                            break;
+                        case 'lessThan':
+                            startX = 0;
+                            endX = lowerBound + 0.5;
+                            break;
+                        case 'greaterThan':
+                            startX = lowerBound - 0.5;
+                            endX = n;
+                            break;
+                        case 'exact':
+                            startX = lowerBound - 0.5;
+                            endX = lowerBound + 0.5;
+                            break;
+                    }
+                } else {
+                    switch (probabilityType) {
+                        case 'between':
+                            startX = lowerBound;
+                            endX = upperBound;
+                            break;
+                        case 'lessThan':
+                            startX = 0;
+                            endX = lowerBound;
+                            break;
+                        case 'greaterThan':
+                            startX = lowerBound;
+                            endX = n;
+                            break;
+                        case 'exact':
+                            // For exact, show small interval around the point
+                            startX = lowerBound - 0.25;
+                            endX = lowerBound + 0.25;
+                            break;
+                    }
+                }
+                
+                // Create area polygon
+                for (let x = startX; x <= endX; x += 0.1) {
+                    const y = normalPDF(x, mu, sigma);
+                    data.push({ x: x.toFixed(1), y: y });
+                }
+                
+                // Close the area
+                data.push({ x: endX.toFixed(1), y: 0 });
+                data.push({ x: startX.toFixed(1), y: 0 });
+                
+                return data;
+            }
+            
+            function createContinuityCorrectionData() {
+                const data = [];
+                const mu = n * p;
+                const sigma = Math.sqrt(n * p * (1 - p));
+                
+                // Add vertical lines at correction points
+                let correctionPoints = [];
+                
+                if (probabilityType === 'between') {
+                    correctionPoints = [lowerBound - 0.5, upperBound + 0.5];
+                } else if (probabilityType === 'lessThan') {
+                    correctionPoints = [lowerBound + 0.5];
+                } else if (probabilityType === 'greaterThan') {
+                    correctionPoints = [lowerBound - 0.5];
+                } else if (probabilityType === 'exact') {
+                    correctionPoints = [lowerBound - 0.5, lowerBound + 0.5];
+                }
+                
+                correctionPoints.forEach(point => {
+                    if (point >= 0 && point <= n) {
+                        data.push({ x: point.toFixed(1), y: 0 });
+                        data.push({ x: point.toFixed(1), y: normalPDF(point, mu, sigma) });
+                        data.push({ x: point.toFixed(1), y: null }); // Break line
+                    }
+                });
+                
+                return data;
+            }
+            
+            function resetValues() {
+                // Reset to default values
+                document.getElementById('nInput').value = 50;
+                document.getElementById('pInput').value = 0.5;
+                document.getElementById('lowerBoundInput').value = 20;
+                document.getElementById('upperBoundInput').value = 30;
+                document.getElementById('probabilityType').value = 'between';
+                
+                // Recalculate
+                calculateApproximation();
+                
+                // Add animation effect
+                document.getElementById('resetBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('resetBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function showCLTDemo() {
+                // Create CLT demonstration
+                alert(currentLanguage === 'bn' 
+                    ? 'সেন্ট্রাল লিমিট থিওরেম ডেমো: বিভিন্ন স্যাম্পল সাইজের জন্য স্যাম্পলিং ডিস্ট্রিবিউশন দেখানো হবে।' 
+                    : 'Central Limit Theorem Demo: Sampling distributions for different sample sizes will be shown.');
+                
+                // Add animation effect
+                document.getElementById('cltDemoBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('cltDemoBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function updateChartLanguage() {
+                if (!chart) return;
+                
+                // Update axes labels
+                chart.options.scales.x.title.text = currentLanguage === 'bn' ? 'সাকসেস সংখ্যা (k)' : 'Number of Successes (k)';
+                chart.options.scales.y.title.text = currentLanguage === 'bn' ? 'প্রোবাবিলিটি' : 'Probability';
+                
+                // Update dataset labels
+                chart.data.datasets.forEach(dataset => {
+                    if (dataset.label === 'Binomial Distribution' || dataset.label === 'বাইনোমিয়াল ডিস্ট্রিবিউশন') {
+                        dataset.label = currentLanguage === 'bn' ? 'বাইনোমিয়াল ডিস্ট্রিবিউশন' : 'Binomial Distribution';
+                    } else if (dataset.label === 'Normal Approximation' || dataset.label === 'নরমাল অ্যাপ্রক্সিমেশন') {
+                        dataset.label = currentLanguage === 'bn' ? 'নরমাল অ্যাপ্রক্সিমেশন' : 'Normal Approximation';
+                    } else if (dataset.label === 'Approximation Area' || dataset.label === 'অ্যাপ্রক্সিমেশন এলাকা') {
+                        dataset.label = currentLanguage === 'bn' ? 'অ্যাপ্রক্সিমেশন এলাকা' : 'Approximation Area';
+                    } else if (dataset.label === 'Continuity Correction' || dataset.label === 'কন্টিনিউটি করেকশন') {
+                        dataset.label = currentLanguage === 'bn' ? 'কন্টিনিউটি করেকশন' : 'Continuity Correction';
+                    }
+                });
+                
+                chart.update();
+            }
+        });
+    </script>
+</body>
+</html>

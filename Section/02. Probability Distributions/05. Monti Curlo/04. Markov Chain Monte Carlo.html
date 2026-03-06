@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markov Chain Monte Carlo (MCMC) Demo | Complex Distribution Sampling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #9C27B0;
+            --secondary: #7B1FA2;
+            --accent: #FF5722;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --info: #2196F3;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --mh-color: #9C27B0;
+            --gibbs-color: #2196F3;
+            --target-color: #FF5722;
+            --sample-color: #4CAF50;
+            --trace-color: #2196F3;
+            --accept-color: #4CAF50;
+            --reject-color: #FF5722;
+            --burnin-color: #FF9800;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--mh-color), var(--gibbs-color), var(--target-color));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Method Selection */
+        .method-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .method-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--light-gray);
+        }
+
+        .method-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .method-card.active {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .method-card.mh.active {
+            border-color: var(--mh-color);
+        }
+
+        .method-card.gibbs.active {
+            border-color: var(--gibbs-color);
+        }
+
+        .method-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-card.mh .method-icon {
+            color: var(--mh-color);
+        }
+
+        .method-card.gibbs .method-icon {
+            color: var(--gibbs-color);
+        }
+
+        .method-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .method-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        /* Distribution Selection */
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .distribution-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dist-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .dist-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .dist-btn.active {
+            background: var(--target-color);
+            color: white;
+            border-color: var(--target-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--primary);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* MCMC Parameters */
+        .mcmc-parameters {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .mcmc-parameters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .pause-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 1rem;
+        }
+
+        /* Target Distribution Plot */
+        .target-plot {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: 300px;
+        }
+
+        .plot-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #targetCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Trace Plot */
+        .trace-plot {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: 300px;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Diagnostics Grid */
+        .diagnostics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .diagnostics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .diagnostics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .diagnostic-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .diagnostic-card.highlight {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 100%);
+            border-color: var(--primary);
+        }
+
+        .diagnostic-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .diagnostic-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .diagnostic-good {
+            color: var(--success);
+        }
+
+        .diagnostic-warning {
+            color: var(--warning);
+        }
+
+        .diagnostic-poor {
+            color: var(--accent);
+        }
+
+        /* Acceptance Rate */
+        .acceptance-rate {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .rate-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .rate-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 1rem;
+        }
+
+        .rate-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .rate-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Algorithm Steps */
+        .algorithm-steps {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            border-left-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        /* Gibbs Sampler Panel */
+        .gibbs-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .gibbs-panel.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .gibbs-visualization {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .gibbs-visualization {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gibbs-plot {
+            height: 300px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .gibbs-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Convergence Diagnostics */
+        .convergence-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .convergence-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .convergence-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .convergence-chart {
+            height: 250px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        /* Theory Section */
+        .theory-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .theory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .theory-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .theory-card h3 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theory-content {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .diagnostic-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Progress Bar */
+        .sampling-progress {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--gibbs-color));
+            transition: width 0.3s ease;
+        }
+
+        /* Chain Visualization */
+        .chain-visualization {
+            position: relative;
+            height: 100%;
+        }
+
+        .current-sample {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--sample-color);
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        /* Burn-in Indicator */
+        .burnin-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            background: var(--burnin-color);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .burnin-indicator.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        /* Range Slider */
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Markov Chain Monte Carlo (MCMC) Demo" data-bn="মার্কভ চেইন মন্টে কার্লো (MCMC) ডেমো">মার্কভ চেইন মন্টে কার্লো (MCMC) ডেমো</h1>
+            <p class="subtitle" data-en="Demonstrate MCMC methods for sampling from complex distributions with Metropolis-Hastings, Gibbs sampling, and convergence diagnostics" data-bn="মেট্রোপলিস-হেস্টিংস, গিবস স্যাম্পলিং এবং কনভারজেন্স ডায়াগনস্টিক্স ব্যবহার করে জটিল ডিস্ট্রিবিউশন থেকে স্যাম্পলিংয়ের জন্য MCMC পদ্ধতি প্রদর্শন করুন">
+                মেট্রোপলিস-হেস্টিংস, গিবস স্যাম্পলিং এবং কনভারজেন্স ডায়াগনস্টিক্স ব্যবহার করে জটিল ডিস্ট্রিবিউশন থেকে স্যাম্পলিংয়ের জন্য MCMC পদ্ধতি প্রদর্শন করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="MCMC Configuration" data-bn="MCMC কনফিগারেশন">MCMC কনফিগারেশন</span>
+                </h2>
+
+                <!-- Method Selection -->
+                <div class="method-selection">
+                    <div class="method-card mh active" data-method="metropolis">
+                        <div class="method-icon">
+                            <i class="fas fa-random"></i>
+                        </div>
+                        <div class="method-name" data-en="Metropolis-Hastings" data-bn="মেট্রোপলিস-হেস্টিংস">মেট্রোপলিস-হেস্টিংস</div>
+                        <div class="method-desc" data-en="Propose and accept/reject moves" data-bn="প্রস্তাব দিন এবং গ্রহণ/প্রত্যাখ্যান করুন">
+                            প্রস্তাব দিন এবং গ্রহণ/প্রত্যাখ্যান করুন
+                        </div>
+                        <div class="help-text" data-en="Flexible, works for any distribution" data-bn="নমনীয়, যেকোনো ডিস্ট্রিবিউশনের জন্য কাজ করে">
+                            নমনীয়, যেকোনো ডিস্ট্রিবিউশনের জন্য কাজ করে
+                        </div>
+                    </div>
+
+                    <div class="method-card gibbs" data-method="gibbs">
+                        <div class="method-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="method-name" data-en="Gibbs Sampling" data-bn="গিবস স্যাম্পলিং">গিবস স্যাম্পলিং</div>
+                        <div class="method-desc" data-en="Sample from conditional distributions" data-bn="কন্ডিশনাল ডিস্ট্রিবিউশন থেকে স্যাম্পলিং">
+                            কন্ডিশনাল ডিস্ট্রিবিউশন থেকে স্যাম্পলিং
+                        </div>
+                        <div class="help-text" data-en="Efficient for high-dimensional problems" data-bn="হাই-ডাইমেনশনাল সমস্যার জন্য কার্যকর">
+                            হাই-ডাইমেনশনাল সমস্যার জন্য কার্যকর
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Distribution Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Target Distribution" data-bn="টার্গেট ডিস্ট্রিবিউশন">টার্গেট ডিস্ট্রিবিউশন</span>
+                </h2>
+
+                <div class="distribution-grid">
+                    <button class="dist-btn active" data-dist="bimodal">
+                        <i class="fas fa-mountain"></i>
+                        <span data-en="Bimodal" data-bn="বাইমোডাল">বাইমোডাল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="skewed">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Skewed Normal" data-bn="স্কিউড নরমাল">স্কিউড নরমাল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="multimodal">
+                        <i class="fas fa-wave-square"></i>
+                        <span data-en="Multimodal" data-bn="মাল্টিমোডাল">মাল্টিমোডাল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="custom">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Custom" data-bn="কাস্টম">কাস্টম</span>
+                    </button>
+                </div>
+
+                <!-- MCMC Parameters -->
+                <div class="mcmc-parameters">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="Samples" data-bn="স্যাম্পল">স্যাম্পল</span>
+                        </div>
+                        <input type="number" id="numSamples" class="value-input" min="100" max="100000" value="5000">
+                        <div class="help-text" data-en="Total MCMC samples" data-bn="মোট MCMC স্যাম্পল">
+                            মোট MCMC স্যাম্পল
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-fire"></i>
+                            <span data-en="Burn-in" data-bn="বার্ন-ইন">বার্ন-ইন</span>
+                        </div>
+                        <input type="number" id="burnIn" class="value-input" min="0" max="5000" value="1000">
+                        <div class="help-text" data-en="Initial samples to discard" data-bn="প্রাথমিক স্যাম্পল বাতিল করুন">
+                            প্রাথমিক স্যাম্পল বাতিল করুন
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-step-forward"></i>
+                            <span data-en="Step Size" data-bn="স্টেপ সাইজ">স্টেপ সাইজ</span>
+                        </div>
+                        <input type="number" id="stepSize" class="value-input" min="0.1" max="10" step="0.1" value="1.0">
+                        <div class="help-text" data-en="Proposal distribution scale" data-bn="প্রপোজাল ডিস্ট্রিবিউশন স্কেল">
+                            প্রপোজাল ডিস্ট্রিবিউশন স্কেল
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MH Proposal Distribution (only for Metropolis-Hastings) -->
+                <div id="mhProposalPanel">
+                    <h2 class="section-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Proposal Distribution" data-bn="প্রপোজাল ডিস্ট্রিবিউশন">প্রপোজাল ডিস্ট্রিবিউশন</span>
+                    </h2>
+                    
+                    <div class="distribution-grid">
+                        <button class="dist-btn" data-proposal="normal">
+                            <i class="fas fa-bell"></i>
+                            <span data-en="Normal" data-bn="নরমাল">নরমাল</span>
+                        </button>
+                        <button class="dist-btn active" data-proposal="uniform">
+                            <i class="fas fa-square"></i>
+                            <span data-en="Uniform" data-bn="ইউনিফর্ম">ইউনিফর্ম</span>
+                        </button>
+                        <button class="dist-btn" data-proposal="cauchy">
+                            <i class="fas fa-wave-square"></i>
+                            <span data-en="Cauchy" data-bn="কচি">কচি</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn start-btn" id="startBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Start Sampling" data-bn="স্যাম্পলিং শুরু করুন">স্যাম্পলিং শুরু করুন</span>
+                    </button>
+                    <button class="control-btn pause-btn" id="pauseBtn">
+                        <i class="fas fa-pause"></i>
+                        <span data-en="Pause" data-bn="বিরতি">বিরতি</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bn="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+
+                <!-- Sampling Progress -->
+                <div class="sampling-progress">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <!-- Target Distribution Plot -->
+                <div class="target-plot">
+                    <div class="section-title" style="margin-bottom: 1rem;">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Target Distribution & Samples" data-bn="টার্গেট ডিস্ট্রিবিউশন ও স্যাম্পল">টার্গেট ডিস্ট্রিবিউশন ও স্যাম্পল</span>
+                    </div>
+                    <div class="plot-container">
+                        <canvas id="targetCanvas"></canvas>
+                        <div class="burnin-indicator" id="burninIndicator">
+                            <span data-en="BURN-IN" data-bn="বার্ন-ইন">বার্ন-ইন</span>
+                        </div>
+                        <div class="current-sample" id="currentSample" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Trace Plot -->
+                <div class="trace-plot">
+                    <div class="section-title" style="margin-bottom: 1rem;">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Chain Trace & Acceptance" data-bn="চেইন ট্রেস ও গ্রহণ">চেইন ট্রেস ও গ্রহণ</span>
+                    </div>
+                    <div class="plot-container">
+                        <canvas id="traceCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Convergence Diagnostics" data-bn="কনভারজেন্স ডায়াগনস্টিক্স">কনভারজেন্স ডায়াগনস্টিক্স</span>
+            </h2>
+
+            <!-- Diagnostics Grid -->
+            <div class="diagnostics-grid">
+                <div class="diagnostic-card highlight">
+                    <div class="diagnostic-label" data-en="Effective Sample Size" data-bn="কার্যকর স্যাম্পল সাইজ">কার্যকর স্যাম্পল সাইজ</div>
+                    <div class="diagnostic-value diagnostic-good" id="essValue">-</div>
+                    <div class="help-text" data-en="Higher is better" data-bn="উচ্চতর উত্তম">
+                        উচ্চতর উত্তম
+                    </div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <div class="diagnostic-label" data-en="Gelman-Rubin R̂" data-bn="গেলম্যান-রুবিন R̂">গেলম্যান-রুবিন R̂</div>
+                    <div class="diagnostic-value diagnostic-good" id="rhatValue">-</div>
+                    <div class="help-text" data-en="Target: R̂ < 1.1" data-bn="লক্ষ্য: R̂ < 1.1">
+                        লক্ষ্য: R̂ < 1.1
+                    </div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <div class="diagnostic-label" data-en="Autocorrelation Lag-1" data-bn="অটোকোরিলেশন ল্যাগ-১">অটোকোরিলেশন ল্যাগ-১</div>
+                    <div class="diagnostic-value diagnostic-warning" id="acfValue">-</div>
+                    <div class="help-text" data-en="Lower is better" data-bn="নিম্নতর উত্তম">
+                        নিম্নতর উত্তম
+                    </div>
+                </div>
+                
+                <div class="diagnostic-card">
+                    <div class="diagnostic-label" data-en="Geweke Z-Score" data-bn="গেউকে জেড-স্কোর">গেউকে জেড-স্কোর</div>
+                    <div class="diagnostic-value diagnostic-good" id="gewekeValue">-</div>
+                    <div class="help-text" data-en="|Z| < 1.96 for convergence" data-bn="কনভারজেন্সের জন্য |Z| < 1.96">
+                        কনভারজেন্সের জন্য |Z| < 1.96
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acceptance Rate -->
+            <div class="acceptance-rate">
+                <div class="section-title" style="margin-bottom: 0;">
+                    <i class="fas fa-percentage"></i>
+                    <span data-en="Acceptance Rate" data-bn="গ্রহণের হার">গ্রহণের হার</span>
+                </div>
+                <div class="rate-display">
+                    <span data-en="Current:" data-bn="বর্তমান:">বর্তমান:</span>
+                    <div class="rate-bar">
+                        <div class="rate-fill" id="acceptanceFill" style="width: 0%"></div>
+                    </div>
+                    <div class="rate-value" id="acceptanceValue">0%</div>
+                </div>
+                <div class="help-text" data-en="Optimal: 20-40% for random walk MH" data-bn="সর্বোত্তম: র্যান্ডম ওয়াক MH-এর জন্য ২০-৪০%">
+                    সর্বোত্তম: র্যান্ডম ওয়াক MH-এর জন্য ২০-৪০%
+                </div>
+            </div>
+        </div>
+
+        <!-- Gibbs Sampler Panel (only for Gibbs Sampling) -->
+        <div class="gibbs-panel" id="gibbsPanel">
+            <h2 class="section-title">
+                <i class="fas fa-sync-alt"></i>
+                <span data-en="Gibbs Sampler Visualization" data-bn="গিবস স্যাম্পলার ভিজ্যুয়ালাইজেশন">গিবস স্যাম্পলার ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="gibbs-visualization">
+                <div class="gibbs-plot" id="gibbsPlot">
+                    <canvas id="gibbsCanvas"></canvas>
+                </div>
+                <div class="gibbs-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Dimensions" data-bn="ডাইমেনশন">ডাইমেনশন</span>
+                        </div>
+                        <select id="gibbsDimensions" class="value-input">
+                            <option value="2">2D Bivariate Normal</option>
+                            <option value="3">3D Multivariate</option>
+                        </select>
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-correlation"></i>
+                            <span data-en="Correlation" data-bn="কোরিলেশন">কোরিলেশন</span>
+                        </div>
+                        <input type="range" id="correlationSlider" class="range-slider" min="-0.9" max="0.9" step="0.1" value="0.7">
+                        <div class="help-text" id="correlationValue" data-en="Correlation: 0.7" data-bn="কোরিলেশন: ০.৭">
+                            কোরিলেশন: ০.৭
+                        </div>
+                    </div>
+                    
+                    <button class="control-btn" id="stepGibbsBtn" style="background: var(--gibbs-color); color: white;">
+                        <i class="fas fa-step-forward"></i>
+                        <span data-en="Step Through" data-bn="ধাপে ধাপে চালান">ধাপে ধাপে চালান</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Algorithm Steps -->
+        <div class="algorithm-steps">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Algorithm Steps" data-bn="অ্যালগরিদম ধাপ">অ্যালগরিদম ধাপ</span>
+            </h2>
+            
+            <div class="steps-container" id="stepsContainer">
+                <!-- Steps will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- Convergence Diagnostics Charts -->
+        <div class="convergence-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Detailed Convergence Analysis" data-bn="বিস্তারিত কনভারজেন্স বিশ্লেষণ">বিস্তারিত কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="convergence-charts">
+                <div class="convergence-chart">
+                    <canvas id="autocorrChart"></canvas>
+                </div>
+                <div class="convergence-chart">
+                    <canvas id="runningMeanChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theory Section -->
+        <div class="theory-section">
+            <h2 class="section-title">
+                <i class="fas fa-book-open"></i>
+                <span data-en="MCMC Theory & Applications" data-bn="MCMC তত্ত্ব ও প্রয়োগ">MCMC তত্ত্ব ও প্রয়োগ</span>
+            </h2>
+            
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-random"></i>
+                        <span data-en="Metropolis-Hastings" data-bn="মেট্রোপলিস-হেস্টিংস">মেট্রোপলিস-হেস্টিংস</span>
+                    </h3>
+                    <div class="theory-content" data-en="Propose new state from proposal distribution Q(x'|x). Accept with probability α = min(1, [π(x')Q(x|x')]/[π(x)Q(x'|x)]). Preserves detailed balance for any proposal." data-bn="প্রপোজাল ডিস্ট্রিবিউশন Q(x'|x) থেকে নতুন স্টেট প্রস্তাব করুন। α = min(1, [π(x')Q(x|x')]/[π(x)Q(x'|x)]) সম্ভাব্যতা দিয়ে গ্রহণ করুন। যেকোনো প্রপোজালের জন্য বিস্তারিত ব্যালেন্স সংরক্ষণ করে।">
+                        প্রপোজাল ডিস্ট্রিবিউশন Q(x'|x) থেকে নতুন স্টেট প্রস্তাব করুন। α = min(1, [π(x')Q(x|x')]/[π(x)Q(x'|x)]) সম্ভাব্যতা দিয়ে গ্রহণ করুন। যেকোনো প্রপোজালের জন্য বিস্তারিত ব্যালেন্স সংরক্ষণ করে।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Gibbs Sampling" data-bn="গিবস স্যাম্পলিং">গিবস স্যাম্পলিং</span>
+                    </h3>
+                    <div class="theory-content" data-en="Iteratively sample each variable from its conditional distribution given all other variables. Special case of MH with acceptance rate 1. Efficient when conditionals are easy to sample." data-bn="প্রতিটি ভেরিয়েবলকে অন্যান্য সব ভেরিয়েবল দেওয়া তার কন্ডিশনাল ডিস্ট্রিবিউশন থেকে পুনরাবৃত্তভাবে স্যাম্পল করুন। ১ গ্রহণের হার সহ MH-এর বিশেষ কেস। যখন কন্ডিশনালগুলি স্যাম্পল করা সহজ হয় তখন কার্যকর।">
+                        প্রতিটি ভেরিয়েবলকে অন্যান্য সব ভেরিয়েবল দেওয়া তার কন্ডিশনাল ডিস্ট্রিবিউশন থেকে পুনরাবৃত্তভাবে স্যাম্পল করুন। ১ গ্রহণের হার সহ MH-এর বিশেষ কেস। যখন কন্ডিশনালগুলি স্যাম্পল করা সহজ হয় তখন কার্যকর।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-check-double"></i>
+                        <span data-en="Convergence Diagnostics" data-bn="কনভারজেন্স ডায়াগনস্টিক্স">কনভারজেন্স ডায়াগনস্টিক্স</span>
+                    </h3>
+                    <div class="theory-content" data-en="ESS measures independent samples, R̂ compares within/between chain variance, autocorrelation measures dependency, Geweke tests stationarity. Multiple chains recommended." data-bn="ESS স্বাধীন স্যাম্পল পরিমাপ করে, R̂ চেইনের ভিতরে/মধ্যে ভ্যারিয়েন্স তুলনা করে, অটোকোরিলেশন নির্ভরতা পরিমাপ করে, গেউকে স্থিরতা পরীক্ষা করে। একাধিক চেইন সুপারিশ করা হয়।">
+                        ESS স্বাধীন স্যাম্পল পরিমাপ করে, R̂ চেইনের ভিতরে/মধ্যে ভ্যারিয়েন্স তুলনা করে, অটোকোরিলেশন নির্ভরতা পরিমাপ করে, গেউকে স্থিরতা পরীক্ষা করে। একাধিক চেইন সুপারিশ করা হয়।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Practical Tips" data-bn="ব্যবহারিক পরামর্শ">ব্যবহারিক পরামর্শ</span>
+                    </h3>
+                    <div class="theory-content" data-en="Adjust step size for 20-40% acceptance. Use multiple chains from dispersed starting points. Discard burn-in samples. Monitor diagnostics. Consider adaptive methods for difficult problems." data-bn="২০-৪০% গ্রহণের হার পেতে স্টেপ সাইজ সামঞ্জস্য করুন। বিচ্ছিন্ন স্টার্টিং পয়েন্ট থেকে একাধিক চেইন ব্যবহার করুন। বার্ন-ইন স্যাম্পল বাতিল করুন। ডায়াগনস্টিক্স পর্যবেক্ষণ করুন। কঠিন সমস্যার জন্য অভিযোজিত পদ্ধতি বিবেচনা করুন।">
+                        ২০-৪০% গ্রহণের হার পেতে স্টেপ সাইজ সামঞ্জস্য করুন। বিচ্ছিন্ন স্টার্টিং পয়েন্ট থেকে একাধিক চেইন ব্যবহার করুন। বার্ন-ইন স্যাম্পল বাতিল করুন। ডায়াগনস্টিক্স পর্যবেক্ষণ করুন। কঠিন সমস্যার জন্য অভিযোজিত পদ্ধতি বিবেচনা করুন।
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart.js global configuration
+            Chart.defaults.font.family = "'Poppins', 'Hind Siliguri', sans-serif";
+            Chart.defaults.color = '#718096';
+
+            // MCMC State
+            let mcmcState = {
+                method: 'metropolis',
+                targetDistribution: 'bimodal',
+                proposalDistribution: 'uniform',
+                numSamples: 5000,
+                burnIn: 1000,
+                stepSize: 1.0,
+                samples: [],
+                currentSample: 0,
+                acceptanceCount: 0,
+                isRunning: false,
+                animationId: null,
+                currentX: 0,
+                traceData: [],
+                diagnostics: {
+                    ess: 0,
+                    rhat: 1.0,
+                    acf: 0,
+                    geweke: 0
+                },
+                chains: [[], [], []], // Multiple chains for R-hat
+                autocorrelations: []
+            };
+
+            // DOM Elements
+            const methodCards = document.querySelectorAll('.method-card');
+            const distButtons = document.querySelectorAll('.dist-btn[data-dist]');
+            const proposalButtons = document.querySelectorAll('.dist-btn[data-proposal]');
+            const numSamplesInput = document.getElementById('numSamples');
+            const burnInInput = document.getElementById('burnIn');
+            const stepSizeInput = document.getElementById('stepSize');
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const progressFill = document.getElementById('progressFill');
+            const mhProposalPanel = document.getElementById('mhProposalPanel');
+            const gibbsPanel = document.getElementById('gibbsPanel');
+            const burninIndicator = document.getElementById('burninIndicator');
+            const currentSampleIndicator = document.getElementById('currentSample');
+            const stepsContainer = document.getElementById('stepsContainer');
+            const correlationSlider = document.getElementById('correlationSlider');
+            const correlationValue = document.getElementById('correlationValue');
+            const stepGibbsBtn = document.getElementById('stepGibbsBtn');
+            const gibbsDimensionsSelect = document.getElementById('gibbsDimensions');
+
+            // Diagnostic Elements
+            const essValue = document.getElementById('essValue');
+            const rhatValue = document.getElementById('rhatValue');
+            const acfValue = document.getElementById('acfValue');
+            const gewekeValue = document.getElementById('gewekeValue');
+            const acceptanceValue = document.getElementById('acceptanceValue');
+            const acceptanceFill = document.getElementById('acceptanceFill');
+
+            // Canvases
+            const targetCanvas = document.getElementById('targetCanvas');
+            const targetCtx = targetCanvas.getContext('2d');
+            const traceCanvas = document.getElementById('traceCanvas');
+            const traceCtx = traceCanvas.getContext('2d');
+            const gibbsCanvas = document.getElementById('gibbsCanvas');
+            const gibbsCtx = gibbsCanvas.getContext('2d');
+            
+            // Chart instances
+            let autocorrChart = null;
+            let runningMeanChart = null;
+
+            // Initialize
+            initMCMC();
+            setupCanvases();
+            updateAlgorithmSteps();
+            initCharts();
+
+            function initMCMC() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Method Selection
+                methodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setMethod(method);
+                    });
+                });
+
+                // Target Distribution Selection
+                distButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dist = this.dataset.dist;
+                        setTargetDistribution(dist);
+                    });
+                });
+
+                // Proposal Distribution Selection
+                proposalButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const proposal = this.dataset.proposal;
+                        setProposalDistribution(proposal);
+                    });
+                });
+
+                // Parameter Inputs
+                numSamplesInput.addEventListener('change', updateParameters);
+                burnInInput.addEventListener('change', updateParameters);
+                stepSizeInput.addEventListener('change', updateParameters);
+
+                // Control Buttons
+                startBtn.addEventListener('click', startSampling);
+                pauseBtn.addEventListener('click', pauseSampling);
+                resetBtn.addEventListener('click', resetSampling);
+
+                // Gibbs Controls
+                correlationSlider.addEventListener('input', updateGibbsCorrelation);
+                stepGibbsBtn.addEventListener('click', stepThroughGibbs);
+                gibbsDimensionsSelect.addEventListener('change', updateGibbsDimensions);
+
+                // Window Resize
+                window.addEventListener('resize', setupCanvases);
+
+                // Initialize with random starting point
+                mcmcState.currentX = (Math.random() - 0.5) * 4;
+                
+                // Update proposal panel visibility
+                updateProposalPanelVisibility();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update correlation value text
+                updateGibbsCorrelation();
+                
+                // Update algorithm steps
+                updateAlgorithmSteps();
+            }
+
+            function setMethod(method) {
+                mcmcState.method = method;
+                
+                // Update active method card
+                methodCards.forEach(card => {
+                    if (card.dataset.method === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                // Show/hide relevant panels
+                updateProposalPanelVisibility();
+                
+                // Update algorithm steps
+                updateAlgorithmSteps();
+                
+                // Update visualizations
+                drawTargetDistribution();
+            }
+
+            function updateProposalPanelVisibility() {
+                if (mcmcState.method === 'metropolis') {
+                    mhProposalPanel.style.display = 'block';
+                    gibbsPanel.classList.remove('active');
+                } else if (mcmcState.method === 'gibbs') {
+                    mhProposalPanel.style.display = 'none';
+                    gibbsPanel.classList.add('active');
+                    setupGibbsVisualization();
+                }
+            }
+
+            function setTargetDistribution(dist) {
+                mcmcState.targetDistribution = dist;
+                
+                // Update active button
+                distButtons.forEach(btn => {
+                    if (btn.dataset.dist === dist) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update visualization
+                drawTargetDistribution();
+            }
+
+            function setProposalDistribution(proposal) {
+                mcmcState.proposalDistribution = proposal;
+                
+                // Update active button
+                proposalButtons.forEach(btn => {
+                    if (btn.dataset.proposal === proposal) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateParameters() {
+                mcmcState.numSamples = parseInt(numSamplesInput.value);
+                mcmcState.burnIn = parseInt(burnInInput.value);
+                mcmcState.stepSize = parseFloat(stepSizeInput.value);
+                
+                // Ensure burn-in is less than total samples
+                if (mcmcState.burnIn >= mcmcState.numSamples) {
+                    mcmcState.burnIn = Math.floor(mcmcState.numSamples * 0.2);
+                    burnInInput.value = mcmcState.burnIn;
+                }
+            }
+
+            function setupCanvases() {
+                // Target Canvas
+                const targetContainer = targetCanvas.parentElement;
+                targetCanvas.width = targetContainer.clientWidth;
+                targetCanvas.height = targetContainer.clientHeight;
+                
+                // Trace Canvas
+                const traceContainer = traceCanvas.parentElement;
+                traceCanvas.width = traceContainer.clientWidth;
+                traceCanvas.height = traceContainer.clientHeight;
+                
+                // Gibbs Canvas
+                if (gibbsCanvas) {
+                    const gibbsContainer = gibbsCanvas.parentElement;
+                    gibbsCanvas.width = gibbsContainer.clientWidth;
+                    gibbsCanvas.height = gibbsContainer.clientHeight;
+                }
+                
+                // Draw initial state
+                drawTargetDistribution();
+                drawTracePlot();
+            }
+
+            function setupGibbsVisualization() {
+                if (gibbsCanvas) {
+                    const container = gibbsCanvas.parentElement;
+                    gibbsCanvas.width = container.clientWidth;
+                    gibbsCanvas.height = container.clientHeight;
+                    drawGibbsVisualization();
+                }
+            }
+
+            function updateGibbsCorrelation() {
+                const value = parseFloat(correlationSlider.value);
+                correlationValue.textContent = currentLanguage === 'bn' 
+                    ? `কোরিলেশন: ${value.toFixed(1)}`
+                    : `Correlation: ${value.toFixed(1)}`;
+                drawGibbsVisualization();
+            }
+
+            function updateGibbsDimensions() {
+                drawGibbsVisualization();
+                updateAlgorithmSteps();
+            }
+
+            function drawTargetDistribution() {
+                const width = targetCanvas.width;
+                const height = targetCanvas.height;
+                const padding = 40;
+                const plotWidth = width - 2 * padding;
+                const plotHeight = height - 2 * padding;
+                
+                // Clear canvas
+                targetCtx.clearRect(0, 0, width, height);
+                
+                if (plotWidth <= 0 || plotHeight <= 0) return;
+                
+                // Draw grid
+                targetCtx.strokeStyle = '#e0e0e0';
+                targetCtx.lineWidth = 1;
+                
+                // Vertical grid lines
+                for (let i = 0; i <= 10; i++) {
+                    const x = padding + (i / 10) * plotWidth;
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(x, padding);
+                    targetCtx.lineTo(x, height - padding);
+                    targetCtx.stroke();
+                }
+                
+                // Horizontal grid lines
+                for (let i = 0; i <= 10; i++) {
+                    const y = padding + (i / 10) * plotHeight;
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(padding, y);
+                    targetCtx.lineTo(width - padding, y);
+                    targetCtx.stroke();
+                }
+                
+                // Draw axes
+                targetCtx.strokeStyle = '#333';
+                targetCtx.lineWidth = 2;
+                
+                // X-axis
+                targetCtx.beginPath();
+                targetCtx.moveTo(padding, height - padding);
+                targetCtx.lineTo(width - padding, height - padding);
+                targetCtx.stroke();
+                
+                // Y-axis
+                targetCtx.beginPath();
+                targetCtx.moveTo(padding, padding);
+                targetCtx.lineTo(padding, height - padding);
+                targetCtx.stroke();
+                
+                // Draw target distribution
+                targetCtx.strokeStyle = '#FF5722'; // Using direct color for --target-color
+                targetCtx.lineWidth = 3;
+                targetCtx.beginPath();
+                
+                const maxPoints = 200;
+                for (let i = 0; i <= maxPoints; i++) {
+                    const x = (i / maxPoints) * 8 - 4; // x from -4 to 4
+                    const y = targetPDF(x);
+                    
+                    // Convert to canvas coordinates
+                    const canvasX = padding + ((x + 4) / 8) * plotWidth;
+                    const canvasY = height - padding - (y * plotHeight * 0.8);
+                    
+                    if (i === 0) {
+                        targetCtx.moveTo(canvasX, canvasY);
+                    } else {
+                        targetCtx.lineTo(canvasX, canvasY);
+                    }
+                }
+                
+                targetCtx.stroke();
+                
+                // Draw all samples
+                if (mcmcState.samples.length > 0) {
+                    // Draw burn-in samples first
+                    mcmcState.samples.forEach((sample, index) => {
+                        if (index < mcmcState.burnIn) {
+                            drawSamplePoint(sample, false, true);
+                        }
+                    });
+                    
+                    // Draw regular samples
+                    mcmcState.samples.forEach((sample, index) => {
+                        if (index >= mcmcState.burnIn) {
+                            drawSamplePoint(sample, false, false);
+                        }
+                    });
+                    
+                    // Draw current/last sample
+                    const lastSample = mcmcState.samples[mcmcState.samples.length - 1];
+                    drawSamplePoint(lastSample, true, false);
+                }
+            }
+
+            function targetPDF(x) {
+                switch(mcmcState.targetDistribution) {
+                    case 'bimodal':
+                        // Mixture of two normals
+                        const comp1 = 0.5 * Math.exp(-0.5 * Math.pow((x - 2) / 0.8, 2)) / (0.8 * Math.sqrt(2 * Math.PI));
+                        const comp2 = 0.5 * Math.exp(-0.5 * Math.pow((x + 2) / 0.8, 2)) / (0.8 * Math.sqrt(2 * Math.PI));
+                        return comp1 + comp2;
+                    
+                    case 'skewed':
+                        // Skewed distribution
+                        return Math.exp(-0.5 * Math.pow(x - 1, 2)) * (1 + Math.atan(x)) * 0.3;
+                    
+                    case 'multimodal':
+                        // Mixture of three normals
+                        const c1 = 0.3 * Math.exp(-0.5 * Math.pow((x - 3) / 0.6, 2)) / (0.6 * Math.sqrt(2 * Math.PI));
+                        const c2 = 0.4 * Math.exp(-0.5 * Math.pow(x / 0.8, 2)) / (0.8 * Math.sqrt(2 * Math.PI));
+                        const c3 = 0.3 * Math.exp(-0.5 * Math.pow((x + 3) / 0.6, 2)) / (0.6 * Math.sqrt(2 * Math.PI));
+                        return c1 + c2 + c3;
+                    
+                    case 'custom':
+                        // Complex custom distribution
+                        return Math.exp(-0.1 * Math.pow(x, 4) + 0.5 * Math.pow(x, 2) - 0.1 * Math.cos(2 * Math.PI * x)) * 0.5;
+                    
+                    default:
+                        return Math.exp(-0.5 * Math.pow(x, 2)) / Math.sqrt(2 * Math.PI);
+                }
+            }
+
+            function drawSamplePoint(x, isCurrent, isBurnIn) {
+                const width = targetCanvas.width;
+                const height = targetCanvas.height;
+                const padding = 40;
+                const plotWidth = width - 2 * padding;
+                
+                // Convert x to canvas coordinates (x from -4 to 4)
+                const canvasX = padding + ((x + 4) / 8) * plotWidth;
+                const y = targetPDF(x);
+                const canvasY = height - padding - (y * (height - 2 * padding) * 0.8);
+                
+                // Draw point
+                targetCtx.beginPath();
+                targetCtx.arc(canvasX, canvasY, isCurrent ? 6 : 3, 0, Math.PI * 2);
+                
+                if (isCurrent) {
+                    targetCtx.fillStyle = '#4CAF50'; // Using direct color for --sample-color
+                    targetCtx.strokeStyle = 'white';
+                    targetCtx.lineWidth = 2;
+                    targetCtx.stroke();
+                    
+                    // Update current sample indicator position
+                    currentSampleIndicator.style.display = 'block';
+                    currentSampleIndicator.style.left = `${canvasX - 6}px`;
+                    currentSampleIndicator.style.top = `${canvasY - 6}px`;
+                } else if (isBurnIn) {
+                    targetCtx.fillStyle = '#FF9800'; // Using direct color for --burnin-color
+                } else {
+                    targetCtx.fillStyle = 'rgba(76, 175, 80, 0.6)';
+                }
+                
+                targetCtx.fill();
+            }
+
+            function drawTracePlot() {
+                const width = traceCanvas.width;
+                const height = traceCanvas.height;
+                const padding = 30;
+                const plotWidth = width - 2 * padding;
+                const plotHeight = height - 2 * padding;
+                
+                // Clear canvas
+                traceCtx.clearRect(0, 0, width, height);
+                
+                if (mcmcState.traceData.length === 0) return;
+                
+                // Draw grid
+                traceCtx.strokeStyle = '#e0e0e0';
+                traceCtx.lineWidth = 1;
+                
+                // Draw trace line
+                traceCtx.strokeStyle = '#2196F3'; // Using direct color for --trace-color
+                traceCtx.lineWidth = 2;
+                traceCtx.beginPath();
+                
+                const maxSamples = Math.min(mcmcState.traceData.length, 500);
+                const step = Math.max(1, Math.floor(mcmcState.traceData.length / maxSamples));
+                
+                for (let i = 0; i < mcmcState.traceData.length; i += step) {
+                    const x = padding + (i / mcmcState.traceData.length) * plotWidth;
+                    const sampleValue = mcmcState.traceData[i];
+                    const y = padding + plotHeight/2 + (sampleValue * plotHeight/8);
+                    
+                    if (i === 0) {
+                        traceCtx.moveTo(x, y);
+                    } else {
+                        traceCtx.lineTo(x, y);
+                    }
+                }
+                
+                traceCtx.stroke();
+            }
+
+            function drawGibbsVisualization() {
+                const width = gibbsCanvas.width;
+                const height = gibbsCanvas.height;
+                
+                // Clear canvas
+                gibbsCtx.clearRect(0, 0, width, height);
+                
+                // Draw bivariate normal visualization
+                const correlation = parseFloat(correlationSlider.value);
+                
+                // Draw coordinate axes
+                gibbsCtx.strokeStyle = '#333';
+                gibbsCtx.lineWidth = 2;
+                
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const scale = Math.min(width, height) * 0.15;
+                
+                gibbsCtx.beginPath();
+                gibbsCtx.moveTo(centerX - scale * 3, centerY);
+                gibbsCtx.lineTo(centerX + scale * 3, centerY);
+                gibbsCtx.stroke();
+                
+                gibbsCtx.beginPath();
+                gibbsCtx.moveTo(centerX, centerY - scale * 3);
+                gibbsCtx.lineTo(centerX, centerY + scale * 3);
+                gibbsCtx.stroke();
+                
+                // Draw contour lines
+                gibbsCtx.strokeStyle = 'rgba(33, 150, 243, 0.3)';
+                gibbsCtx.lineWidth = 1;
+                
+                for (let level = 0.1; level <= 0.9; level += 0.2) {
+                    gibbsCtx.beginPath();
+                    
+                    // Draw ellipse for bivariate normal contour
+                    const radius = Math.sqrt(-2 * Math.log(level));
+                    const a = radius * scale * 2;
+                    const b = radius * scale * Math.sqrt(1 - Math.abs(correlation));
+                    
+                    for (let angle = 0; angle <= Math.PI * 2; angle += 0.1) {
+                        const x = centerX + a * Math.cos(angle);
+                        const y = centerY + b * Math.sin(angle) * (correlation >= 0 ? 1 : -1);
+                        
+                        if (angle === 0) {
+                            gibbsCtx.moveTo(x, y);
+                        } else {
+                            gibbsCtx.lineTo(x, y);
+                        }
+                    }
+                    
+                    gibbsCtx.closePath();
+                    gibbsCtx.stroke();
+                }
+                
+                // Draw Gibbs sampling path (if any samples exist)
+                if (mcmcState.samples.length > 1 && mcmcState.method === 'gibbs') {
+                    gibbsCtx.strokeStyle = '#2196F3'; // Using direct color for --gibbs-color
+                    gibbsCtx.lineWidth = 2;
+                    gibbsCtx.beginPath();
+                    
+                    // Limit the number of samples to draw for performance
+                    const maxSamplesToDraw = Math.min(mcmcState.samples.length, 100);
+                    const step = Math.max(1, Math.floor(mcmcState.samples.length / maxSamplesToDraw));
+                    
+                    for (let i = 0; i < mcmcState.samples.length; i += step) {
+                        const sample = mcmcState.samples[i];
+                        if (Array.isArray(sample) && sample.length >= 2) {
+                            const x = centerX + sample[0] * scale;
+                            const y = centerY + sample[1] * scale;
+                            
+                            if (i === 0) {
+                                gibbsCtx.moveTo(x, y);
+                            } else {
+                                gibbsCtx.lineTo(x, y);
+                            }
+                        }
+                    }
+                    
+                    gibbsCtx.stroke();
+                    
+                    // Draw sample points (limited for performance)
+                    const pointsToDraw = Math.min(mcmcState.samples.length, 50);
+                    const pointStep = Math.max(1, Math.floor(mcmcState.samples.length / pointsToDraw));
+                    
+                    for (let i = 0; i < mcmcState.samples.length; i += pointStep) {
+                        const sample = mcmcState.samples[i];
+                        if (Array.isArray(sample) && sample.length >= 2) {
+                            const x = centerX + sample[0] * scale;
+                            const y = centerY + sample[1] * scale;
+                            
+                            gibbsCtx.beginPath();
+                            gibbsCtx.arc(x, y, 3, 0, Math.PI * 2);
+                            gibbsCtx.fillStyle = '#4CAF50'; // Using direct color for --sample-color
+                            gibbsCtx.fill();
+                        }
+                    }
+                }
+            }
+
+            function initCharts() {
+                // Autocorrelation Chart
+                const autocorrCtx = document.getElementById('autocorrChart').getContext('2d');
+                autocorrChart = new Chart(autocorrCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({length: 20}, (_, i) => i),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation',
+                            data: [],
+                            backgroundColor: 'rgba(33, 150, 243, 0.6)',
+                            borderColor: 'rgba(33, 150, 243, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 1,
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ল্যাগ' : 'Lag'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            }
+                        }
+                    }
+                });
+
+                // Running Mean Chart
+                const runningMeanCtx = document.getElementById('runningMeanChart').getContext('2d');
+                runningMeanChart = new Chart(runningMeanCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'রানিং মিন' : 'Running Mean',
+                            data: [],
+                            borderColor: 'rgba(156, 39, 176, 1)',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'গড়' : 'Mean'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্যাম্পল' : 'Sample'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateCharts() {
+                if (mcmcState.samples.length < 10) return;
+                
+                // Get samples for analysis (skip burn-in)
+                const postBurninSamples = mcmcState.samples.slice(mcmcState.burnIn);
+                if (postBurninSamples.length < 10) return;
+                
+                // Convert to 1D array for Gibbs (take first dimension)
+                const samples1D = postBurninSamples.map(s => 
+                    Array.isArray(s) ? s[0] : s
+                );
+                
+                // Update autocorrelation chart
+                const autocorrs = calculateAutocorrelations(samples1D, 20);
+                autocorrChart.data.datasets[0].data = autocorrs;
+                autocorrChart.update();
+                
+                // Update running mean chart
+                const runningMeans = [];
+                let sum = 0;
+                
+                for (let i = 0; i < samples1D.length; i++) {
+                    sum += samples1D[i];
+                    runningMeans.push({
+                        x: i,
+                        y: sum / (i + 1)
+                    });
+                }
+                
+                runningMeanChart.data.datasets[0].data = runningMeans;
+                runningMeanChart.update();
+            }
+
+            function calculateAutocorrelations(samples, maxLag) {
+                const n = samples.length;
+                if (n < 2) return Array(maxLag + 1).fill(0);
+                
+                const mean = samples.reduce((a, b) => a + b, 0) / n;
+                const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n;
+                
+                if (variance === 0) return Array(maxLag + 1).fill(0);
+                
+                const autocorrs = [];
+                
+                for (let lag = 0; lag <= maxLag; lag++) {
+                    let sum = 0;
+                    for (let i = 0; i < n - lag; i++) {
+                        sum += (samples[i] - mean) * (samples[i + lag] - mean);
+                    }
+                    autocorrs.push(sum / ((n - lag) * variance));
+                }
+                
+                return autocorrs;
+            }
+
+            function startSampling() {
+                if (mcmcState.isRunning) return;
+                
+                mcmcState.isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                // Show burn-in indicator if in burn-in phase
+                if (mcmcState.currentSample < mcmcState.burnIn) {
+                    burninIndicator.classList.add('active');
+                }
+                
+                mcmcLoop();
+            }
+
+            function pauseSampling() {
+                mcmcState.isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                
+                if (mcmcState.animationId) {
+                    cancelAnimationFrame(mcmcState.animationId);
+                    mcmcState.animationId = null;
+                }
+            }
+
+            function resetSampling() {
+                pauseSampling();
+                
+                mcmcState.samples = [];
+                mcmcState.currentSample = 0;
+                mcmcState.acceptanceCount = 0;
+                mcmcState.traceData = [];
+                mcmcState.currentX = (Math.random() - 0.5) * 4;
+                mcmcState.chains = [[], [], []];
+                mcmcState.diagnostics = {
+                    ess: 0,
+                    rhat: 1.0,
+                    acf: 0,
+                    geweke: 0
+                };
+                
+                // Reset progress
+                progressFill.style.width = '0%';
+                acceptanceFill.style.width = '0%';
+                acceptanceValue.textContent = '0%';
+                
+                // Reset diagnostics
+                essValue.textContent = '-';
+                rhatValue.textContent = '-';
+                acfValue.textContent = '-';
+                gewekeValue.textContent = '-';
+                
+                // Reset diagnostic colors
+                essValue.className = 'diagnostic-value diagnostic-good';
+                rhatValue.className = 'diagnostic-value diagnostic-good';
+                acfValue.className = 'diagnostic-value diagnostic-warning';
+                gewekeValue.className = 'diagnostic-value diagnostic-good';
+                
+                // Hide indicators
+                burninIndicator.classList.remove('active');
+                currentSampleIndicator.style.display = 'none';
+                
+                // Clear charts
+                if (autocorrChart) {
+                    autocorrChart.data.datasets[0].data = [];
+                    autocorrChart.update();
+                }
+                
+                if (runningMeanChart) {
+                    runningMeanChart.data.datasets[0].data = [];
+                    runningMeanChart.update();
+                }
+                
+                // Redraw visualizations
+                drawTargetDistribution();
+                drawTracePlot();
+                if (mcmcState.method === 'gibbs') {
+                    drawGibbsVisualization();
+                }
+                
+                updateAlgorithmSteps();
+            }
+
+            function mcmcLoop() {
+                if (!mcmcState.isRunning || mcmcState.currentSample >= mcmcState.numSamples) {
+                    pauseSampling();
+                    return;
+                }
+                
+                // Generate next sample
+                let newSample;
+                let accepted = false;
+                
+                if (mcmcState.method === 'metropolis') {
+                    const result = metropolisHastingsStep();
+                    newSample = result.sample;
+                    accepted = result.accepted;
+                } else if (mcmcState.method === 'gibbs') {
+                    newSample = gibbsSamplingStep();
+                    accepted = true; // Gibbs always accepts
+                }
+                
+                if (newSample !== undefined) {
+                    mcmcState.samples.push(newSample);
+                    const traceValue = Array.isArray(newSample) ? newSample[0] : newSample;
+                    mcmcState.traceData.push(traceValue);
+                    
+                    // Update acceptance rate for MH
+                    if (mcmcState.method === 'metropolis' && accepted) {
+                        mcmcState.acceptanceCount++;
+                    }
+                    
+                    // Add to chains for R-hat calculation (every 3rd sample to different chain)
+                    const chainIndex = mcmcState.currentSample % 3;
+                    mcmcState.chains[chainIndex].push(traceValue);
+                }
+                
+                mcmcState.currentSample++;
+                
+                // Update progress
+                const progress = (mcmcState.currentSample / mcmcState.numSamples) * 100;
+                progressFill.style.width = `${progress}%`;
+                
+                // Update acceptance rate display
+                if (mcmcState.method === 'metropolis') {
+                    const acceptanceRate = mcmcState.acceptanceCount / mcmcState.currentSample * 100;
+                    acceptanceFill.style.width = `${Math.min(100, acceptanceRate)}%`;
+                    acceptanceValue.textContent = `${acceptanceRate.toFixed(1)}%`;
+                }
+                
+                // Update burn-in indicator
+                if (mcmcState.currentSample >= mcmcState.burnIn) {
+                    burninIndicator.classList.remove('active');
+                }
+                
+                // Update diagnostics periodically
+                if (mcmcState.currentSample % 100 === 0 || mcmcState.currentSample === mcmcState.numSamples) {
+                    updateDiagnostics();
+                    updateCharts();
+                }
+                
+                // Update visualization (limit frequency for performance)
+                if (mcmcState.currentSample % 10 === 0 || mcmcState.currentSample === mcmcState.numSamples) {
+                    drawTargetDistribution();
+                    drawTracePlot();
+                    
+                    if (mcmcState.method === 'gibbs' && mcmcState.currentSample % 50 === 0) {
+                        drawGibbsVisualization();
+                    }
+                }
+                
+                // Update algorithm steps
+                updateAlgorithmSteps();
+                
+                // Continue loop with delay for visualization
+                mcmcState.animationId = requestAnimationFrame(() => {
+                    setTimeout(mcmcLoop, 10);
+                });
+            }
+
+            function metropolisHastingsStep() {
+                const currentX = mcmcState.currentX;
+                const currentDensity = targetPDF(currentX);
+                
+                // Propose new state
+                let proposedX;
+                switch(mcmcState.proposalDistribution) {
+                    case 'normal':
+                        // Normal distribution with Box-Muller transform
+                        let u = 0, v = 0;
+                        while(u === 0) u = Math.random();
+                        while(v === 0) v = Math.random();
+                        proposedX = currentX + Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v) * mcmcState.stepSize;
+                        break;
+                    case 'uniform':
+                        proposedX = currentX + (Math.random() - 0.5) * mcmcState.stepSize * 2;
+                        break;
+                    case 'cauchy':
+                        // Cauchy distribution approximation
+                        proposedX = currentX + mcmcState.stepSize * Math.tan(Math.PI * (Math.random() - 0.5));
+                        break;
+                    default:
+                        proposedX = currentX + (Math.random() - 0.5) * mcmcState.stepSize * 2;
+                }
+                
+                const proposedDensity = targetPDF(proposedX);
+                
+                // Calculate acceptance probability
+                // For symmetric proposals, Q(x'|x) = Q(x|x'), so ratio simplifies
+                let acceptanceRatio = proposedDensity / currentDensity;
+                
+                // Handle edge cases
+                if (currentDensity === 0 && proposedDensity > 0) {
+                    acceptanceRatio = Infinity;
+                } else if (currentDensity === 0 && proposedDensity === 0) {
+                    acceptanceRatio = 1;
+                }
+                
+                const acceptanceProb = Math.min(1, acceptanceRatio);
+                
+                // Accept or reject
+                let accepted = false;
+                if (Math.random() < acceptanceProb) {
+                    mcmcState.currentX = proposedX;
+                    accepted = true;
+                    return { sample: proposedX, accepted: true };
+                } else {
+                    return { sample: currentX, accepted: false };
+                }
+            }
+
+            function gibbsSamplingStep() {
+                const correlation = parseFloat(correlationSlider.value);
+                const dimensions = parseInt(gibbsDimensionsSelect.value);
+                
+                if (dimensions === 2) {
+                    // Bivariate normal Gibbs sampling
+                    if (mcmcState.samples.length === 0) {
+                        // Start with random point
+                        const x1 = randomNormal(0, 1);
+                        const x2 = randomNormal(0, 1);
+                        return [x1, x2];
+                    } else {
+                        // Sample x1 given x2, then x2 given x1
+                        const lastSample = mcmcState.samples[mcmcState.samples.length - 1];
+                        let x1, x2;
+                        
+                        if (Array.isArray(lastSample) && lastSample.length >= 2) {
+                            [x1, x2] = lastSample;
+                        } else {
+                            x1 = randomNormal(0, 1);
+                            x2 = randomNormal(0, 1);
+                        }
+                        
+                        // Sample x1 | x2 ~ N(correlation * x2, sqrt(1 - correlation^2))
+                        const newX1 = randomNormal(correlation * x2, Math.sqrt(1 - correlation * correlation));
+                        
+                        // Sample x2 | x1 ~ N(correlation * x1, sqrt(1 - correlation^2))
+                        const newX2 = randomNormal(correlation * newX1, Math.sqrt(1 - correlation * correlation));
+                        
+                        return [newX1, newX2];
+                    }
+                } else {
+                    // 3D multivariate (simplified)
+                    if (mcmcState.samples.length === 0) {
+                        return [randomNormal(0, 1), randomNormal(0, 1), randomNormal(0, 1)];
+                    } else {
+                        const lastSample = mcmcState.samples[mcmcState.samples.length - 1];
+                        let x1, x2, x3;
+                        
+                        if (Array.isArray(lastSample) && lastSample.length >= 3) {
+                            [x1, x2, x3] = lastSample;
+                        } else {
+                            x1 = randomNormal(0, 1);
+                            x2 = randomNormal(0, 1);
+                            x3 = randomNormal(0, 1);
+                        }
+                        
+                        // Simple conditional updates
+                        const newX1 = randomNormal((x2 + x3) / 4, 0.8);
+                        const newX2 = randomNormal((newX1 + x3) / 4, 0.8);
+                        const newX3 = randomNormal((newX1 + newX2) / 4, 0.8);
+                        
+                        return [newX1, newX2, newX3];
+                    }
+                }
+            }
+
+            function randomNormal(mean, std) {
+                // Box-Muller transform
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random();
+                while(v === 0) v = Math.random();
+                return mean + std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            }
+
+            function stepThroughGibbs() {
+                if (mcmcState.isRunning) return;
+                
+                // Take one Gibbs step
+                const newSample = gibbsSamplingStep();
+                mcmcState.samples.push(newSample);
+                mcmcState.traceData.push(Array.isArray(newSample) ? newSample[0] : newSample);
+                mcmcState.currentSample++;
+                
+                // Update visualization
+                drawGibbsVisualization();
+                drawTargetDistribution();
+                updateDiagnostics();
+                updateAlgorithmSteps();
+            }
+
+            function updateDiagnostics() {
+                if (mcmcState.samples.length < 100) return;
+                
+                const postBurninSamples = mcmcState.samples.slice(mcmcState.burnIn);
+                
+                if (postBurninSamples.length < 10) return;
+                
+                // Convert to 1D array for diagnostics
+                const samples1D = postBurninSamples.map(s => Array.isArray(s) ? s[0] : s);
+                
+                // Calculate ESS (simplified)
+                const autocorrs = calculateAutocorrelations(samples1D, 10);
+                const sumAutocorr = autocorrs.slice(1).reduce((a, b) => a + b, 0);
+                mcmcState.diagnostics.ess = Math.round(postBurninSamples.length / (1 + 2 * sumAutocorr));
+                
+                // Calculate autocorrelation at lag 1
+                if (samples1D.length > 1) {
+                    const mean = samples1D.reduce((a, b) => a + b, 0) / samples1D.length;
+                    let numerator = 0;
+                    let denominator = 0;
+                    
+                    for (let i = 0; i < samples1D.length - 1; i++) {
+                        numerator += (samples1D[i] - mean) * (samples1D[i + 1] - mean);
+                        denominator += Math.pow(samples1D[i] - mean, 2);
+                    }
+                    
+                    mcmcState.diagnostics.acf = denominator === 0 ? 0 : numerator / denominator;
+                }
+                
+                // Calculate Geweke diagnostic (simplified)
+                if (postBurninSamples.length > 200) {
+                    const firstPart = samples1D.slice(0, Math.floor(samples1D.length * 0.1));
+                    const lastPart = samples1D.slice(-Math.floor(samples1D.length * 0.5));
+                    
+                    const firstMean = firstPart.reduce((a, b) => a + b, 0) / firstPart.length;
+                    const lastMean = lastPart.reduce((a, b) => a + b, 0) / lastPart.length;
+                    
+                    const firstVar = firstPart.reduce((a, b) => a + Math.pow(b - firstMean, 2), 0) / (firstPart.length - 1);
+                    const lastVar = lastPart.reduce((a, b) => a + Math.pow(b - lastMean, 2), 0) / (lastPart.length - 1);
+                    
+                    const se = Math.sqrt(firstVar / firstPart.length + lastVar / lastPart.length);
+                    mcmcState.diagnostics.geweke = se === 0 ? 0 : Math.abs((firstMean - lastMean) / se);
+                }
+                
+                // Calculate R-hat (simplified for demo)
+                if (mcmcState.chains.every(chain => chain.length > 10)) {
+                    const chainLengths = mcmcState.chains.map(chain => chain.length);
+                    const minChainLength = Math.min(...chainLengths);
+                    
+                    // Use only the first minChainLength samples from each chain
+                    const trimmedChains = mcmcState.chains.map(chain => chain.slice(0, minChainLength));
+                    
+                    const chainMeans = trimmedChains.map(chain => {
+                        return chain.reduce((a, b) => a + b, 0) / chain.length;
+                    });
+                    
+                    const overallMean = chainMeans.reduce((a, b) => a + b, 0) / chainMeans.length;
+                    
+                    // Between-chain variance
+                    const betweenChainVar = chainMeans.reduce((a, b) => a + Math.pow(b - overallMean, 2), 0) / (chainMeans.length - 1);
+                    
+                    // Within-chain variances
+                    const withinChainVars = trimmedChains.map(chain => {
+                        const mean = chain.reduce((a, b) => a + b, 0) / chain.length;
+                        return chain.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (chain.length - 1);
+                    });
+                    
+                    const avgWithinVar = withinChainVars.reduce((a, b) => a + b, 0) / withinChainVars.length;
+                    
+                    // R-hat calculation
+                    const n = minChainLength;
+                    const varPlus = ((n - 1) / n) * avgWithinVar + betweenChainVar;
+                    mcmcState.diagnostics.rhat = Math.sqrt(varPlus / avgWithinVar);
+                }
+                
+                // Update display
+                essValue.textContent = mcmcState.diagnostics.ess > 0 ? mcmcState.diagnostics.ess.toLocaleString() : '-';
+                rhatValue.textContent = mcmcState.diagnostics.rhat > 0 ? mcmcState.diagnostics.rhat.toFixed(3) : '-';
+                acfValue.textContent = Math.abs(mcmcState.diagnostics.acf) > 0.001 ? mcmcState.diagnostics.acf.toFixed(3) : '-';
+                gewekeValue.textContent = mcmcState.diagnostics.geweke > 0 ? mcmcState.diagnostics.geweke.toFixed(3) : '-';
+                
+                // Update colors based on values
+                updateDiagnosticColors();
+            }
+
+            function updateDiagnosticColors() {
+                // ESS - higher is better
+                if (mcmcState.diagnostics.ess > mcmcState.numSamples * 0.1) {
+                    essValue.className = 'diagnostic-value diagnostic-good';
+                } else if (mcmcState.diagnostics.ess > mcmcState.numSamples * 0.01) {
+                    essValue.className = 'diagnostic-value diagnostic-warning';
+                } else {
+                    essValue.className = 'diagnostic-value diagnostic-poor';
+                }
+                
+                // R-hat - closer to 1 is better
+                if (Math.abs(mcmcState.diagnostics.rhat - 1) < 0.1) {
+                    rhatValue.className = 'diagnostic-value diagnostic-good';
+                } else if (Math.abs(mcmcState.diagnostics.rhat - 1) < 0.2) {
+                    rhatValue.className = 'diagnostic-value diagnostic-warning';
+                } else {
+                    rhatValue.className = 'diagnostic-value diagnostic-poor';
+                }
+                
+                // ACF - closer to 0 is better
+                if (Math.abs(mcmcState.diagnostics.acf) < 0.3) {
+                    acfValue.className = 'diagnostic-value diagnostic-good';
+                } else if (Math.abs(mcmcState.diagnostics.acf) < 0.6) {
+                    acfValue.className = 'diagnostic-value diagnostic-warning';
+                } else {
+                    acfValue.className = 'diagnostic-value diagnostic-poor';
+                }
+                
+                // Geweke - |Z| < 1.96 is good
+                if (mcmcState.diagnostics.geweke < 1.96) {
+                    gewekeValue.className = 'diagnostic-value diagnostic-good';
+                } else if (mcmcState.diagnostics.geweke < 3) {
+                    gewekeValue.className = 'diagnostic-value diagnostic-warning';
+                } else {
+                    gewekeValue.className = 'diagnostic-value diagnostic-poor';
+                }
+            }
+
+            function updateAlgorithmSteps() {
+                const steps = mcmcState.method === 'metropolis' ? getMHSteps() : getGibbsSteps();
+                
+                stepsContainer.innerHTML = steps.map((step, index) => {
+                    const isActive = index === getCurrentStepIndex();
+                    return `
+                        <div class="step ${isActive ? 'active' : ''}">
+                            <span class="step-number">${index + 1}</span>
+                            ${step}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function getMHSteps() {
+                const steps = [
+                    currentLanguage === 'bn' ? 'বর্তমান অবস্থা x<sub>t</sub> থেকে শুরু করুন' : 'Start from current state x<sub>t</sub>',
+                    currentLanguage === 'bn' ? `প্রস্তাবিত অবস্থা x' সৃষ্টি করুন প্রপোজাল ডিস্ট্রিবিউশন Q(x'|x<sub>t</sub>) থেকে` : `Generate proposed state x' from proposal distribution Q(x'|x<sub>t</sub>)`,
+                    currentLanguage === 'bn' ? `গ্রহণ সম্ভাব্যতা গণনা করুন: α = min(1, [π(x')Q(x<sub>t</sub>|x')]/[π(x<sub>t</sub>)Q(x'|x<sub>t</sub>)])` : `Calculate acceptance probability: α = min(1, [π(x')Q(x<sub>t</sub>|x')]/[π(x<sub>t</sub>)Q(x'|x<sub>t</sub>)])`,
+                    currentLanguage === 'bn' ? 'ইউনিফর্ম(0,1) থেকে u ∼ ইউনিফর্ম(0,1) নমুনা করুন' : 'Sample u ∼ Uniform(0,1)',
+                    currentLanguage === 'bn' ? `যদি u < α হয়, তাহলে x<sub>t+1</sub> = x' গ্রহণ করুন, অন্যথায় x<sub>t+1</sub> = x<sub>t</sub> রাখুন` : `If u < α, accept x<sub>t+1</sub> = x', otherwise keep x<sub>t+1</sub> = x<sub>t</sub>`,
+                    currentLanguage === 'bn' ? 'পরবর্তী পুনরাবৃত্তির জন্য t = t + 1 করুন' : 'Set t = t + 1 for next iteration'
+                ];
+                
+                return steps;
+            }
+
+            function getGibbsSteps() {
+                const dimensions = parseInt(gibbsDimensionsSelect.value);
+                
+                const steps = [
+                    currentLanguage === 'bn' ? 'যেকোনো স্টার্টিং পয়েন্ট (x<sub>1</sub>⁽⁰⁾, ..., x<sub>d</sub>⁽⁰⁾) থেকে শুরু করুন' : 'Start from any starting point (x<sub>1</sub>⁽⁰⁾, ..., x<sub>d</sub>⁽⁰⁾)',
+                    currentLanguage === 'bn' ? 't = 1, 2, ... পর্যন্ত পুনরাবৃত্তি করুন' : 'For t = 1, 2, ... repeat'
+                ];
+                
+                for (let i = 1; i <= dimensions; i++) {
+                    steps.push(
+                        currentLanguage === 'bn' 
+                            ? `x<sub>${i}</sub>⁽ᵗ⁾ ∼ π(x<sub>${i}</sub> | x<sub>1</sub>⁽ᵗ⁾, ..., x<sub>${i-1}</sub>⁽ᵗ⁾, x<sub>${i+1}</sub>⁽ᵗ⁻¹⁾, ..., x<sub>${dimensions}</sub>⁽ᵗ⁻¹⁾)`
+                            : `x<sub>${i}</sub>⁽ᵗ⁾ ∼ π(x<sub>${i}</sub> | x<sub>1</sub>⁽ᵗ⁾, ..., x<sub>${i-1}</sub>⁽ᵗ⁾, x<sub>${i+1}</sub>⁽ᵗ⁻¹⁾, ..., x<sub>${dimensions}</sub>⁽ᵗ⁻¹⁾)`
+                    );
+                }
+                
+                steps.push(
+                    currentLanguage === 'bn' ? 'সব ভেরিয়েবল আপডেট না হওয়া পর্যন্ত পুনরাবৃত্তি করুন' : 'Repeat until all variables are updated'
+                );
+                
+                return steps;
+            }
+
+            function getCurrentStepIndex() {
+                if (!mcmcState.isRunning) return -1;
+                
+                if (mcmcState.method === 'metropolis') {
+                    // Simple cycling through MH steps for demo
+                    return Math.min(mcmcState.currentSample % 6, 5);
+                } else {
+                    // Gibbs steps based on which variable is being sampled
+                    const dimensions = parseInt(gibbsDimensionsSelect.value);
+                    const totalSteps = dimensions + 3; // Start, repeat, dimensions steps, repeat instruction
+                    return Math.min(mcmcState.currentSample % totalSteps, totalSteps - 1);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

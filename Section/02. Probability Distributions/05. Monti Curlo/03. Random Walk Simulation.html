@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Walk Simulation | Probability Distributions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #FF4081;
+            --success: #00C853;
+            --warning: #FF9100;
+            --info: #2979FF;
+            --light: #ffffff;
+            --dark: #263238;
+            --gray: #78909C;
+            --light-gray: #ECEFF1;
+            --border: #CFD8DC;
+            --walk-1d: #2196F3;
+            --walk-2d: #4CAF50;
+            --walk-3d: #9C27B0;
+            --drift-color: #FF5722;
+            --volatility-color: #673AB7;
+        }
+
+        body {
+            background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--walk-1d), var(--walk-2d), var(--walk-3d));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Walk Dimension Selection */
+        .dimension-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .dimension-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dimension-btn {
+            padding: 1.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .dimension-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .dimension-btn.active {
+            background: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .dimension-btn.active[data-dimension="1d"] {
+            border-color: var(--walk-1d);
+        }
+
+        .dimension-btn.active[data-dimension="2d"] {
+            border-color: var(--walk-2d);
+        }
+
+        .dimension-btn.active[data-dimension="3d"] {
+            border-color: var(--walk-3d);
+        }
+
+        .dimension-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .dimension-btn[data-dimension="1d"] .dimension-icon { color: var(--walk-1d); }
+        .dimension-btn[data-dimension="2d"] .dimension-icon { color: var(--walk-2d); }
+        .dimension-btn[data-dimension="3d"] .dimension-icon { color: var(--walk-3d); }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .label-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .label-text i {
+            color: var(--primary);
+        }
+
+        .value-display {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--light-gray), var(--primary));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .slider.minimal::-webkit-slider-thumb {
+            background: var(--drift-color);
+        }
+
+        .slider.volatile::-webkit-slider-thumb {
+            background: var(--volatility-color);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* Distribution Selection */
+        .distribution-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dist-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .dist-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .dist-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .simulation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Walk Visualization */
+        .walk-visualization {
+            width: 100%;
+            height: 500px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #walkPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Statistics Panel */
+        .stats-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .positive {
+            color: var(--success);
+        }
+
+        .negative {
+            color: var(--accent);
+        }
+
+        /* Multiple Walks Comparison */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .comparison-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .comparison-plot {
+            height: 400px;
+            margin-top: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Path Analysis */
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            min-height: 300px;
+        }
+
+        .analysis-plot {
+            height: 300px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Real-world Applications */
+        .applications-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .application-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .application-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .app-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .app-description {
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+
+        .app-visual {
+            height: 100px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Walk Path Animation */
+        .walk-path {
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .walk-point {
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Walk Animation */
+        @keyframes walk {
+            0% { stroke-dashoffset: 1000; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .walking {
+            stroke-dasharray: 1000;
+            animation: walk 2s linear forwards;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* 3D Controls */
+        .view-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .view-btn {
+            padding: 0.5rem 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn.active {
+            background: var(--walk-3d);
+            color: white;
+            border-color: var(--walk-3d);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Random Walk Simulation" data-bn="র্যান্ডম ওয়াক সিমুলেশন">র্যান্ডম ওয়াক সিমুলেশন</h1>
+            <p class="subtitle" data-en="Simulate random walks and analyze their properties in 1D, 2D, and 3D with adjustable drift and volatility" data-bn="১ডি, ২ডি এবং ৩ডি-তে র্যান্ডম ওয়াক সিমুলেট করুন এবং এদের বৈশিষ্ট্য বিশ্লেষণ করুন, সমন্বয়যোগ্য ড্রিফট এবং ভোলাটিলিটি সহ">
+                ১ডি, ২ডি এবং ৩ডি-তে র্যান্ডম ওয়াক সিমুলেট করুন এবং এদের বৈশিষ্ট্য বিশ্লেষণ করুন, সমন্বয়যোগ্য ড্রিফট এবং ভোলাটিলিটি সহ
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Simulation Parameters" data-bn="সিমুলেশন প্যারামিটার">সিমুলেশন প্যারামিটার</span>
+                </h2>
+
+                <!-- Dimension Selection -->
+                <div class="dimension-selection">
+                    <button class="dimension-btn active" data-dimension="1d">
+                        <div class="dimension-icon">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        <span data-en="1D Walk" data-bn="১ডি ওয়াক">১ডি ওয়াক</span>
+                        <small data-en="Simple up/down movement" data-bn="সহজ উপরে/নিচে চলাচল">সহজ উপরে/নিচে চলাচল</small>
+                    </button>
+
+                    <button class="dimension-btn" data-dimension="2d">
+                        <div class="dimension-icon">
+                            <i class="fas fa-arrows-alt"></i>
+                        </div>
+                        <span data-en="2D Walk" data-bn="২ডি ওয়াক">২ডি ওয়াক</span>
+                        <small data-en="Movement in plane" data-bn="সমতলে চলাচল">সমতলে চলাচল</small>
+                    </button>
+
+                    <button class="dimension-btn" data-dimension="3d">
+                        <div class="dimension-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <span data-en="3D Walk" data-bn="৩ডি ওয়াক">৩ডি ওয়াক</span>
+                        <small data-en="Spatial movement" data-bন="স্থানিক চলাচল">স্থানিক চলাচল</small>
+                    </button>
+                </div>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-ruler-horizontal"></i>
+                                <span data-en="Number of Steps" data-bন="ধাপের সংখ্যা">ধাপের সংখ্যা</span>
+                            </div>
+                            <div class="value-display" id="stepCountValue">1000</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="stepCount" class="slider" min="10" max="5000" value="1000" step="10">
+                            <div class="slider-labels">
+                                <span>10</span>
+                                <span>1000</span>
+                                <span>5000</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Total number of steps in the random walk" data-bন="র্যান্ডম ওয়াকে মোট ধাপের সংখ্যা">র্যান্ডম ওয়াকে মোট ধাপের সংখ্যা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-arrows-alt-v"></i>
+                                <span data-en="Step Size" data-bন="ধাপের আকার">ধাপের আকার</span>
+                            </div>
+                            <div class="value-display" id="stepSizeValue">1.0</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="stepSize" class="slider" min="0.1" max="5" value="1.0" step="0.1">
+                            <div class="slider-labels">
+                                <span>0.1</span>
+                                <span>1.0</span>
+                                <span>5.0</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Length of each step in the walk" data-bন="ওয়াকে প্রতিটি ধাপের দৈর্ঘ্য">ওয়াকে প্রতিটি ধাপের দৈর্ঘ্য</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span data-en="Drift (μ)" data-bন="ড্রিফট (μ)">ড্রিফট (μ)</span>
+                            </div>
+                            <div class="value-display" id="driftValue">0.0</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="drift" class="slider minimal" min="-2" max="2" value="0.0" step="0.1">
+                            <div class="slider-labels">
+                                <span>-2.0</span>
+                                <span>0.0</span>
+                                <span>2.0</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Systematic tendency in one direction" data-bন="এক দিকে পদ্ধতিগত প্রবণতা">এক দিকে পদ্ধতিগত প্রবণতা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-chart-line"></i>
+                                <span data-en="Volatility (σ)" data-bন="ভোলাটিলিটি (σ)">ভোলাটিলিটি (σ)</span>
+                            </div>
+                            <div class="value-display" id="volatilityValue">1.0</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="volatility" class="slider volatile" min="0.1" max="3" value="1.0" step="0.1">
+                            <div class="slider-labels">
+                                <span>0.1</span>
+                                <span>1.0</span>
+                                <span>3.0</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Amount of variation or dispersion" data-bন="পরিবর্তন বা বিচ্ছুরণের পরিমাণ">পরিবর্তন বা বিচ্ছুরণের পরিমাণ</div>
+                    </div>
+                </div>
+
+                <!-- Distribution Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Step Distribution" data-bন="ধাপ ডিস্ট্রিবিউশন">ধাপ ডিস্ট্রিবিউশন</span>
+                </h2>
+
+                <div class="distribution-selection">
+                    <button class="dist-btn active" data-dist="normal">
+                        <i class="fas fa-bell"></i>
+                        <span data-en="Normal" data-bন="নরমাল">নরমাল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="uniform">
+                        <i class="fas fa-square"></i>
+                        <span data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</span>
+                    </button>
+                    <button class="dist-btn" data-dist="cauchy">
+                        <i class="fas fa-infinity"></i>
+                        <span data-en="Cauchy" data-bন="কশি">কশি</span>
+                    </button>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="simulation-controls">
+                    <button class="control-btn start-btn" id="startSimulation">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Start Simulation" data-bন="সিমুলেশন শুরু করুন">সিমুলেশন শুরু করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearSimulation">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <div class="section-title">
+                    <i class="fas fa-eye"></i>
+                    <span data-en="Walk Visualization" data-bন="ওয়াক ভিজুয়ালাইজেশন">ওয়াক ভিজুয়ালাইজেশন</span>
+                </div>
+                
+                <div class="walk-visualization">
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="loader"></div>
+                    </div>
+                    <div id="walkPlot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="stats-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Walk Statistics" data-bন="ওয়াক পরিসংখ্যান">ওয়াক পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Final Position" data-bন="চূড়ান্ত অবস্থান">চূড়ান্ত অবস্থান</div>
+                    <div class="stat-value" id="finalPosition">0.0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Maximum Distance" data-bন="সর্বোচ্চ দূরত্ব">সর্বোচ্চ দূরত্ব</div>
+                    <div class="stat-value" id="maxDistance">0.0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Average Step" data-bন="গড় ধাপ">গড় ধাপ</div>
+                    <div class="stat-value" id="avgStep">0.0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    <div class="stat-value" id="stdDev">0.0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiple Walks Comparison -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Multiple Walks Comparison" data-bন="একাধিক ওয়াক তুলনা">একাধিক ওয়াক তুলনা</span>
+            </h2>
+            
+            <p data-en="Compare multiple random walks with different parameters:" data-bন="বিভিন্ন প্যারামিটার সহ একাধিক র্যান্ডম ওয়াক তুলনা করুন:">
+                বিভিন্ন প্যারামিটার সহ একাধিক র্যান্ডম ওয়াক তুলনা করুন:
+            </p>
+            
+            <div class="comparison-controls">
+                <button class="comparison-btn" id="addWalk">
+                    <i class="fas fa-plus"></i>
+                    <span data-en="Add Another Walk" data-bন="আরেকটি ওয়াক যোগ করুন">আরেকটি ওয়াক যোগ করুন</span>
+                </button>
+                <button class="comparison-btn" id="compareDistances">
+                    <i class="fas fa-ruler-combined"></i>
+                    <span data-en="Compare Distances" data-bন="দূরত্ব তুলনা করুন">দূরত্ব তুলনা করুন</span>
+                </button>
+                <button class="comparison-btn" id="showDistribution">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Show Distribution" data-bন="ডিস্ট্রিবিউশন দেখান">ডিস্ট্রিবিউশন দেখান</span>
+                </button>
+            </div>
+            
+            <div class="comparison-plot" id="comparisonPlot"></div>
+        </div>
+
+        <!-- Path Analysis -->
+        <div class="analysis-section">
+            <h2 class="section-title">
+                <i class="fas fa-search"></i>
+                <span data-en="Path Analysis" data-bন="পাথ বিশ্লেষণ">পাথ বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="analysis-tabs">
+                <button class="tab-btn active" data-tab="returns">
+                    <span data-en="Returns Analysis" data-bন="রিটার্নস বিশ্লেষণ">রিটার্নস বিশ্লেষণ</span>
+                </button>
+                <button class="tab-btn" data-tab="autocorrelation">
+                    <span data-en="Autocorrelation" data-bন="অটোকোরিলেশন">অটোকোরিলেশন</span>
+                </button>
+                <button class="tab-btn" data-tab="hurst">
+                    <span data-en="Hurst Exponent" data-bন="হার্স্ট এক্সপোনেন্ট">হার্স্ট এক্সপোনেন্ট</span>
+                </button>
+            </div>
+            
+            <div class="tab-content">
+                <div class="analysis-plot" id="analysisPlot"></div>
+            </div>
+        </div>
+
+        <!-- Real-world Applications -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-globe"></i>
+                <span data-en="Real-world Applications" data-bন="বাস্তব-বিশ্ব অ্যাপ্লিকেশন">বাস্তব-বিশ্ব অ্যাপ্লিকেশন</span>
+            </h2>
+            
+            <div class="applications-grid">
+                <div class="application-card" data-app="finance">
+                    <div class="application-header">
+                        <div class="app-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="app-title" data-en="Financial Markets" data-bন="আর্থিক বাজার">আর্থিক বাজার</h3>
+                    </div>
+                    <div class="app-description" data-en="Stock prices and asset returns follow random walk patterns" data-bন="শেয়ার মূল্য এবং সম্পদ রিটার্ন র্যান্ডম ওয়াক প্যাটার্ন অনুসরণ করে">
+                        শেয়ার মূল্য এবং সম্পদ রিটার্ন র্যান্ডম ওয়াক প্যাটার্ন অনুসরণ করে
+                    </div>
+                    <div class="app-visual" id="financeVisual"></div>
+                    <button class="comparison-btn" onclick="loadFinanceExample()">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Simulate Stock Prices" data-bন="শেয়ার মূল্য সিমুলেট করুন">শেয়ার মূল্য সিমুলেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="application-card" data-app="physics">
+                    <div class="application-header">
+                        <div class="app-icon">
+                            <i class="fas fa-atom"></i>
+                        </div>
+                        <h3 class="app-title" data-en="Brownian Motion" data-bন="ব্রাউনিয়ান মোশন">ব্রাউনিয়ান মোশন</h3>
+                    </div>
+                    <div class="app-description" data-en="Particle diffusion in fluids follows random walk behavior" data-bন="তরলে কণা ডিফিউশন র্যান্ডম ওয়াক আচরণ অনুসরণ করে">
+                        তরলে কণা ডিফিউশন র্যান্ডম ওয়াক আচরণ অনুসরণ করে
+                    </div>
+                    <div class="app-visual" id="physicsVisual"></div>
+                    <button class="comparison-btn" onclick="loadPhysicsExample()">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Simulate Diffusion" data-bন="ডিফিউশন সিমুলেট করুন">ডিফিউশন সিমুলেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="application-card" data-app="biology">
+                    <div class="application-header">
+                        <div class="app-icon">
+                            <i class="fas fa-dna"></i>
+                        </div>
+                        <h3 class="app-title" data-en="Animal Movement" data-bন="প্রাণী চলাচল">প্রাণী চলাচল</h3>
+                    </div>
+                    <div class="app-description" data-en="Foraging patterns and animal migration can be modeled as random walks" data-bন="ফোরেজিং প্যাটার্ন এবং প্রাণী অভিবাসন র্যান্ডম ওয়াক হিসেবে মডেল করা যেতে পারে">
+                        ফোরেজিং প্যাটার্ন এবং প্রাণী অভিবাসন র্যান্ডম ওয়াক হিসেবে মডেল করা যেতে পারে
+                    </div>
+                    <div class="app-visual" id="biologyVisual"></div>
+                    <button class="comparison-btn" onclick="loadBiologyExample()">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Simulate Foraging" data-bন="ফোরেজিং সিমুলেট করুন">ফোরেজিং সিমুলেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="application-card" data-app="engineering">
+                    <div class="application-header">
+                        <div class="app-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3 class="app-title" data-en="Network Routing" data-bন="নেটওয়ার্ক রাউটিং">নেটওয়ার্ক রাউটিং</h3>
+                    </div>
+                    <div class="app-description" data-en="Random walk algorithms are used in network packet routing and search" data-bন="র্যান্ডম ওয়াক অ্যালগরিদম নেটওয়ার্ক প্যাকেট রাউটিং এবং সার্চে ব্যবহৃত হয়">
+                        র্যান্ডম ওয়াক অ্যালগরিদম নেটওয়ার্ক প্যাকেট রাউটিং এবং সার্চে ব্যবহৃত হয়
+                    </div>
+                    <div class="app-visual" id="engineeringVisual"></div>
+                    <button class="comparison-btn" onclick="loadEngineeringExample()">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Simulate Routing" data-bন="রাউটিং সিমুলেট করুন">রাউটিং সিমুলেট করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                dimension: '1d',
+                stepCount: 1000,
+                stepSize: 1.0,
+                drift: 0.0,
+                volatility: 1.0,
+                distribution: 'normal',
+                walks: [],
+                currentWalk: null,
+                walkHistory: []
+            };
+
+            // DOM Elements
+            const stepCountSlider = document.getElementById('stepCount');
+            const stepCountValue = document.getElementById('stepCountValue');
+            const stepSizeSlider = document.getElementById('stepSize');
+            const stepSizeValue = document.getElementById('stepSizeValue');
+            const driftSlider = document.getElementById('drift');
+            const driftValue = document.getElementById('driftValue');
+            const volatilitySlider = document.getElementById('volatility');
+            const volatilityValue = document.getElementById('volatilityValue');
+            const dimensionBtns = document.querySelectorAll('.dimension-btn');
+            const distBtns = document.querySelectorAll('.dist-btn');
+            const startBtn = document.getElementById('startSimulation');
+            const clearBtn = document.getElementById('clearSimulation');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const walkPlot = document.getElementById('walkPlot');
+            const comparisonPlot = document.getElementById('comparisonPlot');
+            const analysisPlot = document.getElementById('analysisPlot');
+            
+            // Statistics Display
+            const finalPositionEl = document.getElementById('finalPosition');
+            const maxDistanceEl = document.getElementById('maxDistance');
+            const avgStepEl = document.getElementById('avgStep');
+            const stdDevEl = document.getElementById('stdDev');
+
+            // Initialize
+            initSimulation();
+
+            function initSimulation() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Dimension Selection
+                dimensionBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dimension = this.dataset.dimension;
+                        setDimension(dimension);
+                    });
+                });
+
+                // Distribution Selection
+                distBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const distribution = this.dataset.dist;
+                        setDistribution(distribution);
+                    });
+                });
+
+                // Parameter Sliders
+                stepCountSlider.addEventListener('input', updateStepCount);
+                stepSizeSlider.addEventListener('input', updateStepSize);
+                driftSlider.addEventListener('input', updateDrift);
+                volatilitySlider.addEventListener('input', updateVolatility);
+
+                // Simulation Controls
+                startBtn.addEventListener('click', startSimulation);
+                clearBtn.addEventListener('click', clearSimulation);
+
+                // Comparison Controls
+                document.getElementById('addWalk').addEventListener('click', addWalk);
+                document.getElementById('compareDistances').addEventListener('click', compareDistances);
+                document.getElementById('showDistribution').addEventListener('click', showDistribution);
+
+                // Analysis Tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const tab = this.dataset.tab;
+                        setAnalysisTab(tab);
+                    });
+                });
+
+                // Initialize plots
+                initializePlots();
+
+                // Add initial walk
+                setTimeout(() => {
+                    generateRandomWalk();
+                    updateWalkPlot();
+                    updateStatistics();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDimension(dimension) {
+                simulationState.dimension = dimension;
+                
+                // Update active button
+                dimensionBtns.forEach(btn => {
+                    if (btn.dataset.dimension === dimension) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Show/hide 3D controls
+                const viewControls = document.querySelector('.view-controls');
+                if (!viewControls && dimension === '3d') {
+                    const controlsHTML = `
+                        <div class="view-controls">
+                            <button class="view-btn active" data-view="xy">XY Plane</button>
+                            <button class="view-btn" data-view="xz">XZ Plane</button>
+                            <button class="view-btn" data-view="yz">YZ Plane</button>
+                            <button class="view-btn" data-view="3d">3D View</button>
+                        </div>
+                    `;
+                    document.querySelector('.visualization-panel').insertAdjacentHTML('beforeend', controlsHTML);
+                }
+            }
+
+            function setDistribution(distribution) {
+                simulationState.distribution = distribution;
+                
+                // Update active button
+                distBtns.forEach(btn => {
+                    if (btn.dataset.dist === distribution) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateStepCount() {
+                simulationState.stepCount = parseInt(stepCountSlider.value);
+                stepCountValue.textContent = simulationState.stepCount;
+            }
+
+            function updateStepSize() {
+                simulationState.stepSize = parseFloat(stepSizeSlider.value);
+                stepSizeValue.textContent = simulationState.stepSize.toFixed(1);
+            }
+
+            function updateDrift() {
+                simulationState.drift = parseFloat(driftSlider.value);
+                driftValue.textContent = simulationState.drift.toFixed(1);
+            }
+
+            function updateVolatility() {
+                simulationState.volatility = parseFloat(volatilitySlider.value);
+                volatilityValue.textContent = simulationState.volatility.toFixed(1);
+            }
+
+            function generateRandomSample(distribution, mean, std) {
+                switch(distribution) {
+                    case 'normal':
+                        // Box-Muller transform for normal distribution
+                        let u = 0, v = 0;
+                        while(u === 0) u = Math.random();
+                        while(v === 0) v = Math.random();
+                        return mean + std * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                    
+                    case 'uniform':
+                        return mean + std * (Math.random() * 2 - 1) * Math.sqrt(3);
+                    
+                    case 'cauchy':
+                        // Cauchy distribution
+                        return mean + std * Math.tan(Math.PI * (Math.random() - 0.5));
+                    
+                    default:
+                        return mean + std * (Math.random() * 2 - 1);
+                }
+            }
+
+            function generateRandomWalk() {
+                const { dimension, stepCount, stepSize, drift, volatility, distribution } = simulationState;
+                
+                let walk = [];
+                
+                switch(dimension) {
+                    case '1d':
+                        let position1D = 0;
+                        walk.push([0, position1D]);
+                        
+                        for (let i = 1; i <= stepCount; i++) {
+                            const step = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            position1D += step;
+                            walk.push([i, position1D]);
+                        }
+                        break;
+                    
+                    case '2d':
+                        let x = 0, y = 0;
+                        walk.push([x, y]);
+                        
+                        for (let i = 1; i <= stepCount; i++) {
+                            const stepX = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            const stepY = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            x += stepX;
+                            y += stepY;
+                            walk.push([x, y]);
+                        }
+                        break;
+                    
+                    case '3d':
+                        let x3 = 0, y3 = 0, z3 = 0;
+                        walk.push([x3, y3, z3]);
+                        
+                        for (let i = 1; i <= stepCount; i++) {
+                            const stepX = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            const stepY = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            const stepZ = generateRandomSample(distribution, drift * stepSize, volatility * stepSize);
+                            x3 += stepX;
+                            y3 += stepY;
+                            z3 += stepZ;
+                            walk.push([x3, y3, z3]);
+                        }
+                        break;
+                }
+                
+                simulationState.currentWalk = walk;
+                simulationState.walkHistory.push({
+                    walk: walk,
+                    params: { ...simulationState },
+                    timestamp: new Date()
+                });
+                
+                return walk;
+            }
+
+            function startSimulation() {
+                loadingOverlay.classList.add('active');
+                
+                setTimeout(() => {
+                    generateRandomWalk();
+                    updateWalkPlot();
+                    updateStatistics();
+                    loadingOverlay.classList.remove('active');
+                    
+                    // Animate the button
+                    startBtn.classList.add('pulse');
+                    setTimeout(() => startBtn.classList.remove('pulse'), 1000);
+                }, 500);
+            }
+
+            function clearSimulation() {
+                simulationState.walks = [];
+                simulationState.currentWalk = null;
+                simulationState.walkHistory = [];
+                
+                Plotly.purge(walkPlot);
+                Plotly.purge(comparisonPlot);
+                Plotly.purge(analysisPlot);
+                
+                updateStatistics();
+                initializePlots();
+            }
+
+            function updateWalkPlot() {
+                const { dimension, currentWalk } = simulationState;
+                
+                if (!currentWalk) return;
+                
+                let layout, data;
+                
+                switch(dimension) {
+                    case '1d':
+                        const x1d = currentWalk.map(point => point[0]);
+                        const y1d = currentWalk.map(point => point[1]);
+                        
+                        data = [{
+                            x: x1d,
+                            y: y1d,
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: {
+                                color: 'var(--walk-1d)',
+                                width: 2
+                            },
+                            name: currentLanguage === 'bn' ? '১ডি ওয়াক' : '1D Walk'
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? '১ডি র্যান্ডম ওয়াক' : '1D Random Walk',
+                            xaxis: {
+                                title: currentLanguage === 'bn' ? 'ধাপ সংখ্যা' : 'Step Number',
+                                gridcolor: 'lightgray'
+                            },
+                            yaxis: {
+                                title: currentLanguage === 'bn' ? 'অবস্থান' : 'Position',
+                                gridcolor: 'lightgray'
+                            },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white',
+                            font: {
+                                family: 'Poppins, Hind Siliguri, sans-serif'
+                            }
+                        };
+                        break;
+                    
+                    case '2d':
+                        const x2d = currentWalk.map(point => point[0]);
+                        const y2d = currentWalk.map(point => point[1]);
+                        
+                        data = [{
+                            x: x2d,
+                            y: y2d,
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: {
+                                color: 'var(--walk-2d)',
+                                width: 2
+                            },
+                            name: currentLanguage === 'bn' ? '২ডি ওয়াক' : '2D Walk'
+                        }, {
+                            x: [x2d[0], x2d[x2d.length - 1]],
+                            y: [y2d[0], y2d[y2d.length - 1]],
+                            type: 'scatter',
+                            mode: 'markers',
+                            marker: {
+                                color: ['green', 'red'],
+                                size: 10
+                            },
+                            showlegend: false
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? '২ডি র্যান্ডম ওয়াক' : '2D Random Walk',
+                            xaxis: {
+                                title: 'X',
+                                gridcolor: 'lightgray',
+                                scaleanchor: 'y',
+                                scaleratio: 1
+                            },
+                            yaxis: {
+                                title: 'Y',
+                                gridcolor: 'lightgray'
+                            },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white',
+                            font: {
+                                family: 'Poppins, Hind Siliguri, sans-serif'
+                            }
+                        };
+                        break;
+                    
+                    case '3d':
+                        const x3d = currentWalk.map(point => point[0]);
+                        const y3d = currentWalk.map(point => point[1]);
+                        const z3d = currentWalk.map(point => point[2]);
+                        
+                        data = [{
+                            x: x3d,
+                            y: y3d,
+                            z: z3d,
+                            type: 'scatter3d',
+                            mode: 'lines',
+                            line: {
+                                color: z3d,
+                                colorscale: 'Viridis',
+                                width: 4
+                            },
+                            name: currentLanguage === 'bn' ? '৩ডি ওয়াক' : '3D Walk'
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? '৩ডি র্যান্ডম ওয়াক' : '3D Random Walk',
+                            scene: {
+                                xaxis: { title: 'X' },
+                                yaxis: { title: 'Y' },
+                                zaxis: { title: 'Z' },
+                                camera: {
+                                    eye: { x: 1.5, y: 1.5, z: 1.5 }
+                                }
+                            },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white',
+                            font: {
+                                family: 'Poppins, Hind Siliguri, sans-serif'
+                            }
+                        };
+                        break;
+                }
+                
+                Plotly.newPlot(walkPlot, data, layout, { responsive: true });
+            }
+
+            function updateStatistics() {
+                const { currentWalk, dimension } = simulationState;
+                
+                if (!currentWalk || currentWalk.length === 0) {
+                    finalPositionEl.textContent = '0.0';
+                    maxDistanceEl.textContent = '0.0';
+                    avgStepEl.textContent = '0.0';
+                    stdDevEl.textContent = '0.0';
+                    return;
+                }
+                
+                // Calculate statistics based on dimension
+                switch(dimension) {
+                    case '1d':
+                        const finalPos1D = currentWalk[currentWalk.length - 1][1];
+                        const steps1D = [];
+                        let maxDist1D = 0;
+                        
+                        for (let i = 1; i < currentWalk.length; i++) {
+                            const step = Math.abs(currentWalk[i][1] - currentWalk[i-1][1]);
+                            steps1D.push(step);
+                            maxDist1D = Math.max(maxDist1D, Math.abs(currentWalk[i][1]));
+                        }
+                        
+                        const avgStep1D = steps1D.reduce((a, b) => a + b, 0) / steps1D.length;
+                        const variance1D = steps1D.reduce((sq, n) => sq + Math.pow(n - avgStep1D, 2), 0) / steps1D.length;
+                        const stdDev1D = Math.sqrt(variance1D);
+                        
+                        finalPositionEl.textContent = finalPos1D.toFixed(2);
+                        maxDistanceEl.textContent = maxDist1D.toFixed(2);
+                        avgStepEl.textContent = avgStep1D.toFixed(2);
+                        stdDevEl.textContent = stdDev1D.toFixed(2);
+                        break;
+                    
+                    case '2d':
+                        const finalX = currentWalk[currentWalk.length - 1][0];
+                        const finalY = currentWalk[currentWalk.length - 1][1];
+                        const finalDistance = Math.sqrt(finalX * finalX + finalY * finalY);
+                        
+                        let maxDistance = 0;
+                        const distances = [];
+                        
+                        for (let i = 1; i < currentWalk.length; i++) {
+                            const dx = currentWalk[i][0] - currentWalk[i-1][0];
+                            const dy = currentWalk[i][1] - currentWalk[i-1][1];
+                            const stepDistance = Math.sqrt(dx * dx + dy * dy);
+                            distances.push(stepDistance);
+                            
+                            const currentDistance = Math.sqrt(currentWalk[i][0] * currentWalk[i][0] + currentWalk[i][1] * currentWalk[i][1]);
+                            maxDistance = Math.max(maxDistance, currentDistance);
+                        }
+                        
+                        const avgStep = distances.reduce((a, b) => a + b, 0) / distances.length;
+                        const variance = distances.reduce((sq, n) => sq + Math.pow(n - avgStep, 2), 0) / distances.length;
+                        const stdDev = Math.sqrt(variance);
+                        
+                        finalPositionEl.textContent = `(${finalX.toFixed(2)}, ${finalY.toFixed(2)})`;
+                        maxDistanceEl.textContent = maxDistance.toFixed(2);
+                        avgStepEl.textContent = avgStep.toFixed(2);
+                        stdDevEl.textContent = stdDev.toFixed(2);
+                        break;
+                    
+                    case '3d':
+                        const finalPos3D = currentWalk[currentWalk.length - 1];
+                        const finalDist3D = Math.sqrt(
+                            finalPos3D[0] * finalPos3D[0] + 
+                            finalPos3D[1] * finalPos3D[1] + 
+                            finalPos3D[2] * finalPos3D[2]
+                        );
+                        
+                        finalPositionEl.textContent = finalDist3D.toFixed(2);
+                        maxDistanceEl.textContent = 'N/A';
+                        avgStepEl.textContent = 'N/A';
+                        stdDevEl.textContent = 'N/A';
+                        break;
+                }
+            }
+
+            function initializePlots() {
+                // Initialize empty plots
+                Plotly.newPlot(walkPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: 'gray', width: 2 }
+                }], {
+                    title: currentLanguage === 'bn' ? 'ওয়াক ভিজুয়ালাইজেশন' : 'Walk Visualization',
+                    xaxis: { title: currentLanguage === 'bn' ? 'ধাপ সংখ্যা' : 'Step Number' },
+                    yaxis: { title: currentLanguage === 'bn' ? 'অবস্থান' : 'Position' },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+                
+                Plotly.newPlot(comparisonPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'ওয়াক তুলনা' : 'Walk Comparison',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+                
+                Plotly.newPlot(analysisPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'পাথ বিশ্লেষণ' : 'Path Analysis',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+            }
+
+            function addWalk() {
+                // Generate a new walk with different parameters
+                const newWalk = generateRandomWalk();
+                simulationState.walks.push(newWalk);
+                
+                // Update comparison plot
+                updateComparisonPlot();
+            }
+
+            function compareDistances() {
+                const { walkHistory } = simulationState;
+                
+                if (walkHistory.length === 0) return;
+                
+                const distances = walkHistory.map((record, idx) => {
+                    const walk = record.walk;
+                    const lastPoint = walk[walk.length - 1];
+                    let distance;
+                    
+                    if (simulationState.dimension === '1d') {
+                        distance = Math.abs(lastPoint[1]);
+                    } else if (simulationState.dimension === '2d') {
+                        distance = Math.sqrt(lastPoint[0] * lastPoint[0] + lastPoint[1] * lastPoint[1]);
+                    } else {
+                        distance = Math.sqrt(lastPoint[0] * lastPoint[0] + lastPoint[1] * lastPoint[1] + lastPoint[2] * lastPoint[2]);
+                    }
+                    
+                    return {
+                        walk: idx + 1,
+                        distance: distance,
+                        drift: record.params.drift,
+                        volatility: record.params.volatility
+                    };
+                });
+                
+                const data = [{
+                    x: distances.map(d => d.walk),
+                    y: distances.map(d => d.distance),
+                    type: 'bar',
+                    marker: {
+                        color: distances.map(d => 
+                            d.drift > 0 ? 'var(--drift-color)' : 
+                            d.drift < 0 ? 'var(--accent)' : 'var(--primary)'
+                        )
+                    },
+                    text: distances.map(d => `Drift: ${d.drift.toFixed(1)}, Vol: ${d.volatility.toFixed(1)}`),
+                    hoverinfo: 'text+y'
+                }];
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'দূরত্ব তুলনা' : 'Distance Comparison',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'ওয়াক সংখ্যা' : 'Walk Number',
+                        tickmode: 'linear'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'চূড়ান্ত দূরত্ব' : 'Final Distance'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot(comparisonPlot, data, layout, { responsive: true });
+            }
+
+            function showDistribution() {
+                const { currentWalk } = simulationState;
+                
+                if (!currentWalk) return;
+                
+                // Calculate step sizes
+                const steps = [];
+                for (let i = 1; i < currentWalk.length; i++) {
+                    if (simulationState.dimension === '1d') {
+                        steps.push(Math.abs(currentWalk[i][1] - currentWalk[i-1][1]));
+                    } else if (simulationState.dimension === '2d') {
+                        const dx = currentWalk[i][0] - currentWalk[i-1][0];
+                        const dy = currentWalk[i][1] - currentWalk[i-1][1];
+                        steps.push(Math.sqrt(dx * dx + dy * dy));
+                    }
+                }
+                
+                const data = [{
+                    x: steps,
+                    type: 'histogram',
+                    nbinsx: 50,
+                    marker: {
+                        color: 'var(--primary)',
+                        opacity: 0.7
+                    },
+                    name: currentLanguage === 'bn' ? 'ধাপ ডিস্ট্রিবিউশন' : 'Step Distribution'
+                }];
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'ধাপ আকার ডিস্ট্রিবিউশন' : 'Step Size Distribution',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'ধাপ আকার' : 'Step Size'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density'
+                    },
+                    bargap: 0.05,
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot(comparisonPlot, data, layout, { responsive: true });
+            }
+
+            function setAnalysisTab(tab) {
+                // Update active tab
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if (btn.dataset.tab === tab) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update analysis plot based on selected tab
+                updateAnalysisPlot(tab);
+            }
+
+            function updateAnalysisPlot(tab) {
+                const { currentWalk } = simulationState;
+                
+                if (!currentWalk) return;
+                
+                let data, layout;
+                
+                switch(tab) {
+                    case 'returns':
+                        // Calculate returns (percentage changes)
+                        const returns = [];
+                        for (let i = 1; i < currentWalk.length; i++) {
+                            if (simulationState.dimension === '1d') {
+                                const ret = (currentWalk[i][1] - currentWalk[i-1][1]) / Math.abs(currentWalk[i-1][1] || 1);
+                                returns.push(ret);
+                            }
+                        }
+                        
+                        data = [{
+                            x: returns.map((_, i) => i),
+                            y: returns,
+                            type: 'scatter',
+                            mode: 'lines',
+                            line: { color: 'var(--primary)', width: 1 },
+                            name: currentLanguage === 'bn' ? 'রিটার্নস' : 'Returns'
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? 'ধাপ রিটার্নস' : 'Step Returns',
+                            xaxis: { title: currentLanguage === 'bn' ? 'ধাপ' : 'Step' },
+                            yaxis: { title: currentLanguage === 'bn' ? 'রিটার্ন' : 'Return' },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white'
+                        };
+                        break;
+                    
+                    case 'autocorrelation':
+                        // Calculate autocorrelation
+                        const positions = currentWalk.map(point => simulationState.dimension === '1d' ? point[1] : 
+                                           Math.sqrt(point[0] * point[0] + (point[1] || 0) * (point[1] || 0)));
+                        
+                        const autocorr = [];
+                        const maxLag = Math.min(50, positions.length - 1);
+                        
+                        for (let lag = 1; lag <= maxLag; lag++) {
+                            let sum = 0;
+                            for (let i = 0; i < positions.length - lag; i++) {
+                                sum += positions[i] * positions[i + lag];
+                            }
+                            autocorr.push(sum / (positions.length - lag));
+                        }
+                        
+                        data = [{
+                            x: autocorr.map((_, i) => i + 1),
+                            y: autocorr,
+                            type: 'bar',
+                            marker: {
+                                color: autocorr.map(val => val > 0 ? 'var(--success)' : 'var(--accent)')
+                            },
+                            name: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation'
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? 'অটোকোরিলেশন ফাংশন' : 'Autocorrelation Function',
+                            xaxis: { title: currentLanguage === 'bn' ? 'ল্যাগ' : 'Lag' },
+                            yaxis: { title: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation' },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white'
+                        };
+                        break;
+                    
+                    case 'hurst':
+                        // Calculate Hurst exponent approximation
+                        const hurstData = [];
+                        const rsValues = [];
+                        
+                        for (let n = 10; n <= Math.min(200, currentWalk.length / 2); n += 10) {
+                            const segments = Math.floor(currentWalk.length / n);
+                            let totalRS = 0;
+                            
+                            for (let s = 0; s < segments; s++) {
+                                const segment = currentWalk.slice(s * n, (s + 1) * n);
+                                const positions = segment.map(point => simulationState.dimension === '1d' ? point[1] : 
+                                                   Math.sqrt(point[0] * point[0] + (point[1] || 0) * (point[1] || 0)));
+                                
+                                // Calculate R/S statistic
+                                const mean = positions.reduce((a, b) => a + b, 0) / positions.length;
+                                const deviations = positions.map(p => p - mean);
+                                const cumulative = [];
+                                let sum = 0;
+                                
+                                for (const d of deviations) {
+                                    sum += d;
+                                    cumulative.push(sum);
+                                }
+                                
+                                const R = Math.max(...cumulative) - Math.min(...cumulative);
+                                const S = Math.sqrt(deviations.reduce((a, b) => a + b * b, 0) / deviations.length);
+                                
+                                if (S > 0) {
+                                    totalRS += R / S;
+                                }
+                            }
+                            
+                            const avgRS = totalRS / segments;
+                            rsValues.push({ n: n, rs: avgRS });
+                        }
+                        
+                        // Log-log plot for Hurst estimation
+                        const logN = rsValues.map(p => Math.log(p.n));
+                        const logRS = rsValues.map(p => Math.log(p.rs));
+                        
+                        data = [{
+                            x: logN,
+                            y: logRS,
+                            type: 'scatter',
+                            mode: 'markers+lines',
+                            marker: { size: 10, color: 'var(--primary)' },
+                            line: { color: 'var(--primary)', width: 2 },
+                            name: currentLanguage === 'bn' ? 'R/S স্ট্যাটিস্টিক' : 'R/S Statistic'
+                        }];
+                        
+                        layout = {
+                            title: currentLanguage === 'bn' ? 'হার্স্ট এক্সপোনেন্ট অনুমান' : 'Hurst Exponent Estimation',
+                            xaxis: { title: 'log(n)' },
+                            yaxis: { title: 'log(R/S)' },
+                            plot_bgcolor: 'white',
+                            paper_bgcolor: 'white',
+                            showlegend: true
+                        };
+                        break;
+                }
+                
+                if (data && layout) {
+                    Plotly.newPlot(analysisPlot, data, layout, { responsive: true });
+                }
+            }
+
+            // Real-world application examples
+            function loadFinanceExample() {
+                simulationState.dimension = '1d';
+                simulationState.stepCount = 252; // Trading days in a year
+                simulationState.stepSize = 0.01; // 1% daily moves
+                simulationState.drift = 0.0005; // Slight positive drift
+                simulationState.volatility = 0.02; // 2% daily volatility
+                simulationState.distribution = 'normal';
+                
+                // Update UI
+                updateParameterDisplays();
+                setDimension('1d');
+                setDistribution('normal');
+                startSimulation();
+            }
+
+            function loadPhysicsExample() {
+                simulationState.dimension = '2d';
+                simulationState.stepCount = 1000;
+                simulationState.stepSize = 0.1;
+                simulationState.drift = 0.0; // No drift in pure diffusion
+                simulationState.volatility = 0.5;
+                simulationState.distribution = 'normal';
+                
+                updateParameterDisplays();
+                setDimension('2d');
+                setDistribution('normal');
+                startSimulation();
+            }
+
+            function loadBiologyExample() {
+                simulationState.dimension = '2d';
+                simulationState.stepCount = 500;
+                simulationState.stepSize = 1.0;
+                simulationState.drift = 0.1; // Slight drift toward food source
+                simulationState.volatility = 1.5;
+                simulationState.distribution = 'cauchy'; // Heavy-tailed steps
+                
+                updateParameterDisplays();
+                setDimension('2d');
+                setDistribution('cauchy');
+                startSimulation();
+            }
+
+            function loadEngineeringExample() {
+                simulationState.dimension = '3d';
+                simulationState.stepCount = 200;
+                simulationState.stepSize = 1.0;
+                simulationState.drift = 0.0;
+                simulationState.volatility = 1.0;
+                simulationState.distribution = 'uniform'; // Uniform steps in network
+                
+                updateParameterDisplays();
+                setDimension('3d');
+                setDistribution('uniform');
+                startSimulation();
+            }
+
+            function updateParameterDisplays() {
+                stepCountSlider.value = simulationState.stepCount;
+                stepCountValue.textContent = simulationState.stepCount;
+                
+                stepSizeSlider.value = simulationState.stepSize;
+                stepSizeValue.textContent = simulationState.stepSize.toFixed(1);
+                
+                driftSlider.value = simulationState.drift;
+                driftValue.textContent = simulationState.drift.toFixed(1);
+                
+                volatilitySlider.value = simulationState.volatility;
+                volatilityValue.textContent = simulationState.volatility.toFixed(1);
+            }
+
+            function updateComparisonPlot() {
+                // Update comparison plot with all walks
+                // Implementation depends on specific comparison requirements
+            }
+        });
+    </script>
+</body>
+</html>

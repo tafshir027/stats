@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lambda (λ) Estimation Tool | Poisson Parameter Estimation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --mle-color: #2196F3;
+            --ci-color: #4CAF50;
+            --bayesian-color: #FF9800;
+            --estimation-bg: #F3E5F5;
+            --confidence-bg: #E8F5E9;
+            --bayesian-bg: #FFF3E0;
+            --visualization-bg: #E3F2FD;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 50%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 1rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--mle-color), var(--ci-color), var(--bayesian-color));
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .header .subtitle {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Data Input Panel */
+        .data-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .method-btn.active {
+            border-color: var(--poisson-color);
+            background: var(--estimation-bg);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .method-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Input Area */
+        .input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .textarea-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .textarea-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Examples */
+        .examples-container {
+            background: var(--estimation-bg);
+            border-radius: 10px;
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--poisson-color);
+            color: white;
+            border-color: var(--poisson-color);
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .estimate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .estimate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Estimation Results */
+        .estimation-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .estimation-results {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .estimation-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--estimation-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .result-card.mle {
+            background: rgba(33, 150, 243, 0.1);
+            border-color: var(--mle-color);
+        }
+
+        .result-card.ci {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: var(--ci-color);
+        }
+
+        .result-card.bayesian {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: var(--bayesian-color);
+        }
+
+        .result-label {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-formula {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Data Statistics */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .statistics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .visualization-container {
+            height: 400px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--visualization-bg);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        #visualizationCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Confidence Interval Details */
+        .ci-details {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .ci-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .ci-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ci-method {
+            background: var(--confidence-bg);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .ci-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ci-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1rem;
+            margin: 1rem 0;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        /* Bayesian Details */
+        .bayesian-details {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .prior-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .prior-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .prior-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .prior-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .prior-btn.active {
+            border-color: var(--bayesian-color);
+            background: var(--bayesian-bg);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+        }
+
+        .posterior-container {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            background: var(--bayesian-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--poisson-color);
+        }
+
+        /* Data Display */
+        .data-display {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .data-point {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            margin: 0.2rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Animation Classes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { background: white; }
+            50% { background: #FFF9C4; }
+            100% { background: white; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        .highlight {
+            animation: highlight 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .visualization-container {
+                height: 300px;
+            }
+            
+            .estimation-results,
+            .statistics-grid {
+                gap: 0.5rem;
+            }
+            
+            .result-card,
+            .stat-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--poisson-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7B1FA2;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(156, 39, 176, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--poisson-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Lambda (λ) Estimation Tool" data-bn="ল্যাম্বডা (λ) এস্টিমেশন টুল">ল্যাম্বডা (λ) এস্টিমেশন টুল</h1>
+            <p class="subtitle" data-en="Estimate Poisson rate parameter from data using Maximum Likelihood, Confidence Intervals, and Bayesian methods" data-bn="ডেটা থেকে ম্যাক্সিমাম লাইকলিহুড, কনফিডেন্স ইন্টারভ্যাল এবং বেইজিয়ান পদ্ধতি ব্যবহার করে পয়সন রেট প্যারামিটার এস্টিমেট করুন">
+                ডেটা থেকে ম্যাক্সিমাম লাইকলিহুড, কনফিডেন্স ইন্টারভ্যাল এবং বেইজিয়ান পদ্ধতি ব্যবহার করে পয়সন রেট প্যারামিটার এস্টিমেট করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Data Input Panel -->
+            <div class="data-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Input Data" data-bn="ইনপুট ডেটা">ইনপুট ডেটা</span>
+                </h2>
+
+                <!-- Input Methods -->
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <div class="method-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <span data-en="Manual Input" data-bন="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                        <small data-en="Enter numbers" data-bন="সংখ্যা লিখুন">সংখ্যা লিখুন</small>
+                    </button>
+
+                    <button class="method-btn" data-method="generate">
+                        <div class="method-icon">
+                            <i class="fas fa-random"></i>
+                        </div>
+                        <span data-en="Generate Data" data-bন="ডেটা তৈরি করুন">ডেটা তৈরি করুন</span>
+                        <small data-en="Random Poisson" data-bন="র্যান্ডম পয়সন">র্যান্ডম পয়সন</small>
+                    </button>
+
+                    <button class="method-btn" data-method="file">
+                        <div class="method-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <span data-en="Upload File" data-bন="ফাইল আপলোড">ফাইল আপলোড</span>
+                        <small data-en="CSV/TXT" data-bন="CSV/TXT">CSV/TXT</small>
+                    </button>
+                </div>
+
+                <!-- Manual Input Area -->
+                <div class="input-area" id="manualInput">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        <span data-en="Enter count data (comma or space separated):" data-bn="কাউন্ট ডেটা লিখুন (কমা বা স্পেস দ্বারা আলাদা করুন):">
+                            কাউন্ট ডেটা লিখুন (কমা বা স্পেস দ্বারা আলাদা করুন):
+                        </span>
+                    </label>
+                    <textarea id="dataInput" class="textarea-input" placeholder="Example: 3, 5, 2, 7, 4, 6, 5, 3, 8, 4"></textarea>
+                    <div class="help-text" data-en="Enter non-negative integer counts (0, 1, 2, ...)" data-bn="অ-ঋণাত্মক পূর্ণসংখ্যা কাউন্ট লিখুন (০, ১, ২, ...)">
+                        অ-ঋণাত্মক পূর্ণসংখ্যা কাউন্ট লিখুন (০, ১, ২, ...)
+                    </div>
+                </div>
+
+                <!-- Generate Data Area -->
+                <div class="input-area" id="generateInput" style="display: none;">
+                    <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                <span data-en="True λ:" data-bন="সত্য λ:">সত্য λ:</span>
+                            </label>
+                            <input type="number" id="trueLambda" class="value-input" min="0.1" max="20" step="0.1" value="5.0">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                <span data-en="Sample size:" data-bন="নমুনা আকার:">নমুনা আকার:</span>
+                            </label>
+                            <input type="number" id="sampleSize" class="value-input" min="10" max="1000" value="100">
+                        </div>
+                    </div>
+                    <button id="generateDataBtn" class="control-btn" style="background: var(--info); color: white; width: 100%; margin-top: 0.5rem;">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Generate Poisson Data" data-bন="পয়সন ডেটা তৈরি করুন">পয়সন ডেটা তৈরি করুন</span>
+                    </button>
+                </div>
+
+                <!-- File Upload Area -->
+                <div class="input-area" id="fileInput" style="display: none;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        <span data-en="Upload data file:" data-bন="ডেটা ফাইল আপলোড করুন:">ডেটা ফাইল আপলোড করুন:</span>
+                    </label>
+                    <input type="file" id="fileUpload" accept=".csv,.txt,.json" style="width: 100%; padding: 1rem; border: 2px dashed var(--border); border-radius: 8px; margin-bottom: 1rem;">
+                    <div class="help-text" data-en="Supported formats: CSV, TXT, JSON. File should contain numbers separated by commas, spaces, or newlines." data-bন="সাপোর্টেড ফরম্যাট: CSV, TXT, JSON। ফাইলে কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা সংখ্যা থাকতে হবে।">
+                        সাপোর্টেড ফরম্যাট: CSV, TXT, JSON। ফাইলে কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা সংখ্যা থাকতে হবে।
+                    </div>
+                </div>
+
+                <!-- Examples -->
+                <div class="examples-container">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                        <span data-en="Quick Examples:" data-bন="দ্রুত উদাহরণ:">দ্রুত উদাহরণ:</span>
+                    </label>
+                    <div class="example-buttons">
+                        <button class="example-btn" data-example="small">
+                            <span data-en="Small Sample (λ=3)" data-bন="ছোট নমুনা (λ=৩)">ছোট নমুনা (λ=৩)</span>
+                        </button>
+                        <button class="example-btn" data-example="medium">
+                            <span data-en="Medium Sample (λ=5)" data-bন="মাঝারি নমুনা (λ=৫)">মাঝারি নমুনা (λ=৫)</span>
+                        </button>
+                        <button class="example-btn" data-example="large">
+                            <span data-en="Large Sample (λ=10)" data-bন="বড় নমুনা (λ=১০)">বড় নমুনা (λ=১০)</span>
+                        </button>
+                        <button class="example-btn" data-example="zeros">
+                            <span data-en="Zero-inflated" data-bন="জিরো-ইনফ্লেটেড">জিরো-ইনফ্লেটেড</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Preview -->
+                <div class="data-display" id="dataPreview">
+                    <div style="color: var(--gray); text-align: center;">
+                        <span data-en="No data entered yet" data-bন="এখনো কোনো ডেটা ইনপুট হয়নি">এখনো কোনো ডেটা ইনপুট হয়নি</span>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn estimate-btn" id="estimateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Estimate λ" data-bন="λ এস্টিমেট করুন">λ এস্টিমেট করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Estimation Results" data-bন="এস্টিমেশন ফলাফল">এস্টিমেশন ফলাফল</span>
+                </h2>
+                
+                <!-- Estimation Results -->
+                <div class="estimation-results">
+                    <div class="result-card mle">
+                        <div class="result-label">
+                            <i class="fas fa-bullseye"></i>
+                            <span data-en="MLE Estimate" data-bন="MLE এস্টিমেট">MLE এস্টিমেট</span>
+                        </div>
+                        <div class="result-value" id="mleEstimate">-</div>
+                        <div class="help-text" data-en="Maximum Likelihood Estimator" data-bন="ম্যাক্সিমাম লাইকলিহুড এস্টিমেটর">
+                            ম্যাক্সিমাম লাইকলিহুড এস্টিমেটর
+                        </div>
+                        <div class="result-formula" id="mleFormula">λ̂ = (Σxᵢ)/n</div>
+                    </div>
+                    
+                    <div class="result-card ci">
+                        <div class="result-label">
+                            <i class="fas fa-ruler-combined"></i>
+                            <span data-en="95% CI" data-bন="৯৫% CI">৯৫% CI</span>
+                        </div>
+                        <div class="result-value" id="ciEstimate">-</div>
+                        <div class="help-text" data-en="Confidence Interval" data-bন="কনফিডেন্স ইন্টারভ্যাল">
+                            কনফিডেন্স ইন্টারভ্যাল
+                        </div>
+                        <div class="result-formula" id="ciFormula">λ̂ ± 1.96√(λ̂/n)</div>
+                    </div>
+                    
+                    <div class="result-card bayesian">
+                        <div class="result-label">
+                            <i class="fas fa-chart-pie"></i>
+                            <span data-en="Bayesian Mean" data-bন="বেইজিয়ান গড়">বেইজিয়ান গড়</span>
+                        </div>
+                        <div class="result-value" id="bayesianEstimate">-</div>
+                        <div class="help-text" data-en="Posterior Mean (Gamma prior)" data-bন="পোস্টেরিয়র গড় (গামা প্রায়র)">
+                            পোস্টেরিয়র গড় (গামা প্রায়র)
+                        </div>
+                        <div class="result-formula" id="bayesianFormula">(α+Σxᵢ)/(β+n)</div>
+                    </div>
+                </div>
+                
+                <!-- Data Statistics -->
+                <h3 class="section-title" style="font-size: 1.1rem; margin-top: 1.5rem;">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Data Statistics" data-bন="ডেটা পরিসংখ্যান">ডেটা পরিসংখ্যান</span>
+                </h3>
+                
+                <div class="statistics-grid">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Size" data-bন="নমুনা আকার">নমুনা আকার</div>
+                        <div class="stat-value" id="statSize">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Mean" data-bন="নমুনা গড়">নমুনা গড়</div>
+                        <div class="stat-value" id="statMean">0.00</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Variance" data-bন="নমুনা ভ্যারিয়েন্স">নমুনা ভ্যারিয়েন্স</div>
+                        <div class="stat-value" id="statVariance">0.00</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Zero Count" data-bন="জিরো কাউন্ট">জিরো কাউন্ট</div>
+                        <div class="stat-value" id="statZeros">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Panel -->
+        <div class="visualization-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Estimation Visualization" data-bন="এস্টিমেশন ভিজ্যুয়ালাইজেশন">এস্টিমেশন ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="visualization-container">
+                <canvas id="visualizationCanvas"></canvas>
+            </div>
+            
+            <div class="help-text" data-en="Shows likelihood function, confidence intervals, and posterior distribution" data-bন="লাইকলিহুড ফাংশন, কনফিডেন্স ইন্টারভ্যাল এবং পোস্টেরিয়র ডিস্ট্রিবিউশন দেখায়">
+                লাইকলিহুড ফাংশন, কনফিডেন্স ইন্টারভ্যাল এবং পোস্টেরিয়র ডিস্ট্রিবিউশন দেখায়
+            </div>
+        </div>
+
+        <!-- Confidence Interval Details -->
+        <div class="ci-details">
+            <h2 class="section-title">
+                <i class="fas fa-ruler"></i>
+                <span data-en="Confidence Interval Methods" data-bন="কনফিডেন্স ইন্টারভ্যাল পদ্ধতি">কনফিডেন্স ইন্টারভ্যাল পদ্ধতি</span>
+            </h2>
+            
+            <div class="ci-methods">
+                <div class="ci-method">
+                    <div class="ci-title">
+                        <i class="fas fa-walking"></i>
+                        <span data-en="Normal Approximation" data-bন="নরমাল অ্যাপ্রক্সিমেশন">নরমাল অ্যাপ্রক্সিমেশন</span>
+                    </div>
+                    <div class="ci-formula">
+                        λ̂ ± z<sub>α/2</sub>√(λ̂/n)
+                    </div>
+                    <div class="help-text" data-en="For large samples (n > 30)" data-bন="বড় নমুনার জন্য (n > ৩০)">
+                        বড় নমুনার জন্য (n > ৩০)
+                    </div>
+                </div>
+                
+                <div class="ci-method">
+                    <div class="ci-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Exact Method" data-bন="এক্স্যাক্ট পদ্ধতি">এক্স্যাক্ট পদ্ধতি</span>
+                    </div>
+                    <div class="ci-formula">
+                        [χ²(α/2, 2Σx)/2n, χ²(1-α/2, 2(Σx+1))/2n]
+                    </div>
+                    <div class="help-text" data-en="Uses chi-square distribution" data-bন="চি-স্কয়ার ডিস্ট্রিবিউশন ব্যবহার করে">
+                        চি-স্কয়ার ডিস্ট্রিবিউশন ব্যবহার করে
+                    </div>
+                </div>
+                
+                <div class="ci-method">
+                    <div class="ci-title">
+                        <i class="fas fa-adjust"></i>
+                        <span data-en="Score Interval" data-bন="স্কোর ইন্টারভ্যাল">স্কোর ইন্টারভ্যাল</span>
+                    </div>
+                    <div class="ci-formula">
+                        [λ̂ + z²/2n ± z√(λ̂/n + z²/4n²)] / (1 + z²/n)
+                    </div>
+                    <div class="help-text" data-en="Better for small samples" data-bন="ছোট নমুনার জন্য ভাল">
+                        ছোট নমুনার জন্য ভাল
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bayesian Details -->
+        <div class="bayesian-details">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Bayesian Estimation" data-bন="বেইজিয়ান এস্টিমেশন">বেইজিয়ান এস্টিমেশন</span>
+            </h2>
+            
+            <div class="prior-selection">
+                <button class="prior-btn active" data-prior="gamma">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Gamma Prior" data-bন="গামা প্রায়র">গামা প্রায়র</span>
+                    <small data-en="Conjugate prior" data-bন="কনজুগেট প্রায়র">কনজুগেট প্রায়র</small>
+                </button>
+                
+                <button class="prior-btn" data-prior="jeffreys">
+                    <i class="fas fa-compass"></i>
+                    <span data-en="Jeffreys Prior" data-bন="জেফ্রিস প্রায়র">জেফ্রিস প্রায়র</span>
+                    <small data-en="Non-informative" data-bন="নন-ইনফর্মেটিভ">নন-ইনফর্মেটিভ</small>
+                </button>
+                
+                <button class="prior-btn" data-prior="uniform">
+                    <i class="fas fa-square"></i>
+                    <span data-en="Uniform Prior" data-bন="ইউনিফর্ম প্রায়র">ইউনিফর্ম প্রায়র</span>
+                    <small data-en="Flat prior" data-bন="ফ্ল্যাট প্রায়র">ফ্ল্যাট প্রায়র</small>
+                </button>
+            </div>
+            
+            <div class="posterior-container">
+                <h3 style="color: var(--bayesian-color); margin-bottom: 1rem;">
+                    <i class="fas fa-chart-pie"></i>
+                    <span data-en="Posterior Distribution" data-bন="পোস্টেরিয়র ডিস্ট্রিবিউশন">পোস্টেরিয়র ডিস্ট্রিবিউশন</span>
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <div class="stat-label" data-en="Posterior Mean" data-bন="পোস্টেরিয়র গড়">পোস্টেরিয়র গড়</div>
+                        <div class="stat-value" id="posteriorMean">-</div>
+                    </div>
+                    
+                    <div>
+                        <div class="stat-label" data-en="Posterior Mode" data-bন="পোস্টেরিয়র মোড">পোস্টেরিয়র মোড</div>
+                        <div class="stat-value" id="posteriorMode">-</div>
+                    </div>
+                    
+                    <div>
+                        <div class="stat-label" data-en="Posterior SD" data-bন="পোস্টেরিয়র SD">পোস্টেরিয়র SD</div>
+                        <div class="stat-value" id="posteriorSD">-</div>
+                    </div>
+                </div>
+                
+                <div class="help-text" style="margin-top: 1rem;">
+                    <span data-en="Gamma(α, β) prior ⇒ Gamma(α+Σxᵢ, β+n) posterior" data-bন="Gamma(α, β) প্রায়র ⇒ Gamma(α+Σxᵢ, β+n) পোস্টেরিয়র">
+                        Gamma(α, β) প্রায়র ⇒ Gamma(α+Σxᵢ, β+n) পোস্টেরিয়র
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Lambda Estimation Tool Loaded");
+            
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Estimation State
+            let estimationState = {
+                inputMethod: 'manual',
+                data: [],
+                trueLambda: 5.0,
+                sampleSize: 100,
+                prior: 'gamma',
+                results: {
+                    mle: null,
+                    ci: { lower: null, upper: null },
+                    bayesian: null,
+                    posterior: { mean: null, mode: null, sd: null }
+                },
+                statistics: {
+                    size: 0,
+                    mean: 0,
+                    variance: 0,
+                    zeros: 0
+                }
+            };
+
+            // DOM Elements
+            const methodBtns = document.querySelectorAll('.method-btn');
+            const manualInput = document.getElementById('manualInput');
+            const generateInput = document.getElementById('generateInput');
+            const fileInput = document.getElementById('fileInput');
+            const dataInput = document.getElementById('dataInput');
+            const trueLambdaInput = document.getElementById('trueLambda');
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const generateDataBtn = document.getElementById('generateDataBtn');
+            const fileUpload = document.getElementById('fileUpload');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            const dataPreview = document.getElementById('dataPreview');
+            const estimateBtn = document.getElementById('estimateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            // Results Elements
+            const mleEstimateEl = document.getElementById('mleEstimate');
+            const mleFormulaEl = document.getElementById('mleFormula');
+            const ciEstimateEl = document.getElementById('ciEstimate');
+            const ciFormulaEl = document.getElementById('ciFormula');
+            const bayesianEstimateEl = document.getElementById('bayesianEstimate');
+            const bayesianFormulaEl = document.getElementById('bayesianFormula');
+            
+            // Statistics Elements
+            const statSizeEl = document.getElementById('statSize');
+            const statMeanEl = document.getElementById('statMean');
+            const statVarianceEl = document.getElementById('statVariance');
+            const statZerosEl = document.getElementById('statZeros');
+            
+            // Bayesian Elements
+            const priorBtns = document.querySelectorAll('.prior-btn');
+            const posteriorMeanEl = document.getElementById('posteriorMean');
+            const posteriorModeEl = document.getElementById('posteriorMode');
+            const posteriorSDEl = document.getElementById('posteriorSD');
+            
+            // Visualization
+            const visualizationCanvas = document.getElementById('visualizationCanvas');
+            let visualizationCtx;
+            
+            // Initialize
+            initEstimator();
+            
+            function initEstimator() {
+                console.log("Initializing Estimator...");
+                
+                // Initialize Canvas Context
+                visualizationCtx = visualizationCanvas.getContext('2d');
+                
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        console.log("Changing language to:", lang);
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Input Method Selection
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        console.log("Changing input method to:", method);
+                        setInputMethod(method);
+                    });
+                });
+                
+                // Generate Data Button
+                generateDataBtn.addEventListener('click', generateRandomData);
+                
+                // File Upload
+                fileUpload.addEventListener('change', handleFileUpload);
+                
+                // Example Buttons
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        console.log("Loading example:", example);
+                        loadExample(example);
+                    });
+                });
+                
+                // Data Input Events
+                dataInput.addEventListener('input', updateDataPreview);
+                trueLambdaInput.addEventListener('input', updateTrueLambda);
+                sampleSizeInput.addEventListener('input', updateSampleSize);
+                
+                // Control Buttons
+                estimateBtn.addEventListener('click', estimateLambda);
+                clearBtn.addEventListener('click', clearAll);
+                
+                // Prior Selection
+                priorBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const prior = this.dataset.prior;
+                        console.log("Changing prior to:", prior);
+                        setPrior(prior);
+                        if (estimationState.data.length > 0) {
+                            estimateLambda();
+                        }
+                    });
+                });
+                
+                // Initialize canvas
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                
+                // Load default example
+                setTimeout(() => {
+                    loadExample('medium');
+                }, 500);
+                
+                console.log("Initialization complete!");
+            }
+            
+            function resizeCanvas() {
+                console.log("Resizing canvas...");
+                
+                const container = document.querySelector('.visualization-container');
+                if (!container) {
+                    console.error("Container not found!");
+                    return;
+                }
+                
+                visualizationCanvas.width = container.clientWidth;
+                visualizationCanvas.height = container.clientHeight;
+                
+                console.log("Canvas resized to:", visualizationCanvas.width, "x", visualizationCanvas.height);
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+                
+                // Update formulas
+                updateFormulas();
+                
+                console.log("Language changed to:", lang);
+            }
+            
+            function setInputMethod(method) {
+                estimationState.inputMethod = method;
+                
+                // Update active button
+                methodBtns.forEach(btn => {
+                    if (btn.dataset.method === method) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Show/hide input areas
+                manualInput.style.display = method === 'manual' ? 'block' : 'none';
+                generateInput.style.display = method === 'generate' ? 'block' : 'none';
+                fileInput.style.display = method === 'file' ? 'block' : 'none';
+                
+                console.log("Input method changed to:", method);
+            }
+            
+            function updateTrueLambda() {
+                let value = parseFloat(trueLambdaInput.value);
+                if (isNaN(value) || value < 0.1) value = 0.1;
+                if (value > 20) value = 20;
+                estimationState.trueLambda = value;
+                trueLambdaInput.value = value.toFixed(1);
+                console.log("True lambda updated to:", value);
+            }
+            
+            function updateSampleSize() {
+                let value = parseInt(sampleSizeInput.value);
+                if (isNaN(value) || value < 10) value = 10;
+                if (value > 1000) value = 1000;
+                estimationState.sampleSize = value;
+                sampleSizeInput.value = value;
+                console.log("Sample size updated to:", value);
+            }
+            
+            function setPrior(prior) {
+                estimationState.prior = prior;
+                
+                // Update active button
+                priorBtns.forEach(btn => {
+                    if (btn.dataset.prior === prior) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                console.log("Prior changed to:", prior);
+            }
+            
+            function parseInputData(input) {
+                console.log("Parsing input data...");
+                
+                // Remove any non-numeric characters except commas, spaces, and dots
+                const cleanedInput = input.replace(/[^\d\s,.-]/g, '');
+                
+                // Split by commas or spaces
+                const tokens = cleanedInput.split(/[,\s]+/).filter(token => token.trim() !== '');
+                
+                // Parse numbers
+                const data = [];
+                for (const token of tokens) {
+                    const num = parseFloat(token);
+                    if (!isNaN(num) && num >= 0) {
+                        data.push(Math.round(num)); // Poisson counts should be integers
+                    }
+                }
+                
+                console.log("Parsed", data.length, "data points");
+                return data;
+            }
+            
+            function updateDataPreview() {
+                const data = parseInputData(dataInput.value);
+                estimationState.data = data;
+                displayDataPreview(data);
+                updateStatistics(data);
+            }
+            
+            function displayDataPreview(data) {
+                console.log("Updating data preview...");
+                dataPreview.innerHTML = '';
+                
+                if (data.length === 0) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.style.color = '#718096';
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.textContent = currentLanguage === 'bn' 
+                        ? 'কোন ডেটা নেই' 
+                        : 'No data';
+                    dataPreview.appendChild(emptyMsg);
+                    return;
+                }
+                
+                // Show first 50 data points
+                const displayData = data.slice(0, 50);
+                
+                displayData.forEach((value, index) => {
+                    const dataPoint = document.createElement('span');
+                    dataPoint.className = 'data-point';
+                    dataPoint.textContent = value;
+                    dataPoint.title = currentLanguage === 'bn' 
+                        ? `ডেটা পয়েন্ট ${index + 1}: ${value}` 
+                        : `Data point ${index + 1}: ${value}`;
+                    dataPreview.appendChild(dataPoint);
+                });
+                
+                if (data.length > 50) {
+                    const moreMsg = document.createElement('div');
+                    moreMsg.style.textAlign = 'center';
+                    moreMsg.style.marginTop = '0.5rem';
+                    moreMsg.style.color = '#718096';
+                    moreMsg.textContent = currentLanguage === 'bn'
+                        ? `... আরও ${data.length - 50} ডেটা পয়েন্ট`
+                        : `... ${data.length - 50} more data points`;
+                    dataPreview.appendChild(moreMsg);
+                }
+            }
+            
+            function generateRandomData() {
+                console.log("Generating random Poisson data...");
+                
+                const lambda = estimationState.trueLambda;
+                const n = estimationState.sampleSize;
+                const data = [];
+                
+                // Generate Poisson random variables
+                for (let i = 0; i < n; i++) {
+                    // Using Knuth's algorithm
+                    const L = Math.exp(-lambda);
+                    let k = 0;
+                    let p = 1;
+                    
+                    do {
+                        k++;
+                        p *= Math.random();
+                    } while (p > L);
+                    
+                    data.push(k - 1);
+                }
+                
+                // Update input field
+                dataInput.value = data.join(', ');
+                
+                // Update state and preview
+                estimationState.data = data;
+                displayDataPreview(data);
+                updateStatistics(data);
+                
+                console.log(`Generated ${n} Poisson(λ=${lambda}) samples`);
+            }
+            
+            async function handleFileUpload(event) {
+                console.log("Handling file upload...");
+                
+                const file = event.target.files[0];
+                if (!file) {
+                    console.log("No file selected");
+                    return;
+                }
+                
+                try {
+                    const text = await file.text();
+                    console.log("File content loaded, length:", text.length);
+                    
+                    // Parse the text as data
+                    const data = parseInputData(text);
+                    
+                    if (data.length === 0) {
+                        alert(currentLanguage === 'bn' 
+                            ? 'ফাইলে কোনো বৈধ সংখ্যা পাওয়া যায়নি।' 
+                            : 'No valid numbers found in file.');
+                        return;
+                    }
+                    
+                    // Update input field
+                    dataInput.value = data.join(', ');
+                    
+                    // Update state and preview
+                    estimationState.data = data;
+                    displayDataPreview(data);
+                    updateStatistics(data);
+                    
+                    console.log(`Loaded ${data.length} data points from file`);
+                    
+                } catch (error) {
+                    console.error("File upload error:", error);
+                    alert(currentLanguage === 'bn' 
+                        ? 'ফাইল পড়তে ত্রুটি হয়েছে।' 
+                        : 'Error reading file.');
+                }
+            }
+            
+            function loadExample(example) {
+                console.log("Loading example:", example);
+                
+                let data;
+                
+                switch(example) {
+                    case 'small':
+                        // Small sample with λ=3
+                        data = [2, 3, 1, 4, 3, 2, 3, 1, 5, 2];
+                        break;
+                    case 'medium':
+                        // Medium sample with λ=5
+                        data = [5, 4, 6, 3, 7, 5, 4, 6, 5, 3, 4, 6, 5, 7, 4, 5, 6, 4, 3, 5];
+                        break;
+                    case 'large':
+                        // Large sample with λ=10
+                        data = Array.from({length: 50}, () => {
+                            const L = Math.exp(-10);
+                            let k = 0;
+                            let p = 1;
+                            do {
+                                k++;
+                                p *= Math.random();
+                            } while (p > L);
+                            return k - 1;
+                        });
+                        break;
+                    case 'zeros':
+                        // Zero-inflated data
+                        data = [0, 0, 1, 0, 2, 0, 0, 1, 0, 3, 0, 0, 1, 0, 0, 2, 0, 1, 0, 0];
+                        break;
+                }
+                
+                // Update input field
+                dataInput.value = data.join(', ');
+                
+                // Update state and preview
+                estimationState.data = data;
+                displayDataPreview(data);
+                updateStatistics(data);
+                
+                console.log(`Loaded ${data.length} data points for ${example} example`);
+            }
+            
+            function updateStatistics(data) {
+                console.log("Updating statistics...");
+                
+                if (data.length === 0) {
+                    estimationState.statistics = {
+                        size: 0,
+                        mean: 0,
+                        variance: 0,
+                        zeros: 0
+                    };
+                    updateStatisticsDisplay();
+                    return;
+                }
+                
+                const n = data.length;
+                const sum = data.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                // Calculate variance
+                const sumSquaredDiff = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0);
+                const variance = sumSquaredDiff / n;
+                
+                // Count zeros
+                const zeros = data.filter(x => x === 0).length;
+                
+                estimationState.statistics = {
+                    size: n,
+                    mean: mean,
+                    variance: variance,
+                    zeros: zeros
+                };
+                
+                updateStatisticsDisplay();
+                console.log("Statistics updated:", estimationState.statistics);
+            }
+            
+            function updateStatisticsDisplay() {
+                const stats = estimationState.statistics;
+                
+                statSizeEl.textContent = stats.size;
+                statMeanEl.textContent = stats.mean.toFixed(2);
+                statVarianceEl.textContent = stats.variance.toFixed(2);
+                statZerosEl.textContent = stats.zeros;
+            }
+            
+            function updateFormulas() {
+                // These formulas are static, but we can update them based on language if needed
+                mleFormulaEl.textContent = currentLanguage === 'bn' 
+                    ? 'λ̂ = (Σxᵢ)/n'
+                    : 'λ̂ = (Σxᵢ)/n';
+                
+                ciFormulaEl.textContent = currentLanguage === 'bn' 
+                    ? 'λ̂ ± 1.96√(λ̂/n)'
+                    : 'λ̂ ± 1.96√(λ̂/n)';
+                
+                bayesianFormulaEl.textContent = currentLanguage === 'bn' 
+                    ? '(α+Σxᵢ)/(β+n)'
+                    : '(α+Σxᵢ)/(β+n)';
+            }
+            
+            function estimateLambda() {
+                console.log("Starting lambda estimation...");
+                
+                const data = estimationState.data;
+                if (data.length === 0) {
+                    alert(currentLanguage === 'bn' 
+                        ? 'প্রথমে কিছু ডেটা ইনপুট করুন।' 
+                        : 'Please input some data first.');
+                    return;
+                }
+                
+                // Show loading state
+                estimateBtn.innerHTML = `<span class="loading"></span> ${currentLanguage === 'bn' ? 'এস্টিমেট হচ্ছে...' : 'Estimating...'}`;
+                estimateBtn.disabled = true;
+                
+                setTimeout(() => {
+                    try {
+                        console.log("Estimating with", data.length, "data points");
+                        
+                        // Calculate MLE
+                        const mle = calculateMLE(data);
+                        
+                        // Calculate Confidence Interval
+                        const ci = calculateConfidenceInterval(data, mle);
+                        
+                        // Calculate Bayesian estimate
+                        const bayesian = calculateBayesianEstimate(data);
+                        
+                        // Update results
+                        estimationState.results = {
+                            mle: mle,
+                            ci: ci,
+                            bayesian: bayesian.mean,
+                            posterior: bayesian
+                        };
+                        
+                        // Update displays
+                        updateResultsDisplay();
+                        visualizeResults();
+                        
+                        console.log("Estimation complete:", estimationState.results);
+                        
+                    } catch (error) {
+                        console.error('Estimation error:', error);
+                        alert(currentLanguage === 'bn' 
+                            ? 'এস্টিমেশনে ত্রুটি হয়েছে।' 
+                            : 'Error in estimation.');
+                    } finally {
+                        // Restore button state
+                        estimateBtn.innerHTML = `<i class="fas fa-calculator"></i> ${currentLanguage === 'bn' ? 'λ এস্টিমেট করুন' : 'Estimate λ'}`;
+                        estimateBtn.disabled = false;
+                    }
+                }, 100);
+            }
+            
+            function calculateMLE(data) {
+                console.log("Calculating MLE...");
+                // MLE for Poisson is sample mean
+                const n = data.length;
+                const sum = data.reduce((a, b) => a + b, 0);
+                const mle = sum / n;
+                
+                console.log("MLE:", mle);
+                return mle;
+            }
+            
+            function calculateConfidenceInterval(data, mle) {
+                console.log("Calculating confidence interval...");
+                const n = data.length;
+                const alpha = 0.05; // 95% CI
+                const z = 1.96; // z-score for 95% CI
+                
+                // Normal approximation CI
+                const se = Math.sqrt(mle / n);
+                const lower = Math.max(0, mle - z * se);
+                const upper = mle + z * se;
+                
+                console.log("CI: [", lower, ",", upper, "]");
+                return { lower: lower, upper: upper };
+            }
+            
+            function calculateBayesianEstimate(data) {
+                console.log("Calculating Bayesian estimate...");
+                const prior = estimationState.prior;
+                const n = data.length;
+                const sum = data.reduce((a, b) => a + b, 0);
+                
+                let alpha, beta;
+                
+                switch(prior) {
+                    case 'gamma':
+                        // Gamma(2, 0.5) prior - informative
+                        alpha = 2;
+                        beta = 0.5;
+                        break;
+                    case 'jeffreys':
+                        // Jeffreys prior: Gamma(0.5, 0)
+                        alpha = 0.5;
+                        beta = 0;
+                        break;
+                    case 'uniform':
+                        // Uniform prior: Gamma(1, 0)
+                        alpha = 1;
+                        beta = 0;
+                        break;
+                }
+                
+                // Posterior parameters
+                const postAlpha = alpha + sum;
+                const postBeta = beta + n;
+                
+                // Posterior statistics
+                const postMean = postAlpha / postBeta;
+                const postMode = (postAlpha - 1) / postBeta;
+                const postSD = Math.sqrt(postAlpha) / postBeta;
+                
+                console.log("Bayesian estimate - Mean:", postMean, "Mode:", postMode, "SD:", postSD);
+                
+                return {
+                    mean: postMean,
+                    mode: postMode,
+                    sd: postSD,
+                    alpha: postAlpha,
+                    beta: postBeta
+                };
+            }
+            
+            function updateResultsDisplay() {
+                const results = estimationState.results;
+                
+                // MLE
+                mleEstimateEl.textContent = results.mle.toFixed(4);
+                mleEstimateEl.classList.add('pulse');
+                setTimeout(() => mleEstimateEl.classList.remove('pulse'), 1000);
+                
+                // Confidence Interval
+                ciEstimateEl.textContent = `[${results.ci.lower.toFixed(4)}, ${results.ci.upper.toFixed(4)}]`;
+                ciEstimateEl.classList.add('pulse');
+                setTimeout(() => ciEstimateEl.classList.remove('pulse'), 1000);
+                
+                // Bayesian
+                bayesianEstimateEl.textContent = results.bayesian.toFixed(4);
+                bayesianEstimateEl.classList.add('pulse');
+                setTimeout(() => bayesianEstimateEl.classList.remove('pulse'), 1000);
+                
+                // Posterior statistics
+                posteriorMeanEl.textContent = results.posterior.mean.toFixed(4);
+                posteriorModeEl.textContent = results.posterior.mode.toFixed(4);
+                posteriorSDEl.textContent = results.posterior.sd.toFixed(4);
+            }
+            
+            function visualizeResults() {
+                console.log("Visualizing results...");
+                const ctx = visualizationCtx;
+                ctx.clearRect(0, 0, visualizationCanvas.width, visualizationCanvas.height);
+                
+                const { results, statistics } = estimationState;
+                const data = estimationState.data;
+                
+                if (data.length === 0) {
+                    console.log("No data to visualize");
+                    return;
+                }
+                
+                const margin = 50;
+                const plotWidth = visualizationCanvas.width - 2 * margin;
+                const plotHeight = visualizationCanvas.height - 2 * margin;
+                
+                // Find range for visualization
+                const lambdaRange = Math.max(10, results.mle * 3);
+                const maxLambda = Math.min(50, lambdaRange);
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, margin + plotHeight);
+                ctx.lineTo(margin + plotWidth, margin + plotHeight);
+                ctx.strokeStyle = '#2D3748';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw MLE point
+                const mleX = margin + (results.mle / maxLambda) * plotWidth;
+                ctx.beginPath();
+                ctx.arc(mleX, margin + plotHeight - 20, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(33, 150, 243, 0.8)';
+                ctx.fill();
+                ctx.strokeStyle = '#1976D2';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw CI interval
+                const ciLowerX = margin + (results.ci.lower / maxLambda) * plotWidth;
+                const ciUpperX = margin + (results.ci.upper / maxLambda) * plotWidth;
+                
+                ctx.beginPath();
+                ctx.moveTo(ciLowerX, margin + plotHeight - 40);
+                ctx.lineTo(ciUpperX, margin + plotHeight - 40);
+                ctx.strokeStyle = 'rgba(76, 175, 80, 0.8)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                
+                // Draw CI ends
+                ctx.beginPath();
+                ctx.moveTo(ciLowerX, margin + plotHeight - 50);
+                ctx.lineTo(ciLowerX, margin + plotHeight - 30);
+                ctx.moveTo(ciUpperX, margin + plotHeight - 50);
+                ctx.lineTo(ciUpperX, margin + plotHeight - 30);
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw posterior distribution
+                const posterior = results.posterior;
+                if (posterior.alpha > 0 && posterior.beta > 0) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(255, 152, 0, 0.8)';
+                    ctx.lineWidth = 2;
+                    
+                    // Draw Gamma PDF
+                    const gammaPoints = 100;
+                    let maxDensity = 0;
+                    const densities = [];
+                    
+                    for (let i = 0; i <= gammaPoints; i++) {
+                        const lambda = (i / gammaPoints) * maxLambda;
+                        // Gamma PDF: f(λ) = (β^α / Γ(α)) * λ^(α-1) * e^(-βλ)
+                        const density = Math.pow(posterior.beta, posterior.alpha) / gamma(posterior.alpha) *
+                                       Math.pow(lambda, posterior.alpha - 1) *
+                                       Math.exp(-posterior.beta * lambda);
+                        densities.push({ lambda: lambda, density: density });
+                        if (density > maxDensity) maxDensity = density;
+                    }
+                    
+                    // Scale for visualization
+                    const scale = (plotHeight * 0.6) / maxDensity;
+                    
+                    for (let i = 0; i < densities.length; i++) {
+                        const x = margin + (densities[i].lambda / maxLambda) * plotWidth;
+                        const y = margin + plotHeight - (densities[i].density * scale);
+                        
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                
+                // Draw likelihood function
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(156, 39, 176, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
+                
+                const likelihoodPoints = 100;
+                let maxLikelihood = 0;
+                const likelihoods = [];
+                
+                for (let i = 0; i <= likelihoodPoints; i++) {
+                    const lambda = (i / likelihoodPoints) * maxLambda;
+                    // Log-likelihood: L(λ) = Σ[x_i * log(λ) - λ - log(x_i!)]
+                    // For visualization, we use relative likelihood
+                    const logLikelihood = data.reduce((sum, x) => sum + x * Math.log(lambda) - lambda, 0);
+                    const likelihood = Math.exp(logLikelihood);
+                    likelihoods.push({ lambda: lambda, likelihood: likelihood });
+                    if (likelihood > maxLikelihood) maxLikelihood = likelihood;
+                }
+                
+                // Scale for visualization
+                const likelihoodScale = (plotHeight * 0.4) / maxLikelihood;
+                
+                for (let i = 0; i < likelihoods.length; i++) {
+                    const x = margin + (likelihoods[i].lambda / maxLambda) * plotWidth;
+                    const y = margin + plotHeight - (likelihoods[i].likelihood * likelihoodScale);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw labels
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                
+                // X-axis labels
+                for (let i = 0; i <= 5; i++) {
+                    const lambda = (i / 5) * maxLambda;
+                    const x = margin + (lambda / maxLambda) * plotWidth;
+                    ctx.fillText(lambda.toFixed(1), x, margin + plotHeight + 15);
+                }
+                
+                // Y-axis label
+                ctx.save();
+                ctx.translate(20, margin + plotHeight / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText(currentLanguage === 'bn' ? 'ঘনত্ব/সম্ভাবনা' : 'Density/Probability', 0, 0);
+                ctx.restore();
+                
+                // X-axis label
+                ctx.fillText(currentLanguage === 'bn' ? 'λ মান' : 'λ Value', margin + plotWidth / 2, margin + plotHeight + 30);
+                
+                // Legend
+                const legendX = margin + plotWidth - 180;
+                const legendY = margin + 10;
+                
+                // MLE legend
+                ctx.beginPath();
+                ctx.arc(legendX, legendY + 8, 6, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(33, 150, 243, 0.8)';
+                ctx.fill();
+                ctx.strokeStyle = '#1976D2';
+                ctx.stroke();
+                ctx.fillStyle = '#2D3748';
+                ctx.fillText('MLE', legendX + 20, legendY + 12);
+                
+                // CI legend
+                ctx.beginPath();
+                ctx.moveTo(legendX, legendY + 28);
+                ctx.lineTo(legendX + 20, legendY + 28);
+                ctx.strokeStyle = 'rgba(76, 175, 80, 0.8)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.fillStyle = '#2D3748';
+                ctx.fillText('95% CI', legendX + 30, legendY + 32);
+                
+                // Posterior legend
+                ctx.beginPath();
+                ctx.moveTo(legendX, legendY + 48);
+                ctx.lineTo(legendX + 20, legendY + 48);
+                ctx.strokeStyle = 'rgba(255, 152, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#2D3748';
+                ctx.fillText(currentLanguage === 'bn' ? 'পোস্টেরিয়র' : 'Posterior', legendX + 35, legendY + 52);
+                
+                // Likelihood legend
+                ctx.setLineDash([5, 3]);
+                ctx.beginPath();
+                ctx.moveTo(legendX, legendY + 68);
+                ctx.lineTo(legendX + 20, legendY + 68);
+                ctx.strokeStyle = 'rgba(156, 39, 176, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#2D3748';
+                ctx.fillText(currentLanguage === 'bn' ? 'লাইকলিহুড' : 'Likelihood', legendX + 40, legendY + 72);
+                
+                // Title
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' 
+                        ? `λ এস্টিমেশন (n=${statistics.size})`
+                        : `λ Estimation (n=${statistics.size})`,
+                    margin + plotWidth / 2,
+                    margin - 10
+                );
+                
+                console.log("Visualization complete");
+            }
+            
+            function gamma(x) {
+                // Stirling's approximation for factorial/gamma function
+                if (x === 0) return Infinity;
+                if (x === 1) return 1;
+                
+                const n = Math.floor(x);
+                if (n === x) {
+                    // Integer - use factorial
+                    let result = 1;
+                    for (let i = 2; i < n; i++) {
+                        result *= i;
+                    }
+                    return result;
+                } else {
+                    // Non-integer - use approximation
+                    return Math.sqrt(2 * Math.PI / x) * Math.pow(x / Math.E, x);
+                }
+            }
+            
+            function clearAll() {
+                console.log("Clearing all data...");
+                
+                // Clear input fields
+                dataInput.value = '';
+                trueLambdaInput.value = '5.0';
+                sampleSizeInput.value = '100';
+                fileUpload.value = '';
+                
+                // Clear state
+                estimationState.data = [];
+                estimationState.results = {
+                    mle: null,
+                    ci: { lower: null, upper: null },
+                    bayesian: null,
+                    posterior: { mean: null, mode: null, sd: null }
+                };
+                estimationState.statistics = {
+                    size: 0,
+                    mean: 0,
+                    variance: 0,
+                    zeros: 0
+                };
+                
+                // Reset to manual input
+                setInputMethod('manual');
+                
+                // Clear displays
+                displayDataPreview([]);
+                updateStatisticsDisplay();
+                
+                // Clear results
+                mleEstimateEl.textContent = '-';
+                ciEstimateEl.textContent = '-';
+                bayesianEstimateEl.textContent = '-';
+                posteriorMeanEl.textContent = '-';
+                posteriorModeEl.textContent = '-';
+                posteriorSDEl.textContent = '-';
+                
+                // Clear visualization
+                visualizationCtx.clearRect(0, 0, visualizationCanvas.width, visualizationCanvas.height);
+                
+                console.log("All cleared");
+            }
+            
+            console.log("Lambda Estimation Tool ready!");
+        });
+    </script>
+</body>
+</html>

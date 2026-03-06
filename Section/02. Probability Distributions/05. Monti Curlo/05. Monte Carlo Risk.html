@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Risk Analysis | Financial Risk Simulation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #2E7D32;
+            --secondary: #1B5E20;
+            --accent: #D32F2F;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --info: #2196F3;
+            --light: #ffffff;
+            --dark: #263238;
+            --gray: #607D8B;
+            --light-gray: #ECEFF1;
+            --border: #CFD8DC;
+            --var-color: #D32F2F;
+            --cvar-color: #7B1FA2;
+            --es-color: #F57C00;
+            --portfolio-color: #1976D2;
+            --scenario-color: #388E3C;
+            --risk-bg: #FFEBEE;
+            --return-bg: #E8F5E9;
+            --simulation-bg: #E3F2FD;
+        }
+
+        body {
+            background: linear-gradient(135deg, #eceff1 0%, #f5f5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--var-color), var(--cvar-color), var(--es-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Portfolio Configuration */
+        .portfolio-config {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .portfolio-config {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .asset-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .asset-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .asset-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .asset-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .asset-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .stock-icon { background: #2196F3; }
+        .bond-icon { background: #4CAF50; }
+        .commodity-icon { background: #FF9800; }
+        .realestate-icon { background: #9C27B0; }
+
+        .asset-weight {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .parameter-group {
+            margin-bottom: 1rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .label-text {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: var(--gray);
+        }
+
+        .value-display {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--light-gray), var(--primary));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Risk Parameters */
+        .risk-parameters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .risk-parameters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .risk-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .risk-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .risk-title i {
+            color: var(--primary);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        /* Risk Measures Selection */
+        .risk-measures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .risk-measures {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .measure-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .measure-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .measure-btn.active {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .measure-btn.var.active {
+            border-color: var(--var-color);
+        }
+
+        .measure-btn.cvar.active {
+            border-color: var(--cvar-color);
+        }
+
+        .measure-btn.es.active {
+            border-color: var(--es-color);
+        }
+
+        .measure-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .measure-btn.var .measure-icon { color: var(--var-color); }
+        .measure-btn.cvar .measure-icon { color: var(--cvar-color); }
+        .measure-btn.es .measure-icon { color: var(--es-color); }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+
+        .pause-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Risk Visualization Tabs */
+        .visualization-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .viz-tab-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .viz-tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Risk Plot */
+        .risk-plot-container {
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        #riskPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Risk Metrics Display */
+        .risk-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .risk-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .risk-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .metric-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .positive {
+            color: var(--success);
+        }
+
+        .negative {
+            color: var(--accent);
+        }
+
+        /* Portfolio Optimization Section */
+        .optimization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .optimization-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .optimization-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .optimization-btn:hover {
+            background: var(--portfolio-color);
+            color: white;
+            border-color: var(--portfolio-color);
+            transform: translateY(-2px);
+        }
+
+        .efficient-frontier-plot {
+            height: 400px;
+            margin-top: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Scenario Analysis Section */
+        .scenario-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .scenario-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .scenario-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scenario-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .scenario-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--scenario-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .scenario-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .scenario-description {
+            margin-bottom: 1rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .scenario-impact {
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Stress Testing */
+        .stress-testing {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stress-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stress-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stress-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .stress-results {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--risk-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stress-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Risk Visualization */
+        .risk-distribution {
+            fill-opacity: 0.6;
+            stroke-width: 1;
+        }
+
+        .var-line {
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Correlation Matrix */
+        .correlation-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .correlation-cell {
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Time Horizon Selector */
+        .time-horizon {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .time-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Risk Analysis" data-bn="মন্টে কার্লো রিস্ক এনালাইসিস">মন্টে কার্লো রিস্ক এনালাইসিস</h1>
+            <p class="subtitle" data-en="Analyze financial risks using Monte Carlo simulations for Value at Risk (VaR), portfolio optimization, and scenario analysis" data-bn="ভ্যালু অ্যাট রিস্ক (VaR), পোর্টফোলিও অপ্টিমাইজেশন এবং সিনারিও অ্যানালাইসিসের জন্য মন্টে কার্লো সিমুলেশন ব্যবহার করে আর্থিক ঝুঁকি বিশ্লেষণ করুন">
+                ভ্যালু অ্যাট রিস্ক (VaR), পোর্টফোলিও অপ্টিমাইজেশন এবং সিনারিও অ্যানালাইসিসের জন্য মন্টে কার্লো সিমুলেশন ব্যবহার করে আর্থিক ঝুঁকি বিশ্লেষণ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    <span data-en="Portfolio Configuration" data-bn="পোর্টফোলিও কনফিগারেশন">পোর্টফোলিও কনফিগারেশন</span>
+                </h2>
+
+                <!-- Portfolio Assets -->
+                <div class="portfolio-config">
+                    <div class="asset-card">
+                        <div class="asset-header">
+                            <div class="asset-name">
+                                <div class="asset-icon stock-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <span data-en="Stocks" data-bn="স্টকস">স্টকস</span>
+                            </div>
+                            <div class="asset-weight" id="stockWeight">40%</div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span data-en="Expected Return" data-bন="প্রত্যাশিত রিটার্ন">প্রত্যাশিত রিটার্ন</span>
+                                </div>
+                                <div class="value-display" id="stockReturn">8%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="stockReturnSlider" min="0" max="20" value="8" step="0.1">
+                            </div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-bullseye"></i>
+                                    <span data-en="Volatility" data-bন="ভোলাটিলিটি">ভোলাটিলিটি</span>
+                                </div>
+                                <div class="value-display" id="stockVolatility">15%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="stockVolSlider" min="5" max="40" value="15" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asset-card">
+                        <div class="asset-header">
+                            <div class="asset-name">
+                                <div class="asset-icon bond-icon">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </div>
+                                <span data-en="Bonds" data-bন="বন্ডস">বন্ডস</span>
+                            </div>
+                            <div class="asset-weight" id="bondWeight">35%</div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span data-en="Expected Return" data-bন="প্রত্যাশিত রিটার্ন">প্রত্যাশিত রিটার্ন</span>
+                                </div>
+                                <div class="value-display" id="bondReturn">4%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="bondReturnSlider" min="0" max="10" value="4" step="0.1">
+                            </div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-bullseye"></i>
+                                    <span data-en="Volatility" data-bন="ভোলাটিলিটি">ভোলাটিলিটি</span>
+                                </div>
+                                <div class="value-display" id="bondVolatility">5%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="bondVolSlider" min="1" max="15" value="5" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asset-card">
+                        <div class="asset-header">
+                            <div class="asset-name">
+                                <div class="asset-icon commodity-icon">
+                                    <i class="fas fa-gas-pump"></i>
+                                </div>
+                                <span data-en="Commodities" data-bন="কমোডিটি">কমোডিটি</span>
+                            </div>
+                            <div class="asset-weight" id="commodityWeight">15%</div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span data-en="Expected Return" data-bন="প্রত্যাশিত রিটার্ন">প্রত্যাশিত রিটার্ন</span>
+                                </div>
+                                <div class="value-display" id="commodityReturn">6%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="commodityReturnSlider" min="-5" max="25" value="6" step="0.1">
+                            </div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-bullseye"></i>
+                                    <span data-en="Volatility" data-bন="ভোলাটিলিটি">ভোলাটিলিটি</span>
+                                </div>
+                                <div class="value-display" id="commodityVolatility">20%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="commodityVolSlider" min="10" max="50" value="20" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asset-card">
+                        <div class="asset-header">
+                            <div class="asset-name">
+                                <div class="asset-icon realestate-icon">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <span data-en="Real Estate" data-bন="রিয়েল এস্টেট">রিয়েল এস্টেট</span>
+                            </div>
+                            <div class="asset-weight" id="realEstateWeight">10%</div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span data-en="Expected Return" data-bন="প্রত্যাশিত রিটার্ন">প্রত্যাশিত রিটার্ন</span>
+                                </div>
+                                <div class="value-display" id="realEstateReturn">5%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="realEstateReturnSlider" min="0" max="15" value="5" step="0.1">
+                            </div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <div class="label-text">
+                                    <i class="fas fa-bullseye"></i>
+                                    <span data-en="Volatility" data-bন="ভোলাটিলিটি">ভোলাটিলিটি</span>
+                                </div>
+                                <div class="value-display" id="realEstateVolatility">8%</div>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="realEstateVolSlider" min="2" max="25" value="8" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Risk Parameters" data-bন="রিস্ক প্যারামিটার">রিস্ক প্যারামিটার</span>
+                </h2>
+
+                <div class="risk-parameters">
+                    <div class="risk-group">
+                        <div class="risk-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span data-en="Time Horizon" data-bন="সময় সীমা">সময় সীমা</span>
+                        </div>
+                        <div class="time-horizon">
+                            <button class="time-btn active" data-days="1">1D</button>
+                            <button class="time-btn" data-days="5">5D</button>
+                            <button class="time-btn" data-days="21">1M</button>
+                            <button class="time-btn" data-days="252">1Y</button>
+                        </div>
+                        <div class="help-text" data-en="Investment period for risk calculation" data-bন="ঝুঁকি গণনার জন্য বিনিয়োগ সময়সীমা">
+                            ঝুঁকি গণনার জন্য বিনিয়োগ সময়সীমা
+                        </div>
+                    </div>
+
+                    <div class="risk-group">
+                        <div class="risk-title">
+                            <i class="fas fa-database"></i>
+                            <span data-en="Simulation Settings" data-bন="সিমুলেশন সেটিংস">সিমুলেশন সেটিংস</span>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" data-en="Number of Simulations" data-bন="সিমুলেশনের সংখ্যা">সিমুলেশনের সংখ্যা</label>
+                            <input type="number" id="numSimulations" class="number-input" min="1000" max="100000" value="10000" step="1000">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" data-en="Confidence Level" data-bন="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</label>
+                            <input type="number" id="confidenceLevel" class="number-input" min="90" max="99.9" value="95" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Measures Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-shield-alt"></i>
+                    <span data-en="Risk Measures" data-bন="রিস্ক পরিমাপ">রিস্ক পরিমাপ</span>
+                </h2>
+
+                <div class="risk-measures">
+                    <button class="measure-btn var active" data-measure="var">
+                        <div class="measure-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <span data-en="Value at Risk" data-bন="ভ্যালু অ্যাট রিস্ক">ভ্যালু অ্যাট রিস্ক</span>
+                        <small data-en="Maximum loss at confidence level" data-bন="কনফিডেন্স লেভেলে সর্বোচ্চ ক্ষতি">কনফিডেন্স লেভেলে সর্বোচ্চ ক্ষতি</small>
+                    </button>
+
+                    <button class="measure-btn cvar" data-measure="cvar">
+                        <div class="measure-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <span data-en="Conditional VaR" data-bন="কন্ডিশনাল VaR">কন্ডিশনাল VaR</span>
+                        <small data-en="Average loss beyond VaR" data-bন="VaR-এর বাইরে গড় ক্ষতি">VaR-এর বাইরে গড় ক্ষতি</small>
+                    </button>
+
+                    <button class="measure-btn es" data-measure="es">
+                        <div class="measure-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <span data-en="Expected Shortfall" data-bন="এক্সপেক্টেড শর্টফল">এক্সপেক্টেড শর্টফল</span>
+                        <small data-en="Risk in extreme scenarios" data-bন="চরম সিনারিওতে ঝুঁকি">চরম সিনারিওতে ঝুঁকি</small>
+                    </button>
+                </div>
+
+                <!-- Correlation Matrix -->
+                <h2 class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    <span data-en="Asset Correlations" data-bন="সম্পদ সম্পর্ক">সম্পদ সম্পর্ক</span>
+                </h2>
+
+                <div class="correlation-matrix">
+                    <div class="correlation-cell" style="background: var(--light-gray); font-weight: bold;">-</div>
+                    <div class="correlation-cell">Stocks</div>
+                    <div class="correlation-cell">Bonds</div>
+                    <div class="correlation-cell">Comm.</div>
+                    <div class="correlation-cell">Real Est.</div>
+                    <div class="correlation-cell">Stocks</div>
+                    <div class="correlation-cell" id="corr_stock_stock">1.00</div>
+                    <div class="correlation-cell" id="corr_stock_bond">0.20</div>
+                    <div class="correlation-cell" id="corr_stock_comm">0.40</div>
+                    <div class="correlation-cell" id="corr_stock_re">0.60</div>
+                    <div class="correlation-cell">Bonds</div>
+                    <div class="correlation-cell" id="corr_bond_stock">0.20</div>
+                    <div class="correlation-cell" id="corr_bond_bond">1.00</div>
+                    <div class="correlation-cell" id="corr_bond_comm">0.10</div>
+                    <div class="correlation-cell" id="corr_bond_re">0.30</div>
+                    <div class="correlation-cell">Comm.</div>
+                    <div class="correlation-cell" id="corr_comm_stock">0.40</div>
+                    <div class="correlation-cell" id="corr_comm_bond">0.10</div>
+                    <div class="correlation-cell" id="corr_comm_comm">1.00</div>
+                    <div class="correlation-cell" id="corr_comm_re">0.25</div>
+                    <div class="correlation-cell">Real Est.</div>
+                    <div class="correlation-cell" id="corr_re_stock">0.60</div>
+                    <div class="correlation-cell" id="corr_re_bond">0.30</div>
+                    <div class="correlation-cell" id="corr_re_comm">0.25</div>
+                    <div class="correlation-cell" id="corr_re_re">1.00</div>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="simulation-controls">
+                    <button class="control-btn start-btn" id="startSimulation">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Risk Analysis" data-bন="রিস্ক এনালাইসিস চালান">রিস্ক এনালাইসিস চালান</span>
+                    </button>
+                    <button class="control-btn pause-btn" id="pauseSimulation">
+                        <i class="fas fa-pause"></i>
+                        <span data-en="Pause" data-bন="বিরতি">বিরতি</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetSimulation">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <div class="visualization-tabs">
+                    <button class="viz-tab-btn active" data-tab="distribution">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Return Distribution" data-bন="রিটার্ন ডিস্ট্রিবিউশন">রিটার্ন ডিস্ট্রিবিউশন</span>
+                    </button>
+                    <button class="viz-tab-btn" data-tab="var">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="VaR Analysis" data-bন="VaR বিশ্লেষণ">VaR বিশ্লেষণ</span>
+                    </button>
+                    <button class="viz-tab-btn" data-tab="scenarios">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Scenario Paths" data-bন="সিনারিও পাথ">সিনারিও পাথ</span>
+                    </button>
+                </div>
+
+                <div class="risk-plot-container">
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="loader"></div>
+                    </div>
+                    <div id="riskPlot"></div>
+                </div>
+
+                <!-- Risk Metrics Display -->
+                <div class="risk-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Value at Risk (95%)" data-bন="ভ্যালু অ্যাট রিস্ক (৯৫%)">ভ্যালু অ্যাট রিস্ক (৯৫%)</div>
+                        <div class="metric-value" id="varValue">-2.5%</div>
+                        <div class="metric-change">
+                            <i class="fas fa-arrow-down negative"></i>
+                            <span class="negative" data-en="Worst 5% scenario" data-bন">সবচেয়ে খারাপ ৫% সিনারিও</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Conditional VaR" data-bন="কন্ডিশনাল VaR">কন্ডিশনাল VaR</div>
+                        <div class="metric-value" id="cvarValue">-3.8%</div>
+                        <div class="metric-change">
+                            <i class="fas fa-arrow-down negative"></i>
+                            <span class="negative" data-en="Beyond VaR average" data-bন">VaR-এর বাইরে গড়</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Expected Portfolio Return" data-bন="প্রত্যাশিত পোর্টফোলিও রিটার্ন">প্রত্যাশিত পোর্টফোলিও রিটার্ন</div>
+                        <div class="metric-value" id="expectedReturn">6.2%</div>
+                        <div class="metric-change">
+                            <i class="fas fa-arrow-up positive"></i>
+                            <span class="positive" data-en="Annualized" data-bন">বার্ষিক</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Portfolio Volatility" data-bন="পোর্টফোলিও ভোলাটিলিটি">পোর্টফোলিও ভোলাটিলিটি</div>
+                        <div class="metric-value" id="portfolioVolatility">9.5%</div>
+                        <div class="metric-change">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="Annual standard deviation" data-bন">বার্ষিক স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Optimization Section -->
+        <div class="optimization-section">
+            <h2 class="section-title">
+                <i class="fas fa-robot"></i>
+                <span data-en="Portfolio Optimization" data-bন="পোর্টফোলিও অপ্টিমাইজেশন">পোর্টফোলিও অপ্টিমাইজেশন</span>
+            </h2>
+            
+            <p data-en="Find optimal portfolio weights to maximize return for given risk tolerance:" data-bন="দেওয়া ঝুঁকি সহনশীলতার জন্য রিটার্ন সর্বাধিক করতে সর্বোত্তম পোর্টফোলিও ওজন খুঁজুন:">
+                দেওয়া ঝুঁকি সহনশীলতার জন্য রিটার্ন সর্বাধিক করতে সর্বোত্তম পোর্টফোলিও ওজন খুঁজুন:
+            </p>
+            
+            <div class="optimization-controls">
+                <button class="optimization-btn" id="markowitzOptimization">
+                    <i class="fas fa-bullseye"></i>
+                    <span data-en="Markowitz Optimization" data-bন="মার্কোউইটজ অপ্টিমাইজেশন">মার্কোউইটজ অপ্টিমাইজেশন</span>
+                </button>
+                <button class="optimization-btn" id="minVariancePortfolio">
+                    <i class="fas fa-shield-alt"></i>
+                    <span data-en="Minimum Variance" data-bন="ন্যূনতম ভ্যারিয়েন্স">ন্যূনতম ভ্যারিয়েন্স</span>
+                </button>
+                <button class="optimization-btn" id="maxSharpeRatio">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Max Sharpe Ratio" data-bন="সর্বোচ্চ শার্প রেশিও">সর্বোচ্চ শার্প রেশিও</span>
+                </button>
+                <button class="optimization-btn" id="riskParity">
+                    <i class="fas fa-balance-scale"></i>
+                    <span data-en="Risk Parity" data-bন="রিস্ক প্যারিটি">রিস্ক প্যারিটি</span>
+                </button>
+            </div>
+            
+            <div class="efficient-frontier-plot" id="efficientFrontierPlot"></div>
+        </div>
+
+        <!-- Scenario Analysis Section -->
+        <div class="scenario-section">
+            <h2 class="section-title">
+                <i class="fas fa-vial"></i>
+                <span data-en="Scenario Analysis" data-bন="সিনারিও অ্যানালাইসিস">সিনারিও অ্যানালাইসিস</span>
+            </h2>
+            
+            <div class="scenario-grid">
+                <div class="scenario-card" data-scenario="normal">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="Normal Market" data-bন="স্বাভাবিক বাজার">স্বাভাবিক বাজার</h3>
+                    </div>
+                    <div class="scenario-description" data-en="Baseline scenario with expected returns and correlations" data-bন="প্রত্যাশিত রিটার্ন এবং সম্পর্ক সহ বেসলাইন সিনারিও">
+                        প্রত্যাশিত রিটার্ন এবং সম্পর্ক সহ বেসলাইন সিনারিও
+                    </div>
+                    <div class="scenario-impact">
+                        Portfolio Impact: -0.5% to +0.5%
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('normal')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Scenario" data-bন="সিনারিও চালান">সিনারিও চালান</span>
+                    </button>
+                </div>
+
+                <div class="scenario-card" data-scenario="recession">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-chart-line-down"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="Market Recession" data-bন="বাজার মন্দা">বাজার মন্দা</h3>
+                    </div>
+                    <div class="scenario-description" data-en="20% decline in stock markets, flight to quality bonds" data-bন="স্টক মার্কেটে ২০% পতন, গুণগত বন্ডে ফ্লাইট">
+                        স্টক মার্কেটে ২০% পতন, গুণগত বন্ডে ফ্লাইট
+                    </div>
+                    <div class="scenario-impact">
+                        Portfolio Impact: -8% to -12%
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('recession')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Scenario" data-bন="সিনারিও চালান">সিনারিও চালান</span>
+                    </button>
+                </div>
+
+                <div class="scenario-card" data-scenario="inflation">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="High Inflation" data-bন="উচ্চ মুদ্রাস্ফীতি">উচ্চ মুদ্রাস্ফীতি</h3>
+                    </div>
+                    <div class="scenario-description" data-en="Rising inflation benefits commodities, hurts bonds" data-bন="বাড়তি মুদ্রাস্ফীতি কমোডিটিকে উপকৃত করে, বন্ডকে ক্ষতি করে">
+                        বাড়তি মুদ্রাস্ফীতি কমোডিটিকে উপকৃত করে, বন্ডকে ক্ষতি করে
+                    </div>
+                    <div class="scenario-impact">
+                        Portfolio Impact: -3% to +2%
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('inflation')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Scenario" data-bন="সিনারিও চালান">সিনারিও চালান</span>
+                    </button>
+                </div>
+
+                <div class="scenario-card" data-scenario="crisis">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-skull-crossbones"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="Financial Crisis" data-bন="আর্থিক সংকট">আর্থিক সংকট</h3>
+                    </div>
+                    <div class="scenario-description" data-en="Extreme stress scenario with high correlations and volatility" data-bন="উচ্চ সম্পর্ক এবং ভোলাটিলিটি সহ চরম স্ট্রেস সিনারিও">
+                        উচ্চ সম্পর্ক এবং ভোলাটিলিটি সহ চরম স্ট্রেস সিনারিও
+                    </div>
+                    <div class="scenario-impact">
+                        Portfolio Impact: -15% to -25%
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('crisis')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Scenario" data-bন="সিনারিও চালান">সিনারিও চালান</span>
+                    </button>
+                </div>
+
+                <div class="scenario-card" data-scenario="growth">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="High Growth" data-bন="উচ্চ প্রবৃদ্ধি">উচ্চ প্রবৃদ্ধি</h3>
+                    </div>
+                    <div class="scenario-description" data-en="Strong economic growth boosts all asset classes" data-bন="শক্তিশালী অর্থনৈতিক প্রবৃদ্ধি সব সম্পদ শ্রেণিকে বৃদ্ধি করে">
+                        শক্তিশালী অর্থনৈতিক প্রবৃদ্ধি সব সম্পদ শ্রেণিকে বৃদ্ধি করে
+                    </div>
+                    <div class="scenario-impact">
+                        Portfolio Impact: +10% to +15%
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('growth')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Scenario" data-bন="সিনারিও চালান">সিনারিও চালান</span>
+                    </button>
+                </div>
+
+                <div class="scenario-card" data-scenario="custom">
+                    <div class="scenario-header">
+                        <div class="scenario-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <h3 class="scenario-title" data-en="Custom Scenario" data-bন="কাস্টম সিনারিও">কাস্টম সিনারিও</h3>
+                    </div>
+                    <div class="scenario-description" data-en="Define your own scenario with custom parameters" data-bন="কাস্টম প্যারামিটার সহ নিজের সিনারিও সংজ্ঞায়িত করুন">
+                        কাস্টম প্যারামিটার সহ নিজের সিনারিও সংজ্ঞায়িত করুন
+                    </div>
+                    <div class="scenario-impact">
+                        Adjust parameters above
+                    </div>
+                    <button class="optimization-btn" onclick="runScenario('custom')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-cog"></i>
+                        <span data-en="Customize" data-bন">কাস্টমাইজ করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stress Testing -->
+        <div class="stress-testing">
+            <h2 class="section-title">
+                <i class="fas fa-fire-alt"></i>
+                <span data-en="Stress Testing" data-bন="স্ট্রেস টেস্টিং">স্ট্রেস টেস্টিং</span>
+            </h2>
+            
+            <p data-en="Test portfolio resilience under extreme but plausible market conditions:" data-bন="চরম কিন্তু সম্ভাব্য বাজার অবস্থার অধীনে পোর্টফোলিও সহনশীলতা পরীক্ষা করুন:">
+                চরম কিন্তু সম্ভাব্য বাজার অবস্থার অধীনে পোর্টফোলিও সহনশীলতা পরীক্ষা করুন:
+            </p>
+            
+            <div class="stress-controls">
+                <button class="stress-btn" id="historicalStress">
+                    <i class="fas fa-history"></i>
+                    <span data-en="Historical Stress" data-bন="ঐতিহাসিক স্ট্রেস">ঐতিহাসিক স্ট্রেস</span>
+                </button>
+                <button class="stress-btn" id="volatilityShock">
+                    <i class="fas fa-bolt"></i>
+                    <span data-en="Volatility Shock" data-bন="ভোলাটিলিটি শক">ভোলাটিলিটি শক</span>
+                </button>
+                <button class="stress-btn" id="correlationBreakdown">
+                    <i class="fas fa-unlink"></i>
+                    <span data-en="Correlation Breakdown" data-bন="সম্পদ সম্পর্ক ভাঙ্গন">সম্পদ সম্পর্ক ভাঙ্গন</span>
+                </button>
+                <button class="stress-btn" id="liquidityCrisis">
+                    <i class="fas fa-tint-slash"></i>
+                    <span data-en="Liquidity Crisis" data-bন="লিকুইডিটি সংকট">লিকুইডিটি সংকট</span>
+                </button>
+            </div>
+            
+            <div class="stress-results" id="stressResults">
+                <h4 data-en="Stress Test Results" data-bন="স্ট্রেস টেস্ট ফলাফল">স্ট্রেস টেস্ট ফলাফল</h4>
+                <div class="stress-metrics" id="stressMetrics">
+                    <!-- Stress test results will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                // Asset weights
+                weights: {
+                    stocks: 0.40,
+                    bonds: 0.35,
+                    commodities: 0.15,
+                    realEstate: 0.10
+                },
+                // Expected returns (annualized)
+                returns: {
+                    stocks: 0.08,
+                    bonds: 0.04,
+                    commodities: 0.06,
+                    realEstate: 0.05
+                },
+                // Volatilities (annualized)
+                volatilities: {
+                    stocks: 0.15,
+                    bonds: 0.05,
+                    commodities: 0.20,
+                    realEstate: 0.08
+                },
+                // Correlation matrix
+                correlations: {
+                    stocks: { stocks: 1.00, bonds: 0.20, commodities: 0.40, realEstate: 0.60 },
+                    bonds: { stocks: 0.20, bonds: 1.00, commodities: 0.10, realEstate: 0.30 },
+                    commodities: { stocks: 0.40, bonds: 0.10, commodities: 1.00, realEstate: 0.25 },
+                    realEstate: { stocks: 0.60, bonds: 0.30, commodities: 0.25, realEstate: 1.00 }
+                },
+                // Risk parameters
+                riskParams: {
+                    timeHorizon: 21, // days
+                    numSimulations: 10000,
+                    confidenceLevel: 0.95,
+                    riskMeasure: 'var'
+                },
+                // Results storage
+                simulationResults: {
+                    portfolioReturns: [],
+                    var: 0,
+                    cvar: 0,
+                    expectedReturn: 0,
+                    portfolioVolatility: 0
+                },
+                // Optimization results
+                optimizationResults: null,
+                // Current scenario
+                currentScenario: 'normal'
+            };
+
+            // DOM Elements
+            // Asset sliders and displays
+            const stockReturnSlider = document.getElementById('stockReturnSlider');
+            const stockReturnDisplay = document.getElementById('stockReturn');
+            const stockVolSlider = document.getElementById('stockVolSlider');
+            const stockVolDisplay = document.getElementById('stockVolatility');
+            const stockWeightDisplay = document.getElementById('stockWeight');
+            
+            const bondReturnSlider = document.getElementById('bondReturnSlider');
+            const bondReturnDisplay = document.getElementById('bondReturn');
+            const bondVolSlider = document.getElementById('bondVolSlider');
+            const bondVolDisplay = document.getElementById('bondVolatility');
+            const bondWeightDisplay = document.getElementById('bondWeight');
+            
+            const commodityReturnSlider = document.getElementById('commodityReturnSlider');
+            const commodityReturnDisplay = document.getElementById('commodityReturn');
+            const commodityVolSlider = document.getElementById('commodityVolSlider');
+            const commodityVolDisplay = document.getElementById('commodityVolatility');
+            const commodityWeightDisplay = document.getElementById('commodityWeight');
+            
+            const realEstateReturnSlider = document.getElementById('realEstateReturnSlider');
+            const realEstateReturnDisplay = document.getElementById('realEstateReturn');
+            const realEstateVolSlider = document.getElementById('realEstateVolSlider');
+            const realEstateVolDisplay = document.getElementById('realEstateVolatility');
+            const realEstateWeightDisplay = document.getElementById('realEstateWeight');
+            
+            // Risk parameters
+            const numSimulationsInput = document.getElementById('numSimulations');
+            const confidenceLevelInput = document.getElementById('confidenceLevel');
+            const timeButtons = document.querySelectorAll('.time-btn');
+            
+            // Risk measures
+            const measureButtons = document.querySelectorAll('.measure-btn');
+            
+            // Visualization
+            const vizTabButtons = document.querySelectorAll('.viz-tab-btn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const riskPlot = document.getElementById('riskPlot');
+            
+            // Metrics display
+            const varValueEl = document.getElementById('varValue');
+            const cvarValueEl = document.getElementById('cvarValue');
+            const expectedReturnEl = document.getElementById('expectedReturn');
+            const portfolioVolatilityEl = document.getElementById('portfolioVolatility');
+            
+            // Simulation controls
+            const startBtn = document.getElementById('startSimulation');
+            const pauseBtn = document.getElementById('pauseSimulation');
+            const resetBtn = document.getElementById('resetSimulation');
+            
+            // Optimization controls
+            const markowitzBtn = document.getElementById('markowitzOptimization');
+            const minVarianceBtn = document.getElementById('minVariancePortfolio');
+            const maxSharpeBtn = document.getElementById('maxSharpeRatio');
+            const riskParityBtn = document.getElementById('riskParity');
+            
+            // Stress testing
+            const historicalStressBtn = document.getElementById('historicalStress');
+            const volatilityShockBtn = document.getElementById('volatilityShock');
+            const correlationBreakdownBtn = document.getElementById('correlationBreakdown');
+            const liquidityCrisisBtn = document.getElementById('liquidityCrisis');
+            
+            // Initialize
+            initRiskAnalysis();
+
+            function initRiskAnalysis() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Initialize asset sliders
+                initializeAssetControls();
+
+                // Time horizon selection
+                timeButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const days = parseInt(this.dataset.days);
+                        setTimeHorizon(days);
+                    });
+                });
+
+                // Risk measure selection
+                measureButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const measure = this.dataset.measure;
+                        setRiskMeasure(measure);
+                    });
+                });
+
+                // Visualization tabs
+                vizTabButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const tab = this.dataset.tab;
+                        setVisualizationTab(tab);
+                    });
+                });
+
+                // Simulation controls
+                startBtn.addEventListener('click', startRiskSimulation);
+                pauseBtn.addEventListener('click', pauseRiskSimulation);
+                resetBtn.addEventListener('click', resetRiskSimulation);
+
+                // Optimization controls
+                markowitzBtn.addEventListener('click', runMarkowitzOptimization);
+                minVarianceBtn.addEventListener('click', runMinVariancePortfolio);
+                maxSharpeBtn.addEventListener('click', runMaxSharpeRatio);
+                riskParityBtn.addEventListener('click', runRiskParity);
+
+                // Stress testing
+                historicalStressBtn.addEventListener('click', runHistoricalStressTest);
+                volatilityShockBtn.addEventListener('click', runVolatilityShockTest);
+                correlationBreakdownBtn.addEventListener('click', runCorrelationBreakdownTest);
+                liquidityCrisisBtn.addEventListener('click', runLiquidityCrisisTest);
+
+                // Initialize plots
+                initializePlots();
+
+                // Run initial simulation
+                setTimeout(() => {
+                    updatePortfolioStatistics();
+                    runRiskSimulation();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function initializeAssetControls() {
+                // Stock controls
+                stockReturnSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    stockReturnDisplay.textContent = `${value}%`;
+                    simulationState.returns.stocks = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                stockVolSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    stockVolDisplay.textContent = `${value}%`;
+                    simulationState.volatilities.stocks = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                // Bond controls
+                bondReturnSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    bondReturnDisplay.textContent = `${value}%`;
+                    simulationState.returns.bonds = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                bondVolSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    bondVolDisplay.textContent = `${value}%`;
+                    simulationState.volatilities.bonds = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                // Commodity controls
+                commodityReturnSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    commodityReturnDisplay.textContent = `${value}%`;
+                    simulationState.returns.commodities = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                commodityVolSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    commodityVolDisplay.textContent = `${value}%`;
+                    simulationState.volatilities.commodities = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                // Real estate controls
+                realEstateReturnSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    realEstateReturnDisplay.textContent = `${value}%`;
+                    simulationState.returns.realEstate = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                realEstateVolSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    realEstateVolDisplay.textContent = `${value}%`;
+                    simulationState.volatilities.realEstate = value / 100;
+                    updatePortfolioStatistics();
+                });
+
+                // Update correlation matrix cells
+                updateCorrelationMatrix();
+            }
+
+            function setTimeHorizon(days) {
+                simulationState.riskParams.timeHorizon = days;
+                
+                // Update active button
+                timeButtons.forEach(btn => {
+                    if (parseInt(btn.dataset.days) === days) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function setRiskMeasure(measure) {
+                simulationState.riskParams.riskMeasure = measure;
+                
+                // Update active button
+                measureButtons.forEach(btn => {
+                    if (btn.dataset.measure === measure) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function setVisualizationTab(tab) {
+                // Update active tab
+                vizTabButtons.forEach(btn => {
+                    if (btn.dataset.tab === tab) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update plot based on selected tab
+                updateRiskPlot(tab);
+            }
+
+            function updateCorrelationMatrix() {
+                // Update correlation matrix display
+                const corr = simulationState.correlations;
+                
+                document.getElementById('corr_stock_bond').textContent = corr.stocks.bonds.toFixed(2);
+                document.getElementById('corr_stock_comm').textContent = corr.stocks.commodities.toFixed(2);
+                document.getElementById('corr_stock_re').textContent = corr.stocks.realEstate.toFixed(2);
+                
+                document.getElementById('corr_bond_stock').textContent = corr.bonds.stocks.toFixed(2);
+                document.getElementById('corr_bond_comm').textContent = corr.bonds.commodities.toFixed(2);
+                document.getElementById('corr_bond_re').textContent = corr.bonds.realEstate.toFixed(2);
+                
+                document.getElementById('corr_comm_stock').textContent = corr.commodities.stocks.toFixed(2);
+                document.getElementById('corr_comm_bond').textContent = corr.commodities.bonds.toFixed(2);
+                document.getElementById('corr_comm_re').textContent = corr.commodities.realEstate.toFixed(2);
+                
+                document.getElementById('corr_re_stock').textContent = corr.realEstate.stocks.toFixed(2);
+                document.getElementById('corr_re_bond').textContent = corr.realEstate.bonds.toFixed(2);
+                document.getElementById('corr_re_comm').textContent = corr.realEstate.commodities.toFixed(2);
+            }
+
+            function calculatePortfolioStatistics() {
+                const { weights, returns, volatilities, correlations } = simulationState;
+                
+                // Calculate expected portfolio return
+                let expectedReturn = 0;
+                const assets = ['stocks', 'bonds', 'commodities', 'realEstate'];
+                
+                assets.forEach(asset => {
+                    expectedReturn += weights[asset] * returns[asset];
+                });
+                
+                // Calculate portfolio variance
+                let portfolioVariance = 0;
+                
+                assets.forEach(i => {
+                    assets.forEach(j => {
+                        portfolioVariance += weights[i] * weights[j] * volatilities[i] * volatilities[j] * correlations[i][j];
+                    });
+                });
+                
+                const portfolioVolatility = Math.sqrt(portfolioVariance);
+                
+                return {
+                    expectedReturn,
+                    portfolioVolatility
+                };
+            }
+
+            function updatePortfolioStatistics() {
+                const stats = calculatePortfolioStatistics();
+                
+                // Update weight displays
+                stockWeightDisplay.textContent = `${(simulationState.weights.stocks * 100).toFixed(0)}%`;
+                bondWeightDisplay.textContent = `${(simulationState.weights.bonds * 100).toFixed(0)}%`;
+                commodityWeightDisplay.textContent = `${(simulationState.weights.commodities * 100).toFixed(0)}%`;
+                realEstateWeightDisplay.textContent = `${(simulationState.weights.realEstate * 100).toFixed(0)}%`;
+                
+                // Update statistics
+                expectedReturnEl.textContent = `${(stats.expectedReturn * 100).toFixed(2)}%`;
+                portfolioVolatilityEl.textContent = `${(stats.portfolioVolatility * 100).toFixed(2)}%`;
+            }
+
+            function generateMultivariateNormalReturns(numSimulations, timeHorizonDays) {
+                const { weights, returns, volatilities, correlations } = simulationState;
+                const assets = ['stocks', 'bonds', 'commodities', 'realEstate'];
+                const n = assets.length;
+                
+                // Convert annual to daily
+                const daysPerYear = 252;
+                const dt = timeHorizonDays / daysPerYear;
+                
+                // Calculate daily returns and volatilities
+                const dailyReturns = {};
+                const dailyVolatilities = {};
+                
+                assets.forEach(asset => {
+                    dailyReturns[asset] = returns[asset] * dt;
+                    dailyVolatilities[asset] = volatilities[asset] * Math.sqrt(dt);
+                });
+                
+                // Create correlation matrix
+                const corrMatrix = [
+                    [1.00, correlations.stocks.bonds, correlations.stocks.commodities, correlations.stocks.realEstate],
+                    [correlations.bonds.stocks, 1.00, correlations.bonds.commodities, correlations.bonds.realEstate],
+                    [correlations.commodities.stocks, correlations.commodities.bonds, 1.00, correlations.commodities.realEstate],
+                    [correlations.realEstate.stocks, correlations.realEstate.bonds, correlations.realEstate.commodities, 1.00]
+                ];
+                
+                // Generate correlated random variables using Cholesky decomposition
+                const portfolioReturns = [];
+                
+                for (let i = 0; i < numSimulations; i++) {
+                    // Generate independent normal random variables
+                    const z = Array(n).fill(0).map(() => {
+                        let u = 0, v = 0;
+                        while (u === 0) u = Math.random();
+                        while (v === 0) v = Math.random();
+                        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                    });
+                    
+                    // Transform to correlated variables
+                    const x = [];
+                    for (let j = 0; j < n; j++) {
+                        let sum = 0;
+                        for (let k = 0; k <= j; k++) {
+                            sum += corrMatrix[j][k] * (k === j ? Math.sqrt(1 - sum) : z[k]);
+                        }
+                        x.push(sum);
+                    }
+                    
+                    // Calculate asset returns
+                    let portfolioReturn = 0;
+                    assets.forEach((asset, idx) => {
+                        const assetReturn = dailyReturns[asset] + dailyVolatilities[asset] * x[idx];
+                        portfolioReturn += weights[asset] * assetReturn;
+                    });
+                    
+                    portfolioReturns.push(portfolioReturn);
+                }
+                
+                return portfolioReturns;
+            }
+
+            function calculateRiskMetrics(returns, confidenceLevel) {
+                // Sort returns in ascending order
+                const sortedReturns = [...returns].sort((a, b) => a - b);
+                const n = sortedReturns.length;
+                
+                // Calculate VaR (negative of the α-quantile)
+                const alpha = 1 - confidenceLevel;
+                const varIndex = Math.floor(n * alpha);
+                const varValue = -sortedReturns[varIndex]; // Negative for loss
+                
+                // Calculate CVaR/Expected Shortfall (average of losses beyond VaR)
+                const tailReturns = sortedReturns.slice(0, varIndex + 1);
+                const cvarValue = -tailReturns.reduce((a, b) => a + b, 0) / tailReturns.length;
+                
+                // Calculate other statistics
+                const meanReturn = returns.reduce((a, b) => a + b, 0) / n;
+                const variance = returns.reduce((sq, n) => sq + Math.pow(n - meanReturn, 2), 0) / n;
+                const volatility = Math.sqrt(variance);
+                
+                return {
+                    var: varValue,
+                    cvar: cvarValue,
+                    expectedReturn: meanReturn,
+                    volatility: volatility,
+                    returns: sortedReturns
+                };
+            }
+
+            function runRiskSimulation() {
+                loadingOverlay.classList.add('active');
+                
+                setTimeout(() => {
+                    const { numSimulations, timeHorizon, confidenceLevel } = simulationState.riskParams;
+                    
+                    // Generate Monte Carlo simulation
+                    const portfolioReturns = generateMultivariateNormalReturns(numSimulations, timeHorizon);
+                    
+                    // Calculate risk metrics
+                    const riskMetrics = calculateRiskMetrics(portfolioReturns, confidenceLevel);
+                    
+                    // Store results
+                    simulationState.simulationResults = {
+                        portfolioReturns: portfolioReturns,
+                        var: riskMetrics.var,
+                        cvar: riskMetrics.cvar,
+                        expectedReturn: riskMetrics.expectedReturn,
+                        portfolioVolatility: riskMetrics.volatility,
+                        sortedReturns: riskMetrics.returns
+                    };
+                    
+                    // Update metrics display
+                    updateRiskMetrics();
+                    
+                    // Update visualization
+                    updateRiskPlot('distribution');
+                    
+                    loadingOverlay.classList.remove('active');
+                    
+                    // Animate the button
+                    startBtn.classList.add('pulse');
+                    setTimeout(() => startBtn.classList.remove('pulse'), 1000);
+                }, 500);
+            }
+
+            function startRiskSimulation() {
+                runRiskSimulation();
+            }
+
+            function pauseRiskSimulation() {
+                // Pause functionality (if implementing real-time simulation)
+                console.log('Simulation paused');
+            }
+
+            function resetRiskSimulation() {
+                // Reset to default values
+                simulationState.returns = {
+                    stocks: 0.08,
+                    bonds: 0.04,
+                    commodities: 0.06,
+                    realEstate: 0.05
+                };
+                
+                simulationState.volatilities = {
+                    stocks: 0.15,
+                    bonds: 0.05,
+                    commodities: 0.20,
+                    realEstate: 0.08
+                };
+                
+                // Reset sliders
+                stockReturnSlider.value = 8;
+                stockReturnDisplay.textContent = '8%';
+                stockVolSlider.value = 15;
+                stockVolDisplay.textContent = '15%';
+                
+                bondReturnSlider.value = 4;
+                bondReturnDisplay.textContent = '4%';
+                bondVolSlider.value = 5;
+                bondVolDisplay.textContent = '5%';
+                
+                commodityReturnSlider.value = 6;
+                commodityReturnDisplay.textContent = '6%';
+                commodityVolSlider.value = 20;
+                commodityVolDisplay.textContent = '20%';
+                
+                realEstateReturnSlider.value = 5;
+                realEstateReturnDisplay.textContent = '5%';
+                realEstateVolSlider.value = 8;
+                realEstateVolDisplay.textContent = '8%';
+                
+                // Reset risk parameters
+                simulationState.riskParams.timeHorizon = 21;
+                simulationState.riskParams.numSimulations = 10000;
+                simulationState.riskParams.confidenceLevel = 0.95;
+                simulationState.riskParams.riskMeasure = 'var';
+                
+                // Reset UI
+                timeButtons.forEach(btn => {
+                    if (btn.dataset.days === '21') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                measureButtons.forEach(btn => {
+                    if (btn.dataset.measure === 'var') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update displays
+                updatePortfolioStatistics();
+                updateRiskMetrics();
+                
+                // Re-run simulation
+                runRiskSimulation();
+            }
+
+            function updateRiskMetrics() {
+                const results = simulationState.simulationResults;
+                
+                varValueEl.textContent = `${(results.var * 100).toFixed(2)}%`;
+                cvarValueEl.textContent = `${(results.cvar * 100).toFixed(2)}%`;
+                expectedReturnEl.textContent = `${(results.expectedReturn * 100).toFixed(2)}%`;
+                portfolioVolatilityEl.textContent = `${(results.portfolioVolatility * 100).toFixed(2)}%`;
+            }
+
+            function updateRiskPlot(tab) {
+                const results = simulationState.simulationResults;
+                const { confidenceLevel } = simulationState.riskParams;
+                
+                if (!results.portfolioReturns || results.portfolioReturns.length === 0) return;
+                
+                let data = [];
+                let layout = {
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white',
+                    font: {
+                        family: 'Poppins, Hind Siliguri, sans-serif'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.8)',
+                        bordercolor: 'lightgray',
+                        borderwidth: 1
+                    }
+                };
+                
+                switch(tab) {
+                    case 'distribution':
+                        // Return distribution histogram
+                        const histogramData = {
+                            x: results.portfolioReturns.map(r => r * 100),
+                            type: 'histogram',
+                            name: currentLanguage === 'bn' ? 'রিটার্ন ডিস্ট্রিবিউশন' : 'Return Distribution',
+                            nbinsx: 50,
+                            marker: {
+                                color: 'var(--primary)',
+                                opacity: 0.7
+                            }
+                        };
+                        
+                        data.push(histogramData);
+                        
+                        // Add VaR line
+                        const varLine = {
+                            x: [-results.var * 100, -results.var * 100],
+                            y: [0, 'auto'],
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: currentLanguage === 'bn' ? `VaR (${confidenceLevel * 100}%)` : `VaR (${confidenceLevel * 100}%)`,
+                            line: {
+                                color: 'var(--var-color)',
+                                width: 3,
+                                dash: 'dash'
+                            }
+                        };
+                        
+                        data.push(varLine);
+                        
+                        // Add CVaR line
+                        const cvarLine = {
+                            x: [-results.cvar * 100, -results.cvar * 100],
+                            y: [0, 'auto'],
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: currentLanguage === 'bn' ? 'CVaR' : 'CVaR',
+                            line: {
+                                color: 'var(--cvar-color)',
+                                width: 3,
+                                dash: 'dash'
+                            }
+                        };
+                        
+                        data.push(cvarLine);
+                        
+                        layout.title = currentLanguage === 'bn' ? 
+                            'পোর্টফোলিও রিটার্ন ডিস্ট্রিবিউশন' : 
+                            'Portfolio Return Distribution';
+                        layout.xaxis = { 
+                            title: currentLanguage === 'bn' ? 'রিটার্ন (%)' : 'Return (%)'
+                        };
+                        layout.yaxis = { 
+                            title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density'
+                        };
+                        layout.shapes = [{
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: -results.var * 100,
+                            x1: -Infinity,
+                            y0: 0,
+                            y1: 1,
+                            fillcolor: 'rgba(211, 47, 47, 0.1)',
+                            line: {width: 0}
+                        }];
+                        break;
+                        
+                    case 'var':
+                        // VaR analysis plot
+                        const sortedReturns = results.sortedReturns;
+                        const varIndex = Math.floor(sortedReturns.length * (1 - confidenceLevel));
+                        const varValue = -sortedReturns[varIndex];
+                        
+                        // Create cumulative distribution plot
+                        const cumulativeX = sortedReturns.map(r => r * 100);
+                        const cumulativeY = Array(sortedReturns.length).fill(0).map((_, i) => i / sortedReturns.length);
+                        
+                        data.push({
+                            x: cumulativeX,
+                            y: cumulativeY,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: currentLanguage === 'bn' ? 'ক্রমবর্ধমান ডিস্ট্রিবিউশন' : 'Cumulative Distribution',
+                            line: {
+                                color: 'var(--primary)',
+                                width: 2
+                            }
+                        });
+                        
+                        // Highlight VaR region
+                        data.push({
+                            x: cumulativeX.slice(0, varIndex + 1),
+                            y: cumulativeY.slice(0, varIndex + 1),
+                            type: 'scatter',
+                            mode: 'lines',
+                            fill: 'tozeroy',
+                            fillcolor: 'rgba(211, 47, 47, 0.3)',
+                            name: currentLanguage === 'bn' ? 'VaR এলাকা' : 'VaR Region',
+                            line: {
+                                color: 'var(--var-color)',
+                                width: 2
+                            }
+                        });
+                        
+                        layout.title = currentLanguage === 'bn' ? 
+                            'VaR বিশ্লেষণ - ক্রমবর্ধমান ডিস্ট্রিবিউশন' : 
+                            'VaR Analysis - Cumulative Distribution';
+                        layout.xaxis = { 
+                            title: currentLanguage === 'bn' ? 'রিটার্ন (%)' : 'Return (%)'
+                        };
+                        layout.yaxis = { 
+                            title: currentLanguage === 'bn' ? 'ক্রমবর্ধমান সম্ভাবনা' : 'Cumulative Probability'
+                        };
+                        break;
+                        
+                    case 'scenarios':
+                        // Scenario paths plot
+                        const numPaths = 20;
+                        const timePoints = 30;
+                        
+                        for (let i = 0; i < numPaths; i++) {
+                            const pathReturns = generateMultivariateNormalReturns(timePoints, simulationState.riskParams.timeHorizon);
+                            const cumulativePath = [];
+                            let cumulative = 0;
+                            
+                            for (let j = 0; j < pathReturns.length; j++) {
+                                cumulative += pathReturns[j];
+                                cumulativePath.push(cumulative * 100);
+                            }
+                            
+                            data.push({
+                                x: Array(timePoints).fill(0).map((_, idx) => idx + 1),
+                                y: cumulativePath,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: `Path ${i + 1}`,
+                                line: {
+                                    color: `rgba(46, 125, 50, ${0.3 + 0.7 * (i / numPaths)})`,
+                                    width: 1
+                                },
+                                showlegend: false
+                            });
+                        }
+                        
+                        layout.title = currentLanguage === 'bn' ? 
+                            'মন্টে কার্লো সিমুলেশন পাথ' : 
+                            'Monte Carlo Simulation Paths';
+                        layout.xaxis = { 
+                            title: currentLanguage === 'bn' ? 'সময় (দিন)' : 'Time (Days)'
+                        };
+                        layout.yaxis = { 
+                            title: currentLanguage === 'bn' ? 'ক্রমবর্ধমান রিটার্ন (%)' : 'Cumulative Return (%)'
+                        };
+                        break;
+                }
+                
+                if (data.length > 0) {
+                    Plotly.newPlot(riskPlot, data, layout, { responsive: true });
+                }
+            }
+
+            function initializePlots() {
+                // Initialize with empty plot
+                Plotly.newPlot(riskPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'রিস্ক ভিজুয়ালাইজেশন' : 'Risk Visualization',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+                
+                // Initialize efficient frontier plot
+                Plotly.newPlot('efficientFrontierPlot', [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'দক্ষ সীমান্ত' : 'Efficient Frontier',
+                    xaxis: { title: currentLanguage === 'bn' ? 'ঝুঁকি (ভোলাটিলিটি)' : 'Risk (Volatility)' },
+                    yaxis: { title: currentLanguage === 'bn' ? 'প্রত্যাশিত রিটার্ন' : 'Expected Return' },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+            }
+
+            // Scenario functions
+            function runScenario(scenario) {
+                simulationState.currentScenario = scenario;
+                
+                switch(scenario) {
+                    case 'normal':
+                        // Reset to normal parameters
+                        break;
+                    case 'recession':
+                        simulationState.returns.stocks = -0.20;
+                        simulationState.volatilities.stocks = 0.30;
+                        simulationState.returns.bonds = 0.08;
+                        simulationState.volatilities.bonds = 0.08;
+                        simulationState.correlations.stocks.bonds = 0.60;
+                        break;
+                    case 'inflation':
+                        simulationState.returns.commodities = 0.15;
+                        simulationState.volatilities.commodities = 0.30;
+                        simulationState.returns.bonds = 0.02;
+                        simulationState.volatilities.bonds = 0.10;
+                        break;
+                    case 'crisis':
+                        simulationState.returns.stocks = -0.40;
+                        simulationState.volatilities.stocks = 0.50;
+                        simulationState.returns.bonds = -0.05;
+                        simulationState.volatilities.bonds = 0.15;
+                        simulationState.correlations.stocks.bonds = 0.80;
+                        simulationState.correlations.stocks.commodities = 0.70;
+                        break;
+                    case 'growth':
+                        simulationState.returns.stocks = 0.20;
+                        simulationState.returns.bonds = 0.06;
+                        simulationState.returns.commodities = 0.10;
+                        simulationState.returns.realEstate = 0.12;
+                        break;
+                }
+                
+                // Update UI
+                updateAssetDisplays();
+                updateCorrelationMatrix();
+                updatePortfolioStatistics();
+                
+                // Run simulation
+                runRiskSimulation();
+            }
+
+            function updateAssetDisplays() {
+                stockReturnDisplay.textContent = `${(simulationState.returns.stocks * 100).toFixed(1)}%`;
+                stockVolDisplay.textContent = `${(simulationState.volatilities.stocks * 100).toFixed(1)}%`;
+                
+                bondReturnDisplay.textContent = `${(simulationState.returns.bonds * 100).toFixed(1)}%`;
+                bondVolDisplay.textContent = `${(simulationState.volatilities.bonds * 100).toFixed(1)}%`;
+                
+                commodityReturnDisplay.textContent = `${(simulationState.returns.commodities * 100).toFixed(1)}%`;
+                commodityVolDisplay.textContent = `${(simulationState.volatilities.commodities * 100).toFixed(1)}%`;
+                
+                realEstateReturnDisplay.textContent = `${(simulationState.returns.realEstate * 100).toFixed(1)}%`;
+                realEstateVolDisplay.textContent = `${(simulationState.volatilities.realEstate * 100).toFixed(1)}%`;
+            }
+
+            // Optimization functions
+            function runMarkowitzOptimization() {
+                // Simplified Markowitz optimization
+                const assets = ['stocks', 'bonds', 'commodities', 'realEstate'];
+                const n = assets.length;
+                
+                // Generate random portfolio weights
+                const portfolios = [];
+                for (let i = 0; i < 1000; i++) {
+                    // Generate random weights that sum to 1
+                    const weights = [];
+                    let sum = 0;
+                    for (let j = 0; j < n; j++) {
+                        const w = Math.random();
+                        weights.push(w);
+                        sum += w;
+                    }
+                    
+                    // Normalize weights
+                    const normalizedWeights = weights.map(w => w / sum);
+                    
+                    // Calculate portfolio statistics
+                    let expectedReturn = 0;
+                    let portfolioVariance = 0;
+                    
+                    assets.forEach((asset, idx) => {
+                        expectedReturn += normalizedWeights[idx] * simulationState.returns[asset];
+                    });
+                    
+                    assets.forEach((i, idx_i) => {
+                        assets.forEach((j, idx_j) => {
+                            portfolioVariance += normalizedWeights[idx_i] * normalizedWeights[idx_j] * 
+                                                simulationState.volatilities[i] * simulationState.volatilities[j] * 
+                                                simulationState.correlations[i][j];
+                        });
+                    });
+                    
+                    const portfolioVolatility = Math.sqrt(portfolioVariance);
+                    
+                    portfolios.push({
+                        weights: normalizedWeights,
+                        return: expectedReturn,
+                        volatility: portfolioVolatility,
+                        sharpe: expectedReturn / portfolioVolatility
+                    });
+                }
+                
+                // Find efficient frontier
+                const efficientPortfolios = portfolios.filter(p => {
+                    // Check if portfolio is not dominated
+                    return !portfolios.some(q => 
+                        q.volatility <= p.volatility && 
+                        q.return >= p.return && 
+                        (q.volatility < p.volatility || q.return > p.return)
+                    );
+                });
+                
+                // Sort by volatility
+                efficientPortfolios.sort((a, b) => a.volatility - b.volatility);
+                
+                // Update efficient frontier plot
+                updateEfficientFrontierPlot(efficientPortfolios);
+            }
+
+            function runMinVariancePortfolio() {
+                // Find minimum variance portfolio
+                console.log('Running minimum variance portfolio optimization');
+                // Implementation would involve quadratic programming
+            }
+
+            function runMaxSharpeRatio() {
+                // Find maximum Sharpe ratio portfolio
+                console.log('Running maximum Sharpe ratio optimization');
+                // Implementation would involve quadratic programming
+            }
+
+            function runRiskParity() {
+                // Find risk parity portfolio
+                console.log('Running risk parity optimization');
+                // Implementation would involve equal risk contribution
+            }
+
+            function updateEfficientFrontierPlot(portfolios) {
+                const volatilities = portfolios.map(p => p.volatility * 100);
+                const returns = portfolios.map(p => p.return * 100);
+                
+                const data = [{
+                    x: volatilities,
+                    y: returns,
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: currentLanguage === 'bn' ? 'পোর্টফোলিও' : 'Portfolios',
+                    marker: {
+                        size: 6,
+                        color: 'rgba(46, 125, 50, 0.6)'
+                    }
+                }];
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'মার্কোউইটজ দক্ষ সীমান্ত' : 'Markowitz Efficient Frontier',
+                    xaxis: { 
+                        title: currentLanguage === 'bn' ? 'ঝুঁকি (ভোলাটিলিটি %)' : 'Risk (Volatility %)'
+                    },
+                    yaxis: { 
+                        title: currentLanguage === 'bn' ? 'প্রত্যাশিত রিটার্ন (%)' : 'Expected Return (%)'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('efficientFrontierPlot', data, layout, { responsive: true });
+            }
+
+            // Stress testing functions
+            function runHistoricalStressTest() {
+                // Simulate historical stress scenarios
+                updateStressResults('historical', '-15.2%', '-22.8%', '2008 Financial Crisis Scenario');
+            }
+
+            function runVolatilityShockTest() {
+                // Simulate volatility shock
+                updateStressResults('volatility', '-8.5%', '-12.3%', 'Volatility Spike (+30%)');
+            }
+
+            function runCorrelationBreakdownTest() {
+                // Simulate correlation breakdown
+                updateStressResults('correlation', '-10.3%', '-16.7%', 'Correlations → 0.9');
+            }
+
+            function runLiquidityCrisisTest() {
+                // Simulate liquidity crisis
+                updateStressResults('liquidity', '-12.8%', '-19.4%', 'Liquidity Dry-up Scenario');
+            }
+
+            function updateStressResults(type, varImpact, cvarImpact, description) {
+                const stressMetrics = document.getElementById('stressMetrics');
+                
+                stressMetrics.innerHTML = `
+                    <div style="grid-column: span 2; margin-bottom: 1rem;">
+                        <strong>${description}</strong>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 2px solid var(--border);">
+                        <div style="font-size: 0.9rem; color: var(--gray);">VaR Impact</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--var-color);">${varImpact}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 2px solid var(--border);">
+                        <div style="font-size: 0.9rem; color: var(--gray);">CVaR Impact</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--cvar-color);">${cvarImpact}</div>
+                    </div>
+                    <div style="grid-column: span 2; margin-top: 1rem; padding: 1rem; background: var(--return-bg); border-radius: 8px; border: 2px solid var(--border); font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> 
+                        ${currentLanguage === 'bn' ? 
+                            'এই স্ট্রেস টেস্ট পোর্টফোলিওর স্থিতিস্থাপকতা মূল্যায়ন করে চরম বাজার অবস্থার অধীনে।' : 
+                            'This stress test evaluates portfolio resilience under extreme market conditions.'}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

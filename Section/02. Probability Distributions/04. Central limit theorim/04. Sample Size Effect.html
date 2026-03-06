@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Size Effect Demo | Central Limit Theorem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --n1-color: #F44336;
+            --n5-color: #FF9800;
+            --n30-color: #2196F3;
+            --n100-color: #4CAF50;
+            --histogram-bg: #FFF3E0;
+            --comparison-bg: #E8F5E9;
+            --lln-color: #9C27B0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff8e1 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--n1-color), var(--n5-color), var(--n30-color), var(--n100-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Demo Overview */
+        .demo-overview {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-overview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--n1-color), var(--n100-color));
+        }
+
+        .overview-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (max-width: 1024px) {
+            .overview-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .overview-text h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .overview-text p {
+            color: var(--gray);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .lln-highlight {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(156, 39, 176, 0.1);
+            color: var(--lln-color);
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .key-features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .key-features {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--accent);
+        }
+
+        /* Population Distribution */
+        .population-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .population-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--histogram-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--accent);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        /* Distribution Type */
+        .distribution-selection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-selection {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dist-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .dist-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .dist-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Sample Size Slider */
+        .sample-size-controls {
+            margin-bottom: 2rem;
+        }
+
+        .slider-container {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1rem;
+        }
+
+        .size-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--n1-color), var(--n5-color), var(--n30-color), var(--n100-color));
+            border-radius: 4px;
+            outline: none;
+            margin: 1rem 0;
+        }
+
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--dark);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .size-marks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .size-mark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .size-mark.active {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .size-mark .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--gray);
+            border-radius: 50%;
+            margin-bottom: 0.3rem;
+        }
+
+        .size-mark.active .dot {
+            background: var(--accent);
+            transform: scale(1.5);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .sim-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .sim-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sim-btn.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .sim-btn.primary:hover {
+            background: #F57C00;
+        }
+
+        .sim-btn.success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .sim-btn.info {
+            background: var(--info);
+            color: white;
+            border-color: var(--info);
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.highlight {
+            background: var(--comparison-bg);
+            border-color: var(--success);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            color: var(--success);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        /* Histogram Section */
+        .histogram-section {
+            margin-bottom: 2rem;
+        }
+
+        .histogram-container {
+            background: var(--histogram-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 2px solid var(--border);
+            position: relative;
+            height: 300px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Spread Reduction Visualization */
+        .spread-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .spread-chart {
+            height: 200px;
+            margin-top: 1rem;
+            position: relative;
+            background: var(--comparison-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        .spread-bars {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+            padding: 1rem;
+        }
+
+        .spread-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100px;
+        }
+
+        .spread-bar {
+            width: 30px;
+            background: linear-gradient(to top, var(--n1-color), var(--n100-color));
+            border-radius: 4px 4px 0 0;
+            transition: all 0.5s ease;
+        }
+
+        .spread-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* N Comparison Grid */
+        .n-comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .n-comparison-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .n-comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .n-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .n-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .n-card.active {
+            border-color: var(--accent);
+            box-shadow: 0 6px 18px rgba(255, 152, 0, 0.2);
+        }
+
+        .n-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .n1 .n-header { color: var(--n1-color); }
+        .n5 .n-header { color: var(--n5-color); }
+        .n30 .n-header { color: var(--n30-color); }
+        .n100 .n-header { color: var(--n100-color); }
+
+        .n-stats {
+            margin: 1rem 0;
+        }
+
+        .n-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .n-value {
+            font-weight: 600;
+        }
+
+        .n-canvas {
+            height: 120px;
+            margin-top: 1rem;
+        }
+
+        /* Law of Large Numbers Section */
+        .lln-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lln-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--lln-color);
+        }
+
+        .lln-chart-container {
+            height: 300px;
+            margin-top: 1rem;
+            position: relative;
+            background: var(--histogram-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .lln-line {
+            fill: none;
+            stroke: var(--lln-color);
+            stroke-width: 2;
+        }
+
+        .lln-theoretical {
+            stroke: var(--dark);
+            stroke-width: 1;
+            stroke-dasharray: 5,5;
+            opacity: 0.5;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight-flash {
+            animation: highlightFlash 1s ease;
+        }
+
+        @keyframes highlightFlash {
+            0% { background: var(--light-gray); }
+            50% { background: var(--comparison-bg); }
+            100% { background: var(--light-gray); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--light-gray);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Sample Size Effect Demo" data-bn="নমুনা আকার ইফেক্ট ডেমো">নমুনা আকার ইফেক্ট ডেমো</h1>
+            <p class="subtitle" data-en="Visualize how sample size affects sampling distribution and demonstrates the Central Limit Theorem" data-bn="দেখুন কিভাবে নমুনা আকার স্যাম্পলিং ডিস্ট্রিবিউশনকে প্রভাবিত করে এবং সেন্ট্রাল লিমিট থিওরেম প্রদর্শন করে">
+                দেখুন কিভাবে নমুনা আকার স্যাম্পলিং ডিস্ট্রিবিউশনকে প্রভাবিত করে এবং সেন্ট্রাল লিমিট থিওরেম প্রদর্শন করে
+            </p>
+        </div>
+
+        <!-- Demo Overview -->
+        <div class="demo-overview">
+            <div class="overview-content">
+                <div class="overview-text">
+                    <h2 data-en="Understanding Sample Size Effects" data-bn="নমুনা আকারের প্রভাব বোঝা">নমুনা আকারের প্রভাব বোঝা</h2>
+                    <p data-en="This demo shows how increasing sample size reduces sampling variability and causes sampling distributions to approach normal distributions. The Central Limit Theorem states that as sample size increases, the sampling distribution of the sample mean approaches a normal distribution." data-bn="এই ডেমোটি দেখায় কিভাবে নমুনা আকার বাড়ার সাথে সাথে স্যাম্পলিং ভ্যারিয়াবিলিটি হ্রাস পায় এবং স্যাম্পলিং ডিস্ট্রিবিউশনগুলো নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়। সেন্ট্রাল লিমিট থিওরেম বলে যে নমুনা আকার বাড়ার সাথে সাথে স্যাম্পল মিনের স্যাম্পলিং ডিস্ট্রিবিউশন একটি নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়।">
+                        এই ডেমোটি দেখায় কিভাবে নমুনা আকার বাড়ার সাথে সাথে স্যাম্পলিং ভ্যারিয়াবিলিটি হ্রাস পায় এবং স্যাম্পলিং ডিস্ট্রিবিউশনগুলো নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়।
+                    </p>
+                    <div class="lln-highlight">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Law of Large Numbers: Larger samples = Better estimates" data-bn="ল অব লার্জ নাম্বারস: বড় নমুনা = ভাল অনুমান">ল অব লার্জ নাম্বারস: বড় নমুনা = ভাল অনুমান</span>
+                    </div>
+                </div>
+                
+                <div class="key-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="feature-title" data-en="n=1 to n=100" data-bn="n=1 থেকে n=100">n=1 থেকে n=100</div>
+                        <small data-en="Full comparison range" data-bন="সম্পূর্ণ তুলনা পরিসর">সম্পূর্ণ তুলনা পরিসর</small>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-compress-alt"></i>
+                        </div>
+                        <div class="feature-title" data-en="Spread Reduction" data-bন="বিস্তার হ্রাস">বিস্তার হ্রাস</div>
+                        <small data-en="Visualize variability decrease" data-bন="ভ্যারিয়াবিলিটি হ্রাস দেখা">ভ্যারিয়াবিলিটি হ্রাস দেখা</small>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                        <div class="feature-title" data-en="LLN Connection" data-bন="LLN সংযোগ">LLN সংযোগ</div>
+                        <small data-en="Law of Large Numbers" data-bন="ল অব লার্জ নাম্বারস">ল অব লার্জ নাম্বারস</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <!-- Population Settings -->
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Population Settings" data-bn="পপুলেশন সেটিংস">পপুলেশন সেটিংস</span>
+                </h2>
+
+                <div class="population-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <span data-en="Population Mean (μ)" data-bন="পপুলেশন মিন (μ)">পপুলেশন মিন (μ)</span>
+                        </div>
+                        <input type="number" id="popMean" class="value-input" value="50" step="1">
+                        <div class="help-text" data-en="Center of the population" data-bন="পপুলেশনের কেন্দ্র">পপুলেশনের কেন্দ্র</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-expand-alt"></i>
+                            <span data-en="Population SD (σ)" data-bন="পপুলেশন SD (σ)">পপুলেশন SD (σ)</span>
+                        </div>
+                        <input type="number" id="popSD" class="value-input" value="15" step="1" min="1">
+                        <div class="help-text" data-en="Spread of the population" data-bন="পপুলেশনের বিস্তার">পপুলেশনের বিস্তার</div>
+                    </div>
+                </div>
+
+                <!-- Distribution Type -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Distribution Type" data-bন="ডিস্ট্রিবিউশন টাইপ">ডিস্ট্রিবিউশন টাইপ</span>
+                </h2>
+
+                <div class="distribution-selection">
+                    <button class="dist-btn active" data-dist="normal">
+                        <i class="fas fa-bell"></i>
+                        <span data-en="Normal" data-bন="নরমাল">নরমাল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="uniform">
+                        <i class="fas fa-square"></i>
+                        <span data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</span>
+                    </button>
+                    <button class="dist-btn" data-dist="exponential">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Exponential" data-bন="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</span>
+                    </button>
+                    <button class="dist-btn" data-dist="binomial">
+                        <i class="fas fa-dice"></i>
+                        <span data-en="Binomial" data-bন="বাইনোমিয়াল">বাইনোমিয়াল</span>
+                    </button>
+                </div>
+
+                <!-- Sample Size Control -->
+                <h2 class="section-title">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    <span data-en="Sample Size Control" data-bন="নমুনা আকার কন্ট্রোল">নমুনা আকার কন্ট্রোল</span>
+                </h2>
+
+                <div class="sample-size-controls">
+                    <div class="slider-container">
+                        <input type="range" id="sizeSlider" class="size-slider" min="1" max="100" value="30" step="1">
+                        <div class="size-marks">
+                            <div class="size-mark" data-size="1">
+                                <div class="dot"></div>
+                                <span>n=1</span>
+                            </div>
+                            <div class="size-mark" data-size="5">
+                                <div class="dot"></div>
+                                <span>n=5</span>
+                            </div>
+                            <div class="size-mark" data-size="30">
+                                <div class="dot"></div>
+                                <span>n=30</span>
+                            </div>
+                            <div class="size-mark" data-size="100">
+                                <div class="dot"></div>
+                                <span>n=100</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Drag slider or click markers to change sample size" data-bন="নমুনা আকার পরিবর্তন করতে স্লাইডার টানুন বা মার্কার ক্লিক করুন">
+                            নমুনা আকার পরিবর্তন করতে স্লাইডার টানুন বা মার্কার ক্লিক করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Controls -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Simulation Controls" data-bন="সিমুলেশন কন্ট্রোল">সিমুলেশন কন্ট্রোল</span>
+                </h2>
+
+                <div class="simulation-controls">
+                    <button class="sim-btn primary" id="runSimulation">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run" data-bন="চালান">চালান</span>
+                    </button>
+                    <button class="sim-btn" id="pauseSimulation">
+                        <i class="fas fa-pause"></i>
+                        <span data-en="Pause" data-bন="বিরতি">বিরতি</span>
+                    </button>
+                    <button class="sim-btn success" id="compareSizes">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Compare" data-bন="তুলনা">তুলনা</span>
+                    </button>
+                    <button class="sim-btn" id="resetDemo">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+
+                <!-- Quick Comparison -->
+                <h2 class="section-title">
+                    <i class="fas fa-columns"></i>
+                    <span data-en="Quick Comparison" data-bন="দ্রুত তুলনা">দ্রুত তুলনা</span>
+                </h2>
+
+                <div class="comparison-grid">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-vials"></i>
+                            <span data-en="Number of Samples" data-bন="নমুনার সংখ্যা">নমুনার সংখ্যা</span>
+                        </div>
+                        <input type="number" id="numSamples" class="value-input" value="1000" min="100" max="10000" step="100">
+                        <div class="help-text" data-en="Total samples to draw" data-bন="মোট নমুনা নিতে হবে">মোট নমুনা নিতে হবে</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span data-en="Speed" data-bন="গতি">গতি</span>
+                        </div>
+                        <select id="simulationSpeed" class="value-input">
+                            <option value="slow" data-en="Slow" data-bন="ধীর">ধীর</option>
+                            <option value="medium" selected data-en="Medium" data-bন="মধ্যম">মধ্যম</option>
+                            <option value="fast" data-en="Fast" data-bন="দ্রুত">দ্রুত</option>
+                            <option value="instant" data-en="Instant" data-bন="তাত্ক্ষণিক">তাত্ক্ষণিক</option>
+                        </select>
+                        <div class="help-text" data-en="Simulation speed" data-bন="সিমুলেশন গতি">সিমুলেশন গতি</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Current Statistics -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Current Statistics" data-bn="বর্তমান পরিসংখ্যান">বর্তমান পরিসংখ্যান</span>
+                </h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Size (n)" data-bন="নমুনা আকার (n)">নমুনা আকার (n)</div>
+                        <div class="stat-value" id="currentSampleSize">30</div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i>
+                            <span data-en="CLT applies for n≥30" data-bন="CLT n≥30-এর জন্য প্রযোজ্য">CLT n≥30-এর জন্য প্রযোজ্য</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card highlight" id="standardErrorCard">
+                        <div class="stat-label" data-en="Standard Error (σ/√n)" data-bন="স্ট্যান্ডার্ড এরর (σ/√n)">স্ট্যান্ডার্ড এরর (σ/√n)</div>
+                        <div class="stat-value" id="standardErrorValue">2.74</div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-down"></i>
+                            <span data-en="Decreases with √n" data-bন="√n-এর সাথে হ্রাস পায়">√n-এর সাথে হ্রাস পায়</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Spread Ratio" data-bন="বিস্তার অনুপাত">বিস্তার অনুপাত</div>
+                        <div class="stat-value" id="spreadRatio">0.18</div>
+                        <div class="stat-change">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="σ/√n ÷ σ" data-bন="σ/√n ÷ σ">σ/√n ÷ σ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Sampling Distribution -->
+                <div class="histogram-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-project-diagram"></i>
+                        <span data-en="Sampling Distribution for n=" data-bn="নমুনা আকার n=">নমুনা আকার n=</span>
+                        <span id="currentNLabel">30</span>
+                    </h2>
+                    
+                    <div class="histogram-container">
+                        <canvas id="samplingCanvas"></canvas>
+                    </div>
+                    
+                    <div class="help-text" data-en="Distribution of sample means for current sample size" data-bন="বর্তমান নমুনা আকারের জন্য স্যাম্পল গড়ের ডিস্ট্রিবিউশন">
+                        বর্তমান নমুনা আকারের জন্য স্যাম্পল গড়ের ডিস্ট্রিবিউশন
+                    </div>
+                </div>
+
+                <!-- Spread Reduction Visualization -->
+                <div class="spread-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-compress-alt"></i>
+                        <span data-en="Spread Reduction Visualization" data-bn="বিস্তার হ্রাস ভিজ্যুয়ালাইজেশন">বিস্তার হ্রাস ভিজ্যুয়ালাইজেশন</span>
+                    </h2>
+                    
+                    <p data-en="Watch how the spread of sampling distribution decreases as sample size increases:" data-bn="দেখুন কিভাবে নমুনা আকার বাড়ার সাথে সাথে স্যাম্পলিং ডিস্ট্রিবিউশনের বিস্তার হ্রাস পায়:">
+                        দেখুন কিভাবে নমুনা আকার বাড়ার সাথে সাথে স্যাম্পলিং ডিস্ট্রিবিউশনের বিস্তার হ্রাস পায়:
+                    </p>
+                    
+                    <div class="spread-chart">
+                        <div class="spread-bars" id="spreadBars">
+                            <!-- Spread bars will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- N Comparison Section -->
+        <div class="spread-section">
+            <h2 class="section-title">
+                <i class="fas fa-columns"></i>
+                <span data-en="Sample Size Comparison (n=1 to n=100)" data-bn="নমুনা আকার তুলনা (n=1 থেকে n=100)">নমুনা আকার তুলনা (n=1 থেকে n=100)</span>
+            </h2>
+            
+            <p data-en="Compare sampling distributions for different sample sizes:" data-bন="বিভিন্ন নমুনা আকারের জন্য স্যাম্পলিং ডিস্ট্রিবিউশন তুলনা করুন:">
+                বিভিন্ন নমুনা আকারের জন্য স্যাম্পলিং ডিস্ট্রিবিউশন তুলনা করুন:
+            </p>
+            
+            <div class="n-comparison-grid">
+                <!-- n=1 Card -->
+                <div class="n-card n1" data-n="1">
+                    <div class="n-header">
+                        n = 1
+                        <small data-en="Individual observations" data-bন="একক পর্যবেক্ষণ">একক পর্যবেক্ষণ</small>
+                    </div>
+                    <div class="n-stats">
+                        <div class="n-stat">
+                            <span data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর:</span>
+                            <span class="n-value" id="n1SE">15.00</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Spread" data-bন="বিস্তার">বিস্তার:</span>
+                            <span class="n-value" id="n1Spread">100%</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Shape" data-bন="আকৃতি">আকৃতি:</span>
+                            <span class="n-value" id="n1Shape">Same as pop</span>
+                        </div>
+                    </div>
+                    <div class="n-canvas">
+                        <canvas id="n1Canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- n=5 Card -->
+                <div class="n-card n5" data-n="5">
+                    <div class="n-header">
+                        n = 5
+                        <small data-en="Small sample" data-bন="ছোট নমুনা">ছোট নমুনা</small>
+                    </div>
+                    <div class="n-stats">
+                        <div class="n-stat">
+                            <span data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর:</span>
+                            <span class="n-value" id="n5SE">6.71</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Spread" data-bন="বিস্তার">বিস্তার:</span>
+                            <span class="n-value" id="n5Spread">45%</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Shape" data-bন="আকৃতি">আকৃতি:</span>
+                            <span class="n-value" id="n5Shape">Moderate CLT</span>
+                        </div>
+                    </div>
+                    <div class="n-canvas">
+                        <canvas id="n5Canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- n=30 Card -->
+                <div class="n-card n30 active" data-n="30">
+                    <div class="n-header">
+                        n = 30
+                        <small data-en="Rule of thumb" data-bন="থাম্ব রুল">থাম্ব রুল</small>
+                    </div>
+                    <div class="n-stats">
+                        <div class="n-stat">
+                            <span data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর:</span>
+                            <span class="n-value" id="n30SE">2.74</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Spread" data-bন="বিস্তার">বিস্তার:</span>
+                            <span class="n-value" id="n30Spread">18%</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Shape" data-bন="আকৃতি">আকৃতি:</span>
+                            <span class="n-value" id="n30Shape">Nearly Normal</span>
+                        </div>
+                    </div>
+                    <div class="n-canvas">
+                        <canvas id="n30Canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- n=100 Card -->
+                <div class="n-card n100" data-n="100">
+                    <div class="n-header">
+                        n = 100
+                        <small data-en="Large sample" data-bন="বড় নমুনা">বড় নমুনা</small>
+                    </div>
+                    <div class="n-stats">
+                        <div class="n-stat">
+                            <span data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর:</span>
+                            <span class="n-value" id="n100SE">1.50</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Spread" data-bন="বিস্তার">বিস্তার:</span>
+                            <span class="n-value" id="n100Spread">10%</span>
+                        </div>
+                        <div class="n-stat">
+                            <span data-en="Shape" data-bন="আকৃতি">আকৃতি:</span>
+                            <span class="n-value" id="n100Shape">Very Normal</span>
+                        </div>
+                    </div>
+                    <div class="n-canvas">
+                        <canvas id="n100Canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Law of Large Numbers Section -->
+        <div class="lln-section">
+            <h2 class="section-title">
+                <i class="fas fa-infinity"></i>
+                <span data-en="Law of Large Numbers Visualization" data-bn="ল অব লার্জ নাম্বারস ভিজ্যুয়ালাইজেশন">ল অব লার্জ নাম্বারস ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <p data-en="As sample size increases, the sample mean converges to the population mean:" data-bন="নমুনা আকার বাড়ার সাথে সাথে স্যাম্পল মিন পপুলেশন মিনের দিকে কনভার্জ করে:">
+                নমুনা আকার বাড়ার সাথে সাথে স্যাম্পল মিন পপুলেশন মিনের দিকে কনভার্জ করে:
+            </p>
+            
+            <div class="lln-chart-container">
+                <canvas id="llnCanvas"></canvas>
+            </div>
+            
+            <div class="stats-grid" style="margin-top: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Population Mean (μ)" data-bন="পপুলেশন মিন (μ)">পপুলেশন মিন (μ)</div>
+                    <div class="stat-value" id="llnPopMean">50.0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Current Sample Mean" data-bন="বর্তমান স্যাম্পল মিন">বর্তমান স্যাম্পল মিন</div>
+                    <div class="stat-value" id="llnCurrentMean">50.0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Convergence Rate" data-bন="কনভারজেন্স রেট">কনভারজেন্স রেট</div>
+                    <div class="stat-value" id="llnRate">95.2%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Demo State
+            let demoState = {
+                distribution: 'normal',
+                populationMean: 50,
+                populationSD: 15,
+                sampleSize: 30,
+                numSamples: 1000,
+                simulationSpeed: 'medium',
+                isRunning: false,
+                sampleMeans: {},
+                populationData: [],
+                spreadData: {},
+                llnData: []
+            };
+
+            // DOM Elements
+            const distBtns = document.querySelectorAll('.dist-btn');
+            const sizeSlider = document.getElementById('sizeSlider');
+            const sizeMarks = document.querySelectorAll('.size-mark');
+            const runBtn = document.getElementById('runSimulation');
+            const pauseBtn = document.getElementById('pauseSimulation');
+            const compareBtn = document.getElementById('compareSizes');
+            const resetBtn = document.getElementById('resetDemo');
+            const speedSelect = document.getElementById('simulationSpeed');
+            
+            // Input Elements
+            const popMeanInput = document.getElementById('popMean');
+            const popSDInput = document.getElementById('popSD');
+            const numSamplesInput = document.getElementById('numSamples');
+            
+            // Display Elements
+            const currentSampleSizeEl = document.getElementById('currentSampleSize');
+            const currentNLabel = document.getElementById('currentNLabel');
+            const standardErrorValue = document.getElementById('standardErrorValue');
+            const spreadRatio = document.getElementById('spreadRatio');
+            
+            // N Comparison Elements
+            const nCards = document.querySelectorAll('.n-card');
+            const n1SE = document.getElementById('n1SE');
+            const n1Spread = document.getElementById('n1Spread');
+            const n1Shape = document.getElementById('n1Shape');
+            const n5SE = document.getElementById('n5SE');
+            const n5Spread = document.getElementById('n5Spread');
+            const n5Shape = document.getElementById('n5Shape');
+            const n30SE = document.getElementById('n30SE');
+            const n30Spread = document.getElementById('n30Spread');
+            const n30Shape = document.getElementById('n30Shape');
+            const n100SE = document.getElementById('n100SE');
+            const n100Spread = document.getElementById('n100Spread');
+            const n100Shape = document.getElementById('n100Shape');
+            
+            // LLN Elements
+            const llnPopMean = document.getElementById('llnPopMean');
+            const llnCurrentMean = document.getElementById('llnCurrentMean');
+            const llnRate = document.getElementById('llnRate');
+            
+            // Canvas Elements
+            const samplingCanvas = document.getElementById('samplingCanvas');
+            const spreadBars = document.getElementById('spreadBars');
+            const n1Canvas = document.getElementById('n1Canvas');
+            const n5Canvas = document.getElementById('n5Canvas');
+            const n30Canvas = document.getElementById('n30Canvas');
+            const n100Canvas = document.getElementById('n100Canvas');
+            const llnCanvas = document.getElementById('llnCanvas');
+            
+            // Canvas Contexts
+            const sampleCtx = samplingCanvas.getContext('2d');
+            const n1Ctx = n1Canvas.getContext('2d');
+            const n5Ctx = n5Canvas.getContext('2d');
+            const n30Ctx = n30Canvas.getContext('2d');
+            const n100Ctx = n100Canvas.getContext('2d');
+            const llnCtx = llnCanvas.getContext('2d');
+            
+            // Canvas Dimensions
+            let sampleCanvasWidth, sampleCanvasHeight;
+            let nCanvasWidth = 150, nCanvasHeight = 120;
+            let llnCanvasWidth, llnCanvasHeight;
+            
+            // Tooltip
+            const tooltip = document.getElementById('tooltip');
+            
+            // Initialize
+            initDemo();
+
+            function initDemo() {
+                // Set canvas dimensions
+                updateCanvasDimensions();
+                window.addEventListener('resize', updateCanvasDimensions);
+                
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Distribution Selection
+                distBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dist = this.dataset.dist;
+                        setDistribution(dist);
+                    });
+                });
+
+                // Sample Size Slider
+                sizeSlider.addEventListener('input', function() {
+                    const size = parseInt(this.value);
+                    setSampleSize(size);
+                });
+
+                // Size Marks
+                sizeMarks.forEach(mark => {
+                    mark.addEventListener('click', function() {
+                        const size = parseInt(this.dataset.size);
+                        sizeSlider.value = size;
+                        setSampleSize(size);
+                    });
+                });
+
+                // Input Changes
+                popMeanInput.addEventListener('change', updatePopulationParams);
+                popSDInput.addEventListener('change', updatePopulationParams);
+                numSamplesInput.addEventListener('change', updateNumSamples);
+                speedSelect.addEventListener('change', updateSimulationSpeed);
+
+                // Simulation Controls
+                runBtn.addEventListener('click', runSimulation);
+                pauseBtn.addEventListener('click', pauseSimulation);
+                compareBtn.addEventListener('click', compareAllSizes);
+                resetBtn.addEventListener('click', resetDemo);
+
+                // N Cards
+                nCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const n = parseInt(this.dataset.n);
+                        setSampleSize(n);
+                        sizeSlider.value = n;
+                        updateSizeMarks(n);
+                        
+                        // Update active card
+                        nCards.forEach(c => c.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+
+                // Generate initial population data
+                generatePopulationData();
+                
+                // Run initial comparison
+                setTimeout(() => {
+                    compareAllSizes();
+                    updateLLNVisualization();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+                
+                // Update shape labels
+                updateShapeLabels();
+            }
+
+            function setDistribution(dist) {
+                demoState.distribution = dist;
+                
+                // Update active button
+                distBtns.forEach(btn => {
+                    if (btn.dataset.dist === dist) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Generate new population data
+                generatePopulationData();
+                
+                // Reset and update visualizations
+                resetSampleMeans();
+                compareAllSizes();
+            }
+
+            function setSampleSize(size) {
+                demoState.sampleSize = size;
+                
+                // Update display
+                currentSampleSizeEl.textContent = size;
+                currentNLabel.textContent = size;
+                
+                // Update slider position
+                sizeSlider.value = size;
+                
+                // Update size marks
+                updateSizeMarks(size);
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Update N card selection
+                nCards.forEach(card => {
+                    if (parseInt(card.dataset.n) === size) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateSizeMarks(size) {
+                sizeMarks.forEach(mark => {
+                    const markSize = parseInt(mark.dataset.size);
+                    if (markSize === size) {
+                        mark.classList.add('active');
+                    } else {
+                        mark.classList.remove('active');
+                    }
+                });
+            }
+
+            function updatePopulationParams() {
+                demoState.populationMean = parseFloat(popMeanInput.value) || 50;
+                demoState.populationSD = parseFloat(popSDInput.value) || 15;
+                
+                // Update population mean in LLN section
+                llnPopMean.textContent = demoState.populationMean.toFixed(1);
+                
+                // Reset and regenerate
+                generatePopulationData();
+                resetSampleMeans();
+                compareAllSizes();
+                updateStatistics();
+            }
+
+            function updateNumSamples() {
+                demoState.numSamples = parseInt(numSamplesInput.value) || 1000;
+                resetSampleMeans();
+                compareAllSizes();
+            }
+
+            function updateSimulationSpeed() {
+                demoState.simulationSpeed = speedSelect.value;
+            }
+
+            function updateCanvasDimensions() {
+                const sampleContainer = samplingCanvas.parentElement;
+                sampleCanvasWidth = sampleContainer.clientWidth;
+                sampleCanvasHeight = sampleContainer.clientHeight;
+                samplingCanvas.width = sampleCanvasWidth;
+                samplingCanvas.height = sampleCanvasHeight;
+                
+                const llnContainer = llnCanvas.parentElement;
+                llnCanvasWidth = llnContainer.clientWidth;
+                llnCanvasHeight = llnContainer.clientHeight;
+                llnCanvas.width = llnCanvasWidth;
+                llnCanvas.height = llnCanvasHeight;
+                
+                // Set N canvas dimensions
+                [n1Canvas, n5Canvas, n30Canvas, n100Canvas].forEach(canvas => {
+                    canvas.width = nCanvasWidth;
+                    canvas.height = nCanvasHeight;
+                });
+            }
+
+            function generatePopulationData() {
+                const { distribution, populationMean, populationSD } = demoState;
+                let data = [];
+                
+                // Generate 10000 data points
+                switch(distribution) {
+                    case 'normal':
+                        // Normal distribution
+                        for (let i = 0; i < 10000; i++) {
+                            const u1 = Math.random();
+                            const u2 = Math.random();
+                            const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+                            data.push(populationMean + populationSD * z);
+                        }
+                        break;
+                        
+                    case 'uniform':
+                        // Uniform distribution
+                        const range = populationSD * Math.sqrt(12); // Convert SD to range
+                        const min = populationMean - range/2;
+                        const max = populationMean + range/2;
+                        for (let i = 0; i < 10000; i++) {
+                            data.push(min + (max - min) * Math.random());
+                        }
+                        break;
+                        
+                    case 'exponential':
+                        // Exponential distribution (mean = 1/lambda)
+                        const lambda = 1 / populationMean;
+                        for (let i = 0; i < 10000; i++) {
+                            data.push(-Math.log(1 - Math.random()) / lambda);
+                        }
+                        break;
+                        
+                    case 'binomial':
+                        // Binomial distribution (approximated)
+                        // For binomial, we use p = 0.5, n = populationMean * 2
+                        const n = Math.max(1, Math.round(populationMean * 2));
+                        const p = 0.5;
+                        for (let i = 0; i < 10000; i++) {
+                            let successes = 0;
+                            for (let j = 0; j < n; j++) {
+                                if (Math.random() < p) successes++;
+                            }
+                            data.push(successes);
+                        }
+                        break;
+                }
+                
+                demoState.populationData = data;
+            }
+
+            function resetSampleMeans() {
+                // Clear all sample means
+                demoState.sampleMeans = {};
+                demoState.spreadData = {};
+                demoState.llnData = [];
+                
+                // Clear canvases
+                clearCanvas(sampleCtx, sampleCanvasWidth, sampleCanvasHeight);
+                clearCanvas(n1Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n5Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n30Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n100Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(llnCtx, llnCanvasWidth, llnCanvasHeight);
+                
+                // Update spread visualization
+                updateSpreadVisualization();
+            }
+
+            function clearCanvas(ctx, width, height) {
+                ctx.clearRect(0, 0, width, height);
+            }
+
+            function runSimulation() {
+                if (demoState.isRunning) return;
+                
+                demoState.isRunning = true;
+                
+                // Update button states
+                runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + 
+                    (currentLanguage === 'bn' ? 'চলছে...' : 'Running...');
+                runBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                // Generate samples
+                generateSamples(demoState.sampleSize);
+                
+                // Update visualization
+                drawSamplingDistribution(demoState.sampleSize);
+                updateSpreadVisualization();
+                updateLLNVisualization();
+                
+                // Update button states after completion
+                setTimeout(() => {
+                    demoState.isRunning = false;
+                    runBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                        (currentLanguage === 'bn' ? 'চালান' : 'Run');
+                    runBtn.disabled = false;
+                }, 500);
+            }
+
+            function pauseSimulation() {
+                demoState.isRunning = false;
+                
+                // Update button states
+                runBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'চালান' : 'Run');
+                runBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+
+            function generateSamples(sampleSize) {
+                const { numSamples, populationData } = demoState;
+                const sampleMeans = [];
+                
+                // Generate sample means
+                for (let i = 0; i < numSamples; i++) {
+                    let sampleSum = 0;
+                    
+                    // Draw a sample of given size
+                    for (let j = 0; j < sampleSize; j++) {
+                        const randomIndex = Math.floor(Math.random() * populationData.length);
+                        sampleSum += populationData[randomIndex];
+                    }
+                    
+                    const sampleMean = sampleSum / sampleSize;
+                    sampleMeans.push(sampleMean);
+                }
+                
+                // Store in state
+                demoState.sampleMeans[sampleSize] = sampleMeans;
+                
+                // Calculate spread data
+                calculateSpreadData(sampleSize, sampleMeans);
+                
+                // Update LLN data
+                updateLLNData(sampleSize, sampleMeans);
+            }
+
+            function calculateSpreadData(sampleSize, sampleMeans) {
+                if (sampleMeans.length === 0) return;
+                
+                // Calculate standard deviation of sample means
+                const mean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                const squaredDiffs = sampleMeans.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                const stdDev = Math.sqrt(variance);
+                
+                // Theoretical standard error
+                const theoreticalSE = demoState.populationSD / Math.sqrt(sampleSize);
+                
+                // Store spread data
+                demoState.spreadData[sampleSize] = {
+                    actual: stdDev,
+                    theoretical: theoreticalSE,
+                    ratio: stdDev / demoState.populationSD,
+                    mean: mean
+                };
+            }
+
+            function updateLLNData(sampleSize, sampleMeans) {
+                if (sampleMeans.length === 0) return;
+                
+                // Calculate average of sample means
+                const mean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                
+                // Add to LLN data
+                demoState.llnData.push({
+                    n: sampleSize,
+                    sampleMean: mean,
+                    populationMean: demoState.populationMean,
+                    error: Math.abs(mean - demoState.populationMean)
+                });
+            }
+
+            function compareAllSizes() {
+                // Generate samples for all key sizes
+                [1, 5, 30, 100].forEach(size => {
+                    generateSamples(size);
+                    drawNCanvas(size);
+                });
+                
+                // Update comparison statistics
+                updateComparisonStatistics();
+            }
+
+            function drawSamplingDistribution(sampleSize) {
+                const sampleMeans = demoState.sampleMeans[sampleSize];
+                if (!sampleMeans || sampleMeans.length === 0) return;
+                
+                // Clear canvas
+                clearCanvas(sampleCtx, sampleCanvasWidth, sampleCanvasHeight);
+                
+                // Draw histogram
+                drawHistogram(sampleCtx, sampleCanvasWidth, sampleCanvasHeight, sampleMeans, sampleSize);
+                
+                // Draw normal curve overlay
+                drawNormalCurve(sampleCtx, sampleMeans, sampleSize);
+            }
+
+            function drawNCanvas(sampleSize) {
+                const sampleMeans = demoState.sampleMeans[sampleSize];
+                if (!sampleMeans || sampleMeans.length === 0) return;
+                
+                let ctx;
+                switch(sampleSize) {
+                    case 1: ctx = n1Ctx; break;
+                    case 5: ctx = n5Ctx; break;
+                    case 30: ctx = n30Ctx; break;
+                    case 100: ctx = n100Ctx; break;
+                    default: return;
+                }
+                
+                // Clear canvas
+                clearCanvas(ctx, nCanvasWidth, nCanvasHeight);
+                
+                // Draw mini histogram
+                drawMiniHistogram(ctx, nCanvasWidth, nCanvasHeight, sampleMeans, sampleSize);
+            }
+
+            function drawMiniHistogram(ctx, width, height, data, sampleSize) {
+                if (data.length === 0) return;
+                
+                // Calculate statistics
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                
+                // Create bins
+                const numBins = 15;
+                const bins = new Array(numBins).fill(0);
+                
+                data.forEach(value => {
+                    const binIndex = Math.min(
+                        Math.floor(((value - min) / range) * numBins),
+                        numBins - 1
+                    );
+                    bins[binIndex]++;
+                });
+                
+                // Find maximum bin count
+                const maxCount = Math.max(...bins);
+                
+                // Draw histogram bars
+                const barWidth = (width - 10) / numBins;
+                const scale = (height - 20) / maxCount;
+                
+                for (let i = 0; i < numBins; i++) {
+                    const barHeight = bins[i] * scale;
+                    const x = 5 + i * barWidth;
+                    const y = height - 15 - barHeight;
+                    
+                    // Color based on sample size
+                    let color;
+                    switch(sampleSize) {
+                        case 1: color = 'rgba(244, 67, 54, 0.7)'; break;
+                        case 5: color = 'rgba(255, 152, 0, 0.7)'; break;
+                        case 30: color = 'rgba(33, 150, 243, 0.7)'; break;
+                        case 100: color = 'rgba(76, 175, 80, 0.7)'; break;
+                        default: color = 'rgba(0, 0, 0, 0.7)';
+                    }
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, barWidth - 1, barHeight);
+                }
+                
+                // Draw mean line
+                const meanX = 5 + ((mean - min) / range) * (width - 10);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(meanX, height - 15);
+                ctx.lineTo(meanX, 5);
+                ctx.stroke();
+                
+                // Draw sample size label
+                ctx.fillStyle = '#333';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`n=${sampleSize}`, width/2, 10);
+            }
+
+            function drawHistogram(ctx, width, height, data, sampleSize) {
+                if (data.length === 0) return;
+                
+                // Calculate statistics
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                
+                // Create bins
+                const numBins = 30;
+                const bins = new Array(numBins).fill(0);
+                
+                data.forEach(value => {
+                    const binIndex = Math.min(
+                        Math.floor(((value - min) / range) * numBins),
+                        numBins - 1
+                    );
+                    bins[binIndex]++;
+                });
+                
+                // Find maximum bin count
+                const maxCount = Math.max(...bins);
+                
+                // Draw axes
+                ctx.strokeStyle = '#666';
+                ctx.lineWidth = 1;
+                
+                // X-axis
+                ctx.beginPath();
+                ctx.moveTo(30, height - 30);
+                ctx.lineTo(width - 30, height - 30);
+                ctx.stroke();
+                
+                // Y-axis
+                ctx.beginPath();
+                ctx.moveTo(30, height - 30);
+                ctx.lineTo(30, 30);
+                ctx.stroke();
+                
+                // Draw histogram bars
+                const barWidth = (width - 60) / numBins;
+                const scale = (height - 60) / maxCount;
+                
+                for (let i = 0; i < numBins; i++) {
+                    const barHeight = bins[i] * scale;
+                    const x = 30 + i * barWidth;
+                    const y = height - 30 - barHeight;
+                    
+                    // Gradient fill based on sample size
+                    const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
+                    if (sampleSize <= 5) {
+                        gradient.addColorStop(0, 'rgba(244, 67, 54, 0.8)');
+                        gradient.addColorStop(1, 'rgba(244, 67, 54, 0.2)');
+                    } else if (sampleSize <= 30) {
+                        gradient.addColorStop(0, 'rgba(255, 152, 0, 0.8)');
+                        gradient.addColorStop(1, 'rgba(255, 152, 0, 0.2)');
+                    } else {
+                        gradient.addColorStop(0, 'rgba(33, 150, 243, 0.8)');
+                        gradient.addColorStop(1, 'rgba(33, 150, 243, 0.2)');
+                    }
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, y, barWidth - 1, barHeight);
+                    
+                    // Border
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x, y, barWidth - 1, barHeight);
+                }
+                
+                // Draw mean line
+                const meanX = 30 + ((mean - min) / range) * (width - 60);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(meanX, height - 30);
+                ctx.lineTo(meanX, 30);
+                ctx.stroke();
+                
+                // Draw labels
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                
+                // X-axis label
+                ctx.fillText('Sample Mean', width / 2, height - 10);
+                
+                // Y-axis label
+                ctx.save();
+                ctx.translate(15, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText('Frequency', 0, 0);
+                ctx.restore();
+                
+                // Sample size label
+                ctx.fillStyle = sampleSize >= 30 ? '#4CAF50' : '#F44336';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`Sample Size: n = ${sampleSize}`, width / 2, 20);
+            }
+
+            function drawNormalCurve(ctx, data, sampleSize) {
+                if (data.length < 2) return;
+                
+                // Calculate mean and SD of sample means
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const squaredDiffs = data.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / data.length;
+                const stdDev = Math.sqrt(variance);
+                
+                // Theoretical standard error
+                const theoreticalSE = demoState.populationSD / Math.sqrt(sampleSize);
+                
+                // Draw curve
+                ctx.beginPath();
+                ctx.strokeStyle = '#4CAF50';
+                ctx.lineWidth = 2;
+                
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                
+                for (let i = 0; i <= 100; i++) {
+                    const x = min + (i / 100) * range;
+                    const xPos = 30 + ((x - min) / range) * (sampleCanvasWidth - 60);
+                    
+                    // Normal PDF using theoretical SE
+                    const z = (x - demoState.populationMean) / theoreticalSE;
+                    const pdf = (1 / (theoreticalSE * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+                    
+                    // Scale to fit histogram
+                    const maxPdf = 1 / (theoreticalSE * Math.sqrt(2 * Math.PI));
+                    const scale = (sampleCanvasHeight - 60) / maxPdf;
+                    const yPos = sampleCanvasHeight - 30 - pdf * scale;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(xPos, yPos);
+                    } else {
+                        ctx.lineTo(xPos, yPos);
+                    }
+                }
+                
+                ctx.stroke();
+                
+                // Add label
+                ctx.fillStyle = '#4CAF50';
+                ctx.font = '12px Arial';
+                ctx.fillText('Theoretical Normal Curve', sampleCanvasWidth - 150, 40);
+            }
+
+            function updateSpreadVisualization() {
+                const sizes = [1, 5, 30, 100];
+                
+                // Clear previous bars
+                spreadBars.innerHTML = '';
+                
+                sizes.forEach(size => {
+                    const spreadData = demoState.spreadData[size];
+                    if (!spreadData) return;
+                    
+                    // Create bar container
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'spread-bar-container';
+                    
+                    // Create bar
+                    const bar = document.createElement('div');
+                    bar.className = 'spread-bar';
+                    
+                    // Calculate height (inverse of spread, normalized)
+                    const maxSpread = demoState.populationSD; // n=1
+                    const heightPercent = (1 - (spreadData.actual / maxSpread)) * 100;
+                    bar.style.height = `${heightPercent}%`;
+                    
+                    // Create label
+                    const label = document.createElement('div');
+                    label.className = 'spread-label';
+                    label.textContent = `n=${size}`;
+                    label.style.color = getColorForSize(size);
+                    
+                    // Add tooltip
+                    bar.title = `Standard Error: ${spreadData.actual.toFixed(2)}`;
+                    
+                    // Add to container
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(label);
+                    spreadBars.appendChild(barContainer);
+                });
+            }
+
+            function getColorForSize(size) {
+                switch(size) {
+                    case 1: return '#F44336';
+                    case 5: return '#FF9800';
+                    case 30: return '#2196F3';
+                    case 100: return '#4CAF50';
+                    default: return '#333';
+                }
+            }
+
+            function updateStatistics() {
+                const { sampleSize, populationSD } = demoState;
+                
+                // Calculate standard error
+                const standardError = populationSD / Math.sqrt(sampleSize);
+                standardErrorValue.textContent = standardError.toFixed(2);
+                
+                // Calculate spread ratio
+                const spreadRatio = standardError / populationSD;
+                spreadRatio.textContent = spreadRatio.toFixed(2);
+                
+                // Update comparison statistics
+                updateComparisonStatistics();
+            }
+
+            function updateComparisonStatistics() {
+                // Update statistics for each size
+                [1, 5, 30, 100].forEach(size => {
+                    const spreadData = demoState.spreadData[size];
+                    if (!spreadData) return;
+                    
+                    const seEl = document.getElementById(`n${size}SE`);
+                    const spreadEl = document.getElementById(`n${size}Spread`);
+                    
+                    if (seEl) seEl.textContent = spreadData.actual.toFixed(2);
+                    if (spreadEl) {
+                        const spreadPercent = (spreadData.actual / demoState.populationSD * 100).toFixed(0);
+                        spreadEl.textContent = `${spreadPercent}%`;
+                    }
+                });
+                
+                // Update shape labels
+                updateShapeLabels();
+            }
+
+            function updateShapeLabels() {
+                [1, 5, 30, 100].forEach(size => {
+                    const shapeEl = document.getElementById(`n${size}Shape`);
+                    if (!shapeEl) return;
+                    
+                    let shapeText;
+                    if (size === 1) {
+                        shapeText = currentLanguage === 'bn' ? 'পপুলেশনের মত' : 'Same as pop';
+                    } else if (size <= 5) {
+                        shapeText = currentLanguage === 'bn' ? 'মাঝারি CLT' : 'Moderate CLT';
+                    } else if (size <= 30) {
+                        shapeText = currentLanguage === 'bn' ? 'প্রায় নরমাল' : 'Nearly Normal';
+                    } else {
+                        shapeText = currentLanguage === 'bn' ? 'খুবই নরমাল' : 'Very Normal';
+                    }
+                    
+                    shapeEl.textContent = shapeText;
+                });
+            }
+
+            function updateLLNVisualization() {
+                const { llnData, populationMean } = demoState;
+                if (llnData.length === 0) return;
+                
+                // Clear canvas
+                clearCanvas(llnCtx, llnCanvasWidth, llnCanvasHeight);
+                
+                // Draw axes
+                drawLLNAxes();
+                
+                // Draw LLN curve
+                drawLLNCurve();
+                
+                // Update LLN statistics
+                updateLLNStatistics();
+            }
+
+            function drawLLNAxes() {
+                const ctx = llnCtx;
+                const width = llnCanvasWidth;
+                const height = llnCanvasHeight;
+                
+                // Draw axes
+                ctx.strokeStyle = '#666';
+                ctx.lineWidth = 1;
+                
+                // X-axis (sample size)
+                ctx.beginPath();
+                ctx.moveTo(50, height - 50);
+                ctx.lineTo(width - 30, height - 50);
+                ctx.stroke();
+                
+                // Y-axis (sample mean)
+                ctx.beginPath();
+                ctx.moveTo(50, height - 50);
+                ctx.lineTo(50, 30);
+                ctx.stroke();
+                
+                // Draw labels
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                
+                // X-axis label
+                ctx.textAlign = 'center';
+                ctx.fillText('Sample Size (n)', width / 2, height - 20);
+                
+                // Y-axis label
+                ctx.save();
+                ctx.translate(20, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText('Sample Mean', 0, 0);
+                ctx.restore();
+                
+                // Draw grid
+                ctx.strokeStyle = '#EEE';
+                ctx.lineWidth = 0.5;
+                
+                // Horizontal grid lines (population mean ± 2SD)
+                const popMeanY = height - 50 - ((demoState.populationMean - (demoState.populationMean - demoState.populationSD*2)) / (demoState.populationSD*4)) * (height - 80);
+                
+                ctx.beginPath();
+                ctx.moveTo(50, popMeanY);
+                ctx.lineTo(width - 30, popMeanY);
+                ctx.stroke();
+                
+                // Population mean line
+                ctx.strokeStyle = '#666';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(50, popMeanY);
+                ctx.lineTo(width - 30, popMeanY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Population mean label
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'left';
+                ctx.fillText(`μ = ${demoState.populationMean.toFixed(1)}`, width - 100, popMeanY - 5);
+            }
+
+            function drawLLNCurve() {
+                const ctx = llnCtx;
+                const { llnData, populationMean } = demoState;
+                if (llnData.length === 0) return;
+                
+                // Find min and max n
+                const minN = 1;
+                const maxN = Math.max(...llnData.map(d => d.n));
+                
+                // Scale for x-axis
+                const xScale = (llnCanvasWidth - 80) / (maxN - minN);
+                
+                // Scale for y-axis (sample mean)
+                const minMean = Math.min(populationMean - demoState.populationSD, ...llnData.map(d => d.sampleMean));
+                const maxMean = Math.max(populationMean + demoState.populationSD, ...llnData.map(d => d.sampleMean));
+                const yScale = (llnCanvasHeight - 80) / (maxMean - minMean);
+                
+                // Draw LLN curve
+                ctx.strokeStyle = '#9C27B0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                llnData.forEach((point, i) => {
+                    const x = 50 + (point.n - minN) * xScale;
+                    const y = llnCanvasHeight - 50 - (point.sampleMean - minMean) * yScale;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // Draw points
+                llnData.forEach(point => {
+                    const x = 50 + (point.n - minN) * xScale;
+                    const y = llnCanvasHeight - 50 - (point.sampleMean - minMean) * yScale;
+                    
+                    ctx.fillStyle = '#9C27B0';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // Update current LLN statistics
+                const latestPoint = llnData[llnData.length - 1];
+                if (latestPoint) {
+                    llnCurrentMean.textContent = latestPoint.sampleMean.toFixed(2);
+                    
+                    // Calculate convergence rate
+                    const error = Math.abs(latestPoint.sampleMean - populationMean);
+                    const convergenceRate = (1 - error / demoState.populationSD) * 100;
+                    llnRate.textContent = convergenceRate.toFixed(1) + '%';
+                }
+            }
+
+            function updateLLNStatistics() {
+                const latestPoint = demoState.llnData[demoState.llnData.length - 1];
+                if (latestPoint) {
+                    llnCurrentMean.textContent = latestPoint.sampleMean.toFixed(2);
+                    
+                    const error = Math.abs(latestPoint.sampleMean - demoState.populationMean);
+                    const convergenceRate = Math.max(0, 100 - (error / demoState.populationSD * 100));
+                    llnRate.textContent = convergenceRate.toFixed(1) + '%';
+                }
+            }
+
+            function resetDemo() {
+                // Reset state
+                demoState.sampleMeans = {};
+                demoState.spreadData = {};
+                demoState.llnData = [];
+                demoState.isRunning = false;
+                
+                // Reset UI
+                runBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'চালান' : 'Run');
+                runBtn.disabled = false;
+                pauseBtn.disabled = true;
+                
+                // Reset sample size to default
+                setSampleSize(30);
+                sizeSlider.value = 30;
+                
+                // Clear canvases
+                clearCanvas(sampleCtx, sampleCanvasWidth, sampleCanvasHeight);
+                clearCanvas(n1Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n5Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n30Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(n100Ctx, nCanvasWidth, nCanvasHeight);
+                clearCanvas(llnCtx, llnCanvasWidth, llnCanvasHeight);
+                
+                // Reset spread visualization
+                updateSpreadVisualization();
+                
+                // Reset statistics
+                updateStatistics();
+                updateLLNStatistics();
+            }
+        });
+    </script>
+</body>
+</html>

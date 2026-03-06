@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Population vs Sample Distribution Comparer | জনসংখ্যা vs নমুনা ডিস্ট্রিবিউশন তুলনাকারী</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --population-color: #2196F3;
+            --sample-color: #4CAF50;
+            --statistical-color: #9C27B0;
+            --comparison-color: #FF9800;
+            --error-color: #F44336;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--comparison-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--population-color), var(--sample-color), var(--comparison-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--comparison-color);
+        }
+
+        /* Population Settings */
+        .population-settings {
+            margin-bottom: 2rem;
+        }
+
+        .distribution-type {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-type {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dist-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dist-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .dist-btn.active {
+            border-color: var(--population-color);
+            background: rgba(33, 150, 243, 0.1);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+        }
+
+        .dist-icon {
+            font-size: 1.5rem;
+            color: var(--population-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--comparison-color);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, var(--light-gray), var(--comparison-color));
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--comparison-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            width: 70px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* Sample Settings */
+        .sample-settings {
+            margin-bottom: 2rem;
+        }
+
+        .sample-size-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sample-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .sample-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sample-btn.active {
+            background: var(--sample-color);
+            color: white;
+            border-color: var(--sample-color);
+        }
+
+        /* Sampling Methods */
+        .sampling-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .method-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .method-card.active {
+            border-color: var(--statistical-color);
+            background: rgba(156, 39, 176, 0.1);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--statistical-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .method-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .method-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .simulate-btn {
+            background: var(--comparison-color);
+            color: white;
+        }
+
+        .simulate-btn:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 2rem;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            height: 400px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+                height: 800px;
+            }
+        }
+
+        .chart-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i.population {
+            color: var(--population-color);
+        }
+
+        .chart-title i.sample {
+            color: var(--sample-color);
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .chart-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 1.2rem;
+        }
+
+        /* Statistical Tests Section */
+        .statistical-tests {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .test-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--statistical-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .test-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .test-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            color: var(--statistical-color);
+        }
+
+        /* Parameter Comparison */
+        .parameter-comparison {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .comparison-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .param-name {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .param-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .population-value {
+            color: var(--population-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .sample-value {
+            color: var(--sample-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .difference {
+            font-size: 0.9rem;
+            color: var(--dark);
+            padding: 0.3rem 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .difference.positive {
+            background: rgba(76, 175, 80, 0.1);
+            color: #2E7D32;
+            border-color: #4CAF50;
+        }
+
+        .difference.negative {
+            background: rgba(244, 67, 54, 0.1);
+            color: #C62828;
+            border-color: #F44336;
+        }
+
+        /* Convergence Analysis */
+        .convergence-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .convergence-chart-container {
+            height: 300px;
+            margin-top: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            position: relative;
+        }
+
+        .convergence-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--comparison-color);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Side-by-side comparison line */
+        .comparison-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: var(--comparison-color);
+            opacity: 0.3;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .sample-size-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sampling-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .simulation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .distribution-type {
+                grid-template-columns: 1fr;
+            }
+            
+            .tests-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Population vs Sample Distribution Comparer" data-bn="জনসংখ্যা vs নমুনা ডিস্ট্রিবিউশন তুলনাকারী">জনসংখ্যা vs নমুনা ডিস্ট্রিবিউশন তুলনাকারী</h1>
+            <p class="subtitle" data-en="Compare population distribution with sampling distribution - Side-by-side visualization, parameter preservation, and statistical tests" data-bn="জনসংখ্যা ডিস্ট্রিবিউশনের সাথে স্যাম্পলিং ডিস্ট্রিবিউশন তুলনা করুন - পাশাপাশি ভিজ্যুয়ালাইজেশন, প্যারামিটার সংরক্ষণ এবং পরিসংখ্যানিক টেস্ট">
+                জনসংখ্যা ডিস্ট্রিবিউশনের সাথে স্যাম্পলিং ডিস্ট্রিবিউশন তুলনা করুন - পাশাপাশি ভিজ্যুয়ালাইজেশন, প্যারামিটার সংরক্ষণ এবং পরিসংখ্যানিক টেস্ট
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Population Settings" data-bn="জনসংখ্যা সেটিংস">জনসংখ্যা সেটিংস</span>
+                </h2>
+
+                <!-- Distribution Type -->
+                <div class="distribution-type">
+                    <button class="dist-btn active" data-dist="normal">
+                        <div class="dist-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <span data-en="Normal" data-bn="নরমাল">নরমাল</span>
+                        <small data-en="Symmetric" data-bn="সিমেট্রিক">সিমেট্রিক</small>
+                    </button>
+
+                    <button class="dist-btn" data-dist="uniform">
+                        <div class="dist-icon">
+                            <i class="fas fa-square"></i>
+                        </div>
+                        <span data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</span>
+                        <small data-en="Equal probability" data-bন="সমান সম্ভাবনা">সমান সম্ভাবনা</small>
+                    </button>
+
+                    <button class="dist-btn" data-dist="exponential">
+                        <div class="dist-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span data-en="Exponential" data-bন="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</span>
+                        <small data-en="Right skewed" data-bন="ডানে তির্যক">ডানে তির্যক</small>
+                    </button>
+
+                    <button class="dist-btn" data-dist="bimodal">
+                        <div class="dist-icon">
+                            <i class="fas fa-mountain"></i>
+                        </div>
+                        <span data-en="Bimodal" data-bন="বাইমোডাল">বাইমোডাল</span>
+                        <small data-en="Two peaks" data-bন="দুটি শিখর">দুটি শিখর</small>
+                    </button>
+
+                    <button class="dist-btn" data-dist="lognormal">
+                        <div class="dist-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <span data-en="Log-normal" data-bন="লগ-নরমাল">লগ-নরমাল</span>
+                        <small data-en="Positive skew" data-bন="পজিটিভ স্কিউ">পজিটিভ স্কিউ</small>
+                    </button>
+
+                    <button class="dist-btn" data-dist="custom">
+                        <div class="dist-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <span data-en="Custom" data-bন="কাস্টম">কাস্টম</span>
+                        <small data-en="Adjust parameters" data-bন="প্যারামিটার সামঞ্জস্য করুন">প্যারামিটার সামঞ্জস্য করুন</small>
+                    </button>
+                </div>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <span data-en="Population Mean (μ)" data-bন="জনসংখ্যা গড় (μ)">জনসংখ্যা গড় (μ)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="populationMeanSlider" class="slider" min="-10" max="10" step="0.1" value="0">
+                            <input type="number" id="populationMeanValue" class="slider-value" value="0">
+                        </div>
+                        <div class="help-text" data-en="Central tendency of population" data-bন="জনসংখ্যার কেন্দ্রীয় প্রবণতা">জনসংখ্যার কেন্দ্রীয় প্রবণতা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-expand-alt"></i>
+                            <span data-en="Population Std Dev (σ)" data-bন="জনসংখ্যা স্ট্যান্ডার্ড ডেভিয়েশন (σ)">জনসংখ্যা স্ট্যান্ডার্ড ডেভিয়েশন (σ)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="populationStdSlider" class="slider" min="0.1" max="5" step="0.1" value="2">
+                            <input type="number" id="populationStdValue" class="slider-value" value="2">
+                        </div>
+                        <div class="help-text" data-en="Spread of population data" data-bন="জনসংখ্যা ডেটার বিস্তার">জনসংখ্যা ডেটার বিস্তার</div>
+                    </div>
+                </div>
+
+                <!-- Custom Distribution Controls -->
+                <div class="parameter-controls" id="customControls" style="display: none;">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-balance-scale-left"></i>
+                            <span data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="skewnessSlider" class="slider" min="-2" max="2" step="0.1" value="0">
+                            <input type="number" id="skewnessValue" class="slider-value" value="0">
+                        </div>
+                        <div class="help-text" data-en="Distribution asymmetry" data-bন="ডিস্ট্রিবিউশন অ্যাসিমেট্রি">ডিস্ট্রিবিউশন অ্যাসিমেট্রি</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-mountain"></i>
+                            <span data-en="Kurtosis" data-bন="কার্টোসিস">কার্টোসিস</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="kurtosisSlider" class="slider" min="1" max="10" step="0.1" value="3">
+                            <input type="number" id="kurtosisValue" class="slider-value" value="3">
+                        </div>
+                        <div class="help-text" data-en="Tail heaviness" data-bন="টেইল ভারীতা">টেইল ভারীতা</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title" style="margin-top: 2rem;">
+                    <i class="fas fa-vial"></i>
+                    <span data-en="Sampling Settings" data-bন="স্যাম্পলিং সেটিংস">স্যাম্পলিং সেটিংস</span>
+                </h2>
+
+                <!-- Sample Size Selection -->
+                <div class="sample-settings">
+                    <div class="sample-size-grid">
+                        <button class="sample-btn" data-size="5">n=5</button>
+                        <button class="sample-btn active" data-size="10">n=10</button>
+                        <button class="sample-btn" data-size="30">n=30</button>
+                        <button class="sample-btn" data-size="50">n=50</button>
+                        <button class="sample-btn" data-size="100">n=100</button>
+                        <button class="sample-btn" data-size="200">n=200</button>
+                    </div>
+                    <div class="help-text" data-en="Number of observations in each sample" data-bন="প্রতিটি নমুনায় পর্যবেক্ষণের সংখ্যা">
+                        প্রতিটি নমুনায় পর্যবেক্ষণের সংখ্যা
+                    </div>
+                </div>
+
+                <!-- Sampling Methods -->
+                <div class="sampling-methods">
+                    <div class="method-card active" data-method="simple">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-random"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Simple Random" data-bন="সিম্পল র্যান্ডম">সিম্পল র্যান্ডম</div>
+                                <div class="method-desc" data-en="Equal probability selection" data-bন="সমান সম্ভাবনা নির্বাচন">সমান সম্ভাবনা নির্বাচন</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="method-card" data-method="stratified">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Stratified" data-bন="স্ট্র্যাটিফাইড">স্ট্র্যাটিফাইড</div>
+                                <div class="method-desc" data-en="Proportional from strata" data-bন="স্ট্রাটা থেকে সমানুপাতিক">স্ট্রাটা থেকে সমানুপাতিক</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="method-card" data-method="systematic">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-ruler-combined"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Systematic" data-bন="সিস্টেমেটিক">সিস্টেমেটিক</div>
+                                <div class="method-desc" data-en="Fixed interval selection" data-bন="নির্দিষ্ট ব্যবধান নির্বাচন">নির্দিষ্ট ব্যবধান নির্বাচন</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="method-card" data-method="bootstrap">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Bootstrap" data-bন="বুটস্ট্র্যাপ">বুটস্ট্র্যাপ</div>
+                                <div class="method-desc" data-en="With replacement sampling" data-bন="প্রতিস্থাপন সহ স্যাম্পলিং">প্রতিস্থাপন সহ স্যাম্পলিং</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="simulation-controls">
+                    <button class="control-btn simulate-btn" id="simulateBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Simulation" data-bন="সিমুলেশন চালান">সিমুলেশন চালান</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Side-by-Side Comparison" data-bন="পাশাপাশি তুলনা">পাশাপাশি তুলনা</span>
+                </h2>
+
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fas fa-users population"></i>
+                                <span data-en="Population Distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশন">জনসংখ্যা ডিস্ট্রিবিউশন</span>
+                            </h3>
+                            <div class="chart-stats">
+                                <small>N = <span id="populationCount">10000</span></small>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="populationChart"></canvas>
+                            <div class="chart-placeholder" id="populationPlaceholder">
+                                <i class="fas fa-chart-bar fa-2x"></i>
+                            </div>
+                            <div class="comparison-line"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-wrapper">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="fas fa-vial sample"></i>
+                                <span data-en="Sampling Distribution" data-bন="স্যাম্পলিং ডিস্ট্রিবিউশন">স্যাম্পলিং ডিস্ট্রিবিউশন</span>
+                            </h3>
+                            <div class="chart-stats">
+                                <small>Samples = <span id="sampleCount">1000</span></small>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="sampleDistributionChart"></canvas>
+                            <div class="chart-placeholder" id="samplePlaceholder">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Overlay Toggle -->
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button class="sample-btn" id="overlayToggle" style="width: auto;">
+                        <i class="fas fa-layer-group"></i>
+                        <span data-en="Overlay Distributions" data-bন="ডিস্ট্রিবিউশন ওভারলে">ডিস্ট্রিবিউশন ওভারলে</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameter Comparison -->
+        <div class="parameter-comparison">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Parameter Preservation Analysis" data-bন="প্যারামিটার সংরক্ষণ বিশ্লেষণ">প্যারামিটার সংরক্ষণ বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Compare how sample statistics preserve population parameters:" data-bন="নমুনা পরিসংখ্যান কীভাবে জনসংখ্যা প্যারামিটার সংরক্ষণ করে তা তুলনা করুন:">
+                নমুনা পরিসংখ্যান কীভাবে জনসংখ্যা প্যারামিটার সংরক্ষণ করে তা তুলনা করুন:
+            </p>
+            
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <div class="param-name" data-en="Mean" data-bন="গড়">গড়</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popMeanValue">0.00</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleMeanValue">0.00</span>
+                    </div>
+                    <div class="difference" id="meanDifference">0.00 (0%)</div>
+                    <small data-en="Population vs Sample" data-bন="জনসংখ্যা vs নমুনা">জনসংখ্যা vs নমুনা</small>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="param-name" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popStdValue">2.00</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleStdValue">0.63</span>
+                    </div>
+                    <div class="difference" id="stdDifference">-1.37 (-68.5%)</div>
+                    <small data-en="σ vs σ/√n" data-bন="σ vs σ/√n">σ vs σ/√n</small>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="param-name" data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popVarValue">4.00</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleVarValue">0.40</span>
+                    </div>
+                    <div class="difference" id="varDifference">-3.60 (-90%)</div>
+                    <small data-en="σ² vs σ²/n" data-bন="σ² vs σ²/n">σ² vs σ²/n</small>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="param-name" data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popSkewValue">0.00</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleSkewValue">0.00</span>
+                    </div>
+                    <div class="difference" id="skewDifference">0.00 (0%)</div>
+                    <small data-en="Asymmetry comparison" data-bন="অ্যাসিমেট্রি তুলনা">অ্যাসিমেট্রি তুলনা</small>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="param-name" data-en="Kurtosis" data-bন="কার্টোসিস">কার্টোসিস</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popKurtValue">3.00</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleKurtValue">3.00</span>
+                    </div>
+                    <div class="difference" id="kurtDifference">0.00 (0%)</div>
+                    <small data-en="Tail comparison" data-bন="টেইল তুলনা">টেইল তুলনা</small>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="param-name" data-en="95% CI Width" data-bন="৯৫% CI প্রস্থ">৯৫% CI প্রস্থ</div>
+                    <div class="param-values">
+                        <span class="population-value" id="popCIWidth">—</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span class="sample-value" id="sampleCIWidth">2.46</span>
+                    </div>
+                    <div class="difference" id="ciDifference">—</div>
+                    <small data-en="Confidence interval" data-bন="কনফিডেন্স ইন্টারভ্যাল">কনফিডেন্স ইন্টারভ্যাল</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistical Tests Section -->
+        <div class="statistical-tests">
+            <h2 class="section-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span data-en="Statistical Test Implementation" data-bন="পরিসংখ্যানিক টেস্ট বাস্তবায়ন">পরিসংখ্যানিক টেস্ট বাস্তবায়ন</span>
+            </h2>
+            
+            <p data-en="Perform statistical tests to compare population and sample distributions:" data-bন="জনসংখ্যা এবং নমুনা ডিস্ট্রিবিউশন তুলনা করতে পরিসংখ্যানিক টেস্ট সম্পাদন করুন:">
+                জনসংখ্যা এবং নমুনা ডিস্ট্রিবিউশন তুলনা করতে পরিসংখ্যানিক টেস্ট সম্পাদন করুন:
+            </p>
+            
+            <div class="tests-grid">
+                <div class="test-card">
+                    <div class="test-header">
+                        <div class="test-icon">
+                            <i class="fas fa-t-test"></i>
+                        </div>
+                        <div>
+                            <div class="test-title" data-en="t-Test for Means" data-bন="গড়ের জন্য t-টেস্ট">গড়ের জন্য t-টেস্ট</div>
+                            <small data-en="Test if sample mean equals population mean" data-bন="নমুনা গড় জনসংখ্যা গড়ের সমান কিনা পরীক্ষা করুন">নমুনা গড় জনসংখ্যা গড়ের সমান কিনা পরীক্ষা করুন</small>
+                        </div>
+                    </div>
+                    <div class="test-result">
+                        <div data-en="H₀: μ_sample = μ_population" data-bন="H₀: μ_নমুনা = μ_জনসংখ্যা">H₀: μ_নমুনা = μ_জনসংখ্যা</div>
+                        <div class="test-value" id="tTestResult">t = 0.00</div>
+                        <div data-en="p-value: " data-bন="p-মান: ">p-মান: <span id="tTestPValue">1.000</span></div>
+                        <div id="tTestConclusion" data-en="No significant difference" data-bন="কোন উল্লেখযোগ্য পার্থক্য নেই">কোন উল্লেখযোগ্য পার্থক্য নেই</div>
+                    </div>
+                </div>
+                
+                <div class="test-card">
+                    <div class="test-header">
+                        <div class="test-icon">
+                            <i class="fas fa-chi-square"></i>
+                        </div>
+                        <div>
+                            <div class="test-title" data-en="χ² Goodness-of-Fit" data-bন="χ² গুডনেস-অফ-ফিট">χ² গুডনেস-অফ-ফিট</div>
+                            <small data-en="Test if sample distribution fits population distribution" data-bন="নমুনা ডিস্ট্রিবিউশন জনসংখ্যা ডিস্ট্রিবিউশনে ফিট করে কিনা পরীক্ষা করুন">নমুনা ডিস্ট্রিবিউশন জনসংখ্যা ডিস্ট্রিবিউশনে ফিট করে কিনা পরীক্ষা করুন</small>
+                        </div>
+                    </div>
+                    <div class="test-result">
+                        <div data-en="H₀: Distributions are equal" data-bন="H₀: ডিস্ট্রিবিউশন সমান">H₀: ডিস্ট্রিবিউশন সমান</div>
+                        <div class="test-value" id="chiSquareResult">χ² = 0.00</div>
+                        <div data-en="p-value: " data-bন="p-মান: ">p-মান: <span id="chiSquarePValue">1.000</span></div>
+                        <div id="chiSquareConclusion" data-en="Distributions match" data-bন="ডিস্ট্রিবিউশন মেলে">ডিস্ট্রিবিউশন মেলে</div>
+                    </div>
+                </div>
+                
+                <div class="test-card">
+                    <div class="test-header">
+                        <div class="test-icon">
+                            <i class="fas fa-braille"></i>
+                        </div>
+                        <div>
+                            <div class="test-title" data-en="Kolmogorov-Smirnov" data-bন="কলমোগোরভ-স্মিরনভ">কলমোগোরভ-স্মিরনভ</div>
+                            <small data-en="Test if samples come from same distribution" data-bন="নমুনা একই ডিস্ট্রিবিউশন থেকে আসে কিনা পরীক্ষা করুন">নমুনা একই ডিস্ট্রিবিউশন থেকে আসে কিনা পরীক্ষা করুন</small>
+                        </div>
+                    </div>
+                    <div class="test-result">
+                        <div data-en="H₀: Same distribution" data-bন="H₀: একই ডিস্ট্রিবিউশন">H₀: একই ডিস্ট্রিবিউশন</div>
+                        <div class="test-value" id="ksTestResult">D = 0.00</div>
+                        <div data-en="p-value: " data-bন="p-মান: ">p-মান: <span id="ksTestPValue">1.000</span></div>
+                        <div id="ksTestConclusion" data-en="Samples from same distribution" data-bন="একই ডিস্ট্রিবিউশন থেকে নমুনা">একই ডিস্ট্রিবিউশন থেকে নমুনা</div>
+                    </div>
+                </div>
+                
+                <div class="test-card">
+                    <div class="test-header">
+                        <div class="test-icon">
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <div>
+                            <div class="test-title" data-en="ANOVA F-Test" data-bন="ANOVA F-টেস্ট">ANOVA F-টেস্ট</div>
+                            <small data-en="Test variance equality between distributions" data-bন="ডিস্ট্রিবিউশনগুলির মধ্যে ভ্যারিয়েন্স সমতা পরীক্ষা করুন">ডিস্ট্রিবিউশনগুলির মধ্যে ভ্যারিয়েন্স সমতা পরীক্ষা করুন</small>
+                        </div>
+                    </div>
+                    <div class="test-result">
+                        <div data-en="H₀: σ₁² = σ₂²" data-bন="H₀: σ₁² = σ₂²">H₀: σ₁² = σ₂²</div>
+                        <div class="test-value" id="fTestResult">F = 1.00</div>
+                        <div data-en="p-value: " data-bন="p-মান: ">p-মান: <span id="fTestPValue">1.000</span></div>
+                        <div id="fTestConclusion" data-en="Equal variances" data-bন="সমান ভ্যারিয়েন্স">সমান ভ্যারিয়েন্স</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Analysis -->
+        <div class="convergence-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-bullseye"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Observe how sampling distribution converges to normal distribution as sample size increases:" data-bন="নমুনা আকার বৃদ্ধির সাথে সাথে স্যাম্পলিং ডিস্ট্রিবিউশন কীভাবে নরমাল ডিস্ট্রিবিউশনে কনভার্জ করে তা পর্যবেক্ষণ করুন:">
+                নমুনা আকার বৃদ্ধির সাথে সাথে স্যাম্পলিং ডিস্ট্রিবিউশন কীভাবে নরমাল ডিস্ট্রিবিউশনে কনভার্জ করে তা পর্যবেক্ষণ করুন:
+            </p>
+            
+            <div class="convergence-chart-container">
+                <canvas id="convergenceChart"></canvas>
+                <div class="convergence-placeholder" id="convergencePlaceholder">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                distribution: 'normal',
+                populationMean: 0,
+                populationStd: 2,
+                skewness: 0,
+                kurtosis: 3,
+                sampleSize: 10,
+                samplingMethod: 'simple',
+                populationData: [],
+                sampleMeans: [],
+                isSimulating: false,
+                simulationInterval: null
+            };
+
+            // Charts
+            let populationChart = null;
+            let sampleDistributionChart = null;
+            let convergenceChart = null;
+
+            // DOM Elements
+            const distBtns = document.querySelectorAll('.dist-btn');
+            const populationMeanSlider = document.getElementById('populationMeanSlider');
+            const populationMeanValue = document.getElementById('populationMeanValue');
+            const populationStdSlider = document.getElementById('populationStdSlider');
+            const populationStdValue = document.getElementById('populationStdValue');
+            const customControls = document.getElementById('customControls');
+            const skewnessSlider = document.getElementById('skewnessSlider');
+            const skewnessValue = document.getElementById('skewnessValue');
+            const kurtosisSlider = document.getElementById('kurtosisSlider');
+            const kurtosisValue = document.getElementById('kurtosisValue');
+            const sampleBtns = document.querySelectorAll('.sample-btn');
+            const methodCards = document.querySelectorAll('.method-card');
+            const simulateBtn = document.getElementById('simulateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const overlayToggle = document.getElementById('overlayToggle');
+
+            // Parameter Elements
+            const popMeanValue = document.getElementById('popMeanValue');
+            const sampleMeanValue = document.getElementById('sampleMeanValue');
+            const meanDifference = document.getElementById('meanDifference');
+            const popStdValue = document.getElementById('popStdValue');
+            const sampleStdValue = document.getElementById('sampleStdValue');
+            const stdDifference = document.getElementById('stdDifference');
+            const popVarValue = document.getElementById('popVarValue');
+            const sampleVarValue = document.getElementById('sampleVarValue');
+            const varDifference = document.getElementById('varDifference');
+            const popSkewValue = document.getElementById('popSkewValue');
+            const sampleSkewValue = document.getElementById('sampleSkewValue');
+            const skewDifference = document.getElementById('skewDifference');
+            const popKurtValue = document.getElementById('popKurtValue');
+            const sampleKurtValue = document.getElementById('sampleKurtValue');
+            const kurtDifference = document.getElementById('kurtDifference');
+            const popCIWidth = document.getElementById('popCIWidth');
+            const sampleCIWidth = document.getElementById('sampleCIWidth');
+            const ciDifference = document.getElementById('ciDifference');
+
+            // Test Result Elements
+            const tTestResult = document.getElementById('tTestResult');
+            const tTestPValue = document.getElementById('tTestPValue');
+            const tTestConclusion = document.getElementById('tTestConclusion');
+            const chiSquareResult = document.getElementById('chiSquareResult');
+            const chiSquarePValue = document.getElementById('chiSquarePValue');
+            const chiSquareConclusion = document.getElementById('chiSquareConclusion');
+            const ksTestResult = document.getElementById('ksTestResult');
+            const ksTestPValue = document.getElementById('ksTestPValue');
+            const ksTestConclusion = document.getElementById('ksTestConclusion');
+            const fTestResult = document.getElementById('fTestResult');
+            const fTestPValue = document.getElementById('fTestPValue');
+            const fTestConclusion = document.getElementById('fTestConclusion');
+
+            // Initialize
+            initComparer();
+
+            function initComparer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Distribution Selection
+                distBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dist = this.dataset.dist;
+                        setDistribution(dist);
+                    });
+                });
+
+                // Parameter Controls
+                populationMeanSlider.addEventListener('input', function() {
+                    populationMeanValue.value = this.value;
+                    simulationState.populationMean = parseFloat(this.value);
+                    updatePopulationData();
+                });
+
+                populationMeanValue.addEventListener('change', function() {
+                    let value = parseFloat(this.value);
+                    if (value < -10) value = -10;
+                    if (value > 10) value = 10;
+                    this.value = value;
+                    populationMeanSlider.value = value;
+                    simulationState.populationMean = value;
+                    updatePopulationData();
+                });
+
+                populationStdSlider.addEventListener('input', function() {
+                    populationStdValue.value = this.value;
+                    simulationState.populationStd = parseFloat(this.value);
+                    updatePopulationData();
+                });
+
+                populationStdValue.addEventListener('change', function() {
+                    let value = parseFloat(this.value);
+                    if (value < 0.1) value = 0.1;
+                    if (value > 5) value = 5;
+                    this.value = value;
+                    populationStdSlider.value = value;
+                    simulationState.populationStd = value;
+                    updatePopulationData();
+                });
+
+                skewnessSlider.addEventListener('input', function() {
+                    skewnessValue.value = this.value;
+                    simulationState.skewness = parseFloat(this.value);
+                    updatePopulationData();
+                });
+
+                skewnessValue.addEventListener('change', function() {
+                    let value = parseFloat(this.value);
+                    if (value < -2) value = -2;
+                    if (value > 2) value = 2;
+                    this.value = value;
+                    skewnessSlider.value = value;
+                    simulationState.skewness = value;
+                    updatePopulationData();
+                });
+
+                kurtosisSlider.addEventListener('input', function() {
+                    kurtosisValue.value = this.value;
+                    simulationState.kurtosis = parseFloat(this.value);
+                    updatePopulationData();
+                });
+
+                kurtosisValue.addEventListener('change', function() {
+                    let value = parseFloat(this.value);
+                    if (value < 1) value = 1;
+                    if (value > 10) value = 10;
+                    this.value = value;
+                    kurtosisSlider.value = value;
+                    simulationState.kurtosis = value;
+                    updatePopulationData();
+                });
+
+                // Sample Size Selection
+                sampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const size = parseInt(this.dataset.size);
+                        setSampleSize(size);
+                    });
+                });
+
+                // Sampling Method Selection
+                methodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setSamplingMethod(method);
+                    });
+                });
+
+                // Simulation Controls
+                simulateBtn.addEventListener('click', toggleSimulation);
+                resetBtn.addEventListener('click', resetSimulation);
+                overlayToggle.addEventListener('click', toggleOverlay);
+
+                // Initialize charts
+                initializeCharts();
+
+                // Generate initial population
+                generatePopulationData();
+                updatePopulationChart();
+                updateStatistics();
+
+                // Run initial simulation
+                setTimeout(() => {
+                    runSimulation();
+                }, 1000);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDistribution(dist) {
+                simulationState.distribution = dist;
+                
+                // Update active button
+                distBtns.forEach(btn => {
+                    if (btn.dataset.dist === dist) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Show/hide custom controls
+                if (dist === 'custom') {
+                    customControls.style.display = 'grid';
+                } else {
+                    customControls.style.display = 'none';
+                }
+
+                // Regenerate population data
+                generatePopulationData();
+                updatePopulationChart();
+                resetSimulation();
+            }
+
+            function setSampleSize(size) {
+                simulationState.sampleSize = size;
+                
+                // Update active button
+                sampleBtns.forEach(btn => {
+                    if (parseInt(btn.dataset.size) === size) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Reset simulation
+                resetSimulation();
+            }
+
+            function setSamplingMethod(method) {
+                simulationState.samplingMethod = method;
+                
+                // Update active card
+                methodCards.forEach(card => {
+                    if (card.dataset.method === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                // Reset simulation
+                resetSimulation();
+            }
+
+            function generatePopulationData() {
+                const { distribution, populationMean, populationStd, skewness, kurtosis } = simulationState;
+                const data = [];
+                const n = 10000; // Population size
+                
+                switch(distribution) {
+                    case 'normal':
+                        // Normal distribution
+                        for (let i = 0; i < n; i++) {
+                            const u = Math.random();
+                            const v = Math.random();
+                            const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                            data.push(populationMean + populationStd * z);
+                        }
+                        break;
+                        
+                    case 'uniform':
+                        // Uniform distribution
+                        for (let i = 0; i < n; i++) {
+                            data.push(populationMean + populationStd * (Math.random() - 0.5) * Math.sqrt(12));
+                        }
+                        break;
+                        
+                    case 'exponential':
+                        // Exponential distribution
+                        for (let i = 0; i < n; i++) {
+                            data.push(populationMean - populationStd + populationStd * (-Math.log(Math.random())));
+                        }
+                        break;
+                        
+                    case 'bimodal':
+                        // Bimodal distribution (mixture of two normals)
+                        for (let i = 0; i < n; i++) {
+                            const u = Math.random();
+                            const v = Math.random();
+                            const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                            const meanShift = Math.random() < 0.5 ? -populationStd : populationStd;
+                            data.push(populationMean + meanShift + populationStd * 0.5 * z);
+                        }
+                        break;
+                        
+                    case 'lognormal':
+                        // Log-normal distribution
+                        for (let i = 0; i < n; i++) {
+                            const u = Math.random();
+                            const v = Math.random();
+                            const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                            data.push(Math.exp(populationMean + populationStd * z));
+                        }
+                        break;
+                        
+                    case 'custom':
+                        // Custom distribution with skewness and kurtosis control
+                        for (let i = 0; i < n; i++) {
+                            // Generate from Pearson distribution family
+                            let value;
+                            if (Math.abs(skewness) < 0.1 && Math.abs(kurtosis - 3) < 0.1) {
+                                // Close to normal
+                                const u = Math.random();
+                                const v = Math.random();
+                                value = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                            } else {
+                                // Use transformed normal
+                                const u = Math.random();
+                                const v = Math.random();
+                                let normal = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                                
+                                // Apply skewness transformation (Fernandez-Steel)
+                                if (skewness !== 0) {
+                                    const gamma = skewness;
+                                    const m = Math.sqrt(Math.abs(gamma));
+                                    const s = gamma < 0 ? -1 : 1;
+                                    value = s * (2/(1 + m)) * (normal >= 0 ? m * normal : normal/m);
+                                } else {
+                                    value = normal;
+                                }
+                            }
+                            
+                            // Adjust kurtosis
+                            const excessKurtosis = kurtosis - 3;
+                            if (excessKurtosis > 0) {
+                                value *= (1 + 0.1 * excessKurtosis);
+                            }
+                            
+                            data.push(populationMean + populationStd * value);
+                        }
+                        break;
+                }
+                
+                simulationState.populationData = data;
+            }
+
+            function drawSamples() {
+                const { populationData, sampleSize, samplingMethod, sampleMeans } = simulationState;
+                const nSamples = 1000; // Number of samples to draw
+                
+                // Clear previous samples
+                simulationState.sampleMeans = [];
+                
+                switch(samplingMethod) {
+                    case 'simple':
+                        // Simple random sampling
+                        for (let i = 0; i < nSamples; i++) {
+                            let sum = 0;
+                            for (let j = 0; j < sampleSize; j++) {
+                                const randomIndex = Math.floor(Math.random() * populationData.length);
+                                sum += populationData[randomIndex];
+                            }
+                            simulationState.sampleMeans.push(sum / sampleSize);
+                        }
+                        break;
+                        
+                    case 'stratified':
+                        // Stratified sampling (simplified)
+                        const sortedData = [...populationData].sort((a, b) => a - b);
+                        const strataSize = Math.floor(sortedData.length / sampleSize);
+                        for (let i = 0; i < nSamples; i++) {
+                            let sum = 0;
+                            for (let j = 0; j < sampleSize; j++) {
+                                const stratumStart = j * strataSize;
+                                const stratumEnd = Math.min((j + 1) * strataSize, sortedData.length);
+                                const randomIndex = Math.floor(stratumStart + Math.random() * (stratumEnd - stratumStart));
+                                sum += sortedData[randomIndex];
+                            }
+                            simulationState.sampleMeans.push(sum / sampleSize);
+                        }
+                        break;
+                        
+                    case 'systematic':
+                        // Systematic sampling
+                        const interval = Math.floor(populationData.length / sampleSize);
+                        for (let i = 0; i < nSamples; i++) {
+                            let sum = 0;
+                            const start = Math.floor(Math.random() * interval);
+                            for (let j = 0; j < sampleSize; j++) {
+                                const index = (start + j * interval) % populationData.length;
+                                sum += populationData[index];
+                            }
+                            simulationState.sampleMeans.push(sum / sampleSize);
+                        }
+                        break;
+                        
+                    case 'bootstrap':
+                        // Bootstrap sampling (with replacement)
+                        for (let i = 0; i < nSamples; i++) {
+                            let sum = 0;
+                            for (let j = 0; j < sampleSize; j++) {
+                                const randomIndex = Math.floor(Math.random() * populationData.length);
+                                sum += populationData[randomIndex];
+                            }
+                            simulationState.sampleMeans.push(sum / sampleSize);
+                        }
+                        break;
+                }
+            }
+
+            function updatePopulationChart() {
+                const ctx = document.getElementById('populationChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (populationChart) {
+                    populationChart.destroy();
+                }
+                
+                // Calculate histogram
+                const data = simulationState.populationData;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binCount = 30;
+                const binSize = (max - min) / binCount;
+                
+                const bins = new Array(binCount).fill(0);
+                data.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binSize), binCount - 1);
+                    bins[binIndex]++;
+                });
+                
+                // Create chart
+                populationChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: bins.map((_, i) => {
+                            const binStart = min + i * binSize;
+                            return binStart.toFixed(1);
+                        }),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'জনসংখ্যা' : 'Population',
+                            data: bins,
+                            backgroundColor: 'rgba(33, 150, 243, 0.6)',
+                            borderColor: 'rgba(33, 150, 243, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Value'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কাউন্ট' : 'Count'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // Hide placeholder
+                document.getElementById('populationPlaceholder').style.display = 'none';
+            }
+
+            function updateSampleDistributionChart() {
+                const ctx = document.getElementById('sampleDistributionChart').getContext('2d');
+                const sampleMeans = simulationState.sampleMeans;
+                
+                if (sampleMeans.length === 0) {
+                    document.getElementById('samplePlaceholder').style.display = 'flex';
+                    return;
+                }
+                
+                document.getElementById('samplePlaceholder').style.display = 'none';
+                
+                // Destroy existing chart
+                if (sampleDistributionChart) {
+                    sampleDistributionChart.destroy();
+                }
+                
+                // Calculate histogram for sample means
+                const min = Math.min(...sampleMeans);
+                const max = Math.max(...sampleMeans);
+                const binCount = 30;
+                const binSize = (max - min) / binCount;
+                
+                const bins = new Array(binCount).fill(0);
+                sampleMeans.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binSize), binCount - 1);
+                    bins[binIndex]++;
+                });
+                
+                // Theoretical normal distribution
+                const theoreticalMean = simulationState.populationMean;
+                const theoreticalStdError = simulationState.populationStd / Math.sqrt(simulationState.sampleSize);
+                
+                const normalCurve = bins.map((_, i) => {
+                    const x = min + i * binSize + binSize / 2;
+                    const y = sampleMeans.length * binSize * 
+                            (1 / (theoreticalStdError * Math.sqrt(2 * Math.PI))) *
+                            Math.exp(-0.5 * ((x - theoreticalMean) / theoreticalStdError) ** 2);
+                    return y;
+                });
+                
+                // Create chart
+                sampleDistributionChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: bins.map((_, i) => {
+                            const binStart = min + i * binSize;
+                            return binStart.toFixed(2);
+                        }),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'নমুনা গড়' : 'Sample Means',
+                            data: bins,
+                            backgroundColor: 'rgba(76, 175, 80, 0.6)',
+                            borderColor: 'rgba(76, 175, 80, 1)',
+                            borderWidth: 1
+                        }, {
+                            label: currentLanguage === 'bn' ? 'তাত্ত্বিক নরমাল' : 'Theoretical Normal',
+                            data: normalCurve,
+                            type: 'line',
+                            borderColor: 'rgba(255, 152, 0, 0.8)',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা গড় (x̄)' : 'Sample Mean (x̄)'
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কাউন্ট' : 'Count'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateConvergenceChart() {
+                const ctx = document.getElementById('convergenceChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (convergenceChart) {
+                    convergenceChart.destroy();
+                }
+                
+                // Sample sizes to test
+                const sampleSizes = [5, 10, 20, 30, 50, 100, 200];
+                const errors = [];
+                
+                // Calculate error for each sample size
+                sampleSizes.forEach(size => {
+                    const theoreticalStdError = simulationState.populationStd / Math.sqrt(size);
+                    
+                    // Simulate sampling for this size
+                    let sampleMeans = [];
+                    const nSamples = 1000;
+                    
+                    for (let i = 0; i < nSamples; i++) {
+                        let sum = 0;
+                        for (let j = 0; j < size; j++) {
+                            const randomIndex = Math.floor(Math.random() * simulationState.populationData.length);
+                            sum += simulationState.populationData[randomIndex];
+                        }
+                        sampleMeans.push(sum / size);
+                    }
+                    
+                    // Calculate actual std error
+                    const sampleMean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                    const variance = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 2), 0) / sampleMeans.length;
+                    const actualStdError = Math.sqrt(variance);
+                    
+                    // Calculate percentage error
+                    const error = Math.abs((actualStdError - theoreticalStdError) / theoreticalStdError) * 100;
+                    errors.push(error);
+                });
+                
+                // Create chart
+                convergenceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sampleSizes.map(n => `n=${n}`),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'ত্রুটি %' : 'Error %',
+                            data: errors,
+                            borderColor: 'rgba(156, 39, 176, 0.8)',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Error: ${context.parsed.y.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা আকার (n)' : 'Sample Size (n)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ত্রুটি %' : 'Error %'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // Hide placeholder
+                document.getElementById('convergencePlaceholder').style.display = 'none';
+            }
+
+            function updateStatistics() {
+                const populationData = simulationState.populationData;
+                const sampleMeans = simulationState.sampleMeans;
+                
+                // Population statistics
+                const popMean = populationData.reduce((a, b) => a + b, 0) / populationData.length;
+                const popVariance = populationData.reduce((sum, x) => sum + Math.pow(x - popMean, 2), 0) / populationData.length;
+                const popStd = Math.sqrt(popVariance);
+                
+                // Calculate population skewness and kurtosis
+                let popSkewness = 0;
+                let popKurtosis = 0;
+                if (popStd > 0) {
+                    const m3 = populationData.reduce((sum, x) => sum + Math.pow(x - popMean, 3), 0) / populationData.length;
+                    const m4 = populationData.reduce((sum, x) => sum + Math.pow(x - popMean, 4), 0) / populationData.length;
+                    popSkewness = m3 / Math.pow(popStd, 3);
+                    popKurtosis = m4 / Math.pow(popStd, 4);
+                }
+                
+                // Sample statistics
+                let sampleMean = 0;
+                let sampleStd = 0;
+                let sampleSkewness = 0;
+                let sampleKurtosis = 0;
+                
+                if (sampleMeans.length > 0) {
+                    sampleMean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                    const sampleVariance = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 2), 0) / sampleMeans.length;
+                    sampleStd = Math.sqrt(sampleVariance);
+                    
+                    if (sampleStd > 0) {
+                        const m3 = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 3), 0) / sampleMeans.length;
+                        const m4 = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 4), 0) / sampleMeans.length;
+                        sampleSkewness = m3 / Math.pow(sampleStd, 3);
+                        sampleKurtosis = m4 / Math.pow(sampleStd, 4);
+                    }
+                }
+                
+                // Theoretical values
+                const theoreticalStdError = simulationState.populationStd / Math.sqrt(simulationState.sampleSize);
+                const theoreticalVarError = Math.pow(theoreticalStdError, 2);
+                const theoreticalCIWidth = 1.96 * 2 * theoreticalStdError; // 95% CI width
+                
+                // Update display values
+                popMeanValue.textContent = popMean.toFixed(2);
+                sampleMeanValue.textContent = sampleMeans.length > 0 ? sampleMean.toFixed(2) : "—";
+                
+                popStdValue.textContent = popStd.toFixed(2);
+                sampleStdValue.textContent = sampleMeans.length > 0 ? sampleStd.toFixed(2) : "—";
+                
+                popVarValue.textContent = popVariance.toFixed(2);
+                sampleVarValue.textContent = sampleMeans.length > 0 ? Math.pow(sampleStd, 2).toFixed(2) : "—";
+                
+                popSkewValue.textContent = popSkewness.toFixed(2);
+                sampleSkewValue.textContent = sampleMeans.length > 0 ? sampleSkewness.toFixed(2) : "—";
+                
+                popKurtValue.textContent = popKurtosis.toFixed(2);
+                sampleKurtValue.textContent = sampleMeans.length > 0 ? sampleKurtosis.toFixed(2) : "—";
+                
+                popCIWidth.textContent = "—";
+                sampleCIWidth.textContent = theoreticalCIWidth.toFixed(2);
+                
+                // Calculate differences
+                if (sampleMeans.length > 0) {
+                    const meanDiff = sampleMean - popMean;
+                    const meanDiffPercent = (meanDiff / popMean) * 100;
+                    meanDifference.textContent = `${meanDiff.toFixed(2)} (${meanDiffPercent.toFixed(1)}%)`;
+                    meanDifference.className = meanDiff >= 0 ? 'difference positive' : 'difference negative';
+                    
+                    const stdDiff = sampleStd - theoreticalStdError;
+                    const stdDiffPercent = (stdDiff / theoreticalStdError) * 100;
+                    stdDifference.textContent = `${stdDiff.toFixed(2)} (${stdDiffPercent.toFixed(1)}%)`;
+                    stdDifference.className = stdDiff >= 0 ? 'difference positive' : 'difference negative';
+                    
+                    const varDiff = Math.pow(sampleStd, 2) - theoreticalVarError;
+                    const varDiffPercent = (varDiff / theoreticalVarError) * 100;
+                    varDifference.textContent = `${varDiff.toFixed(2)} (${varDiffPercent.toFixed(1)}%)`;
+                    varDifference.className = varDiff >= 0 ? 'difference positive' : 'difference negative';
+                    
+                    const skewDiff = sampleSkewness - popSkewness;
+                    const skewDiffPercent = popSkewness !== 0 ? (skewDiff / Math.abs(popSkewness)) * 100 : 0;
+                    skewDifference.textContent = `${skewDiff.toFixed(2)} (${skewDiffPercent.toFixed(1)}%)`;
+                    skewDifference.className = skewDiff >= 0 ? 'difference positive' : 'difference negative';
+                    
+                    const kurtDiff = sampleKurtosis - popKurtosis;
+                    const kurtDiffPercent = (kurtDiff / popKurtosis) * 100;
+                    kurtDifference.textContent = `${kurtDiff.toFixed(2)} (${kurtDiffPercent.toFixed(1)}%)`;
+                    kurtDifference.className = kurtDiff >= 0 ? 'difference positive' : 'difference negative';
+                    
+                    ciDifference.textContent = "—";
+                }
+                
+                // Update sample count
+                document.getElementById('sampleCount').textContent = sampleMeans.length;
+            }
+
+            function performStatisticalTests() {
+                const populationData = simulationState.populationData;
+                const sampleMeans = simulationState.sampleMeans;
+                
+                if (sampleMeans.length === 0) return;
+                
+                // 1. t-Test for means
+                const popMean = populationData.reduce((a, b) => a + b, 0) / populationData.length;
+                const sampleMean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                const sampleStd = Math.sqrt(sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 2), 0) / sampleMeans.length);
+                const tStat = (sampleMean - popMean) / (sampleStd / Math.sqrt(sampleMeans.length));
+                const tPValue = 2 * (1 - jStat.studentt.cdf(Math.abs(tStat), sampleMeans.length - 1));
+                
+                tTestResult.textContent = `t = ${tStat.toFixed(3)}`;
+                tTestPValue.textContent = tPValue.toFixed(3);
+                tTestConclusion.textContent = tPValue < 0.05 ? 
+                    (currentLanguage === 'bn' ? 'উল্লেখযোগ্য পার্থক্য' : 'Significant difference') :
+                    (currentLanguage === 'bn' ? 'কোন উল্লেখযোগ্য পার্থক্য নেই' : 'No significant difference');
+                tTestConclusion.style.color = tPValue < 0.05 ? '#F44336' : '#4CAF50';
+                
+                // 2. Chi-square Goodness-of-fit test
+                // Create frequency tables
+                const popHist = createHistogram(populationData, 10);
+                const sampleHist = createHistogram(sampleMeans, 10);
+                
+                // Calculate expected frequencies
+                const totalPop = popHist.reduce((a, b) => a + b, 0);
+                const totalSample = sampleHist.reduce((a, b) => a + b, 0);
+                const expected = popHist.map(freq => (freq / totalPop) * totalSample);
+                
+                // Calculate chi-square statistic
+                let chiSquare = 0;
+                for (let i = 0; i < sampleHist.length; i++) {
+                    if (expected[i] > 0) {
+                        chiSquare += Math.pow(sampleHist[i] - expected[i], 2) / expected[i];
+                    }
+                }
+                
+                const df = sampleHist.length - 1;
+                const chiPValue = 1 - jStat.chisquare.cdf(chiSquare, df);
+                
+                chiSquareResult.textContent = `χ² = ${chiSquare.toFixed(3)}`;
+                chiSquarePValue.textContent = chiPValue.toFixed(3);
+                chiSquareConclusion.textContent = chiPValue < 0.05 ? 
+                    (currentLanguage === 'bn' ? 'ডিস্ট্রিবিউশন মেলে না' : 'Distributions differ') :
+                    (currentLanguage === 'bn' ? 'ডিস্ট্রিবিউশন মেলে' : 'Distributions match');
+                chiSquareConclusion.style.color = chiPValue < 0.05 ? '#F44336' : '#4CAF50';
+                
+                // 3. Kolmogorov-Smirnov test
+                const ksStat = calculateKSTest(populationData, sampleMeans);
+                const ksPValue = calculateKSPValue(ksStat, populationData.length, sampleMeans.length);
+                
+                ksTestResult.textContent = `D = ${ksStat.toFixed(3)}`;
+                ksTestPValue.textContent = ksPValue.toFixed(3);
+                ksTestConclusion.textContent = ksPValue < 0.05 ? 
+                    (currentLanguage === 'bn' ? 'ভিন্ন ডিস্ট্রিবিউশন' : 'Different distributions') :
+                    (currentLanguage === 'bn' ? 'একই ডিস্ট্রিবিউশন' : 'Same distribution');
+                ksTestConclusion.style.color = ksPValue < 0.05 ? '#F44336' : '#4CAF50';
+                
+                // 4. F-Test for variances
+                const popVariance = populationData.reduce((sum, x) => sum + Math.pow(x - popMean, 2), 0) / (populationData.length - 1);
+                const sampleVariance = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 2), 0) / (sampleMeans.length - 1);
+                const fStat = Math.max(popVariance, sampleVariance) / Math.min(popVariance, sampleVariance);
+                const fPValue = 2 * Math.min(
+                    jStat.centralF.cdf(fStat, populationData.length - 1, sampleMeans.length - 1),
+                    1 - jStat.centralF.cdf(fStat, populationData.length - 1, sampleMeans.length - 1)
+                );
+                
+                fTestResult.textContent = `F = ${fStat.toFixed(3)}`;
+                fTestPValue.textContent = fPValue.toFixed(3);
+                fTestConclusion.textContent = fPValue < 0.05 ? 
+                    (currentLanguage === 'bn' ? 'ভিন্ন ভ্যারিয়েন্স' : 'Different variances') :
+                    (currentLanguage === 'bn' ? 'সমান ভ্যারিয়েন্স' : 'Equal variances');
+                fTestConclusion.style.color = fPValue < 0.05 ? '#F44336' : '#4CAF50';
+            }
+
+            function createHistogram(data, bins) {
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binSize = (max - min) / bins;
+                const histogram = new Array(bins).fill(0);
+                
+                data.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binSize), bins - 1);
+                    histogram[binIndex]++;
+                });
+                
+                return histogram;
+            }
+
+            function calculateKSTest(data1, data2) {
+                // Sort both datasets
+                const sorted1 = [...data1].sort((a, b) => a - b);
+                const sorted2 = [...data2].sort((a, b) => a - b);
+                
+                const n1 = sorted1.length;
+                const n2 = sorted2.length;
+                
+                // Calculate empirical distribution functions
+                let i = 0, j = 0;
+                let d = 0;
+                let fn1 = 0, fn2 = 0;
+                
+                while (i < n1 && j < n2) {
+                    const d1 = sorted1[i];
+                    const d2 = sorted2[j];
+                    
+                    if (d1 <= d2) {
+                        fn1 = (++i) / n1;
+                    }
+                    if (d2 <= d1) {
+                        fn2 = (++j) / n2;
+                    }
+                    
+                    d = Math.max(d, Math.abs(fn1 - fn2));
+                }
+                
+                return d;
+            }
+
+            function calculateKSPValue(d, n1, n2) {
+                // Approximation for p-value
+                const n = (n1 * n2) / (n1 + n2);
+                const z = d * Math.sqrt(n);
+                
+                // Kolmogorov distribution approximation
+                let sum = 0;
+                for (let k = 1; k <= 100; k++) {
+                    sum += Math.pow(-1, k - 1) * Math.exp(-2 * k * k * z * z);
+                }
+                
+                return 1 - 2 * sum;
+            }
+
+            function toggleSimulation() {
+                if (simulationState.isSimulating) {
+                    stopSimulation();
+                } else {
+                    startSimulation();
+                }
+            }
+
+            function startSimulation() {
+                simulationState.isSimulating = true;
+                simulateBtn.innerHTML = '<i class="fas fa-pause"></i> ' + 
+                    (currentLanguage === 'bn' ? 'বিরতি দিন' : 'Pause');
+                
+                // Run simulation
+                runSimulation();
+            }
+
+            function stopSimulation() {
+                simulationState.isSimulating = false;
+                simulateBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'সিমুলেশন চালান' : 'Run Simulation');
+                
+                if (simulationState.simulationInterval) {
+                    clearInterval(simulationState.simulationInterval);
+                    simulationState.simulationInterval = null;
+                }
+            }
+
+            function runSimulation() {
+                // Draw samples
+                drawSamples();
+                
+                // Update visualizations
+                updateSampleDistributionChart();
+                updateConvergenceChart();
+                updateStatistics();
+                performStatisticalTests();
+                
+                // Stop simulation after running once
+                stopSimulation();
+            }
+
+            function resetSimulation() {
+                stopSimulation();
+                simulationState.sampleMeans = [];
+                updateSampleDistributionChart();
+                updateStatistics();
+                
+                // Reset convergence chart
+                if (convergenceChart) {
+                    convergenceChart.destroy();
+                    convergenceChart = null;
+                }
+                document.getElementById('convergencePlaceholder').style.display = 'flex';
+            }
+
+            function toggleOverlay() {
+                // This would toggle overlay of distributions on same chart
+                alert(currentLanguage === 'bn' ? 
+                    'ওভারলে ফিচারটি পরবর্তী আপডেটে যুক্ত করা হবে' : 
+                    'Overlay feature will be added in the next update');
+            }
+
+            function updatePopulationData() {
+                generatePopulationData();
+                updatePopulationChart();
+                resetSimulation();
+            }
+
+            function initializeCharts() {
+                // Just create empty contexts for now
+                const popCtx = document.getElementById('populationChart').getContext('2d');
+                const sampleCtx = document.getElementById('sampleDistributionChart').getContext('2d');
+                const convCtx = document.getElementById('convergenceChart').getContext('2d');
+                
+                // Show placeholders initially
+                document.getElementById('populationPlaceholder').style.display = 'flex';
+                document.getElementById('samplePlaceholder').style.display = 'flex';
+                document.getElementById('convergencePlaceholder').style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>

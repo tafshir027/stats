@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Process Visualizer | Temporal & Spatial Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --temporal-color: #2196F3;
+            --spatial-color: #4CAF50;
+            --interarrival-color: #FF9800;
+            --process-bg: #F3E5F5;
+            --analysis-bg: #E8F5E9;
+            --visualization-bg: #E3F2FD;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 50%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 1rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--temporal-color), var(--spatial-color), var(--interarrival-color));
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .header .subtitle {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Groups */
+        .parameter-group {
+            background: var(--process-bg);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--poisson-color);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Slider Styling */
+        .slider-container {
+            margin-top: 0.8rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #E1BEE7, var(--poisson-color));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-value-display {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--poisson-color);
+        }
+
+        /* Process Type Selection */
+        .process-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .process-types {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .process-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .process-btn.active {
+            border-color: var(--poisson-color);
+            background: var(--process-bg);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .process-btn.temporal.active {
+            border-color: var(--temporal-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .process-btn.spatial.active {
+            border-color: var(--spatial-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .process-btn.analysis.active {
+            border-color: var(--interarrival-color);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .process-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .process-btn.temporal .process-icon { color: var(--temporal-color); }
+        .process-btn.spatial .process-icon { color: var(--spatial-color); }
+        .process-btn.analysis .process-icon { color: var(--interarrival-color); }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .visualize-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .visualize-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            min-height: 600px;
+        }
+
+        /* Visualization Container */
+        .visualization-container {
+            height: 500px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--visualization-bg);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        #temporalCanvas,
+        #spatialCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .canvas-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-weight: 600;
+            color: var(--dark);
+            z-index: 10;
+        }
+
+        /* Statistics Panel */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .statistics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.2rem;
+            background: var(--analysis-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Inter-Arrival Analysis */
+        .analysis-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-container {
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--analysis-bg);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        #interarrivalCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Time Unit Controls */
+        .time-unit-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .unit-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .unit-btn:hover {
+            background: var(--temporal-color);
+            color: white;
+            border-color: var(--temporal-color);
+        }
+
+        .unit-btn.active {
+            background: var(--temporal-color);
+            color: white;
+            border-color: var(--temporal-color);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--poisson-color);
+        }
+
+        /* Event List */
+        .event-list-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .event-list {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .event-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-time {
+            color: var(--temporal-color);
+            font-weight: 600;
+        }
+
+        .event-position {
+            color: var(--spatial-color);
+            font-weight: 600;
+        }
+
+        .event-interval {
+            color: var(--interarrival-color);
+            font-weight: 600;
+        }
+
+        /* Animation Classes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes eventFlash {
+            0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        .event-flash {
+            animation: eventFlash 1s;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .visualization-container,
+            .analysis-container {
+                height: 400px;
+            }
+            
+            .statistics-grid {
+                gap: 0.5rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .visualization-container,
+            .analysis-container {
+                height: 300px;
+            }
+            
+            .process-types {
+                gap: 0.5rem;
+            }
+            
+            .process-btn {
+                padding: 0.8rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--poisson-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7B1FA2;
+        }
+
+        /* Coordinates Display */
+        .coordinates-display {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--dark);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson Process Visualizer" data-bn="পয়সন প্রসেস ভিজ্যুয়ালাইজার">পয়সন প্রসেস ভিজ্যুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Visualize temporal and spatial Poisson processes with inter-arrival time analysis" data-bn="টেম্পোরাল এবং স্পেশিয়াল পয়সন প্রসেস ভিজ্যুয়ালাইজ করুন ইন্টার-আরাইভাল টাইম অ্যানালাইসিস সহ">
+                টেম্পোরাল এবং স্পেশিয়াল পয়সন প্রসেস ভিজ্যুয়ালাইজ করুন ইন্টার-আরাইভাল টাইম অ্যানালাইসিস সহ
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Process Parameters" data-bn="প্রসেস প্যারামিটার">প্রসেস প্যারামিটার</span>
+                </h2>
+
+                <!-- Lambda Parameter -->
+                <div class="parameter-group">
+                    <div class="parameter-label">
+                        <i class="fas fa-greek-letter-lambda"></i>
+                        <span data-en="Rate Parameter (λ)" data-bn="রেট প্যারামিটার (λ)">রেট প্যারামিটার (λ)</span>
+                    </div>
+                    <input type="number" id="lambdaValue" class="value-input" min="0.1" max="20" step="0.1" value="5.0">
+                    <div class="slider-container">
+                        <input type="range" id="lambdaSlider" class="slider" min="0.1" max="20" step="0.1" value="5.0">
+                        <div class="slider-value-display" id="lambdaDisplay">λ = 5.0</div>
+                    </div>
+                    <div class="help-text" data-en="Events per unit time/space" data-bn="প্রতি ইউনিট সময়/স্থানে ইভেন্ট">প্রতি ইউনিট সময়/স্থানে ইভেন্ট</div>
+                </div>
+
+                <!-- Process Type Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    <span data-en="Process Type" data-bn="প্রসেস টাইপ">প্রসেস টাইপ</span>
+                </h2>
+
+                <div class="process-types">
+                    <button class="process-btn temporal active" data-type="temporal">
+                        <div class="process-icon">
+                            <i class="fas fa-stream"></i>
+                        </div>
+                        <span data-en="Temporal" data-bন="টেম্পোরাল">টেম্পোরাল</span>
+                        <small data-en="Time events" data-bন="সময় ইভেন্ট">সময় ইভেন্ট</small>
+                    </button>
+
+                    <button class="process-btn spatial" data-type="spatial">
+                        <div class="process-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span data-en="Spatial" data-bন="স্পেশিয়াল">স্পেশিয়াল</span>
+                        <small data-en="Space points" data-bন="স্থান বিন্দু">স্থান বিন্দু</small>
+                    </button>
+
+                    <button class="process-btn analysis" data-type="analysis">
+                        <div class="process-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <span data-en="Inter-Arrival" data-bন="ইন্টার-আরাইভাল">ইন্টার-আরাইভাল</span>
+                        <small data-en="Time analysis" data-bন="সময় বিশ্লেষণ">সময় বিশ্লেষণ</small>
+                    </button>
+                </div>
+
+                <!-- Time Parameters -->
+                <div class="parameter-group" id="timeParams">
+                    <div class="parameter-label">
+                        <i class="fas fa-clock"></i>
+                        <span data-en="Time Parameters" data-bন="সময় প্যারামিটার">সময় প্যারামিটার</span>
+                    </div>
+                    <div class="input-group">
+                        <div>
+                            <input type="number" id="timeInterval" class="value-input" min="1" max="100" value="20">
+                            <div class="help-text" data-en="Total time" data-bন="মোট সময়">মোট সময়</div>
+                        </div>
+                        <div>
+                            <input type="number" id="simulationCount" class="value-input" min="1" max="1000" value="100">
+                            <div class="help-text" data-en="Simulations" data-bন="সিমুলেশন">সিমুলেশন</div>
+                        </div>
+                    </div>
+                    
+                    <div class="time-unit-controls">
+                        <button class="unit-btn active" data-unit="seconds">সেকেন্ড</button>
+                        <button class="unit-btn" data-unit="minutes">মিনিট</button>
+                        <button class="unit-btn" data-unit="hours">ঘন্টা</button>
+                    </div>
+                </div>
+
+                <!-- Spatial Parameters -->
+                <div class="parameter-group" id="spaceParams" style="display: none;">
+                    <div class="parameter-label">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        <span data-en="Space Parameters" data-bন="স্থান প্যারামিটার">স্থান প্যারামিটার</span>
+                    </div>
+                    <div class="input-group">
+                        <div>
+                            <input type="number" id="spaceWidth" class="value-input" min="10" max="1000" value="500">
+                            <div class="help-text" data-en="Width (units)" data-bন="প্রস্থ (একক)">প্রস্থ (একক)</div>
+                        </div>
+                        <div>
+                            <input type="number" id="spaceHeight" class="value-input" min="10" max="1000" value="500">
+                            <div class="help-text" data-en="Height (units)" data-bন="উচ্চতা (একক)">উচ্চতা (একক)</div>
+                        </div>
+                    </div>
+                    <div class="help-text" data-en="Define spatial area for point generation" data-bন="বিন্দু জেনারেশনের জন্য স্থানিক এলাকা নির্ধারণ করুন">বিন্দু জেনারেশনের জন্য স্থানিক এলাকা নির্ধারণ করুন</div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn visualize-btn" id="visualizeBtn">
+                        <i class="fas fa-play-circle"></i>
+                        <span data-en="Visualize Process" data-bন="প্রসেস ভিজ্যুয়ালাইজ করুন">প্রসেস ভিজ্যুয়ালাইজ করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-eye"></i>
+                    <span data-en="Process Visualization" data-bন="প্রসেস ভিজ্যুয়ালাইজেশন">প্রসেস ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="visualization-container">
+                    <div class="canvas-container">
+                        <div class="canvas-label" id="canvasLabel" data-en="Temporal Poisson Process" data-bn="টেম্পোরাল পয়সন প্রসেস">টেম্পোরাল পয়সন প্রসেস</div>
+                        <canvas id="temporalCanvas"></canvas>
+                        <canvas id="spatialCanvas" style="display: none;"></canvas>
+                        <div class="coordinates-display" id="coordinatesDisplay" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="help-text" id="visualizationHelp" 
+                     data-en="Click on events/points for details. Use mouse wheel to zoom in/out on spatial view." 
+                     data-bn="বিস্তারিত জানতে ইভেন্ট/বিন্দুতে ক্লিক করুন। স্পেশিয়াল ভিউতে জুম ইন/আউট করতে মাউস হুইল ব্যবহার করুন।">
+                    বিস্তারিত জানতে ইভেন্ট/বিন্দুতে ক্লিক করুন। স্পেশিয়াল ভিউতে জুম ইন/আউট করতে মাউস হুইল ব্যবহার করুন।
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="statistics-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Process Statistics" data-bন="প্রসেস পরিসংখ্যান">প্রসেস পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="statistics-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Total Events" data-bন="মোট ইভেন্ট">মোট ইভেন্ট</div>
+                    <div class="stat-value" id="totalEvents">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Event Rate" data-bন="ইভেন্ট রেট">ইভেন্ট রেট</div>
+                    <div class="stat-value" id="eventRate">0.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Mean Interval" data-bন="গড় ব্যবধান">গড় ব্যবধান</div>
+                    <div class="stat-value" id="meanInterval">0.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Process Intensity" data-bন="প্রসেস ইনটেনসিটি">প্রসেস ইনটেনসিটি</div>
+                    <div class="stat-value" id="processIntensity">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inter-Arrival Analysis Panel -->
+        <div class="analysis-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Inter-Arrival Time Analysis" data-bন="ইন্টার-আরাইভাল টাইম বিশ্লেষণ">ইন্টার-আরাইভাল টাইম বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="analysis-container">
+                <canvas id="interarrivalCanvas"></canvas>
+                <div class="canvas-label" data-en="Inter-Arrival Distribution" data-bন="ইন্টার-আরাইভাল ডিস্ট্রিবিউশন">ইন্টার-আরাইভাল ডিস্ট্রিবিউশন</div>
+            </div>
+            
+            <div class="help-text" data-en="Shows distribution of time intervals between consecutive events" data-bন="পরপর ইভেন্টের মধ্যকার সময় ব্যবধানের ডিস্ট্রিবিউশন দেখায়">
+                পরপর ইভেন্টের মধ্যকার সময় ব্যবধানের ডিস্ট্রিবিউশন দেখায়
+            </div>
+        </div>
+
+        <!-- Event List Panel -->
+        <div class="event-list-panel">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Event Timeline" data-bন="ইভেন্ট টাইমলাইন">ইভেন্ট টাইমলাইন</span>
+            </h2>
+            
+            <div class="event-list" id="eventList">
+                <!-- Events will be listed here -->
+                <div class="event-item" style="text-align: center; color: var(--gray);">
+                    <span data-en="No events generated yet" data-bn="এখনো কোনো ইভেন্ট জেনারেট হয়নি">এখনো কোনো ইভেন্ট জেনারেট হয়নি</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Poisson Process Visualizer Loaded");
+            
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Process State
+            let processState = {
+                type: 'temporal',
+                lambda: 5.0,
+                timeInterval: 20,
+                simulationCount: 100,
+                timeUnit: 'seconds',
+                spaceWidth: 500,
+                spaceHeight: 500,
+                events: [],
+                spatialPoints: [],
+                interArrivalTimes: [],
+                statistics: {
+                    totalEvents: 0,
+                    eventRate: 0,
+                    meanInterval: 0,
+                    intensity: 0
+                }
+            };
+
+            // DOM Elements
+            const lambdaInput = document.getElementById('lambdaValue');
+            const lambdaSlider = document.getElementById('lambdaSlider');
+            const lambdaDisplay = document.getElementById('lambdaDisplay');
+            const processTypeBtns = document.querySelectorAll('.process-btn');
+            const timeParams = document.getElementById('timeParams');
+            const spaceParams = document.getElementById('spaceParams');
+            const timeIntervalInput = document.getElementById('timeInterval');
+            const simulationCountInput = document.getElementById('simulationCount');
+            const spaceWidthInput = document.getElementById('spaceWidth');
+            const spaceHeightInput = document.getElementById('spaceHeight');
+            const unitBtns = document.querySelectorAll('.unit-btn');
+            const visualizeBtn = document.getElementById('visualizeBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            // Visualization Elements
+            const temporalCanvas = document.getElementById('temporalCanvas');
+            const spatialCanvas = document.getElementById('spatialCanvas');
+            const interarrivalCanvas = document.getElementById('interarrivalCanvas');
+            const canvasLabel = document.getElementById('canvasLabel');
+            const visualizationHelp = document.getElementById('visualizationHelp');
+            const coordinatesDisplay = document.getElementById('coordinatesDisplay');
+            
+            // Statistics Elements
+            const totalEventsEl = document.getElementById('totalEvents');
+            const eventRateEl = document.getElementById('eventRate');
+            const meanIntervalEl = document.getElementById('meanInterval');
+            const processIntensityEl = document.getElementById('processIntensity');
+            
+            // Event List
+            const eventList = document.getElementById('eventList');
+            
+            // Canvas Contexts
+            let temporalCtx, spatialCtx, interarrivalCtx;
+            let canvasWidth, canvasHeight;
+            
+            // Zoom variables for spatial view
+            let spatialZoom = 1.0;
+            let spatialPanX = 0;
+            let spatialPanY = 0;
+            let isDragging = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            
+            // Initialize
+            initVisualizer();
+            
+            function initVisualizer() {
+                console.log("Initializing Visualizer...");
+                
+                // Initialize Canvas Contexts
+                temporalCtx = temporalCanvas.getContext('2d');
+                spatialCtx = spatialCanvas.getContext('2d');
+                interarrivalCtx = interarrivalCanvas.getContext('2d');
+                
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        console.log("Changing language to:", lang);
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Lambda Controls
+                lambdaInput.addEventListener('input', updateLambda);
+                lambdaSlider.addEventListener('input', updateLambda);
+                
+                // Process Type Selection
+                processTypeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const type = this.dataset.type;
+                        console.log("Changing process type to:", type);
+                        setProcessType(type);
+                    });
+                });
+                
+                // Parameter Inputs
+                timeIntervalInput.addEventListener('input', updateTimeInterval);
+                simulationCountInput.addEventListener('input', updateSimulationCount);
+                spaceWidthInput.addEventListener('input', updateSpaceWidth);
+                spaceHeightInput.addEventListener('input', updateSpaceHeight);
+                
+                // Time Unit Selection
+                unitBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const unit = this.dataset.unit;
+                        console.log("Changing time unit to:", unit);
+                        setTimeUnit(unit);
+                    });
+                });
+                
+                // Control Buttons
+                visualizeBtn.addEventListener('click', visualizeProcess);
+                resetBtn.addEventListener('click', resetVisualizer);
+                
+                // Initialize canvases
+                resizeCanvases();
+                window.addEventListener('resize', resizeCanvases);
+                
+                // Set up spatial canvas interactions
+                setupSpatialInteractions();
+                
+                // Generate initial visualization
+                setTimeout(() => {
+                    console.log("Generating initial visualization...");
+                    visualizeProcess();
+                }, 500);
+            }
+            
+            function resizeCanvases() {
+                console.log("Resizing canvases...");
+                
+                const visualizationContainer = document.querySelector('.visualization-container');
+                const analysisContainer = document.querySelector('.analysis-container');
+                
+                if (!visualizationContainer || !analysisContainer) {
+                    console.error("Containers not found!");
+                    return;
+                }
+                
+                // Get computed dimensions
+                canvasWidth = visualizationContainer.clientWidth;
+                canvasHeight = visualizationContainer.clientHeight;
+                
+                console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
+                
+                // Set temporal canvas
+                temporalCanvas.width = canvasWidth;
+                temporalCanvas.height = canvasHeight;
+                
+                // Set spatial canvas
+                spatialCanvas.width = canvasWidth;
+                spatialCanvas.height = canvasHeight;
+                
+                // Set interarrival canvas
+                const analysisWidth = analysisContainer.clientWidth;
+                const analysisHeight = analysisContainer.clientHeight;
+                interarrivalCanvas.width = analysisWidth;
+                interarrivalCanvas.height = analysisHeight;
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+                
+                console.log("Language changed to:", lang);
+            }
+            
+            function updateLambda() {
+                let value = parseFloat(lambdaInput.value);
+                
+                // Validate input
+                if (isNaN(value) || value < 0.1) value = 0.1;
+                if (value > 20) value = 20;
+                
+                processState.lambda = value;
+                
+                // Sync slider with input
+                lambdaSlider.value = value;
+                lambdaInput.value = value.toFixed(1);
+                lambdaDisplay.textContent = `λ = ${value.toFixed(1)}`;
+                
+                console.log("Lambda updated to:", value);
+            }
+            
+            function setProcessType(type) {
+                processState.type = type;
+                
+                // Update active button
+                processTypeBtns.forEach(btn => {
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Show/hide parameter groups
+                if (type === 'temporal' || type === 'analysis') {
+                    timeParams.style.display = 'block';
+                    spaceParams.style.display = 'none';
+                    canvasLabel.textContent = type === 'temporal' 
+                        ? (currentLanguage === 'bn' ? 'টেম্পোরাল পয়সন প্রসেস' : 'Temporal Poisson Process')
+                        : (currentLanguage === 'bn' ? 'ইন্টার-আরাইভাল বিশ্লেষণ' : 'Inter-Arrival Analysis');
+                    temporalCanvas.style.display = 'block';
+                    spatialCanvas.style.display = 'none';
+                } else if (type === 'spatial') {
+                    timeParams.style.display = 'none';
+                    spaceParams.style.display = 'block';
+                    canvasLabel.textContent = currentLanguage === 'bn' ? 'স্পেশিয়াল পয়সন প্রসেস' : 'Spatial Poisson Process';
+                    temporalCanvas.style.display = 'none';
+                    spatialCanvas.style.display = 'block';
+                }
+                
+                // Update help text based on type
+                if (type === 'spatial') {
+                    visualizationHelp.textContent = currentLanguage === 'bn' 
+                        ? 'বিস্তারিত জানতে বিন্দুতে ক্লিক করুন। জুম ইন/আউট করতে মাউস হুইল ব্যবহার করুন। প্যান করতে ক্লিক করে ড্র্যাগ করুন।'
+                        : 'Click on points for details. Use mouse wheel to zoom in/out. Click and drag to pan.';
+                } else {
+                    visualizationHelp.textContent = currentLanguage === 'bn' 
+                        ? 'বিস্তারিত জানতে ইভেন্টে ক্লিক করুন'
+                        : 'Click on events for details';
+                }
+                
+                console.log("Process type changed to:", type);
+            }
+            
+            function updateTimeInterval() {
+                let value = parseInt(timeIntervalInput.value);
+                if (isNaN(value) || value < 1) value = 1;
+                if (value > 100) value = 100;
+                processState.timeInterval = value;
+                timeIntervalInput.value = value;
+                console.log("Time interval updated to:", value);
+            }
+            
+            function updateSimulationCount() {
+                let value = parseInt(simulationCountInput.value);
+                if (isNaN(value) || value < 1) value = 1;
+                if (value > 1000) value = 1000;
+                processState.simulationCount = value;
+                simulationCountInput.value = value;
+                console.log("Simulation count updated to:", value);
+            }
+            
+            function updateSpaceWidth() {
+                let value = parseInt(spaceWidthInput.value);
+                if (isNaN(value) || value < 10) value = 10;
+                if (value > 1000) value = 1000;
+                processState.spaceWidth = value;
+                spaceWidthInput.value = value;
+                console.log("Space width updated to:", value);
+            }
+            
+            function updateSpaceHeight() {
+                let value = parseInt(spaceHeightInput.value);
+                if (isNaN(value) || value < 10) value = 10;
+                if (value > 1000) value = 1000;
+                processState.spaceHeight = value;
+                spaceHeightInput.value = value;
+                console.log("Space height updated to:", value);
+            }
+            
+            function setTimeUnit(unit) {
+                processState.timeUnit = unit;
+                
+                // Update active button
+                unitBtns.forEach(btn => {
+                    if (btn.dataset.unit === unit) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                console.log("Time unit changed to:", unit);
+            }
+            
+            function setupSpatialInteractions() {
+                console.log("Setting up spatial interactions...");
+                
+                spatialCanvas.addEventListener('mousedown', startDrag);
+                spatialCanvas.addEventListener('mousemove', handleDrag);
+                spatialCanvas.addEventListener('mouseup', endDrag);
+                spatialCanvas.addEventListener('wheel', handleZoom);
+                spatialCanvas.addEventListener('click', handleSpatialClick);
+                
+                // Handle touch events for mobile
+                spatialCanvas.addEventListener('touchstart', handleTouchStart);
+                spatialCanvas.addEventListener('touchmove', handleTouchMove);
+                spatialCanvas.addEventListener('touchend', handleTouchEnd);
+            }
+            
+            function startDrag(e) {
+                if (processState.type !== 'spatial') return;
+                
+                isDragging = true;
+                dragStartX = e.clientX - spatialPanX;
+                dragStartY = e.clientY - spatialPanY;
+                spatialCanvas.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+            
+            function handleDrag(e) {
+                if (!isDragging || processState.type !== 'spatial') return;
+                
+                spatialPanX = e.clientX - dragStartX;
+                spatialPanY = e.clientY - dragStartY;
+                visualizeProcess();
+                e.preventDefault();
+            }
+            
+            function endDrag() {
+                isDragging = false;
+                spatialCanvas.style.cursor = 'default';
+            }
+            
+            function handleZoom(e) {
+                if (processState.type !== 'spatial') return;
+                
+                e.preventDefault();
+                const zoomIntensity = 0.1;
+                const wheel = e.deltaY < 0 ? 1 : -1;
+                const zoom = Math.exp(wheel * zoomIntensity);
+                
+                // Get mouse position relative to canvas
+                const rect = spatialCanvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Calculate world coordinates before zoom
+                const worldX = (mouseX - spatialPanX) / spatialZoom;
+                const worldY = (mouseY - spatialPanY) / spatialZoom;
+                
+                // Apply zoom
+                spatialZoom *= zoom;
+                spatialZoom = Math.max(0.1, Math.min(10, spatialZoom)); // Clamp zoom
+                
+                // Adjust pan to zoom towards mouse
+                spatialPanX = mouseX - worldX * spatialZoom;
+                spatialPanY = mouseY - worldY * spatialZoom;
+                
+                visualizeProcess();
+            }
+            
+            function handleTouchStart(e) {
+                if (processState.type !== 'spatial') return;
+                if (e.touches.length === 1) {
+                    startDrag({
+                        clientX: e.touches[0].clientX,
+                        clientY: e.touches[0].clientY
+                    });
+                }
+                e.preventDefault();
+            }
+            
+            function handleTouchMove(e) {
+                if (processState.type !== 'spatial') return;
+                if (e.touches.length === 1) {
+                    handleDrag({
+                        clientX: e.touches[0].clientX,
+                        clientY: e.touches[0].clientY
+                    });
+                }
+                e.preventDefault();
+            }
+            
+            function handleTouchEnd(e) {
+                if (processState.type !== 'spatial') return;
+                endDrag();
+                e.preventDefault();
+            }
+            
+            function handleSpatialClick(e) {
+                if (processState.type !== 'spatial') return;
+                
+                const rect = spatialCanvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                
+                // Convert to world coordinates
+                const worldX = (clickX - spatialPanX) / spatialZoom;
+                const worldY = (clickY - spatialPanY) / spatialZoom;
+                
+                // Find clicked point
+                const scaleX = canvasWidth / processState.spaceWidth;
+                const scaleY = canvasHeight / processState.spaceHeight;
+                const scale = Math.min(scaleX, scaleY);
+                
+                const clickedPoint = processState.spatialPoints.find(point => {
+                    const pointX = point.x * scale;
+                    const pointY = point.y * scale;
+                    const distance = Math.sqrt(
+                        Math.pow(worldX - pointX, 2) + 
+                        Math.pow(worldY - pointY, 2)
+                    );
+                    return distance < 15; // Click radius
+                });
+                
+                if (clickedPoint) {
+                    showPointDetails(clickedPoint);
+                }
+            }
+            
+            function showPointDetails(point) {
+                const message = currentLanguage === 'bn'
+                    ? `বিন্দু: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`
+                    : `Point: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
+                
+                // Update coordinates display
+                coordinatesDisplay.textContent = message;
+                coordinatesDisplay.style.display = 'block';
+                
+                // Flash the point
+                if (processState.type === 'spatial') {
+                    visualizeSpatialProcess(); // Redraw to clear
+                    
+                    spatialCtx.save();
+                    spatialCtx.translate(spatialPanX, spatialPanY);
+                    spatialCtx.scale(spatialZoom, spatialZoom);
+                    
+                    const scaleX = canvasWidth / processState.spaceWidth;
+                    const scaleY = canvasHeight / processState.spaceHeight;
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    spatialCtx.beginPath();
+                    spatialCtx.arc(point.x * scale, point.y * scale, 10, 0, Math.PI * 2);
+                    spatialCtx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                    spatialCtx.fill();
+                    spatialCtx.strokeStyle = '#FF5722';
+                    spatialCtx.lineWidth = 2;
+                    spatialCtx.stroke();
+                    
+                    spatialCtx.restore();
+                }
+                
+                // Remove highlight after 1 second
+                setTimeout(() => {
+                    coordinatesDisplay.style.display = 'none';
+                    if (processState.type === 'spatial') {
+                        visualizeSpatialProcess();
+                    }
+                }, 1000);
+            }
+            
+            function generateTemporalEvents() {
+                console.log("Generating temporal events...");
+                const { lambda, timeInterval, simulationCount } = processState;
+                const allEvents = [];
+                
+                for (let sim = 0; sim < simulationCount; sim++) {
+                    const events = [];
+                    let currentTime = 0;
+                    
+                    // Generate events using exponential distribution
+                    while (currentTime < timeInterval) {
+                        const u = Math.random();
+                        const interval = -Math.log(1 - u) / lambda;
+                        currentTime += interval;
+                        
+                        if (currentTime <= timeInterval) {
+                            events.push({
+                                time: currentTime,
+                                simulation: sim
+                            });
+                        }
+                    }
+                    
+                    allEvents.push(...events);
+                }
+                
+                // Sort all events by time
+                allEvents.sort((a, b) => a.time - b.time);
+                
+                // Calculate inter-arrival times
+                const interArrivalTimes = [];
+                for (let i = 1; i < allEvents.length; i++) {
+                    interArrivalTimes.push(allEvents[i].time - allEvents[i-1].time);
+                }
+                
+                processState.events = allEvents;
+                processState.interArrivalTimes = interArrivalTimes;
+                
+                console.log(`Generated ${allEvents.length} events with ${interArrivalTimes.length} intervals`);
+            }
+            
+            function generateSpatialPoints() {
+                console.log("Generating spatial points...");
+                const { lambda, spaceWidth, spaceHeight } = processState;
+                const area = spaceWidth * spaceHeight;
+                const expectedPoints = lambda * (area / 10000); // Normalize for reasonable visualization
+                const numPoints = Math.round(expectedPoints);
+                
+                const points = [];
+                for (let i = 0; i < numPoints; i++) {
+                    points.push({
+                        x: Math.random() * spaceWidth,
+                        y: Math.random() * spaceHeight,
+                        id: i
+                    });
+                }
+                
+                processState.spatialPoints = points;
+                console.log(`Generated ${points.length} spatial points`);
+            }
+            
+            function calculateStatistics() {
+                console.log("Calculating statistics...");
+                const { events, interArrivalTimes, spatialPoints, timeInterval, spaceWidth, spaceHeight, lambda } = processState;
+                
+                if (processState.type === 'temporal' || processState.type === 'analysis') {
+                    processState.statistics.totalEvents = events.length;
+                    processState.statistics.eventRate = events.length / timeInterval;
+                    processState.statistics.meanInterval = interArrivalTimes.length > 0 
+                        ? interArrivalTimes.reduce((a, b) => a + b, 0) / interArrivalTimes.length
+                        : 0;
+                    processState.statistics.intensity = lambda;
+                } else if (processState.type === 'spatial') {
+                    const area = spaceWidth * spaceHeight;
+                    processState.statistics.totalEvents = spatialPoints.length;
+                    processState.statistics.eventRate = spatialPoints.length / area;
+                    processState.statistics.meanInterval = 0; // Not applicable for spatial
+                    processState.statistics.intensity = lambda;
+                }
+                
+                console.log("Statistics:", processState.statistics);
+            }
+            
+            function visualizeTemporalProcess() {
+                console.log("Visualizing temporal process...");
+                temporalCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                
+                const { events, timeInterval } = processState;
+                const margin = 50;
+                const plotWidth = canvasWidth - 2 * margin;
+                const plotHeight = 100;
+                const plotY = canvasHeight / 2;
+                
+                // Draw timeline
+                temporalCtx.beginPath();
+                temporalCtx.moveTo(margin, plotY);
+                temporalCtx.lineTo(margin + plotWidth, plotY);
+                temporalCtx.strokeStyle = 'var(--temporal-color)';
+                temporalCtx.lineWidth = 2;
+                temporalCtx.stroke();
+                
+                // Draw time markers
+                const numMarkers = 10;
+                for (let i = 0; i <= numMarkers; i++) {
+                    const t = (i / numMarkers) * timeInterval;
+                    const x = margin + (i / numMarkers) * plotWidth;
+                    
+                    // Marker line
+                    temporalCtx.beginPath();
+                    temporalCtx.moveTo(x, plotY - 10);
+                    temporalCtx.lineTo(x, plotY + 10);
+                    temporalCtx.strokeStyle = '#718096';
+                    temporalCtx.lineWidth = 1;
+                    temporalCtx.stroke();
+                    
+                    // Time label
+                    temporalCtx.fillStyle = '#2D3748';
+                    temporalCtx.font = '12px Arial';
+                    temporalCtx.textAlign = 'center';
+                    temporalCtx.fillText(t.toFixed(1), x, plotY + 30);
+                }
+                
+                // Draw events
+                events.forEach((event, index) => {
+                    const x = margin + (event.time / timeInterval) * plotWidth;
+                    
+                    // Event marker
+                    temporalCtx.beginPath();
+                    temporalCtx.arc(x, plotY, 8, 0, Math.PI * 2);
+                    temporalCtx.fillStyle = 'var(--temporal-color)';
+                    temporalCtx.fill();
+                    
+                    // Event border
+                    temporalCtx.beginPath();
+                    temporalCtx.arc(x, plotY, 8, 0, Math.PI * 2);
+                    temporalCtx.strokeStyle = 'white';
+                    temporalCtx.lineWidth = 2;
+                    temporalCtx.stroke();
+                });
+                
+                // Add title
+                temporalCtx.fillStyle = '#2D3748';
+                temporalCtx.font = '16px Arial';
+                temporalCtx.textAlign = 'center';
+                temporalCtx.fillText(
+                    currentLanguage === 'bn' 
+                        ? `টেম্পোরাল পয়সন প্রসেস (${events.length} ইভেন্ট)` 
+                        : `Temporal Poisson Process (${events.length} events)`,
+                    canvasWidth / 2,
+                    30
+                );
+                
+                console.log("Temporal visualization complete");
+            }
+            
+            function visualizeSpatialProcess() {
+                console.log("Visualizing spatial process...");
+                spatialCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                
+                // Apply zoom and pan transformations
+                spatialCtx.save();
+                spatialCtx.translate(spatialPanX, spatialPanY);
+                spatialCtx.scale(spatialZoom, spatialZoom);
+                
+                const { spatialPoints, spaceWidth, spaceHeight } = processState;
+                const scaleX = canvasWidth / spaceWidth;
+                const scaleY = canvasHeight / spaceHeight;
+                const scale = Math.min(scaleX, scaleY);
+                
+                // Draw background
+                spatialCtx.fillStyle = '#E3F2FD';
+                spatialCtx.fillRect(0, 0, spaceWidth * scale, spaceHeight * scale);
+                
+                // Draw grid
+                spatialCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                spatialCtx.lineWidth = 1;
+                
+                const gridSize = 50;
+                for (let x = 0; x <= spaceWidth; x += gridSize) {
+                    spatialCtx.beginPath();
+                    spatialCtx.moveTo(x * scale, 0);
+                    spatialCtx.lineTo(x * scale, spaceHeight * scale);
+                    spatialCtx.stroke();
+                }
+                for (let y = 0; y <= spaceHeight; y += gridSize) {
+                    spatialCtx.beginPath();
+                    spatialCtx.moveTo(0, y * scale);
+                    spatialCtx.lineTo(spaceWidth * scale, y * scale);
+                    spatialCtx.stroke();
+                }
+                
+                // Draw points
+                spatialPoints.forEach(point => {
+                    const x = point.x * scale;
+                    const y = point.y * scale;
+                    
+                    spatialCtx.beginPath();
+                    spatialCtx.arc(x, y, 6, 0, Math.PI * 2);
+                    spatialCtx.fillStyle = 'var(--spatial-color)';
+                    spatialCtx.fill();
+                    spatialCtx.strokeStyle = 'white';
+                    spatialCtx.lineWidth = 2;
+                    spatialCtx.stroke();
+                });
+                
+                spatialCtx.restore();
+                
+                // Draw zoom indicator
+                spatialCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                spatialCtx.fillRect(10, 10, 150, 40);
+                spatialCtx.fillStyle = 'white';
+                spatialCtx.font = '12px Arial';
+                spatialCtx.textAlign = 'left';
+                spatialCtx.fillText(`Zoom: ${spatialZoom.toFixed(2)}x`, 20, 30);
+                spatialCtx.fillText(`${spatialPoints.length} points`, 20, 45);
+                
+                console.log("Spatial visualization complete");
+            }
+            
+            function visualizeInterArrivalAnalysis() {
+                console.log("Visualizing inter-arrival analysis...");
+                const ctx = interarrivalCtx;
+                ctx.clearRect(0, 0, interarrivalCanvas.width, interarrivalCanvas.height);
+                
+                const { interArrivalTimes, lambda } = processState;
+                if (interArrivalTimes.length === 0) {
+                    console.log("No inter-arrival times to visualize");
+                    return;
+                }
+                
+                const margin = 40;
+                const plotWidth = interarrivalCanvas.width - 2 * margin;
+                const plotHeight = interarrivalCanvas.height - 2 * margin;
+                
+                // Find max interval for scaling
+                const maxInterval = Math.max(...interArrivalTimes);
+                
+                // Create histogram
+                const numBins = 20;
+                const binWidth = maxInterval / numBins;
+                const histogram = new Array(numBins).fill(0);
+                
+                interArrivalTimes.forEach(interval => {
+                    const binIndex = Math.min(Math.floor(interval / binWidth), numBins - 1);
+                    histogram[binIndex]++;
+                });
+                
+                const maxCount = Math.max(...histogram);
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, margin + plotHeight);
+                ctx.lineTo(margin + plotWidth, margin + plotHeight);
+                ctx.strokeStyle = '#2D3748';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw histogram bars
+                histogram.forEach((count, index) => {
+                    const x = margin + (index / numBins) * plotWidth;
+                    const barWidth = plotWidth / numBins;
+                    const barHeight = (count / maxCount) * plotHeight;
+                    
+                    ctx.fillStyle = 'var(--interarrival-color)';
+                    ctx.fillRect(x, margin + plotHeight - barHeight, barWidth - 2, barHeight);
+                    
+                    // Draw bar border
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, margin + plotHeight - barHeight, barWidth - 2, barHeight);
+                });
+                
+                // Draw theoretical exponential curve
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                
+                for (let i = 0; i <= 100; i++) {
+                    const t = (i / 100) * maxInterval;
+                    const theoreticalDensity = lambda * Math.exp(-lambda * t);
+                    const y = (theoreticalDensity / (lambda * maxCount)) * plotHeight * interArrivalTimes.length;
+                    
+                    const plotX = margin + (i / 100) * plotWidth;
+                    const plotY = margin + plotHeight - y;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(plotX, plotY);
+                    } else {
+                        ctx.lineTo(plotX, plotY);
+                    }
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Add labels
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'ইন্টার-আরাইভাল সময়' : 'Inter-Arrival Time',
+                    interarrivalCanvas.width / 2,
+                    interarrivalCanvas.height - 10
+                );
+                
+                ctx.save();
+                ctx.translate(10, interarrivalCanvas.height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                    0,
+                    0
+                );
+                ctx.restore();
+                
+                // Add title
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' 
+                        ? `ইন্টার-আরাইভাল সময় ডিস্ট্রিবিউশন (λ = ${lambda.toFixed(1)})`
+                        : `Inter-Arrival Time Distribution (λ = ${lambda.toFixed(1)})`,
+                    interarrivalCanvas.width / 2,
+                    25
+                );
+                
+                console.log("Inter-arrival analysis visualization complete");
+            }
+            
+            function updateEventList() {
+                console.log("Updating event list...");
+                eventList.innerHTML = '';
+                
+                if (processState.type === 'temporal') {
+                    const events = processState.events.slice(0, 20); // Show first 20 events
+                    
+                    if (events.length === 0) {
+                        const emptyItem = document.createElement('div');
+                        emptyItem.className = 'event-item';
+                        emptyItem.style.textAlign = 'center';
+                        emptyItem.style.color = '#718096';
+                        emptyItem.textContent = currentLanguage === 'bn' 
+                            ? 'কোন ইভেন্ট জেনারেট হয়নি' 
+                            : 'No events generated';
+                        eventList.appendChild(emptyItem);
+                        return;
+                    }
+                    
+                    events.forEach((event, index) => {
+                        const eventItem = document.createElement('div');
+                        eventItem.className = 'event-item fade-in';
+                        
+                        const eventNumber = document.createElement('span');
+                        eventNumber.textContent = `E${index + 1}`;
+                        
+                        const eventTime = document.createElement('span');
+                        eventTime.className = 'event-time';
+                        eventTime.textContent = `${event.time.toFixed(2)} ${processState.timeUnit}`;
+                        
+                        if (index > 0) {
+                            const interval = event.time - processState.events[index - 1].time;
+                            const intervalSpan = document.createElement('span');
+                            intervalSpan.className = 'event-interval';
+                            intervalSpan.textContent = `Δ: ${interval.toFixed(2)}`;
+                            eventItem.appendChild(intervalSpan);
+                        }
+                        
+                        eventItem.appendChild(eventNumber);
+                        eventItem.appendChild(eventTime);
+                        eventList.appendChild(eventItem);
+                    });
+                    
+                    if (processState.events.length > 20) {
+                        const moreItem = document.createElement('div');
+                        moreItem.className = 'event-item';
+                        moreItem.style.textAlign = 'center';
+                        moreItem.style.color = '#718096';
+                        moreItem.textContent = currentLanguage === 'bn'
+                            ? `... আরও ${processState.events.length - 20} ইভেন্ট`
+                            : `... ${processState.events.length - 20} more events`;
+                        eventList.appendChild(moreItem);
+                    }
+                } else if (processState.type === 'spatial') {
+                    const points = processState.spatialPoints.slice(0, 20);
+                    
+                    if (points.length === 0) {
+                        const emptyItem = document.createElement('div');
+                        emptyItem.className = 'event-item';
+                        emptyItem.style.textAlign = 'center';
+                        emptyItem.style.color = '#718096';
+                        emptyItem.textContent = currentLanguage === 'bn' 
+                            ? 'কোন বিন্দু জেনারেট হয়নি' 
+                            : 'No points generated';
+                        eventList.appendChild(emptyItem);
+                        return;
+                    }
+                    
+                    points.forEach((point, index) => {
+                        const pointItem = document.createElement('div');
+                        pointItem.className = 'event-item fade-in';
+                        
+                        const pointNumber = document.createElement('span');
+                        pointNumber.textContent = `P${index + 1}`;
+                        
+                        const pointPosition = document.createElement('span');
+                        pointPosition.className = 'event-position';
+                        pointPosition.textContent = `(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`;
+                        
+                        pointItem.appendChild(pointNumber);
+                        pointItem.appendChild(pointPosition);
+                        eventList.appendChild(pointItem);
+                    });
+                    
+                    if (processState.spatialPoints.length > 20) {
+                        const moreItem = document.createElement('div');
+                        moreItem.className = 'event-item';
+                        moreItem.style.textAlign = 'center';
+                        moreItem.style.color = '#718096';
+                        moreItem.textContent = currentLanguage === 'bn'
+                            ? `... আরও ${processState.spatialPoints.length - 20} বিন্দু`
+                            : `... ${processState.spatialPoints.length - 20} more points`;
+                        eventList.appendChild(moreItem);
+                    }
+                }
+            }
+            
+            function updateStatisticsDisplay() {
+                console.log("Updating statistics display...");
+                const stats = processState.statistics;
+                totalEventsEl.textContent = stats.totalEvents.toLocaleString();
+                eventRateEl.textContent = stats.eventRate.toFixed(2);
+                meanIntervalEl.textContent = stats.meanInterval.toFixed(2);
+                processIntensityEl.textContent = stats.intensity.toFixed(2);
+            }
+            
+            function visualizeProcess() {
+                console.log("Starting visualization process...");
+                
+                // Show loading state
+                visualizeBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'bn' ? 'চলছে...' : 'Processing...'}`;
+                visualizeBtn.disabled = true;
+                
+                // Force resize
+                resizeCanvases();
+                
+                setTimeout(() => {
+                    try {
+                        console.log("Processing visualization step 1...");
+                        
+                        // Generate data based on process type
+                        if (processState.type === 'temporal' || processState.type === 'analysis') {
+                            generateTemporalEvents();
+                        } else if (processState.type === 'spatial') {
+                            generateSpatialPoints();
+                        }
+                        
+                        console.log("Processing visualization step 2...");
+                        // Calculate statistics
+                        calculateStatistics();
+                        
+                        console.log("Processing visualization step 3...");
+                        // Update displays
+                        updateStatisticsDisplay();
+                        updateEventList();
+                        
+                        console.log("Processing visualization step 4...");
+                        // Visualize based on type
+                        switch(processState.type) {
+                            case 'temporal':
+                                visualizeTemporalProcess();
+                                break;
+                            case 'spatial':
+                                visualizeSpatialProcess();
+                                break;
+                            case 'analysis':
+                                visualizeInterArrivalAnalysis();
+                                break;
+                        }
+                        
+                        console.log("Visualization completed successfully!");
+                        
+                    } catch (error) {
+                        console.error('Visualization error:', error);
+                        alert(currentLanguage === 'bn' 
+                            ? 'ত্রুটি হয়েছে। পৃষ্ঠাটি রিফ্রেশ করুন।' 
+                            : 'An error occurred. Please refresh the page.');
+                    } finally {
+                        // Restore button state
+                        visualizeBtn.innerHTML = `<i class="fas fa-eye"></i> ${currentLanguage === 'bn' ? 'ভিজ্যুয়ালাইজ করুন' : 'Visualize'}`;
+                        visualizeBtn.disabled = false;
+                    }
+                }, 100);
+            }
+            
+            function resetVisualizer() {
+                console.log("Resetting visualizer...");
+                
+                // Reset process state
+                processState.lambda = 5.0;
+                processState.timeInterval = 20;
+                processState.simulationCount = 100;
+                processState.timeUnit = 'seconds';
+                processState.spaceWidth = 500;
+                processState.spaceHeight = 500;
+                processState.events = [];
+                processState.spatialPoints = [];
+                processState.interArrivalTimes = [];
+                processState.statistics = {
+                    totalEvents: 0,
+                    eventRate: 0,
+                    meanInterval: 0,
+                    intensity: 0
+                };
+                
+                // Reset zoom and pan
+                spatialZoom = 1.0;
+                spatialPanX = 0;
+                spatialPanY = 0;
+                
+                // Reset inputs
+                lambdaInput.value = 5.0;
+                lambdaSlider.value = 5.0;
+                lambdaDisplay.textContent = 'λ = 5.0';
+                timeIntervalInput.value = 20;
+                simulationCountInput.value = 100;
+                spaceWidthInput.value = 500;
+                spaceHeightInput.value = 500;
+                
+                // Reset active buttons
+                processTypeBtns.forEach(btn => {
+                    if (btn.dataset.type === 'temporal') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                unitBtns.forEach(btn => {
+                    if (btn.dataset.unit === 'seconds') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Show temporal parameters by default
+                setProcessType('temporal');
+                
+                // Clear canvases
+                if (temporalCtx) temporalCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                if (spatialCtx) spatialCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                if (interarrivalCtx) interarrivalCtx.clearRect(0, 0, interarrivalCanvas.width, interarrivalCanvas.height);
+                
+                // Reset displays
+                updateStatisticsDisplay();
+                eventList.innerHTML = `<div class="event-item" style="text-align: center; color: #718096;">
+                    <span>${currentLanguage === 'bn' ? 'এখনো কোনো ইভেন্ট জেনারেট হয়নি' : 'No events generated yet'}</span>
+                </div>`;
+                
+                // Reset coordinates display
+                coordinatesDisplay.style.display = 'none';
+                
+                console.log("Reset complete");
+            }
+            
+            console.log("Initialization complete!");
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নরমাল ডিস্ট্রিবিউশন গুডনেস-অফ-ফিট টেস্ট | পরিসংখ্যান</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #607D8B;
+            --secondary: #455A64;
+            --accent: #FF5722;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --info: #2196F3;
+            --danger: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --histogram: #607D8B;
+            --normal-curve: #FF5722;
+            --qq-line: #4CAF50;
+            --qq-points: #2196F3;
+            --reject: #F44336;
+            --fail-to-reject: #4CAF50;
+        }
+
+        body {
+            background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(96, 125, 139, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Data Input Panel */
+        .data-input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .input-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .input-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Data Input */
+        .data-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .textarea-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .textarea-label i {
+            color: var(--primary);
+        }
+
+        .data-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .data-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(96, 125, 139, 0.1);
+        }
+
+        /* Sample Data Buttons */
+        .sample-data-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .sample-data-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .sample-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .sample-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .sample-name {
+            font-weight: 700;
+        }
+
+        .sample-desc {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Test Configuration */
+        .test-configuration {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .test-configuration {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .config-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .config-label i {
+            color: var(--primary);
+        }
+
+        .config-select {
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .config-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(96, 125, 139, 0.1);
+        }
+
+        .config-input {
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(96, 125, 139, 0.1);
+        }
+
+        /* Test Selection */
+        .test-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .test-option {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .test-option:hover {
+            border-color: var(--primary);
+            background: var(--light-gray);
+        }
+
+        .test-option.selected {
+            border-color: var(--primary);
+            background: rgba(96, 125, 139, 0.1);
+        }
+
+        .test-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .test-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(96, 125, 139, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn.success:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Test Results */
+        .test-results {
+            margin-bottom: 2rem;
+        }
+
+        .result-summary {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .result-verdict {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-verdict.reject {
+            color: var(--reject);
+        }
+
+        .result-verdict.fail-to-reject {
+            color: var(--fail-to-reject);
+        }
+
+        .result-description {
+            font-size: 1rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Individual Test Results */
+        .individual-tests {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .test-result-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .test-result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .test-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .test-result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .test-result-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .shapiro-icon { background: var(--primary); }
+        .ks-icon { background: var(--accent); }
+        .qq-icon { background: var(--success); }
+
+        .test-result-status {
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+        }
+
+        .test-result-status.reject { 
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--reject);
+        }
+
+        .test-result-status.fail-to-reject { 
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--fail-to-reject);
+        }
+
+        .test-result-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .test-result-interpretation {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* QQ Plot Container */
+        .qq-plot-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .qq-plot-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .qq-interpretation {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .interpretation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .interpretation-title i {
+            color: var(--success);
+        }
+
+        .interpretation-list {
+            list-style: none;
+        }
+
+        .interpretation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .interpretation-item i {
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-top: 0.2rem;
+        }
+
+        /* Normality Indicators */
+        .normality-indicators {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .indicator-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .indicator-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .indicator-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .skewness-icon { background: var(--primary); }
+        .kurtosis-icon { background: var(--accent); }
+        .mean-icon { background: var(--info); }
+        .median-icon { background: var(--success); }
+
+        .indicator-title {
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .indicator-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .indicator-description {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Statistical Tests Explanation */
+        .tests-explanation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .explanation-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .explanation-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .explanation-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .explanation-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .explanation-content {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .explanation-formula {
+            font-family: monospace;
+            background: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .histogram-legend { background: var(--histogram); }
+        .normal-curve-legend { background: var(--normal-curve); }
+        .qq-line-legend { background: var(--qq-line); }
+        .qq-points-legend { background: var(--qq-points); }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .data-input-panel,
+            .results-panel,
+            .visualization-area,
+            .normality-indicators,
+            .tests-explanation {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+            
+            .test-result-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .input-group {
+                padding: 1rem;
+            }
+            
+            .test-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { background-color: var(--light-gray); }
+            50% { background-color: rgba(96, 125, 139, 0.1); }
+            100% { background-color: var(--light-gray); }
+        }
+
+        .highlight {
+            animation: highlight 1s ease;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.8rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Normal Distribution Goodness-of-Fit Test" data-bn="নরমাল ডিস্ট্রিবিউশন গুডনেস-অফ-ফিট টেস্ট">নরমাল ডিস্ট্রিবিউশন গুডনেস-অফ-ফিট টেস্ট</h1>
+            <p class="subtitle" data-en="Test if your data follows normal distribution using Shapiro-Wilk test, Kolmogorov-Smirnov test, and QQ plots" data-bn="শাপিরো-উইলক টেস্ট, কলমোগোরভ-স্মিরনভ টেস্ট এবং QQ প্লট ব্যবহার করে পরীক্ষা করুন আপনার ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে কিনা">
+                শাপিরো-উইলক টেস্ট, কলমোগোরভ-স্মিরনভ টেস্ট এবং QQ প্লট ব্যবহার করে পরীক্ষা করুন আপনার ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে কিনা
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Data Input Panel -->
+            <div class="data-input-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <!-- Data Input Area -->
+                <div class="input-group">
+                    <div class="input-header">
+                        <div class="input-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <h3 class="input-title" data-en="Enter Your Data" data-bন="আপনার ডেটা লিখুন">আপনার ডেটা লিখুন</h3>
+                    </div>
+                    
+                    <div class="data-input-area">
+                        <label class="textarea-label">
+                            <i class="fas fa-list-ol"></i>
+                            <span data-en="Data Values (comma or space separated)" data-bন="ডেটা মান (কমা বা স্পেস দ্বারা পৃথক)">ডেটা মান (কমা বা স্পেস দ্বারা পৃথক)</span>
+                        </label>
+                        <textarea class="data-textarea" id="dataInput" placeholder="e.g., 1.2, 2.5, 3.1, 4.8, 5.2, 6.7, 7.3, 8.9, 9.4, 10.1"></textarea>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 0.8rem; color: var(--gray);">
+                                <span data-en="Enter numeric values only" data-bন="শুধুমাত্র সংখ্যাসূচক মান লিখুন">শুধুমাত্র সংখ্যাসূচক মান লিখুন</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">
+                                <span data-en="Count:" data-bন="সংখ্যা:">সংখ্যা:</span>
+                                <span id="dataCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Data -->
+                <div class="input-group">
+                    <div class="input-header">
+                        <div class="input-icon">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <h3 class="input-title" data-en="Sample Data Sets" data-bন="স্যাম্পল ডেটা সেট">স্যাম্পল ডেটা সেট</h3>
+                    </div>
+                    
+                    <div class="sample-data-buttons">
+                        <button class="sample-btn" data-sample="normal">
+                            <span class="sample-name" data-en="Normal Data" data-bন="নরমাল ডেটা">নরমাল ডেটা</span>
+                            <span class="sample-desc" data-en="Follows normal distribution" data-bন="নরমাল ডিস্ট্রিবিউশন অনুসরণ করে">নরমাল ডিস্ট্রিবিউশন অনুসরণ করে</span>
+                        </button>
+                        
+                        <button class="sample-btn" data-sample="right_skewed">
+                            <span class="sample-name" data-en="Right Skewed" data-bন="ডানদিকে স্কিউড">ডানদিকে স্কিউড</span>
+                            <span class="sample-desc" data-en="Positively skewed data" data-bন="ধনাত্মক স্কিউড ডেটা">ধনাত্মক স্কিউড ডেটা</span>
+                        </button>
+                        
+                        <button class="sample-btn" data-sample="left_skewed">
+                            <span class="sample-name" data-en="Left Skewed" data-bন="বামদিকে স্কিউড">বামদিকে স্কিউড</span>
+                            <span class="sample-desc" data-en="Negatively skewed data" data-bন="ঋণাত্মক স্কিউড ডেটা">ঋণাত্মক স্কিউড ডেটা</span>
+                        </button>
+                        
+                        <button class="sample-btn" data-sample="heavy_tailed">
+                            <span class="sample-name" data-en="Heavy Tailed" data-bন="হেভি টেইলড">হেভি টেইলড</span>
+                            <span class="sample-desc" data-en="High kurtosis data" data-bন="উচ্চ কার্টোসিস ডেটা">উচ্চ কার্টোসিস ডেটা</span>
+                        </button>
+                        
+                        <button class="sample-btn" data-sample="uniform">
+                            <span class="sample-name" data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</span>
+                            <span class="sample-desc" data-en="Uniformly distributed" data-bন="ইউনিফর্মলি ডিস্ট্রিবিউটেড">ইউনিফর্মলি ডিস্ট্রিবিউটেড</span>
+                        </button>
+                        
+                        <button class="sample-btn" data-sample="bimodal">
+                            <span class="sample-name" data-en="Bimodal" data-bন="বাইমোডাল">বাইমোডাল</span>
+                            <span class="sample-desc" data-en="Two peaks in distribution" data-bন="ডিস্ট্রিবিউশনে দুইটি পিক">ডিস্ট্রিবিউশনে দুইটি পিক</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Test Configuration -->
+                <div class="input-group">
+                    <div class="input-header">
+                        <div class="input-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3 class="input-title" data-en="Test Configuration" data-bন="টেস্ট কনফিগারেশন">টেস্ট কনফিগারেশন</h3>
+                    </div>
+                    
+                    <div class="test-configuration">
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-signal"></i>
+                                <span data-en="Significance Level (α)" data-bন="সিগনিফিকেন্স লেভেল (α)">সিগনিফিকেন্স লেভেল (α)</span>
+                            </label>
+                            <select class="config-select" id="significanceLevel">
+                                <option value="0.01">0.01 (99% confidence)</option>
+                                <option value="0.05" selected>0.05 (95% confidence)</option>
+                                <option value="0.10">0.10 (90% confidence)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-ruler"></i>
+                                <span data-en="Sample Size" data-bন="স্যাম্পল সাইজ">স্যাম্পল সাইজ</span>
+                            </label>
+                            <input type="number" class="config-input" id="sampleSize" value="100" min="3" max="5000" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="test-selection">
+                        <label class="test-option selected">
+                            <input type="checkbox" id="shapiroWilkTest" checked>
+                            <div>
+                                <div class="test-name" data-en="Shapiro-Wilk Test" data-bন="শাপিরো-উইলক টেস্ট">শাপিরো-উইলক টেস্ট</div>
+                            </div>
+                        </label>
+                        
+                        <label class="test-option selected">
+                            <input type="checkbox" id="kolmogorovSmirnovTest" checked>
+                            <div>
+                                <div class="test-name" data-en="Kolmogorov-Smirnov Test" data-bন="কলমোগোরভ-স্মিরনভ টেস্ট">কলমোগোরভ-স্মিরনভ টেস্ট</div>
+                            </div>
+                        </label>
+                        
+                        <label class="test-option selected">
+                            <input type="checkbox" id="generateQQPlot" checked>
+                            <div>
+                                <div class="test-name" data-en="QQ Plot" data-bন="QQ প্লট">QQ প্লট</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="runTestsBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Normality Tests" data-bন="নরমালিটি টেস্ট রান করুন">নরমালিটি টেস্ট রান করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="clearDataBtn">
+                        <i class="fas fa-trash"></i>
+                        <span data-en="Clear Data" data-bন="ডেটা ক্লিয়ার করুন">ডেটা ক্লিয়ার করুন</span>
+                    </button>
+                    <button class="action-btn success" id="downloadReportBtn">
+                        <i class="fas fa-download"></i>
+                        <span data-en="Download Report" data-bন="রিপোর্ট ডাউনলোড করুন">রিপোর্ট ডাউনলোড করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Test Results" data-bন="টেস্ট ফলাফল">টেস্ট ফলাফল</span>
+                </h2>
+                
+                <!-- Overall Result -->
+                <div class="test-results">
+                    <div class="result-summary" id="overallResult">
+                        <div class="result-verdict" id="overallVerdict" data-en="Enter data and run tests" data-bন="ডেটা লিখুন এবং টেস্ট রান করুন">
+                            ডেটা লিখুন এবং টেস্ট রান করুন
+                        </div>
+                        <div class="result-description" id="overallDescription" data-en="Please input your data and run normality tests to see results" data-bন="ফলাফল দেখতে আপনার ডেটা ইনপুট করুন এবং নরমালিটি টেস্ট রান করুন">
+                            ফলাফল দেখতে আপনার ডেটা ইনপুট করুন এবং নরমালিটি টেস্ট রান করুন
+                        </div>
+                    </div>
+
+                    <!-- Individual Test Results -->
+                    <div class="individual-tests">
+                        <!-- Shapiro-Wilk Test Result -->
+                        <div class="test-result-card fade-in" id="shapiroResult">
+                            <div class="test-result-header">
+                                <div class="test-result-title">
+                                    <div class="test-result-icon shapiro-icon">
+                                        <i class="fas fa-calculator"></i>
+                                    </div>
+                                    <span data-en="Shapiro-Wilk Test" data-bন="শাপিরো-উইলক টেস্ট">শাপিরো-উইলক টেস্ট</span>
+                                </div>
+                                <div class="test-result-status" id="shapiroStatus" data-en="Pending" data-bন="পেন্ডিং">পেন্ডিং</div>
+                            </div>
+                            
+                            <div class="test-result-metrics">
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="Test Statistic (W)" data-bন="টেস্ট স্ট্যাটিস্টিক (W)">টেস্ট স্ট্যাটিস্টিক (W)</div>
+                                    <div class="metric-value" id="shapiroStatistic">-</div>
+                                </div>
+                                
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="p-value" data-bন="p-মান">p-মান</div>
+                                    <div class="metric-value" id="shapiroPValue">-</div>
+                                </div>
+                            </div>
+                            
+                            <div class="test-result-interpretation" id="shapiroInterpretation" data-en="Test not performed yet" data-bন="টেস্ট এখনো করা হয়নি">
+                                টেস্ট এখনো করা হয়নি
+                            </div>
+                        </div>
+
+                        <!-- Kolmogorov-Smirnov Test Result -->
+                        <div class="test-result-card fade-in" id="ksResult">
+                            <div class="test-result-header">
+                                <div class="test-result-title">
+                                    <div class="test-result-icon ks-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <span data-en="Kolmogorov-Smirnov Test" data-bন="কলমোগোরভ-স্মিরনভ টেস্ট">কলমোগোরভ-স্মিরনভ টেস্ট</span>
+                                </div>
+                                <div class="test-result-status" id="ksStatus" data-en="Pending" data-bন="পেন্ডিং">পেন্ডিং</div>
+                            </div>
+                            
+                            <div class="test-result-metrics">
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="Test Statistic (D)" data-bন="টেস্ট স্ট্যাটিস্টিক (D)">টেস্ট স্ট্যাটিস্টিক (D)</div>
+                                    <div class="metric-value" id="ksStatistic">-</div>
+                                </div>
+                                
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="p-value" data-bন="p-মান">p-মান</div>
+                                    <div class="metric-value" id="ksPValue">-</div>
+                                </div>
+                            </div>
+                            
+                            <div class="test-result-interpretation" id="ksInterpretation" data-en="Test not performed yet" data-bন="টেস্ট এখনো করা হয়নি">
+                                টেস্ট এখনো করা হয়নি
+                            </div>
+                        </div>
+
+                        <!-- QQ Plot Result -->
+                        <div class="test-result-card fade-in" id="qqResult">
+                            <div class="test-result-header">
+                                <div class="test-result-title">
+                                    <div class="test-result-icon qq-icon">
+                                        <i class="fas fa-chart-scatter"></i>
+                                    </div>
+                                    <span data-en="QQ Plot Analysis" data-bন="QQ প্লট বিশ্লেষণ">QQ প্লট বিশ্লেষণ</span>
+                                </div>
+                                <div class="test-result-status" id="qqStatus" data-en="Pending" data-bন="পেন্ডিং">পেন্ডিং</div>
+                            </div>
+                            
+                            <div class="test-result-metrics">
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="Correlation (R²)" data-bন="কোরিলেশন (R²)">কোরিলেশন (R²)</div>
+                                    <div class="metric-value" id="qqCorrelation">-</div>
+                                </div>
+                                
+                                <div class="test-metric">
+                                    <div class="metric-label" data-en="Points on Line" data-bন="লাইনে পয়েন্ট">লাইনে পয়েন্ট</div>
+                                    <div class="metric-value" id="qqPointsOnLine">-</div>
+                                </div>
+                            </div>
+                            
+                            <div class="test-result-interpretation" id="qqInterpretation" data-en="QQ plot not generated yet" data-bন="QQ প্লট এখনো তৈরি হয়নি">
+                                QQ প্লট এখনো তৈরি হয়নি
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="visualization-area">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Histogram with Normal Curve Overlay" data-bন="নরমাল কার্ভ ওভারলে সহ হিস্টোগ্রাম">নরমাল কার্ভ ওভারলে সহ হিস্টোগ্রাম</span>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="histogramChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Quantile-Quantile (QQ) Plot" data-bন="কোয়ান্টাইল-কোয়ান্টাইল (QQ) প্লট">কোয়ান্টাইল-কোয়ান্টাইল (QQ) প্লট</span>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="qqPlotChart"></canvas>
+                    </div>
+                    
+                    <div class="qq-plot-container">
+                        <div class="qq-interpretation">
+                            <h3 class="interpretation-title">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="QQ Plot Interpretation Guide" data-bন="QQ প্লট ইন্টারপ্রিটেশন গাইড">QQ প্লট ইন্টারপ্রিটেশন গাইড</span>
+                            </h3>
+                            <ul class="interpretation-list">
+                                <li class="interpretation-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span data-en="Points fall on straight line: Data follows normal distribution" data-bন="পয়েন্ট সরল রেখায় পড়ে: ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে">
+                                        পয়েন্ট সরল রেখায় পড়ে: ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে
+                                    </span>
+                                </li>
+                                <li class="interpretation-item">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span data-en="Points curve upward: Right-skewed distribution" data-bন="পয়েন্ট উপরের দিকে বাঁক: ডান-স্কিউড ডিস্ট্রিবিউশন">
+                                        পয়েন্ট উপরের দিকে বাঁক: ডান-স্কিউড ডিস্ট্রিবিউশন
+                                    </span>
+                                </li>
+                                <li class="interpretation-item">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span data-en="Points curve downward: Left-skewed distribution" data-bন="পয়েন্ট নিচের দিকে বাঁক: বাম-স্কিউড ডিস্ট্রিবিউশন">
+                                        পয়েন্ট নিচের দিকে বাঁক: বাম-স্কিউড ডিস্ট্রিবিউশন
+                                    </span>
+                                </li>
+                                <li class="interpretation-item">
+                                    <i class="fas fa-expand-alt"></i>
+                                    <span data-en="Points form S-shape: Heavy-tailed distribution" data-bন="পয়েন্ট S-আকৃতি তৈরি করে: হেভি-টেইলড ডিস্ট্রিবিউশন">
+                                        পয়েন্ট S-আকৃতি তৈরি করে: হেভি-টেইলড ডিস্ট্রিবিউশন
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-color histogram-legend"></div>
+                                <span data-en="Data Histogram" data-bন="ডেটা হিস্টোগ্রাম">ডেটা হিস্টোগ্রাম</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color normal-curve-legend"></div>
+                                <span data-en="Theoretical Normal" data-bন="থিওরিটিক্যাল নরমাল">থিওরিটিক্যাল নরমাল</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color qq-line-legend"></div>
+                                <span data-en="QQ Reference Line" data-bন="QQ রেফারেন্স লাইন">QQ রেফারেন্স লাইন</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color qq-points-legend"></div>
+                                <span data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Normality Indicators -->
+        <div class="normality-indicators">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-en="Normality Indicators" data-bন="নরমালিটি ইন্ডিকেটর">নরমালিটি ইন্ডিকেটর</span>
+            </h2>
+            
+            <div class="indicators-grid">
+                <div class="indicator-card fade-in">
+                    <div class="indicator-icon skewness-icon">
+                        <i class="fas fa-balance-scale-left"></i>
+                    </div>
+                    <div class="indicator-title" data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</div>
+                    <div class="indicator-value" id="skewnessValue">0.00</div>
+                    <div class="indicator-description" id="skewnessDesc" data-en="Measure of symmetry" data-bন="প্রতিসাম্যের পরিমাপ">
+                        প্রতিসাম্যের পরিমাপ
+                    </div>
+                </div>
+                
+                <div class="indicator-card fade-in">
+                    <div class="indicator-icon kurtosis-icon">
+                        <i class="fas fa-mountain"></i>
+                    </div>
+                    <div class="indicator-title" data-en="Kurtosis" data-bন="কার্টোসিস">কার্টোসিস</div>
+                    <div class="indicator-value" id="kurtosisValue">3.00</div>
+                    <div class="indicator-description" id="kurtosisDesc" data-en="Measure of tail heaviness" data-bন="লেজের ভারীভাবের পরিমাপ">
+                        লেজের ভারীভাবের পরিমাপ
+                    </div>
+                </div>
+                
+                <div class="indicator-card fade-in">
+                    <div class="indicator-icon mean-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="indicator-title" data-en="Mean" data-bন="মিন">মিন</div>
+                    <div class="indicator-value" id="meanValue">0.00</div>
+                    <div class="indicator-description" id="meanDesc" data-en="Central tendency" data-bন="কেন্দ্রীয় প্রবণতা">
+                        কেন্দ্রীয় প্রবণতা
+                    </div>
+                </div>
+                
+                <div class="indicator-card fade-in">
+                    <div class="indicator-icon median-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="indicator-title" data-en="Median" data-bন="মিডিয়ান">মিডিয়ান</div>
+                    <div class="indicator-value" id="medianValue">0.00</div>
+                    <div class="indicator-description" id="medianDesc" data-en="Middle value" data-bন="মধ্যম মান">
+                        মধ্যম মান
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistical Tests Explanation -->
+        <div class="tests-explanation">
+            <h2 class="section-title">
+                <i class="fas fa-book"></i>
+                <span data-en="Statistical Tests Explanation" data-bন="পরিসংখ্যানিক টেস্ট ব্যাখ্যা">পরিসংখ্যানিক টেস্ট ব্যাখ্যা</span>
+            </h2>
+            
+            <div class="explanation-grid">
+                <div class="explanation-card">
+                    <div class="explanation-header">
+                        <div class="explanation-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="explanation-title" data-en="Shapiro-Wilk Test" data-bন="শাপিরো-উইলক টেস্ট">শাপিরো-উইলক টেস্ট</h3>
+                    </div>
+                    <div class="explanation-content">
+                        <p data-en="The Shapiro-Wilk test is one of the most powerful tests for normality, especially for small sample sizes (n < 50). It compares the ordered sample values with the corresponding expected values from a normal distribution." data-bন="শাপিরো-উইলক টেস্ট নরমালিটির জন্য সবচেয়ে শক্তিশালী টেস্টগুলোর একটি, বিশেষ করে ছোট স্যাম্পল সাইজের জন্য (n < ৫০)। এটি ক্রমানুসারে সাজানো স্যাম্পল মানগুলোর সাথে নরমাল ডিস্ট্রিবিউশনের প্রত্যাশিত মানের তুলনা করে।">
+                            শাপিরো-উইলক টেস্ট নরমালিটির জন্য সবচেয়ে শক্তিশালী টেস্টগুলোর একটি, বিশেষ করে ছোট স্যাম্পল সাইজের জন্য (n < ৫০)। এটি ক্রমানুসারে সাজানো স্যাম্পল মানগুলোর সাথে নরমাল ডিস্ট্রিবিউশনের প্রত্যাশিত মানের তুলনা করে।
+                        </p>
+                        <div class="explanation-formula">
+                            W = (Σaᵢxᵢ)² / Σ(xᵢ - x̄)²
+                        </div>
+                        <p data-en="Null Hypothesis (H₀): Data comes from a normal distribution. Reject H₀ if p-value < α." data-bন="নাল হাইপোথিসিস (H₀): ডেটা নরমাল ডিস্ট্রিবিউশন থেকে আসে। H₀ রিজেক্ট করুন যদি p-মান < α।">
+                            নাল হাইপোথিসিস (H₀): ডেটা নরমাল ডিস্ট্রিবিউশন থেকে আসে। H₀ রিজেক্ট করুন যদি p-মান < α।
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="explanation-card">
+                    <div class="explanation-header">
+                        <div class="explanation-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="explanation-title" data-en="Kolmogorov-Smirnov Test" data-bন="কলমোগোরভ-স্মিরনভ টেস্ট">কলমোগোরভ-স্মিরনভ টেস্ট</h3>
+                    </div>
+                    <div class="explanation-content">
+                        <p data-en="The Kolmogorov-Smirnov test compares the empirical distribution function of the sample with the cumulative distribution function of the hypothesized normal distribution. It measures the maximum distance between the two distributions." data-bন="কলমোগোরভ-স্মিরনভ টেস্ট স্যাম্পলের এম্পিরিক্যাল ডিস্ট্রিবিউশন ফাংশনের সাথে হাইপোথিসাইজড নরমাল ডিস্ট্রিবিউশনের কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশনের তুলনা করে। এটি দুইটি ডিস্ট্রিবিউশনের মধ্যে সর্বোচ্চ দূরত্ব পরিমাপ করে।">
+                            কলমোগোরভ-স্মিরনভ টেস্ট স্যাম্পলের এম্পিরিক্যাল ডিস্ট্রিবিউশন ফাংশনের সাথে হাইপোথিসাইজড নরমাল ডিস্ট্রিবিউশনের কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশনের তুলনা করে। এটি দুইটি ডিস্ট্রিবিউশনের মধ্যে সর্বোচ্চ দূরত্ব পরিমাপ করে।
+                        </p>
+                        <div class="explanation-formula">
+                            D = supₓ |Fₙ(x) - F(x)|
+                        </div>
+                        <p data-en="Where Fₙ(x) is the empirical CDF and F(x) is the theoretical normal CDF. Suitable for larger sample sizes (n ≥ 50)." data-bন="যেখানে Fₙ(x) হলো এম্পিরিক্যাল CDF এবং F(x) হলো থিওরিটিক্যাল নরমাল CDF। বড় স্যাম্পল সাইজের জন্য উপযুক্ত (n ≥ ৫০)।">
+                            যেখানে Fₙ(x) হলো এম্পিরিক্যাল CDF এবং F(x) হলো থিওরিটিক্যাল নরমাল CDF। বড় স্যাম্পল সাইজের জন্য উপযুক্ত (n ≥ ৫০)।
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="explanation-card">
+                    <div class="explanation-header">
+                        <div class="explanation-icon">
+                            <i class="fas fa-chart-scatter"></i>
+                        </div>
+                        <h3 class="explanation-title" data-en="QQ Plot Analysis" data-bন="QQ প্লট বিশ্লেষণ">QQ প্লট বিশ্লেষণ</h3>
+                    </div>
+                    <div class="explanation-content">
+                        <p data-en="A Quantile-Quantile plot is a graphical method for comparing two probability distributions by plotting their quantiles against each other. For normality testing, sample quantiles are plotted against theoretical normal quantiles." data-bন="কোয়ান্টাইল-কোয়ান্টাইল প্লট হলো দুইটি প্রোবাবিলিটি ডিস্ট্রিবিউশনের তুলনা করার একটি গ্রাফিক্যাল পদ্ধতি, যেখানে তাদের কোয়ান্টাইল একে অপরের বিপরীতে প্লট করা হয়। নরমালিটি টেস্টিং-এর জন্য, স্যাম্পল কোয়ান্টাইল থিওরিটিক্যাল নরমাল কোয়ান্টাইলের বিপরীতে প্লট করা হয়।">
+                            কোয়ান্টাইল-কোয়ান্টাইল প্লট হলো দুইটি প্রোবাবিলিটি ডিস্ট্রিবিউশনের তুলনা করার একটি গ্রাফিক্যাল পদ্ধতি, যেখানে তাদের কোয়ান্টাইল একে অপরের বিপরীতে প্লট করা হয়। নরমালিটি টেস্টিং-এর জন্য, স্যাম্পল কোয়ান্টাইল থিওরিটিক্যাল নরমাল কোয়ান্টাইলের বিপরীতে প্লট করা হয়।
+                        </p>
+                        <p data-en="Interpretation: If points fall approximately along the reference line, the data follows a normal distribution. Deviations from the line indicate departures from normality." data-bন="ইন্টারপ্রিটেশন: যদি পয়েন্টগুলি রেফারেন্স লাইনের প্রায় ধার বরাবর পড়ে, তবে ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে। লাইন থেকে বিচ্যুতি নরমালিটি থেকে বিচ্যুতি নির্দেশ করে।">
+                            ইন্টারপ্রিটেশন: যদি পয়েন্টগুলি রেফারেন্স লাইনের প্রায় ধার বরাবর পড়ে, তবে ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে। লাইন থেকে বিচ্যুতি নরমালিটি থেকে বিচ্যুতি নির্দেশ করে।
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let dataArray = [];
+            let histogramChart = null;
+            let qqPlotChart = null;
+            
+            // Initialize application
+            initGoodnessOfFitTest();
+            
+            function initGoodnessOfFitTest() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Initialize event listeners
+                initializeEventListeners();
+                
+                // Initialize charts
+                initializeCharts();
+                
+                // Load initial sample data
+                loadSampleData('normal');
+                
+                // Initialize MathJax
+                if (window.MathJax) {
+                    MathJax.typeset();
+                }
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+            
+            function initializeEventListeners() {
+                // Data input event
+                document.getElementById('dataInput').addEventListener('input', function() {
+                    parseDataInput();
+                });
+                
+                // Sample data buttons
+                document.querySelectorAll('.sample-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const sample = this.dataset.sample;
+                        loadSampleData(sample);
+                        
+                        // Highlight selected button
+                        document.querySelectorAll('.sample-btn').forEach(b => {
+                            b.style.background = 'white';
+                            b.style.color = 'var(--dark)';
+                        });
+                        this.style.background = 'var(--primary)';
+                        this.style.color = 'white';
+                    });
+                });
+                
+                // Test option checkboxes
+                document.querySelectorAll('.test-option input').forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const label = this.parentElement;
+                        label.classList.toggle('selected', this.checked);
+                    });
+                });
+                
+                // Action buttons
+                document.getElementById('runTestsBtn').addEventListener('click', runNormalityTests);
+                document.getElementById('clearDataBtn').addEventListener('click', clearData);
+                document.getElementById('downloadReportBtn').addEventListener('click', downloadReport);
+            }
+            
+            function parseDataInput() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    dataArray = [];
+                    document.getElementById('dataCount').textContent = '0';
+                    return;
+                }
+                
+                // Parse data - handle comma, space, or newline separated values
+                dataArray = input.split(/[, \n]+/)
+                    .map(val => val.trim())
+                    .filter(val => val !== '')
+                    .map(val => parseFloat(val))
+                    .filter(val => !isNaN(val));
+                
+                // Update count
+                document.getElementById('dataCount').textContent = dataArray.length;
+                document.getElementById('sampleSize').value = dataArray.length;
+                
+                // Update charts if we have enough data
+                if (dataArray.length >= 3) {
+                    updateHistogramChart();
+                    updateNormalityIndicators();
+                }
+            }
+            
+            function loadSampleData(sampleType) {
+                let sampleData = [];
+                
+                switch(sampleType) {
+                    case 'normal':
+                        // Generate normally distributed data
+                        sampleData = generateNormalData(0, 1, 100);
+                        break;
+                        
+                    case 'right_skewed':
+                        // Generate right-skewed data (exponential distribution)
+                        sampleData = generateExponentialData(1, 100);
+                        break;
+                        
+                    case 'left_skewed':
+                        // Generate left-skewed data (negative of right-skewed)
+                        sampleData = generateExponentialData(1, 100).map(x => 10 - x);
+                        break;
+                        
+                    case 'heavy_tailed':
+                        // Generate heavy-tailed data (t-distribution)
+                        sampleData = generateTDistributionData(3, 100);
+                        break;
+                        
+                    case 'uniform':
+                        // Generate uniformly distributed data
+                        sampleData = generateUniformData(0, 10, 100);
+                        break;
+                        
+                    case 'bimodal':
+                        // Generate bimodal data (mixture of two normals)
+                        sampleData = generateBimodalData(100);
+                        break;
+                }
+                
+                // Format data for display
+                const formattedData = sampleData.map(val => val.toFixed(2)).join(', ');
+                document.getElementById('dataInput').value = formattedData;
+                
+                // Parse the loaded data
+                parseDataInput();
+            }
+            
+            function generateNormalData(mean, std, n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    let u = 0, v = 0;
+                    while (u === 0) u = Math.random();
+                    while (v === 0) v = Math.random();
+                    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                    data.push(mean + std * z);
+                }
+                return data;
+            }
+            
+            function generateExponentialData(lambda, n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    data.push(-Math.log(1 - Math.random()) / lambda);
+                }
+                return data;
+            }
+            
+            function generateTDistributionData(df, n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    // Generate t-distribution using normal and chi-square
+                    const z = jStat.normal.sample(0, 1);
+                    const chi2 = jStat.chisquare.sample(df);
+                    data.push(z / Math.sqrt(chi2 / df));
+                }
+                return data;
+            }
+            
+            function generateUniformData(min, max, n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    data.push(min + Math.random() * (max - min));
+                }
+                return data;
+            }
+            
+            function generateBimodalData(n) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    if (Math.random() < 0.5) {
+                        data.push(jStat.normal.sample(-2, 1));
+                    } else {
+                        data.push(jStat.normal.sample(2, 1));
+                    }
+                }
+                return data;
+            }
+            
+            function initializeCharts() {
+                // Histogram Chart
+                const histCtx = document.getElementById('histogramChart').getContext('2d');
+                histogramChart = new Chart(histCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'ডেটা হিস্টোগ্রাম' : 'Data Histogram',
+                                data: [],
+                                backgroundColor: 'rgba(96, 125, 139, 0.7)',
+                                borderColor: 'rgba(96, 125, 139, 1)',
+                                borderWidth: 1,
+                                borderRadius: 3
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'থিওরিটিক্যাল নরমাল' : 'Theoretical Normal',
+                                data: [],
+                                type: 'line',
+                                borderColor: 'rgba(255, 87, 34, 1)',
+                                backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি' : 'Frequency',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // QQ Plot Chart
+                const qqCtx = document.getElementById('qqPlotChart').getContext('2d');
+                qqPlotChart = new Chart(qqCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points',
+                                data: [],
+                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                                borderColor: 'rgba(33, 150, 243, 1)',
+                                borderWidth: 2,
+                                pointRadius: 5
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'রেফারেন্স লাইন' : 'Reference Line',
+                                data: [],
+                                type: 'line',
+                                borderColor: 'rgba(76, 175, 80, 1)',
+                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                borderDash: [5, 5]
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'থিওরিটিক্যাল কোয়ান্টাইল' : 'Theoretical Quantiles',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্যাম্পল কোয়ান্টাইল' : 'Sample Quantiles',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function updateHistogramChart() {
+                if (dataArray.length < 3) return;
+                
+                // Calculate histogram bins
+                const min = Math.min(...dataArray);
+                const max = Math.max(...dataArray);
+                const range = max - min;
+                const binCount = Math.ceil(Math.sqrt(dataArray.length));
+                const binWidth = range / binCount;
+                
+                // Create bins
+                const bins = new Array(binCount).fill(0);
+                const binLabels = [];
+                
+                // Count data in each bin
+                dataArray.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binWidth), binCount - 1);
+                    bins[binIndex]++;
+                });
+                
+                // Create labels and normalize for density
+                for (let i = 0; i < binCount; i++) {
+                    const binStart = min + i * binWidth;
+                    const binEnd = binStart + binWidth;
+                    binLabels.push(`${binStart.toFixed(1)}-${binEnd.toFixed(1)}`);
+                }
+                
+                // Calculate theoretical normal curve
+                const mean = jStat.mean(dataArray);
+                const std = jStat.stdev(dataArray, true);
+                const normalCurve = [];
+                
+                for (let i = 0; i < binCount; i++) {
+                    const binCenter = min + (i + 0.5) * binWidth;
+                    const density = normalPDF(binCenter, mean, std) * binWidth * dataArray.length;
+                    normalCurve.push(density);
+                }
+                
+                // Update histogram chart
+                histogramChart.data.labels = binLabels;
+                histogramChart.data.datasets[0].data = bins;
+                histogramChart.data.datasets[1].data = normalCurve;
+                histogramChart.update();
+            }
+            
+            function normalPDF(x, mean, std) {
+                const variance = std * std;
+                const exponent = -Math.pow(x - mean, 2) / (2 * variance);
+                const coefficient = 1 / (std * Math.sqrt(2 * Math.PI));
+                return coefficient * Math.exp(exponent);
+            }
+            
+            function updateNormalityIndicators() {
+                if (dataArray.length < 3) return;
+                
+                // Calculate statistics
+                const mean = jStat.mean(dataArray);
+                const median = jStat.median(dataArray);
+                const std = jStat.stdev(dataArray, true);
+                
+                // Calculate skewness
+                const skewness = calculateSkewness(dataArray, mean, std);
+                
+                // Calculate kurtosis
+                const kurtosis = calculateKurtosis(dataArray, mean, std);
+                
+                // Update display
+                document.getElementById('skewnessValue').textContent = skewness.toFixed(3);
+                document.getElementById('kurtosisValue').textContent = kurtosis.toFixed(3);
+                document.getElementById('meanValue').textContent = mean.toFixed(3);
+                document.getElementById('medianValue').textContent = median.toFixed(3);
+                
+                // Update descriptions
+                updateIndicatorDescriptions(skewness, kurtosis, mean, median);
+            }
+            
+            function calculateSkewness(data, mean, std) {
+                const n = data.length;
+                let sum = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    sum += Math.pow((data[i] - mean) / std, 3);
+                }
+                
+                return (n / ((n - 1) * (n - 2))) * sum;
+            }
+            
+            function calculateKurtosis(data, mean, std) {
+                const n = data.length;
+                let sum = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    sum += Math.pow((data[i] - mean) / std, 4);
+                }
+                
+                const kurtosis = (n * (n + 1) / ((n - 1) * (n - 2) * (n - 3))) * sum - 
+                                (3 * Math.pow(n - 1, 2) / ((n - 2) * (n - 3)));
+                
+                return kurtosis + 3; // Convert to excess kurtosis
+            }
+            
+            function updateIndicatorDescriptions(skewness, kurtosis, mean, median) {
+                // Skewness description
+                let skewDesc = '';
+                if (Math.abs(skewness) < 0.5) {
+                    skewDesc = currentLanguage === 'bn' ? 'প্রায় প্রতিসম' : 'Approximately symmetric';
+                } else if (skewness > 0) {
+                    skewDesc = currentLanguage === 'bn' ? 'ডানদিকে স্কিউড' : 'Right-skewed';
+                } else {
+                    skewDesc = currentLanguage === 'bn' ? 'বামদিকে স্কিউড' : 'Left-skewed';
+                }
+                document.getElementById('skewnessDesc').textContent = skewDesc;
+                
+                // Kurtosis description
+                let kurtDesc = '';
+                const excessKurtosis = kurtosis - 3;
+                if (Math.abs(excessKurtosis) < 0.5) {
+                    kurtDesc = currentLanguage === 'bn' ? 'নরমাল কার্টোসিস' : 'Normal kurtosis';
+                } else if (excessKurtosis > 0) {
+                    kurtDesc = currentLanguage === 'bn' ? 'হেভি টেইলড' : 'Heavy-tailed';
+                } else {
+                    kurtDesc = currentLanguage === 'bn' ? 'লাইট টেইলড' : 'Light-tailed';
+                }
+                document.getElementById('kurtosisDesc').textContent = kurtDesc;
+                
+                // Mean vs Median comparison
+                const diffRatio = Math.abs(mean - median) / Math.abs(mean);
+                let meanDesc = '';
+                if (diffRatio < 0.1) {
+                    meanDesc = currentLanguage === 'bn' ? 'মিন ≈ মিডিয়ান' : 'Mean ≈ Median';
+                } else if (mean > median) {
+                    meanDesc = currentLanguage === 'bn' ? 'মিন > মিডিয়ান' : 'Mean > Median';
+                } else {
+                    meanDesc = currentLanguage === 'bn' ? 'মিন < মিডিয়ান' : 'Mean < Median';
+                }
+                document.getElementById('meanDesc').textContent = meanDesc;
+                document.getElementById('medianDesc').textContent = meanDesc;
+            }
+            
+            function runNormalityTests() {
+                if (dataArray.length < 3) {
+                    alert(currentLanguage === 'bn' 
+                        ? 'অন্তত ৩টি ডেটা পয়েন্ট প্রয়োজন' 
+                        : 'At least 3 data points required');
+                    return;
+                }
+                
+                // Get test configuration
+                const alpha = parseFloat(document.getElementById('significanceLevel').value);
+                const runShapiro = document.getElementById('shapiroWilkTest').checked;
+                const runKS = document.getElementById('kolmogorovSmirnovTest').checked;
+                const runQQ = document.getElementById('generateQQPlot').checked;
+                
+                // Calculate statistics
+                const mean = jStat.mean(dataArray);
+                const std = jStat.stdev(dataArray, true);
+                const n = dataArray.length;
+                
+                let overallReject = false;
+                let testsRun = 0;
+                let testsRejected = 0;
+                
+                // Run Shapiro-Wilk Test
+                if (runShapiro && n >= 3 && n <= 5000) {
+                    testsRun++;
+                    const shapiroResult = performShapiroWilkTest(dataArray);
+                    updateShapiroWilkResult(shapiroResult, alpha);
+                    if (shapiroResult.pValue < alpha) testsRejected++;
+                } else if (runShapiro) {
+                    document.getElementById('shapiroResult').style.display = 'none';
+                }
+                
+                // Run Kolmogorov-Smirnov Test
+                if (runKS && n >= 5) {
+                    testsRun++;
+                    const ksResult = performKolmogorovSmirnovTest(dataArray, mean, std);
+                    updateKolmogorovSmirnovResult(ksResult, alpha);
+                    if (ksResult.pValue < alpha) testsRejected++;
+                } else if (runKS) {
+                    document.getElementById('ksResult').style.display = 'none';
+                }
+                
+                // Generate QQ Plot
+                if (runQQ) {
+                    testsRun++;
+                    const qqResult = generateQQPlot(dataArray, mean, std);
+                    updateQQPlotResult(qqResult);
+                    // QQ plot doesn't have p-value for overall decision
+                } else {
+                    document.getElementById('qqResult').style.display = 'none';
+                }
+                
+                // Determine overall verdict
+                if (testsRun > 0) {
+                    overallReject = testsRejected > 0;
+                    updateOverallResult(overallReject, testsRejected, testsRun, alpha);
+                }
+                
+                // Update histogram
+                updateHistogramChart();
+                
+                // Add animation effect
+                document.getElementById('runTestsBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('runTestsBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function performShapiroWilkTest(data) {
+                // Sort data
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                // Calculate mean
+                const mean = jStat.mean(sortedData);
+                
+                // Calculate coefficients for Shapiro-Wilk test
+                // Using approximation for coefficients
+                const m = [];
+                for (let i = 1; i <= n; i++) {
+                    m.push(jStat.normal.inv((i - 0.375) / (n + 0.25), 0, 1));
+                }
+                
+                // Calculate sum of squares
+                let ss = 0;
+                for (let i = 0; i < n; i++) {
+                    ss += Math.pow(sortedData[i] - mean, 2);
+                }
+                
+                // Calculate b (using approximation)
+                let b = 0;
+                for (let i = 0; i < Math.floor(n / 2); i++) {
+                    const ai = calculateShapiroCoefficient(n, i);
+                    b += ai * (sortedData[n - 1 - i] - sortedData[i]);
+                }
+                
+                // Calculate W statistic
+                const W = Math.pow(b, 2) / ss;
+                
+                // Approximate p-value using Royston's method
+                const pValue = calculateShapiroPValue(W, n);
+                
+                return {
+                    statistic: W,
+                    pValue: pValue,
+                    sampleSize: n
+                };
+            }
+            
+            function calculateShapiroCoefficient(n, i) {
+                // Approximate coefficients for Shapiro-Wilk test
+                // Using Royston's approximation
+                const m = [];
+                for (let j = 1; j <= n; j++) {
+                    m.push(jStat.normal.inv((j - 0.375) / (n + 0.25), 0, 1));
+                }
+                
+                const u = 1 / Math.sqrt(n);
+                const coefficients = [
+                    -2.706056, 4.434685, -2.071190, -0.147981, 0.221157, m[n - 1]
+                ];
+                
+                let sum = coefficients[0] * Math.pow(u, 5) + 
+                         coefficients[1] * Math.pow(u, 4) + 
+                         coefficients[2] * Math.pow(u, 3) + 
+                         coefficients[3] * Math.pow(u, 2) + 
+                         coefficients[4] * u + 
+                         coefficients[5];
+                
+                return sum;
+            }
+            
+            function calculateShapiroPValue(W, n) {
+                // Approximate p-value using Royston's method
+                if (n <= 11) {
+                    const gamma = 0.459 * n - 2.273;
+                    const y = -Math.log(gamma - Math.log(1 - W));
+                    const mu = 0.5440 - 0.39978 * n + 0.025054 * Math.pow(n, 2) - 0.0006714 * Math.pow(n, 3);
+                    const sigma = Math.exp(1.3822 - 0.77857 * n + 0.062767 * Math.pow(n, 2) - 0.0020322 * Math.pow(n, 3));
+                    
+                    const z = (y - mu) / sigma;
+                    return 1 - jStat.normal.cdf(z, 0, 1);
+                } else {
+                    // For n > 11, use different approximation
+                    const logW = Math.log(1 - W);
+                    const y = Math.log(-logW);
+                    
+                    let mu, sigma;
+                    if (n <= 2000) {
+                        mu = -1.5861 - 0.31082 * y - 0.083751 * Math.pow(y, 2) - 0.0038915 * Math.pow(y, 3);
+                        sigma = Math.exp(-0.4803 - 0.082676 * y + 0.0030302 * Math.pow(y, 2));
+                    } else {
+                        mu = -3.735 - 0.615 * y + 0.085 * Math.pow(y, 2);
+                        sigma = Math.exp(1.78 + 0.306 * y);
+                    }
+                    
+                    const z = (logW - mu) / sigma;
+                    return 1 - jStat.normal.cdf(z, 0, 1);
+                }
+            }
+            
+            function updateShapiroWilkResult(result, alpha) {
+                document.getElementById('shapiroStatistic').textContent = result.statistic.toFixed(4);
+                document.getElementById('shapiroPValue').textContent = result.pValue.toFixed(4);
+                
+                const reject = result.pValue < alpha;
+                const statusElement = document.getElementById('shapiroStatus');
+                const card = document.getElementById('shapiroResult');
+                
+                if (reject) {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'রিজেক্ট H₀' : 'Reject H₀';
+                    statusElement.classList.remove('fail-to-reject');
+                    statusElement.classList.add('reject');
+                    card.style.borderColor = '#F44336';
+                } else {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'H₀ রিজেক্ট করতে ব্যর্থ' : 'Fail to reject H₀';
+                    statusElement.classList.remove('reject');
+                    statusElement.classList.add('fail-to-reject');
+                    card.style.borderColor = '#4CAF50';
+                }
+                
+                // Update interpretation
+                let interpretation = '';
+                if (currentLanguage === 'bn') {
+                    interpretation = reject 
+                        ? `p-মান (${result.pValue.toFixed(4)}) < α (${alpha}) হওয়ায়, আমরা নাল হাইপোথিসিস রিজেক্ট করি। ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে না।`
+                        : `p-মান (${result.pValue.toFixed(4)}) ≥ α (${alpha}) হওয়ায়, আমরা নাল হাইপোথিসিস রিজেক্ট করতে ব্যর্থ হই। ডেটা নরমাল ডিস্ট্রিবিউশন থেকে বিচ্যুত নয়।`;
+                } else {
+                    interpretation = reject
+                        ? `Since p-value (${result.pValue.toFixed(4)}) < α (${alpha}), we reject the null hypothesis. Data does not follow normal distribution.`
+                        : `Since p-value (${result.pValue.toFixed(4)}) ≥ α (${alpha}), we fail to reject the null hypothesis. Data is not significantly different from normal.`;
+                }
+                document.getElementById('shapiroInterpretation').textContent = interpretation;
+                
+                // Show the card
+                document.getElementById('shapiroResult').style.display = 'block';
+            }
+            
+            function performKolmogorovSmirnovTest(data, mean, std) {
+                // Sort data
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                // Calculate empirical CDF
+                let D = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    const empiricalCDF = (i + 1) / n;
+                    const theoreticalCDF = jStat.normal.cdf(sortedData[i], mean, std);
+                    
+                    const diff1 = Math.abs(empiricalCDF - theoreticalCDF);
+                    const diff2 = Math.abs(i / n - theoreticalCDF);
+                    
+                    D = Math.max(D, diff1, diff2);
+                }
+                
+                // Calculate p-value using approximation
+                const pValue = calculateKSPValue(D, n);
+                
+                return {
+                    statistic: D,
+                    pValue: pValue,
+                    sampleSize: n
+                };
+            }
+            
+            function calculateKSPValue(D, n) {
+                // Approximate p-value for Kolmogorov-Smirnov test
+                const sqrtN = Math.sqrt(n);
+                const x = D * (sqrtN + 0.12 + 0.11 / sqrtN);
+                
+                let pValue = 0;
+                if (x < 0.27) {
+                    pValue = 1;
+                } else if (x < 1) {
+                    const t = Math.exp(-1.23370055013617 / Math.pow(x, 2));
+                    pValue = 1 - 2.25675833419103 * t + 1.57805279490286 * Math.pow(t, 2) - 
+                             0.93161476346916 * Math.pow(t, 3) + 0.20938672885267 * Math.pow(t, 4);
+                } else {
+                    const t = Math.exp(-2 * Math.pow(x, 2));
+                    pValue = 2 * (Math.pow(t, 4) - Math.pow(t, 9) + Math.pow(t, 16));
+                }
+                
+                return Math.max(0, Math.min(1, pValue));
+            }
+            
+            function updateKolmogorovSmirnovResult(result, alpha) {
+                document.getElementById('ksStatistic').textContent = result.statistic.toFixed(4);
+                document.getElementById('ksPValue').textContent = result.pValue.toFixed(4);
+                
+                const reject = result.pValue < alpha;
+                const statusElement = document.getElementById('ksStatus');
+                const card = document.getElementById('ksResult');
+                
+                if (reject) {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'রিজেক্ট H₀' : 'Reject H₀';
+                    statusElement.classList.remove('fail-to-reject');
+                    statusElement.classList.add('reject');
+                    card.style.borderColor = '#F44336';
+                } else {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'H₀ রিজেক্ট করতে ব্যর্থ' : 'Fail to reject H₀';
+                    statusElement.classList.remove('reject');
+                    statusElement.classList.add('fail-to-reject');
+                    card.style.borderColor = '#4CAF50';
+                }
+                
+                // Update interpretation
+                let interpretation = '';
+                if (currentLanguage === 'bn') {
+                    interpretation = reject
+                        ? `K-S পরিসংখান D = ${result.statistic.toFixed(4)}। p-মান < α হওয়ায়, ডেটা নরমাল ডিস্ট্রিবিউশন থেকে উল্লেখযোগ্যভাবে ভিন্ন।`
+                        : `K-S পরিসংখান D = ${result.statistic.toFixed(4)}। p-মান ≥ α হওয়ায়, ডেটা নরমাল ডিস্ট্রিবিউশন থেকে উল্লেখযোগ্যভাবে ভিন্ন নয়।`;
+                } else {
+                    interpretation = reject
+                        ? `K-S statistic D = ${result.statistic.toFixed(4)}. Since p-value < α, data is significantly different from normal distribution.`
+                        : `K-S statistic D = ${result.statistic.toFixed(4)}. Since p-value ≥ α, data is not significantly different from normal distribution.`;
+                }
+                document.getElementById('ksInterpretation').textContent = interpretation;
+                
+                // Show the card
+                document.getElementById('ksResult').style.display = 'block';
+            }
+            
+            function generateQQPlot(data, mean, std) {
+                // Sort data
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                // Calculate theoretical quantiles
+                const theoreticalQuantiles = [];
+                const sampleQuantiles = [];
+                
+                for (let i = 0; i < n; i++) {
+                    const p = (i + 1 - 0.5) / n; // Blom's approximation
+                    const theoreticalQ = jStat.normal.inv(p, 0, 1); // Standard normal quantile
+                    const sampleQ = (sortedData[i] - mean) / std; // Standardized sample quantile
+                    
+                    theoreticalQuantiles.push(theoreticalQ);
+                    sampleQuantiles.push(sampleQ);
+                }
+                
+                // Calculate correlation coefficient
+                const correlation = calculateCorrelation(theoreticalQuantiles, sampleQuantiles);
+                
+                // Calculate reference line (y = x)
+                const minQ = Math.min(...theoreticalQuantiles);
+                const maxQ = Math.max(...theoreticalQuantiles);
+                const referenceLine = [
+                    {x: minQ, y: minQ},
+                    {x: maxQ, y: maxQ}
+                ];
+                
+                // Prepare data points
+                const dataPoints = [];
+                for (let i = 0; i < n; i++) {
+                    dataPoints.push({x: theoreticalQuantiles[i], y: sampleQuantiles[i]});
+                }
+                
+                // Update QQ plot chart
+                qqPlotChart.data.datasets[0].data = dataPoints;
+                qqPlotChart.data.datasets[1].data = referenceLine;
+                qqPlotChart.update();
+                
+                // Calculate points close to line
+                let pointsOnLine = 0;
+                const threshold = 0.5; // Distance threshold
+                
+                for (let i = 0; i < n; i++) {
+                    const distance = Math.abs(sampleQuantiles[i] - theoreticalQuantiles[i]);
+                    if (distance < threshold) {
+                        pointsOnLine++;
+                    }
+                }
+                
+                const percentageOnLine = (pointsOnLine / n * 100).toFixed(1);
+                
+                return {
+                    correlation: correlation,
+                    pointsOnLine: percentageOnLine,
+                    rSquared: Math.pow(correlation, 2)
+                };
+            }
+            
+            function calculateCorrelation(x, y) {
+                const n = x.length;
+                const meanX = jStat.mean(x);
+                const meanY = jStat.mean(y);
+                
+                let numerator = 0;
+                let denomX = 0;
+                let denomY = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    numerator += (x[i] - meanX) * (y[i] - meanY);
+                    denomX += Math.pow(x[i] - meanX, 2);
+                    denomY += Math.pow(y[i] - meanY, 2);
+                }
+                
+                return numerator / Math.sqrt(denomX * denomY);
+            }
+            
+            function updateQQPlotResult(result) {
+                document.getElementById('qqCorrelation').textContent = result.rSquared.toFixed(4);
+                document.getElementById('qqPointsOnLine').textContent = `${result.pointsOnLine}%`;
+                
+                // Determine status based on correlation
+                const goodFit = result.rSquared > 0.95 && parseFloat(result.pointsOnLine) > 80;
+                const statusElement = document.getElementById('qqStatus');
+                const card = document.getElementById('qqResult');
+                
+                if (goodFit) {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'ভাল ফিট' : 'Good Fit';
+                    statusElement.classList.remove('reject');
+                    statusElement.classList.add('fail-to-reject');
+                    card.style.borderColor = '#4CAF50';
+                } else {
+                    statusElement.textContent = currentLanguage === 'bn' ? 'খারাপ ফিট' : 'Poor Fit';
+                    statusElement.classList.remove('fail-to-reject');
+                    statusElement.classList.add('reject');
+                    card.style.borderColor = '#F44336';
+                }
+                
+                // Update interpretation
+                let interpretation = '';
+                if (currentLanguage === 'bn') {
+                    interpretation = goodFit
+                        ? `R² = ${result.rSquared.toFixed(4)}, ${result.pointsOnLine}% পয়েন্ট রেফারেন্স লাইনের কাছাকাছি। ডেটা নরমাল ডিস্ট্রিবিউশনের সাথে ভালভাবে মিলছে।`
+                        : `R² = ${result.rSquared.toFixed(4)}, শুধুমাত্র ${result.pointsOnLine}% পয়েন্ট রেফারেন্স লাইনের কাছাকাছি। ডেটা নরমাল ডিস্ট্রিবিউশন থেকে বিচ্যুত।`;
+                } else {
+                    interpretation = goodFit
+                        ? `R² = ${result.rSquared.toFixed(4)}, ${result.pointsOnLine}% points close to reference line. Data shows good fit to normal distribution.`
+                        : `R² = ${result.rSquared.toFixed(4)}, only ${result.pointsOnLine}% points close to reference line. Data deviates from normal distribution.`;
+                }
+                document.getElementById('qqInterpretation').textContent = interpretation;
+                
+                // Show the card
+                document.getElementById('qqResult').style.display = 'block';
+            }
+            
+            function updateOverallResult(reject, rejectedCount, totalTests, alpha) {
+                const verdictElement = document.getElementById('overallVerdict');
+                const descriptionElement = document.getElementById('overallDescription');
+                const summaryCard = document.getElementById('overallResult');
+                
+                if (reject) {
+                    verdictElement.textContent = currentLanguage === 'bn' ? 'ডেটা নরমাল নয়' : 'Data is NOT Normal';
+                    verdictElement.className = 'result-verdict reject';
+                    summaryCard.style.borderColor = '#F44336';
+                    
+                    if (currentLanguage === 'bn') {
+                        descriptionElement.textContent = `${rejectedCount}/${totalTests} টেস্টে নাল হাইপোথিসিস রিজেক্ট হয়েছে (α = ${alpha})। ডেটা নরমাল ডিস্ট্রিবিউশন অনুসরণ করে না।`;
+                    } else {
+                        descriptionElement.textContent = `${rejectedCount}/${totalTests} tests rejected null hypothesis (α = ${alpha}). Data does not follow normal distribution.`;
+                    }
+                } else {
+                    verdictElement.textContent = currentLanguage === 'bn' ? 'ডেটা নরমাল হতে পারে' : 'Data MAY be Normal';
+                    verdictElement.className = 'result-verdict fail-to-reject';
+                    summaryCard.style.borderColor = '#4CAF50';
+                    
+                    if (currentLanguage === 'bn') {
+                        descriptionElement.textContent = `কোন টেস্টই নাল হাইপোথিসিস রিজেক্ট করেনি (α = ${alpha})। ডেটা নরমাল ডিস্ট্রিবিউশন থেকে উল্লেখযোগ্যভাবে ভিন্ন নয়।`;
+                    } else {
+                        descriptionElement.textContent = `No tests rejected null hypothesis (α = ${alpha}). Data is not significantly different from normal distribution.`;
+                    }
+                }
+                
+                // Add highlight animation
+                summaryCard.classList.add('highlight');
+                setTimeout(() => {
+                    summaryCard.classList.remove('highlight');
+                }, 1000);
+            }
+            
+            function clearData() {
+                document.getElementById('dataInput').value = '';
+                dataArray = [];
+                document.getElementById('dataCount').textContent = '0';
+                
+                // Reset results
+                document.getElementById('overallVerdict').textContent = 
+                    currentLanguage === 'bn' ? 'ডেটা লিখুন এবং টেস্ট রান করুন' : 'Enter data and run tests';
+                document.getElementById('overallDescription').textContent = 
+                    currentLanguage === 'bn' ? 'ফলাফল দেখতে আপনার ডেটা ইনপুট করুন এবং নরমালিটি টেস্ট রান করুন' : 
+                    'Please input your data and run normality tests to see results';
+                
+                // Reset test results
+                ['shapiro', 'ks', 'qq'].forEach(test => {
+                    document.getElementById(`${test}Result`).style.display = 'block';
+                    document.getElementById(`${test}Statistic`).textContent = '-';
+                    document.getElementById(`${test}PValue`).textContent = '-';
+                    document.getElementById(`${test}Status`).textContent = currentLanguage === 'bn' ? 'পেন্ডিং' : 'Pending';
+                    document.getElementById(`${test}Status`).className = 'test-result-status';
+                    document.getElementById(`${test}Result`).style.borderColor = 'var(--border)';
+                });
+                
+                // Clear charts
+                histogramChart.data.datasets[0].data = [];
+                histogramChart.data.datasets[1].data = [];
+                histogramChart.update();
+                
+                qqPlotChart.data.datasets[0].data = [];
+                qqPlotChart.data.datasets[1].data = [];
+                qqPlotChart.update();
+                
+                // Reset indicators
+                ['skewness', 'kurtosis', 'mean', 'median'].forEach(indicator => {
+                    document.getElementById(`${indicator}Value`).textContent = '0.00';
+                });
+                
+                // Add animation effect
+                document.getElementById('clearDataBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('clearDataBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function downloadReport() {
+                if (dataArray.length < 3) {
+                    alert(currentLanguage === 'bn' 
+                        ? 'রিপোর্ট ডাউনলোড করার জন্য প্রথমে টেস্ট রান করুন' 
+                        : 'Run tests first to download report');
+                    return;
+                }
+                
+                // Create report content
+                let report = 'NORMAL DISTRIBUTION GOODNESS-OF-FIT TEST REPORT\n';
+                report += '='.repeat(50) + '\n\n';
+                
+                // Basic information
+                report += 'BASIC INFORMATION\n';
+                report += '-' .repeat(30) + '\n';
+                report += `Sample Size: ${dataArray.length}\n`;
+                report += `Significance Level (α): ${document.getElementById('significanceLevel').value}\n`;
+                report += `Date: ${new Date().toLocaleString()}\n\n`;
+                
+                // Data summary
+                report += 'DATA SUMMARY\n';
+                report += '-' .repeat(30) + '\n';
+                report += `Mean: ${jStat.mean(dataArray).toFixed(4)}\n`;
+                report += `Standard Deviation: ${jStat.stdev(dataArray, true).toFixed(4)}\n`;
+                report += `Skewness: ${document.getElementById('skewnessValue').textContent}\n`;
+                report += `Kurtosis: ${document.getElementById('kurtosisValue').textContent}\n\n`;
+                
+                // Test results
+                report += 'TEST RESULTS\n';
+                report += '-' .repeat(30) + '\n';
+                
+                // Shapiro-Wilk
+                if (document.getElementById('shapiroWilkTest').checked) {
+                    report += 'SHAPIRO-WILK TEST\n';
+                    report += `  Test Statistic (W): ${document.getElementById('shapiroStatistic').textContent}\n`;
+                    report += `  p-value: ${document.getElementById('shapiroPValue').textContent}\n`;
+                    report += `  Result: ${document.getElementById('shapiroStatus').textContent}\n\n`;
+                }
+                
+                // Kolmogorov-Smirnov
+                if (document.getElementById('kolmogorovSmirnovTest').checked) {
+                    report += 'KOLMOGOROV-SMIRNOV TEST\n';
+                    report += `  Test Statistic (D): ${document.getElementById('ksStatistic').textContent}\n`;
+                    report += `  p-value: ${document.getElementById('ksPValue').textContent}\n`;
+                    report += `  Result: ${document.getElementById('ksStatus').textContent}\n\n`;
+                }
+                
+                // QQ Plot
+                if (document.getElementById('generateQQPlot').checked) {
+                    report += 'QQ PLOT ANALYSIS\n';
+                    report += `  Correlation (R²): ${document.getElementById('qqCorrelation').textContent}\n`;
+                    report += `  Points on Line: ${document.getElementById('qqPointsOnLine').textContent}\n`;
+                    report += `  Result: ${document.getElementById('qqStatus').textContent}\n\n`;
+                }
+                
+                // Overall conclusion
+                report += 'OVERALL CONCLUSION\n';
+                report += '-' .repeat(30) + '\n';
+                report += document.getElementById('overallVerdict').textContent + '\n';
+                report += document.getElementById('overallDescription').textContent + '\n\n';
+                
+                // Interpretation
+                report += 'INTERPRETATION\n';
+                report += '-' .repeat(30) + '\n';
+                report += '1. p-value < α: Reject null hypothesis, data is NOT normal\n';
+                report += '2. p-value ≥ α: Fail to reject null hypothesis, data MAY be normal\n';
+                report += '3. QQ plot R² > 0.95 and >80% points on line: Good fit to normal\n\n';
+                
+                report += '='.repeat(50) + '\n';
+                report += 'Generated by Normal Distribution Goodness-of-Fit Test Tool\n';
+                
+                // Create download link
+                const blob = new Blob([report], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `normality_test_report_${new Date().toISOString().slice(0,10)}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                // Add animation effect
+                document.getElementById('downloadReportBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('downloadReportBtn').classList.remove('pulse');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

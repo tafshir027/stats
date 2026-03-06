@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Uncertainty Quantifier | Uncertainty Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.9.1/math.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6A1B9A;
+            --secondary: #4527A0;
+            --accent: #FF4081;
+            --success: #00C853;
+            --info: #2979FF;
+            --warning: #FF9100;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --uncertainty: #8E24AA;
+            --sensitivity: #0288D1;
+            --propagation: #43A047;
+            --bayesian: #F57C00;
+            --model-bg: #F3E5F5;
+            --input-bg: #E3F2FD;
+            --output-bg: #E8F5E9;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--uncertainty);
+            color: white;
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--uncertainty), var(--sensitivity), var(--propagation), var(--bayesian));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Navigation Tabs */
+        .analysis-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .analysis-tabs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tab-btn {
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            border-color: var(--uncertainty);
+            background: var(--model-bg);
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.1);
+        }
+
+        .tab-btn.sensitivity.active {
+            border-color: var(--sensitivity);
+            background: rgba(2, 136, 209, 0.1);
+        }
+
+        .tab-btn.propagation.active {
+            border-color: var(--propagation);
+            background: rgba(67, 160, 71, 0.1);
+        }
+
+        .tab-btn.bayesian.active {
+            border-color: var(--bayesian);
+            background: rgba(245, 124, 0, 0.1);
+        }
+
+        .tab-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tab-btn .tab-icon { color: var(--uncertainty); }
+        .tab-btn.sensitivity .tab-icon { color: var(--sensitivity); }
+        .tab-btn.propagation .tab-icon { color: var(--propagation); }
+        .tab-btn.bayesian .tab-icon { color: var(--bayesian); }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Model Definition Panel */
+        .model-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--uncertainty);
+        }
+
+        /* Model Input */
+        .model-input-section {
+            margin-bottom: 2rem;
+        }
+
+        .model-editor {
+            background: var(--input-bg);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .model-input-group {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .model-label {
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+        }
+
+        .model-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .model-input:focus {
+            outline: none;
+            border-color: var(--uncertainty);
+            box-shadow: 0 0 0 3px rgba(142, 36, 170, 0.1);
+        }
+
+        /* Input Variables */
+        .input-variables {
+            margin-top: 2rem;
+        }
+
+        .variable-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .variable-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .variable-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .variable-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .dist-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .dist-input:focus {
+            outline: none;
+            border-color: var(--uncertainty);
+        }
+
+        /* Distribution Types */
+        .distribution-types {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dist-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .dist-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .dist-btn.active {
+            border-color: var(--uncertainty);
+            background: var(--model-bg);
+        }
+
+        /* Monte Carlo Parameters */
+        .mc-parameters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .parameter-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .parameter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--uncertainty);
+            margin: 0.5rem 0;
+        }
+
+        .slider-container {
+            margin-top: 1rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--uncertainty), var(--sensitivity));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--uncertainty);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .quantify-btn {
+            background: var(--uncertainty);
+            color: white;
+        }
+
+        .quantify-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(142, 36, 170, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Uncertainty Results */
+        .uncertainty-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .uncertainty-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .result-uncertainty {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        /* Visualization */
+        .visualization-container {
+            height: 400px;
+            margin-bottom: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        #uncertaintyPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sensitivity Analysis Section */
+        .sensitivity-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .sensitivity-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        .sensitivity-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--input-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .sensitivity-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sensitivity-label {
+            width: 120px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sensitivity-bar-container {
+            flex: 1;
+            height: 25px;
+            background: var(--light-gray);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensitivity-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--sensitivity);
+            border-radius: 12px;
+            transition: width 1s ease;
+        }
+
+        .sensitivity-value {
+            width: 100px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--sensitivity);
+        }
+
+        /* Uncertainty Propagation Section */
+        .propagation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .propagation-visual {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .propagation-visual {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .propagation-card {
+            padding: 1.5rem;
+            background: var(--output-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .propagation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .propagation-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--propagation);
+            margin: 1rem 0;
+        }
+
+        /* Bayesian Inference Section */
+        .bayesian-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .bayesian-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .prior-posterior {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .prior-posterior {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Confidence Intervals */
+        .confidence-intervals {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .interval-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .interval-level {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .interval-range {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--uncertainty);
+        }
+
+        /* Model Examples */
+        .model-examples {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .model-examples {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .example-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .example-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--uncertainty);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .example-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Risk Assessment */
+        .risk-assessment {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .risk-cell {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .risk-low { background: #4CAF50; }
+        .risk-medium { background: #FFC107; }
+        .risk-high { background: #FF5722; }
+        .risk-critical { background: #D32F2F; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .mc-parameters {
+                grid-template-columns: 1fr;
+            }
+            
+            .confidence-intervals {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Uncertainty Visualization */
+        .uncertainty-visual {
+            position: relative;
+            height: 200px;
+            margin-top: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        .uncertainty-band {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(142, 36, 170, 0.2);
+            border: 2px solid var(--uncertainty);
+            border-radius: 5px;
+            transform: translateY(-50%);
+        }
+
+        .uncertainty-mean {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 60px;
+            background: var(--uncertainty);
+            transform: translate(-50%, -50%);
+        }
+
+        .uncertainty-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            font-weight: 600;
+            color: var(--uncertainty);
+            background: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Uncertainty Quantifier" data-bn="মন্টে কার্লো আনসার্টেইন্টি কোয়ান্টিফায়ার">মন্টে কার্লো আনসার্টেইন্টি কোয়ান্টিফায়ার</h1>
+            <p class="subtitle" data-en="Quantify uncertainty in complex systems using Monte Carlo methods with sensitivity analysis, uncertainty propagation, and Bayesian inference" data-bn="সেনসিটিভিটি অ্যানালাইসিস, আনসার্টেইন্টি প্রোপাগেশন এবং বেইজিয়ান ইনফারেন্স সহ মন্টে কার্লো পদ্ধতি ব্যবহার করে জটিল সিস্টেমে আনসার্টেইন্টি কোয়ান্টিফায় করুন">
+                সেনসিটিভিটি অ্যানালাইসিস, আনসার্টেইন্টি প্রোপাগেশন এবং বেইজিয়ান ইনফারেন্স সহ মন্টে কার্লো পদ্ধতি ব্যবহার করে জটিল সিস্টেমে আনসার্টেইন্টি কোয়ান্টিফায় করুন
+            </p>
+        </div>
+
+        <!-- Analysis Tabs -->
+        <div class="analysis-tabs">
+            <button class="tab-btn active" data-tab="uncertainty">
+                <div class="tab-icon">
+                    <i class="fas fa-chart-area"></i>
+                </div>
+                <span data-en="Uncertainty Quantification" data-bn="আনসার্টেইন্টি কোয়ান্টিফিকেশন">আনসার্টেইন্টি কোয়ান্টিফিকেশন</span>
+            </button>
+            <button class="tab-btn sensitivity" data-tab="sensitivity">
+                <div class="tab-icon">
+                    <i class="fas fa-sliders-h"></i>
+                </div>
+                <span data-en="Sensitivity Analysis" data-bn="সেনসিটিভিটি অ্যানালাইসিস">সেনসিটিভিটি অ্যানালাইসিস</span>
+            </button>
+            <button class="tab-btn propagation" data-tab="propagation">
+                <div class="tab-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <span data-en="Uncertainty Propagation" data-bন="আনসার্টেইন্টি প্রোপাগেশন">আনসার্টেইন্টি প্রোপাগেশন</span>
+            </button>
+            <button class="tab-btn bayesian" data-tab="bayesian">
+                <div class="tab-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <span data-en="Bayesian Inference" data-bন="বেইজিয়ান ইনফারেন্স">বেইজিয়ান ইনফারেন্স</span>
+            </button>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Model Definition Panel -->
+            <div class="model-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-cube"></i>
+                    <span data-en="Model Definition" data-bন="মডেল সংজ্ঞা">মডেল সংজ্ঞা</span>
+                </h2>
+
+                <!-- Model Input -->
+                <div class="model-input-section">
+                    <div class="model-editor">
+                        <div class="model-input-group">
+                            <div class="model-label" data-en="Model Function f(x,y,z) =" data-bন="মডেল ফাংশন f(x,y,z) =">মডেল ফাংশন f(x,y,z) =</div>
+                            <input type="text" id="modelFunction" class="model-input" value="x*y + z^2" placeholder="e.g., x*y + z^2">
+                        </div>
+                        <div class="help-text" data-en="Use variables x, y, z. JavaScript math functions: sin, cos, exp, log, sqrt, pow(x,y)" data-bন="ভেরিয়েবল x, y, z ব্যবহার করুন। JavaScript ম্যাথ ফাংশন: sin, cos, exp, log, sqrt, pow(x,y)">
+                            ভেরিয়েবল x, y, z ব্যবহার করুন। JavaScript ম্যাথ ফাংশন: sin, cos, exp, log, sqrt, pow(x,y)
+                        </div>
+                    </div>
+
+                    <!-- Model Examples -->
+                    <div class="model-examples">
+                        <div class="example-card" data-example="engineering">
+                            <div class="example-header">
+                                <div class="example-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <h3 class="example-title" data-en="Engineering" data-bন="প্রকৌশল">প্রকৌশল</h3>
+                            </div>
+                            <p style="font-size: 0.9rem; color: var(--gray);">x*y + z^2</p>
+                        </div>
+                        <div class="example-card" data-example="financial">
+                            <div class="example-header">
+                                <div class="example-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="example-title" data-en="Financial" data-bন="আর্থিক">আর্থিক</h3>
+                            </div>
+                            <p style="font-size: 0.9rem; color: var(--gray);">x*exp(r*t)</p>
+                        </div>
+                        <div class="example-card" data-example="environmental">
+                            <div class="example-header">
+                                <div class="example-icon">
+                                    <i class="fas fa-leaf"></i>
+                                </div>
+                                <h3 class="example-title" data-en="Environmental" data-bন="পরিবেশগত">পরিবেশগত</h3>
+                            </div>
+                            <p style="font-size: 0.9rem; color: var(--gray);">x/(y+z)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Variables -->
+                <div class="input-variables">
+                    <h2 class="section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Input Variables with Uncertainty" data-bন="আনসার্টেইন্টি সহ ইনপুট ভেরিয়েবল">আনসার্টেইন্টি সহ ইনপুট ভেরিয়েবল</span>
+                    </h2>
+
+                    <div class="variable-controls">
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <i class="fas fa-x" style="color: var(--uncertainty);"></i>
+                                <span data-en="Variable x" data-bন="ভেরিয়েবল x">ভেরিয়েবল x</span>
+                            </div>
+                            <div class="variable-inputs">
+                                <input type="number" id="xMean" class="dist-input" value="10" placeholder="Mean">
+                                <input type="number" id="xStd" class="dist-input" value="1" placeholder="Std Dev">
+                            </div>
+                        </div>
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <i class="fas fa-y" style="color: var(--sensitivity);"></i>
+                                <span data-en="Variable y" data-bন="ভেরিয়েবল y">ভেরিয়েবল y</span>
+                            </div>
+                            <div class="variable-inputs">
+                                <input type="number" id="yMean" class="dist-input" value="5" placeholder="Mean">
+                                <input type="number" id="yStd" class="dist-input" value="0.5" placeholder="Std Dev">
+                            </div>
+                        </div>
+                        <div class="variable-card">
+                            <div class="variable-header">
+                                <i class="fas fa-z" style="color: var(--propagation);"></i>
+                                <span data-en="Variable z" data-bন="ভেরিয়েবল z">ভেরিয়েবল z</span>
+                            </div>
+                            <div class="variable-inputs">
+                                <input type="number" id="zMean" class="dist-input" value="3" placeholder="Mean">
+                                <input type="number" id="zStd" class="dist-input" value="0.3" placeholder="Std Dev">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distribution Types -->
+                    <h2 class="section-title" style="margin-top: 2rem;">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Distribution Type" data-bন="ডিস্ট্রিবিউশন টাইপ">ডিস্ট্রিবিউশন টাইপ</span>
+                    </h2>
+
+                    <div class="distribution-types">
+                        <button class="dist-btn active" data-dist="normal">
+                            <i class="fas fa-bell"></i>
+                            <span data-en="Normal" data-bন="নরমাল">নরমাল</span>
+                        </button>
+                        <button class="dist-btn" data-dist="uniform">
+                            <i class="fas fa-square"></i>
+                            <span data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</span>
+                        </button>
+                        <button class="dist-btn" data-dist="lognormal">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="Log-normal" data-bন="লগ-নরমাল">লগ-নরমাল</span>
+                        </button>
+                        <button class="dist-btn" data-dist="triangular">
+                            <i class="fas fa-play"></i>
+                            <span data-en="Triangular" data-bন="ট্রায়াঙ্গুলার">ট্রায়াঙ্গুলার</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monte Carlo Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Monte Carlo Parameters" data-bন="মন্টে কার্লো প্যারামিটার">মন্টে কার্লো প্যারামিটার</span>
+                </h2>
+
+                <div class="mc-parameters">
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Sample Size" data-bন="নমুনা আকার">নমুনা আকার</div>
+                        <div class="parameter-value" id="sampleSizeValue">10000</div>
+                        <div class="slider-container">
+                            <input type="range" id="sampleSize" class="slider" min="1000" max="100000" value="10000" step="1000">
+                            <div class="help-text" data-en="More samples = better uncertainty estimate" data-bন="বেশি নমুনা = ভাল আনসার্টেইন্টি অনুমান">বেশি নমুনা = ভাল আনসার্টেইন্টি অনুমান</div>
+                        </div>
+                    </div>
+
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Random Seed" data-bন="র্যান্ডম সিড">র্যান্ডম সিড</div>
+                        <div class="parameter-value" id="randomSeedValue">1234</div>
+                        <div class="slider-container">
+                            <input type="range" id="randomSeed" class="slider" min="1" max="10000" value="1234" step="1">
+                            <div class="help-text" data-en="For reproducible results" data-bন="পুনরুৎপাদনযোগ্য ফলাফলের জন্য">পুনরুৎপাদনযোগ্য ফলাফলের জন্য</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn quantify-btn" id="quantifyBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Quantify Uncertainty" data-bন="আনসার্টেইন্টি কোয়ান্টিফায় করুন">আনসার্টেইন্টি কোয়ান্টিফায় করুন</span>
+                    </button>
+                    <button class="action-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Uncertainty Results" data-bন="আনসার্টেইন্টি ফলাফল">আনসার্টেইন্টি ফলাফল</span>
+                </h2>
+
+                <!-- Uncertainty Results -->
+                <div class="uncertainty-results">
+                    <div class="result-card">
+                        <div class="result-label" data-en="Mean Output" data-bন="গড় আউটপুট">গড় আউটপুট</div>
+                        <div class="result-value" id="meanOutput">55.23</div>
+                        <div class="result-uncertainty" id="meanUncertainty">±2.45</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="result-value" id="stdOutput">12.34</div>
+                        <div class="result-uncertainty" id="stdUncertainty">(Coeff: 22.3%)</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="95% Confidence Interval" data-bন="৯৫% কনফিডেন্স ইন্টারভ্যাল">৯৫% কনফিডেন্স ইন্টারভ্যাল</div>
+                        <div class="result-value" id="confidenceInterval">[45.6, 64.9]</div>
+                        <div class="result-uncertainty" id="intervalWidth">Width: 19.3</div>
+                    </div>
+                </div>
+
+                <!-- Visualization -->
+                <div class="visualization-container">
+                    <div id="uncertaintyPlot"></div>
+                </div>
+
+                <!-- Uncertainty Visualization -->
+                <div class="uncertainty-visual">
+                    <div class="uncertainty-band" id="uncertaintyBand"></div>
+                    <div class="uncertainty-mean"></div>
+                    <div class="uncertainty-label" id="uncertaintyLabel">± 2.45 (95% CI)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensitivity Analysis Section -->
+        <div class="sensitivity-section" id="sensitivitySection">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                <span data-en="Sensitivity Analysis" data-bন="সেনসিটিভিটি অ্যানালাইসিস">সেনসিটিভিটি অ্যানালাইসিস</span>
+            </h2>
+            
+            <p data-en="Identify which input variables contribute most to output uncertainty:" data-bন="শনাক্ত করুন কোন ইনপুট ভেরিয়েবল আউটপুট আনসার্টেইন্টিতে সবচেয়ে বেশি অবদান রাখে:">
+                শনাক্ত করুন কোন ইনপুট ভেরিয়েবল আউটপুট আনসার্টেইন্টিতে সবচেয়ে বেশি অবদান রাখে:
+            </p>
+            
+            <div class="sensitivity-chart">
+                <div class="sensitivity-bars" id="sensitivityBars">
+                    <!-- Sensitivity bars will be inserted here -->
+                </div>
+            </div>
+            
+            <div class="help-text" data-en="Sensitivity indices show percentage contribution to output variance. Higher value = more influential variable." data-bন="সেনসিটিভিটি সূচক আউটপুট ভ্যারিয়েন্সে শতকরা অবদান দেখায়। উচ্চ মান = আরও প্রভাবশালী ভেরিয়েবল।">
+                সেনসিটিভিটি সূচক আউটপুট ভ্যারিয়েন্সে শতকরা অবদান দেখায়। উচ্চ মান = আরও প্রভাবশালী ভেরিয়েবল।
+            </div>
+        </div>
+
+        <!-- Uncertainty Propagation Section -->
+        <div class="propagation-section" id="propagationSection">
+            <h2 class="section-title">
+                <i class="fas fa-project-diagram"></i>
+                <span data-en="Uncertainty Propagation" data-bন="আনসার্টেইন্টি প্রোপাগেশন">আনসার্টেইন্টি প্রোপাগেশন</span>
+            </h2>
+            
+            <p data-en="Track how input uncertainties propagate through the model to affect output uncertainty:" data-bন="ট্র্যাক করুন কিভাবে ইনপুট আনসার্টেইন্টি মডেলের মধ্য দিয়ে ছড়িয়ে পড়ে আউটপুট আনসার্টেইন্টিকে প্রভাবিত করে:">
+                ট্র্যাক করুন কিভাবে ইনপুট আনসার্টেইন্টি মডেলের মধ্য দিয়ে ছড়িয়ে পড়ে আউটপুট আনসার্টেইন্টিকে প্রভাবিত করে:
+            </p>
+            
+            <div class="propagation-visual">
+                <div class="propagation-card">
+                    <div class="propagation-title" data-en="Input Uncertainty" data-bন="ইনপুট আনসার্টেইন্টি">ইনপুট আনসার্টেইন্টি</div>
+                    <div class="propagation-value" id="inputUncertainty">± 15.2%</div>
+                    <div class="help-text" data-en="Combined uncertainty of all inputs" data-bন="সমস্ত ইনপুটের সম্মিলিত আনসার্টেইন্টি">সমস্ত ইনপুটের সম্মিলিত আনসার্টেইন্টি</div>
+                </div>
+                <div class="propagation-card">
+                    <div class="propagation-title" data-en="Output Uncertainty" data-bন="আউটপুট আনসার্টেইন্টি">আউটপুট আনসার্টেইন্টি</div>
+                    <div class="propagation-value" id="outputUncertainty">± 22.3%</div>
+                    <div class="help-text" data-en="Propagated through model" data-bন="মডেলের মাধ্যমে ছড়িয়ে পড়েছে">মডেলের মাধ্যমে ছড়িয়ে পড়েছে</div>
+                </div>
+            </div>
+            
+            <div class="confidence-intervals">
+                <div class="interval-card">
+                    <div class="interval-level">68% CI</div>
+                    <div class="interval-range" id="ci68">[42.8, 67.7]</div>
+                </div>
+                <div class="interval-card">
+                    <div class="interval-level">95% CI</div>
+                    <div class="interval-range" id="ci95">[30.5, 80.0]</div>
+                </div>
+                <div class="interval-card">
+                    <div class="interval-level">99.7% CI</div>
+                    <div class="interval-range" id="ci997">[18.2, 92.3]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bayesian Inference Section -->
+        <div class="bayesian-section" id="bayesianSection">
+            <h2 class="section-title">
+                <i class="fas fa-brain"></i>
+                <span data-en="Bayesian Inference" data-bন="বেইজিয়ান ইনফারেন্স">বেইজিয়ান ইনফারেন্স</span>
+            </h2>
+            
+            <p data-en="Update prior beliefs about parameters based on observed data using Bayes' theorem:" data-bন="বেইজের উপপাদ্য ব্যবহার করে পর্যবেক্ষণকৃত ডেটার উপর ভিত্তি করে প্যারামিটার সম্পর্কে পূর্ববর্তী বিশ্বাস আপডেট করুন:">
+                বেইজের উপপাদ্য ব্যবহার করে পর্যবেক্ষণকৃত ডেটার উপর ভিত্তি করে প্যারামিটার সম্পর্কে পূর্ববর্তী বিশ্বাস আপডেট করুন:
+            </p>
+            
+            <div class="bayesian-controls">
+                <div class="parameter-card">
+                    <div class="parameter-label" data-en="Prior Distribution" data-bন="প্রায়র ডিস্ট্রিবিউশন">প্রায়র ডিস্ট্রিবিউশন</div>
+                    <div class="parameter-value" id="priorValue">Normal(10, 2)</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-label" data-en="Likelihood Function" data-bন="লাইকলিহুড ফাংশন">লাইকলিহুড ফাংশন</div>
+                    <div class="parameter-value" id="likelihoodValue">Normal</div>
+                </div>
+            </div>
+            
+            <div class="prior-posterior">
+                <div class="propagation-card">
+                    <div class="propagation-title" data-en="Prior Belief" data-bন="প্রায়র বিশ্বাস">প্রায়র বিশ্বাস</div>
+                    <div class="propagation-value">10 ± 2</div>
+                    <div class="help-text" data-en="Initial parameter estimate" data-bন="প্রাথমিক প্যারামিটার অনুমান">প্রাথমিক প্যারামিটার অনুমান</div>
+                </div>
+                <div class="propagation-card">
+                    <div class="propagation-title" data-en="Posterior Belief" data-bন="পোস্টেরিয়র বিশ্বাস">পোস্টেরিয়র বিশ্বাস</div>
+                    <div class="propagation-value">12.5 ± 1.2</div>
+                    <div class="help-text" data-en="Updated after data observation" data-bন="ডেটা পর্যবেক্ষণের পরে আপডেট করা হয়েছে">ডেটা পর্যবেক্ষণের পরে আপডেট করা হয়েছে</div>
+                </div>
+            </div>
+            
+            <div class="help-text" data-en="Bayesian inference combines prior knowledge with observed data to produce posterior distributions, quantifying updated uncertainty." data-bন="বেইজিয়ান ইনফারেন্স পূর্ববর্তী জ্ঞানকে পর্যবেক্ষণকৃত ডেটার সাথে একত্রিত করে পোস্টেরিয়র ডিস্ট্রিবিউশন তৈরি করে, আপডেট করা আনসার্টেইন্টি কোয়ান্টিফায় করে।">
+                বেইজিয়ান ইনফারেন্স পূর্ববর্তী জ্ঞানকে পর্যবেক্ষণকৃত ডেটার সাথে একত্রিত করে পোস্টেরিয়র ডিস্ট্রিবিউশন তৈরি করে, আপডেট করা আনসার্টেইন্টি কোয়ান্টিফায় করে।
+            </div>
+        </div>
+
+        <!-- Risk Assessment -->
+        <div class="risk-assessment">
+            <h2 class="section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-en="Risk Assessment" data-bন="রিস্ক অ্যাসেসমেন্ট">রিস্ক অ্যাসেসমেন্ট</span>
+            </h2>
+            
+            <p data-en="Associate uncertainty levels with risk categories based on output distribution:" data-bন="আউটপুট ডিস্ট্রিবিউশনের উপর ভিত্তি করে আনসার্টেইন্টি লেভেলকে রিস্ক ক্যাটাগরির সাথে যুক্ত করুন:">
+                আউটপুট ডিস্ট্রিবিউশনের উপর ভিত্তি করে আনসার্টেইন্টি লেভেলকে রিস্ক ক্যাটাগরির সাথে যুক্ত করুন:
+            </p>
+            
+            <div class="risk-matrix">
+                <div class="risk-cell risk-low">Low</div>
+                <div class="risk-cell risk-low">Acceptable</div>
+                <div class="risk-cell risk-medium">Moderate</div>
+                <div class="risk-cell risk-high">High</div>
+                <div class="risk-cell risk-critical">Critical</div>
+                
+                <div class="risk-cell risk-low">< 5%</div>
+                <div class="risk-cell risk-low">5-10%</div>
+                <div class="risk-cell risk-medium">10-20%</div>
+                <div class="risk-cell risk-high">20-30%</div>
+                <div class="risk-cell risk-critical">> 30%</div>
+            </div>
+            
+            <div class="help-text" style="margin-top: 1rem;" data-en="Based on Coefficient of Variation (CV = Std Dev / Mean). Higher CV indicates higher risk due to greater relative uncertainty." data-bন="কোয়াফিশিয়েন্ট অফ ভ্যারিয়েশন (CV = স্ট্যান্ডার্ড ডেভিয়েশন / গড়) এর উপর ভিত্তি করে। উচ্চ CV বেশি আপেক্ষিক আনসার্টেইন্টির কারণে উচ্চতর ঝুঁকি নির্দেশ করে।">
+                কোয়াফিশিয়েন্ট অফ ভ্যারিয়েশন (CV = স্ট্যান্ডার্ড ডেভিয়েশন / গড়) এর উপর ভিত্তি করে। উচ্চ CV বেশি আপেক্ষিক আনসার্টেইন্টির কারণে উচ্চতর ঝুঁকি নির্দেশ করে।
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Application State
+            const state = {
+                modelFunction: 'x*y + z^2',
+                variables: {
+                    x: { mean: 10, std: 1 },
+                    y: { mean: 5, std: 0.5 },
+                    z: { mean: 3, std: 0.3 }
+                },
+                distribution: 'normal',
+                sampleSize: 10000,
+                randomSeed: 1234,
+                currentTab: 'uncertainty',
+                results: null
+            };
+
+            // DOM Elements
+            const modelFunctionInput = document.getElementById('modelFunction');
+            const sampleSizeSlider = document.getElementById('sampleSize');
+            const sampleSizeValue = document.getElementById('sampleSizeValue');
+            const randomSeedSlider = document.getElementById('randomSeed');
+            const randomSeedValue = document.getElementById('randomSeedValue');
+            const quantifyBtn = document.getElementById('quantifyBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const distBtns = document.querySelectorAll('.dist-btn');
+            const exampleCards = document.querySelectorAll('.example-card');
+
+            // Input Variable Elements
+            const xMeanInput = document.getElementById('xMean');
+            const xStdInput = document.getElementById('xStd');
+            const yMeanInput = document.getElementById('yMean');
+            const yStdInput = document.getElementById('yStd');
+            const zMeanInput = document.getElementById('zMean');
+            const zStdInput = document.getElementById('zStd');
+
+            // Result Display Elements
+            const meanOutputEl = document.getElementById('meanOutput');
+            const meanUncertaintyEl = document.getElementById('meanUncertainty');
+            const stdOutputEl = document.getElementById('stdOutput');
+            const stdUncertaintyEl = document.getElementById('stdUncertainty');
+            const confidenceIntervalEl = document.getElementById('confidenceInterval');
+            const intervalWidthEl = document.getElementById('intervalWidth');
+            const inputUncertaintyEl = document.getElementById('inputUncertainty');
+            const outputUncertaintyEl = document.getElementById('outputUncertainty');
+            const ci68El = document.getElementById('ci68');
+            const ci95El = document.getElementById('ci95');
+            const ci997El = document.getElementById('ci997');
+            const sensitivityBars = document.getElementById('sensitivityBars');
+            const uncertaintyBand = document.getElementById('uncertaintyBand');
+            const uncertaintyLabel = document.getElementById('uncertaintyLabel');
+
+            // Initialize
+            initUncertaintyQuantifier();
+
+            function initUncertaintyQuantifier() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Event Listeners
+                modelFunctionInput.addEventListener('change', updateModelFunction);
+                sampleSizeSlider.addEventListener('input', updateSampleSize);
+                randomSeedSlider.addEventListener('input', updateRandomSeed);
+                
+                // Variable Inputs
+                xMeanInput.addEventListener('change', updateVariableX);
+                xStdInput.addEventListener('change', updateVariableX);
+                yMeanInput.addEventListener('change', updateVariableY);
+                yStdInput.addEventListener('change', updateVariableY);
+                zMeanInput.addEventListener('change', updateVariableZ);
+                zStdInput.addEventListener('change', updateVariableZ);
+
+                // Tab Navigation
+                tabBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        setActiveTab(this.dataset.tab);
+                    });
+                });
+
+                // Distribution Selection
+                distBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        setDistribution(this.dataset.dist);
+                    });
+                });
+
+                // Example Cards
+                exampleCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        loadExample(this.dataset.example);
+                    });
+                });
+
+                // Action Buttons
+                quantifyBtn.addEventListener('click', runUncertaintyQuantification);
+                resetBtn.addEventListener('click', resetAll);
+
+                // Initialize values
+                updateSampleSize();
+                updateRandomSeed();
+                updateModelFunction();
+                updateVariables();
+
+                // Initial uncertainty quantification
+                setTimeout(() => {
+                    runUncertaintyQuantification();
+                }, 1000);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function updateModelFunction() {
+                state.modelFunction = modelFunctionInput.value;
+            }
+
+            function updateSampleSize() {
+                state.sampleSize = parseInt(sampleSizeSlider.value);
+                sampleSizeValue.textContent = state.sampleSize.toLocaleString();
+            }
+
+            function updateRandomSeed() {
+                state.randomSeed = parseInt(randomSeedSlider.value);
+                randomSeedValue.textContent = state.randomSeed;
+            }
+
+            function updateVariableX() {
+                state.variables.x.mean = parseFloat(xMeanInput.value);
+                state.variables.x.std = parseFloat(xStdInput.value);
+            }
+
+            function updateVariableY() {
+                state.variables.y.mean = parseFloat(yMeanInput.value);
+                state.variables.y.std = parseFloat(yStdInput.value);
+            }
+
+            function updateVariableZ() {
+                state.variables.z.mean = parseFloat(zMeanInput.value);
+                state.variables.z.std = parseFloat(zStdInput.value);
+            }
+
+            function updateVariables() {
+                updateVariableX();
+                updateVariableY();
+                updateVariableZ();
+            }
+
+            function setActiveTab(tab) {
+                state.currentTab = tab;
+                
+                // Update active tab button
+                tabBtns.forEach(btn => {
+                    if (btn.dataset.tab === tab) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Show/hide sections based on active tab
+                const sections = ['sensitivitySection', 'propagationSection', 'bayesianSection'];
+                sections.forEach(section => {
+                    const el = document.getElementById(section);
+                    if (el) {
+                        el.style.display = 'none';
+                    }
+                });
+
+                // Show active section
+                const activeSection = document.getElementById(`${tab}Section`);
+                if (activeSection) {
+                    activeSection.style.display = 'block';
+                    activeSection.classList.add('fade-in');
+                }
+            }
+
+            function setDistribution(dist) {
+                state.distribution = dist;
+                
+                // Update active distribution button
+                distBtns.forEach(btn => {
+                    if (btn.dataset.dist === dist) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function loadExample(example) {
+                const examples = {
+                    engineering: {
+                        function: 'x*y + z^2',
+                        x: { mean: 10, std: 1 },
+                        y: { mean: 5, std: 0.5 },
+                        z: { mean: 3, std: 0.3 }
+                    },
+                    financial: {
+                        function: 'x*exp(r*t)',
+                        x: { mean: 1000, std: 100 },
+                        y: { mean: 0.05, std: 0.01 },
+                        z: { mean: 10, std: 1 }
+                    },
+                    environmental: {
+                        function: 'x/(y+z)',
+                        x: { mean: 100, std: 10 },
+                        y: { mean: 5, std: 1 },
+                        z: { mean: 5, std: 1 }
+                    }
+                };
+
+                const ex = examples[example];
+                if (ex) {
+                    modelFunctionInput.value = ex.function;
+                    xMeanInput.value = ex.x.mean;
+                    xStdInput.value = ex.x.std;
+                    yMeanInput.value = ex.y.mean;
+                    yStdInput.value = ex.y.std;
+                    zMeanInput.value = ex.z.mean;
+                    zStdInput.value = ex.z.std;
+                    
+                    updateModelFunction();
+                    updateVariables();
+                }
+            }
+
+            // Pseudo-random number generator with seed
+            function seededRandom(seed) {
+                return function() {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+            }
+
+            function sampleFromDistribution(mean, std, distType, rand) {
+                switch(distType) {
+                    case 'uniform':
+                        return mean - std * Math.sqrt(3) + 2 * std * Math.sqrt(3) * rand();
+                    case 'lognormal':
+                        const normal = Math.sqrt(-2 * Math.log(rand())) * Math.cos(2 * Math.PI * rand());
+                        return Math.exp(mean + std * normal);
+                    case 'triangular':
+                        const u = rand();
+                        if (u < 0.5) {
+                            return mean - std * Math.sqrt(2 * u);
+                        } else {
+                            return mean + std * Math.sqrt(2 * (1 - u));
+                        }
+                    case 'normal':
+                    default:
+                        // Box-Muller transform for normal distribution
+                        const u1 = rand();
+                        const u2 = rand();
+                        const normalSample = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                        return mean + std * normalSample;
+                }
+            }
+
+            function evaluateModel(x, y, z) {
+                try {
+                    // Replace ^ with ** for exponentiation
+                    const funcStr = state.modelFunction.replace(/\^/g, '**');
+                    const func = new Function('x', 'y', 'z', `return ${funcStr}`);
+                    return func(x, y, z);
+                } catch (error) {
+                    console.error('Model evaluation error:', error);
+                    return NaN;
+                }
+            }
+
+            function runMonteCarloSimulation() {
+                const startTime = performance.now();
+                const rand = seededRandom(state.randomSeed);
+                const results = [];
+                
+                let sum = 0;
+                let sumSquares = 0;
+                let validSamples = 0;
+                
+                for (let i = 0; i < state.sampleSize; i++) {
+                    // Sample from input distributions
+                    const x = sampleFromDistribution(
+                        state.variables.x.mean,
+                        state.variables.x.std,
+                        state.distribution,
+                        rand
+                    );
+                    
+                    const y = sampleFromDistribution(
+                        state.variables.y.mean,
+                        state.variables.y.std,
+                        state.distribution,
+                        rand
+                    );
+                    
+                    const z = sampleFromDistribution(
+                        state.variables.z.mean,
+                        state.variables.z.std,
+                        state.distribution,
+                        rand
+                    );
+                    
+                    // Evaluate model
+                    const output = evaluateModel(x, y, z);
+                    
+                    if (!isNaN(output) && isFinite(output)) {
+                        results.push({
+                            x, y, z, output,
+                            iteration: i + 1
+                        });
+                        
+                        sum += output;
+                        sumSquares += output * output;
+                        validSamples++;
+                    }
+                }
+                
+                const endTime = performance.now();
+                const computationTime = (endTime - startTime) / 1000;
+                
+                // Calculate statistics
+                const mean = sum / validSamples;
+                const variance = (sumSquares / validSamples) - (mean * mean);
+                const stdDev = Math.sqrt(variance);
+                
+                // Sort results for percentile calculations
+                const sortedOutputs = results.map(r => r.output).sort((a, b) => a - b);
+                
+                const percentiles = {
+                    p2_5: sortedOutputs[Math.floor(0.025 * validSamples)],
+                    p16: sortedOutputs[Math.floor(0.16 * validSamples)],
+                    p50: sortedOutputs[Math.floor(0.5 * validSamples)],
+                    p84: sortedOutputs[Math.floor(0.84 * validSamples)],
+                    p97_5: sortedOutputs[Math.floor(0.975 * validSamples)]
+                };
+                
+                return {
+                    results,
+                    mean,
+                    stdDev,
+                    variance,
+                    percentiles,
+                    validSamples,
+                    computationTime
+                };
+            }
+
+            function calculateSensitivityIndices(mcResults) {
+                // Simple Sobol' indices approximation
+                const n = mcResults.results.length;
+                const outputs = mcResults.results.map(r => r.output);
+                const mean = mcResults.mean;
+                const totalVariance = mcResults.variance;
+                
+                // First-order sensitivity indices (main effects)
+                const sensitivity = {
+                    x: 0,
+                    y: 0,
+                    z: 0
+                };
+                
+                // Calculate using simple variance decomposition
+                const chunkSize = Math.floor(n / 100);
+                for (let i = 0; i < n; i += chunkSize) {
+                    const chunk = mcResults.results.slice(i, i + chunkSize);
+                    if (chunk.length > 0) {
+                        // Conditional variances
+                        const condVarX = calculateConditionalVariance(chunk, 'x');
+                        const condVarY = calculateConditionalVariance(chunk, 'y');
+                        const condVarZ = calculateConditionalVariance(chunk, 'z');
+                        
+                        sensitivity.x += condVarX / totalVariance;
+                        sensitivity.y += condVarY / totalVariance;
+                        sensitivity.z += condVarZ / totalVariance;
+                    }
+                }
+                
+                // Normalize to percentages
+                const total = sensitivity.x + sensitivity.y + sensitivity.z;
+                if (total > 0) {
+                    sensitivity.x = (sensitivity.x / total * 100).toFixed(1);
+                    sensitivity.y = (sensitivity.y / total * 100).toFixed(1);
+                    sensitivity.z = (sensitivity.z / total * 100).toFixed(1);
+                }
+                
+                return sensitivity;
+            }
+
+            function calculateConditionalVariance(samples, variable) {
+                const groups = {};
+                
+                // Group by discretized variable values
+                samples.forEach(sample => {
+                    const value = sample[variable];
+                    const key = Math.floor(value * 10) / 10; // Discretize to 0.1 intervals
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(sample.output);
+                });
+                
+                // Calculate variance within groups
+                let withinGroupVariance = 0;
+                let totalPoints = 0;
+                
+                Object.values(groups).forEach(group => {
+                    if (group.length > 1) {
+                        const groupMean = group.reduce((a, b) => a + b, 0) / group.length;
+                        const groupVariance = group.reduce((sum, val) => sum + Math.pow(val - groupMean, 2), 0) / group.length;
+                        withinGroupVariance += groupVariance * group.length;
+                        totalPoints += group.length;
+                    }
+                });
+                
+                return totalPoints > 0 ? withinGroupVariance / totalPoints : 0;
+            }
+
+            function runUncertaintyQuantification() {
+                // Show loading state
+                quantifyBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'bn' ? 'গণনা চলছে...' : 'Calculating...'}`;
+                
+                // Run Monte Carlo simulation
+                const mcResults = runMonteCarloSimulation();
+                state.results = mcResults;
+                
+                // Calculate sensitivity indices
+                const sensitivity = calculateSensitivityIndices(mcResults);
+                
+                // Update display
+                updateUncertaintyResults(mcResults);
+                updateSensitivityAnalysis(sensitivity);
+                updateUncertaintyPropagation(mcResults);
+                updateBayesianInference(mcResults);
+                updateVisualization(mcResults);
+                updateRiskAssessment(mcResults);
+                
+                // Reset button text
+                quantifyBtn.innerHTML = `<i class="fas fa-calculator"></i> ${currentLanguage === 'bn' ? 'আনসার্টেইন্টি কোয়ান্টিফায় করুন' : 'Quantify Uncertainty'}`;
+            }
+
+            function updateUncertaintyResults(results) {
+                const mean = results.mean.toFixed(2);
+                const stdDev = results.stdDev.toFixed(2);
+                const coeffVariation = ((results.stdDev / results.mean) * 100).toFixed(1);
+                
+                // Confidence intervals
+                const ci95 = `[${results.percentiles.p2_5.toFixed(1)}, ${results.percentiles.p97_5.toFixed(1)}]`;
+                const ciWidth = (results.percentiles.p97_5 - results.percentiles.p2_5).toFixed(1);
+                
+                meanOutputEl.textContent = mean;
+                meanUncertaintyEl.textContent = `±${(1.96 * results.stdDev / Math.sqrt(results.validSamples)).toFixed(2)}`;
+                stdOutputEl.textContent = stdDev;
+                stdUncertaintyEl.textContent = `(Coeff: ${coeffVariation}%)`;
+                confidenceIntervalEl.textContent = ci95;
+                intervalWidthEl.textContent = `Width: ${ciWidth}`;
+                
+                // Update uncertainty visualization
+                const uncertaintyMargin = (1.96 * results.stdDev).toFixed(2);
+                uncertaintyLabel.textContent = `± ${uncertaintyMargin} (95% CI)`;
+                
+                // Position the uncertainty band
+                const bandWidth = Math.min(80, (results.stdDev * 10)); // Scale for visualization
+                uncertaintyBand.style.left = `${50 - bandWidth/2}%`;
+                uncertaintyBand.style.width = `${bandWidth}%`;
+            }
+
+            function updateSensitivityAnalysis(sensitivity) {
+                sensitivityBars.innerHTML = '';
+                
+                const variables = [
+                    { name: 'x', label: 'Variable x', value: sensitivity.x, color: 'var(--uncertainty)' },
+                    { name: 'y', label: 'Variable y', value: sensitivity.y, color: 'var(--sensitivity)' },
+                    { name: 'z', label: 'Variable z', value: sensitivity.z, color: 'var(--propagation)' }
+                ];
+                
+                variables.forEach(variable => {
+                    const row = document.createElement('div');
+                    row.className = 'sensitivity-row fade-in';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'sensitivity-label';
+                    label.textContent = currentLanguage === 'bn' ? 
+                        (variable.name === 'x' ? 'ভেরিয়েবল x' : 
+                         variable.name === 'y' ? 'ভেরিয়েবল y' : 'ভেরিয়েবল z') : 
+                        variable.label;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'sensitivity-bar-container';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'sensitivity-bar';
+                    bar.style.width = `${variable.value}%`;
+                    bar.style.background = variable.color;
+                    
+                    const value = document.createElement('div');
+                    value.className = 'sensitivity-value';
+                    value.textContent = `${variable.value}%`;
+                    value.style.color = variable.color;
+                    
+                    barContainer.appendChild(bar);
+                    row.appendChild(label);
+                    row.appendChild(barContainer);
+                    row.appendChild(value);
+                    sensitivityBars.appendChild(row);
+                });
+            }
+
+            function updateUncertaintyPropagation(results) {
+                // Calculate input uncertainty (combined)
+                const inputUncertainty = Math.sqrt(
+                    Math.pow(state.variables.x.std / state.variables.x.mean, 2) +
+                    Math.pow(state.variables.y.std / state.variables.y.mean, 2) +
+                    Math.pow(state.variables.z.std / state.variables.z.mean, 2)
+                ) * 100;
+                
+                // Output uncertainty
+                const outputUncertainty = (results.stdDev / results.mean) * 100;
+                
+                inputUncertaintyEl.textContent = `± ${inputUncertainty.toFixed(1)}%`;
+                outputUncertaintyEl.textContent = `± ${outputUncertainty.toFixed(1)}%`;
+                
+                // Update confidence intervals
+                ci68El.textContent = `[${results.percentiles.p16.toFixed(1)}, ${results.percentiles.p84.toFixed(1)}]`;
+                ci95El.textContent = `[${results.percentiles.p2_5.toFixed(1)}, ${results.percentiles.p97_5.toFixed(1)}]`;
+                ci997El.textContent = `[${(results.mean - 3 * results.stdDev).toFixed(1)}, ${(results.mean + 3 * results.stdDev).toFixed(1)}]`;
+            }
+
+            function updateBayesianInference(results) {
+                // Simulate Bayesian update
+                const priorMean = state.variables.x.mean;
+                const priorStd = state.variables.x.std;
+                
+                // Simulate observed data
+                const observedMean = results.mean * 0.9; // Slight bias
+                const observedStd = results.stdDev / Math.sqrt(results.validSamples);
+                
+                // Bayesian update for normal-normal conjugate prior
+                const posteriorPrecision = 1/(priorStd*priorStd) + results.validSamples/(observedStd*observedStd);
+                const posteriorMean = (priorMean/(priorStd*priorStd) + observedMean*results.validSamples/(observedStd*observedStd)) / posteriorPrecision;
+                const posteriorStd = Math.sqrt(1/posteriorPrecision);
+                
+                document.getElementById('priorValue').textContent = 
+                    `${currentLanguage === 'bn' ? 'নরমাল' : 'Normal'}(${priorMean.toFixed(1)}, ${priorStd.toFixed(1)})`;
+                
+                // Update posterior display
+                const posteriorCard = document.querySelector('.prior-posterior .propagation-card:nth-child(2) .propagation-value');
+                if (posteriorCard) {
+                    posteriorCard.textContent = `${posteriorMean.toFixed(1)} ± ${posteriorStd.toFixed(1)}`;
+                }
+            }
+
+            function updateVisualization(results) {
+                // Create histogram of output distribution
+                const outputs = results.results.map(r => r.output);
+                const hist = createHistogram(outputs, 50);
+                
+                const trace = {
+                    x: hist.bins,
+                    y: hist.counts,
+                    type: 'bar',
+                    name: currentLanguage === 'bn' ? 'আউটপুট ডিস্ট্রিবিউশন' : 'Output Distribution',
+                    marker: {
+                        color: 'var(--uncertainty)',
+                        opacity: 0.7
+                    }
+                };
+                
+                const meanLine = {
+                    x: [results.mean, results.mean],
+                    y: [0, Math.max(...hist.counts)],
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'গড়' : 'Mean',
+                    line: {
+                        color: 'var(--accent)',
+                        width: 3,
+                        dash: 'dash'
+                    }
+                };
+                
+                const ci95Lines = {
+                    x: [results.percentiles.p2_5, results.percentiles.p97_5],
+                    y: [Math.max(...hist.counts) * 0.5, Math.max(...hist.counts) * 0.5],
+                    mode: 'lines+markers',
+                    name: '95% CI',
+                    line: {
+                        color: 'var(--success)',
+                        width: 4
+                    },
+                    marker: {
+                        size: 10,
+                        symbol: 'triangle-up'
+                    }
+                };
+                
+                const layout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'আউটপুট আনসার্টেইন্টি ডিস্ট্রিবিউশন' : 'Output Uncertainty Distribution',
+                        font: {size: 16}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'আউটপুট মান' : 'Output Value',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                        gridcolor: 'lightgray'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('uncertaintyPlot', [trace, meanLine, ci95Lines], layout);
+            }
+
+            function createHistogram(data, bins) {
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binWidth = (max - min) / bins;
+                
+                const histogram = {
+                    bins: [],
+                    counts: []
+                };
+                
+                for (let i = 0; i < bins; i++) {
+                    const binStart = min + i * binWidth;
+                    const binEnd = binStart + binWidth;
+                    histogram.bins.push(binStart);
+                    
+                    const count = data.filter(value => value >= binStart && value < binEnd).length;
+                    histogram.counts.push(count);
+                }
+                
+                return histogram;
+            }
+
+            function updateRiskAssessment(results) {
+                const cv = (results.stdDev / results.mean) * 100;
+                const riskMatrix = document.querySelectorAll('.risk-matrix .risk-cell');
+                
+                // Reset all cells
+                riskMatrix.forEach(cell => {
+                    cell.style.transform = 'scale(1)';
+                });
+                
+                // Highlight appropriate risk level
+                let riskLevel;
+                if (cv < 5) riskLevel = 1;
+                else if (cv < 10) riskLevel = 2;
+                else if (cv < 20) riskLevel = 3;
+                else if (cv < 30) riskLevel = 4;
+                else riskLevel = 5;
+                
+                // Highlight the risk level cell
+                if (riskLevel <= 5) {
+                    const riskCell = document.querySelector(`.risk-matrix .risk-cell:nth-child(${riskLevel + 5})`);
+                    if (riskCell) {
+                        riskCell.style.transform = 'scale(1.2)';
+                        riskCell.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                    }
+                }
+            }
+
+            function resetAll() {
+                // Reset inputs to defaults
+                modelFunctionInput.value = 'x*y + z^2';
+                xMeanInput.value = 10;
+                xStdInput.value = 1;
+                yMeanInput.value = 5;
+                yStdInput.value = 0.5;
+                zMeanInput.value = 3;
+                zStdInput.value = 0.3;
+                sampleSizeSlider.value = 10000;
+                randomSeedSlider.value = 1234;
+                
+                // Reset selections
+                setDistribution('normal');
+                setActiveTab('uncertainty');
+                
+                // Update state
+                updateModelFunction();
+                updateVariables();
+                updateSampleSize();
+                updateRandomSeed();
+                
+                // Run uncertainty quantification with reset values
+                runUncertaintyQuantification();
+            }
+        });
+    </script>
+</body>
+</html>

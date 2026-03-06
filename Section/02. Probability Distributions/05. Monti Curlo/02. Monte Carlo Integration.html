@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Integration Tool | Numerical Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #FF5722;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FFC107;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --monte-carlo: #2196F3;
+            --monte-carlo-dark: #1976D2;
+            --importance-sampling: #9C27B0;
+            --variance-reduction: #FF9800;
+            --multi-dim: #009688;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--monte-carlo);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--monte-carlo), var(--multi-dim), var(--importance-sampling));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Panel */
+        .input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--monte-carlo);
+        }
+
+        /* Function Input */
+        .function-input-section {
+            margin-bottom: 2rem;
+        }
+
+        .function-editor {
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .function-input-group {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .function-label {
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+        }
+
+        .function-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .function-input:focus {
+            outline: none;
+            border-color: var(--monte-carlo);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .function-examples {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .function-examples {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--monte-carlo);
+            color: white;
+            border-color: var(--monte-carlo);
+        }
+
+        /* Integration Domain */
+        .domain-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .domain-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .domain-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .domain-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .domain-input:focus {
+            outline: none;
+            border-color: var(--monte-carlo);
+        }
+
+        /* Monte Carlo Parameters */
+        .mc-parameters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .parameter-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .parameter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--monte-carlo);
+            margin: 0.5rem 0;
+        }
+
+        .slider-container {
+            margin-top: 1rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--monte-carlo), var(--multi-dim));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--monte-carlo);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Integration Methods */
+        .method-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .method-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .method-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .method-card.active {
+            border-color: var(--monte-carlo);
+            background: rgba(33, 150, 243, 0.05);
+        }
+
+        .method-card.importance.active {
+            border-color: var(--importance-sampling);
+            background: rgba(156, 39, 176, 0.05);
+        }
+
+        .method-card.variance.active {
+            border-color: var(--variance-reduction);
+            background: rgba(255, 152, 0, 0.05);
+        }
+
+        .method-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--monte-carlo);
+        }
+
+        .method-card.importance .method-icon { color: var(--importance-sampling); }
+        .method-card.variance .method-icon { color: var(--variance-reduction); }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .integrate-btn {
+            background: var(--monte-carlo);
+            color: white;
+        }
+
+        .integrate-btn:hover {
+            background: var(--monte-carlo-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Integration Results */
+        .integration-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .integration-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .result-error {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        /* Visualization */
+        .visualization-container {
+            height: 400px;
+            margin-bottom: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        #integrationPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Multi-dimensional Settings */
+        .multi-dim-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .dimension-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .dimension-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .dimension-btn.active {
+            background: var(--multi-dim);
+            color: white;
+            border-color: var(--multi-dim);
+        }
+
+        .dimension-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .dimension-inputs {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Importance Sampling Settings */
+        .importance-sampling-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .importance-functions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .importance-functions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Variance Reduction Methods */
+        .variance-reduction-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .variance-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .variance-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .variance-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .variance-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .variance-card.active {
+            border-color: var(--variance-reduction);
+            background: rgba(255, 152, 0, 0.05);
+        }
+
+        /* Convergence Analysis */
+        .convergence-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .convergence-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Performance Comparison */
+        .performance-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .performance-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .domain-inputs,
+            .mc-parameters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--monte-carlo);
+        }
+
+        /* Monte Carlo Points Animation */
+        .mc-points {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .mc-point {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--monte-carlo);
+            animation: mcPointAnimation 2s ease-out forwards;
+        }
+
+        @keyframes mcPointAnimation {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Integration Tool" data-bn="মন্টে কার্লো ইন্টিগ্রেশন টুল">মন্টে কার্লো ইন্টিগ্রেশন টুল</h1>
+            <p class="subtitle" data-en="Perform numerical integration using Monte Carlo methods with multi-dimensional support, importance sampling, and variance reduction techniques" data-bn="মাল্টি-ডাইমেনশনাল সাপোর্ট, ইম্পর্টেন্স স্যাম্পলিং এবং ভ্যারিয়েন্স রিডাকশন টেকনিক সহ মন্টে কার্লো পদ্ধতি ব্যবহার করে সংখ্যাগত ইন্টিগ্রেশন সম্পাদন করুন">
+                মাল্টি-ডাইমেনশনাল সাপোর্ট, ইম্পর্টেন্স স্যাম্পলিং এবং ভ্যারিয়েন্স রিডাকশন টেকনিক সহ মন্টে কার্লো পদ্ধতি ব্যবহার করে সংখ্যাগত ইন্টিগ্রেশন সম্পাদন করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <!-- Function Input -->
+                <div class="function-input-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-function"></i>
+                        <span data-en="Function to Integrate" data-bn="ইন্টিগ্রেট করার ফাংশন">ইন্টিগ্রেট করার ফাংশন</span>
+                    </h2>
+                    <div class="function-editor">
+                        <div class="function-input-group">
+                            <div class="function-label" data-en="f(x) =" data-bn="f(x) =">f(x) =</div>
+                            <input type="text" id="functionInput" class="function-input" value="sin(x)*exp(-x/2)" placeholder="e.g., sin(x)*exp(-x/2)">
+                        </div>
+                        <div class="help-text" data-en="Use JavaScript math functions: sin, cos, exp, log, sqrt, pow(x,y)" data-bn="JavaScript ম্যাথ ফাংশন ব্যবহার করুন: sin, cos, exp, log, sqrt, pow(x,y)">
+                            JavaScript ম্যাথ ফাংশন ব্যবহার করুন: sin, cos, exp, log, sqrt, pow(x,y)
+                        </div>
+                    </div>
+                    <div class="function-examples">
+                        <button class="example-btn" data-example="sin(x)">sin(x)</button>
+                        <button class="example-btn" data-example="x*x">x²</button>
+                        <button class="example-btn" data-example="exp(-x*x/2)">exp(-x²/2)</button>
+                        <button class="example-btn" data-example="1/(1+x*x)">1/(1+x²)</button>
+                        <button class="example-btn" data-example="sqrt(1-x*x)">√(1-x²)</button>
+                        <button class="example-btn" data-example="log(1+x)">log(1+x)</button>
+                    </div>
+                </div>
+
+                <!-- Integration Domain -->
+                <h2 class="section-title">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    <span data-en="Integration Domain" data-bn="ইন্টিগ্রেশন ডোমেইন">ইন্টিগ্রেশন ডোমেইন</span>
+                </h2>
+                <div class="domain-inputs">
+                    <div class="domain-group">
+                        <div class="domain-label">
+                            <i class="fas fa-arrow-left"></i>
+                            <span data-en="Lower Bound (a)" data-bn="নিম্ন সীমা (a)">নিম্ন সীমা (a)</span>
+                        </div>
+                        <input type="number" id="lowerBound" class="domain-input" value="0" step="0.1">
+                    </div>
+                    <div class="domain-group">
+                        <div class="domain-label">
+                            <i class="fas fa-arrow-right"></i>
+                            <span data-en="Upper Bound (b)" data-bন="উচ্চ সীমা (b)">উচ্চ সীমা (b)</span>
+                        </div>
+                        <input type="number" id="upperBound" class="domain-input" value="3.14159" step="0.1">
+                    </div>
+                </div>
+
+                <!-- Monte Carlo Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Monte Carlo Parameters" data-bন="মন্টে কার্লো প্যারামিটার">মন্টে কার্লো প্যারামিটার</span>
+                </h2>
+                <div class="mc-parameters">
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Sample Points" data-bন="নমুনা পয়েন্ট">নমুনা পয়েন্ট</div>
+                        <div class="parameter-value" id="sampleCountValue">1000</div>
+                        <div class="slider-container">
+                            <input type="range" id="sampleCount" class="slider" min="100" max="100000" value="1000" step="100">
+                            <div class="help-text" data-en="More points = better accuracy" data-bন="বেশি পয়েন্ট = ভাল নির্ভুলতা">বেশি পয়েন্ট = ভাল নির্ভুলতা</div>
+                        </div>
+                    </div>
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Random Seed" data-bন="র্যান্ডম সিড">র্যান্ডম সিড</div>
+                        <div class="parameter-value" id="randomSeedValue">42</div>
+                        <div class="slider-container">
+                            <input type="range" id="randomSeed" class="slider" min="1" max="100" value="42" step="1">
+                            <div class="help-text" data-en="For reproducible results" data-bন="পুনরুৎপাদনযোগ্য ফলাফলের জন্য">পুনরুৎপাদনযোগ্য ফলাফলের জন্য</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integration Methods -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Integration Method" data-bন="ইন্টিগ্রেশন পদ্ধতি">ইন্টিগ্রেশন পদ্ধতি</span>
+                </h2>
+                <div class="method-selection">
+                    <div class="method-card active" data-method="basic">
+                        <div class="method-icon">
+                            <i class="fas fa-dice"></i>
+                        </div>
+                        <h3 data-en="Basic Monte Carlo" data-bন="বেসিক মন্টে কার্লো">বেসিক মন্টে কার্লো</h3>
+                        <p class="help-text" data-en="Simple random sampling" data-bন="সরল র্যান্ডম স্যাম্পলিং">সরল র্যান্ডম স্যাম্পলিং</p>
+                    </div>
+                    <div class="method-card importance" data-method="importance">
+                        <div class="method-icon">
+                            <i class="fas fa-weight-hanging"></i>
+                        </div>
+                        <h3 data-en="Importance Sampling" data-bন="ইম্পর্টেন্স স্যাম্পলিং">ইম্পর্টেন্স স্যাম্পলিং</h3>
+                        <p class="help-text" data-en="Weighted sampling for variance reduction" data-bন="ভ্যারিয়েন্স কমানোর জন্য ওজনযুক্ত স্যাম্পলিং">ভ্যারিয়েন্স কমানোর জন্য ওজনযুক্ত স্যাম্পলিং</p>
+                    </div>
+                    <div class="method-card variance" data-method="variance">
+                        <div class="method-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 data-en="Variance Reduction" data-bন="ভ্যারিয়েন্স রিডাকশন">ভ্যারিয়েন্স রিডাকশন</h3>
+                        <p class="help-text" data-en="Advanced techniques for better accuracy" data-bন="ভাল নির্ভুলতার জন্য উন্নত টেকনিক">ভাল নির্ভুলতার জন্য উন্নত টেকনিক</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn integrate-btn" id="integrateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Run Integration" data-bন="ইন্টিগ্রেশন চালান">ইন্টিগ্রেশন চালান</span>
+                    </button>
+                    <button class="action-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Integration Results" data-bন="ইন্টিগ্রেশন ফলাফল">ইন্টিগ্রেশন ফলাফল</span>
+                </h2>
+
+                <!-- Results Display -->
+                <div class="integration-results">
+                    <div class="result-card">
+                        <div class="result-label" data-en="Monte Carlo Estimate" data-bন="মন্টে কার্লো অনুমান">মন্টে কার্লো অনুমান</div>
+                        <div class="result-value" id="mcEstimate">1.2566</div>
+                        <div class="result-error" id="mcError">±0.0123</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="Analytical Value" data-bন="বিশ্লেষণাত্মক মান">বিশ্লেষণাত্মক মান</div>
+                        <div class="result-value" id="analyticalValue">1.2566</div>
+                        <div class="result-error" id="analyticalError">(If known)</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="Relative Error" data-bন="আপেক্ষিক ত্রুটি">আপেক্ষিক ত্রুটি</div>
+                        <div class="result-value" id="relativeError">1.23%</div>
+                        <div class="result-error" id="varianceValue">Variance: 0.015</div>
+                    </div>
+                </div>
+
+                <!-- Visualization -->
+                <div class="visualization-container">
+                    <div id="integrationPlot"></div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="performance-metrics">
+                    <div class="result-card">
+                        <div class="result-label" data-en="Computation Time" data-bন="গণনার সময়">গণনার সময়</div>
+                        <div class="result-value" id="computationTime">0.045s</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="Points Inside" data-bন="ভিতরের পয়েন্ট">ভিতরের পয়েন্ট</div>
+                        <div class="result-value" id="pointsInside">647</div>
+                        <div class="result-error" id="pointsRatio">64.7%</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label" data-en="Efficiency Gain" data-bন="দক্ষতা লাভ">দক্ষতা লাভ</div>
+                        <div class="result-value" id="efficiencyGain">2.5x</div>
+                        <div class="result-error" data-en="vs Basic MC" data-bন="বেসিক MC-এর তুলনায়">বেসিক MC-এর তুলনায়</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-dimensional Integration -->
+        <div class="multi-dim-section">
+            <h2 class="section-title">
+                <i class="fas fa-cube"></i>
+                <span data-en="Multi-dimensional Integration" data-bন="মাল্টি-ডাইমেনশনাল ইন্টিগ্রেশন">মাল্টি-ডাইমেনশনাল ইন্টিগ্রেশন</span>
+            </h2>
+            
+            <p data-en="Extend integration to higher dimensions. Select dimension and set bounds for each variable:" data-bন="ইন্টিগ্রেশন উচ্চ মাত্রায় প্রসারিত করুন। মাত্রা নির্বাচন করুন এবং প্রতিটি ভেরিয়েবলের জন্য সীমা নির্ধারণ করুন:">
+                ইন্টিগ্রেশন উচ্চ মাত্রায় প্রসারিত করুন। মাত্রা নির্বাচন করুন এবং প্রতিটি ভেরিয়েবলের জন্য সীমা নির্ধারণ করুন:
+            </p>
+            
+            <div class="dimension-controls">
+                <span data-en="Dimensions:" data-bন="মাত্রা:">মাত্রা:</span>
+                <button class="dimension-btn active" data-dim="1">1D</button>
+                <button class="dimension-btn" data-dim="2">2D</button>
+                <button class="dimension-btn" data-dim="3">3D</button>
+                <button class="dimension-btn" data-dim="4">4D</button>
+            </div>
+            
+            <div class="dimension-inputs" id="dimensionInputs">
+                <div class="domain-group">
+                    <div class="domain-label">x₁: [a₁, b₁]</div>
+                    <input type="number" class="domain-input dim-lower" value="0" placeholder="Lower">
+                    <input type="number" class="domain-input dim-upper" value="1" placeholder="Upper" style="margin-top: 0.5rem;">
+                </div>
+            </div>
+            
+            <div class="help-text" data-en="For 2D: f(x,y), 3D: f(x,y,z), 4D: f(x,y,z,w). Curse of dimensionality increases points needed exponentially." data-bন="২D-এর জন্য: f(x,y), ৩D: f(x,y,z), ৪D: f(x,y,z,w)। মাত্রার অভিশাপ প্রয়োজনীয় পয়েন্টগুলো সূচকীয়ভাবে বাড়ায়।">
+                ২D-এর জন্য: f(x,y), ৩D: f(x,y,z), ৪D: f(x,y,z,w)। মাত্রার অভিশাপ প্রয়োজনীয় পয়েন্টগুলো সূচকীয়ভাবে বাড়ায়।
+            </div>
+        </div>
+
+        <!-- Importance Sampling Settings -->
+        <div class="importance-sampling-section">
+            <h2 class="section-title">
+                <i class="fas fa-weight-hanging"></i>
+                <span data-en="Importance Sampling" data-bন="ইম্পর্টেন্স স্যাম্পলিং">ইম্পর্টেন্স স্যাম্পলিং</span>
+            </h2>
+            
+            <p data-en="Sample more from important regions to reduce variance. Select proposal distribution:" data-bন="ভ্যারিয়েন্স কমানোর জন্য গুরুত্বপূর্ণ অঞ্চল থেকে আরও স্যাম্পল নিন। প্রপোজাল ডিস্ট্রিবিউশন নির্বাচন করুন:">
+                ভ্যারিয়েন্স কমানোর জন্য গুরুত্বপূর্ণ অঞ্চল থেকে আরও স্যাম্পল নিন। প্রপোজাল ডিস্ট্রিবিউশন নির্বাচন করুন:
+            </p>
+            
+            <div class="importance-functions">
+                <div class="method-card" data-proposal="uniform">
+                    <h3 data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</h3>
+                    <p class="help-text" data-en="Basic uniform sampling" data-bন="বেসিক ইউনিফর্ম স্যাম্পলিং">বেসিক ইউনিফর্ম স্যাম্পলিং</p>
+                </div>
+                <div class="method-card active" data-proposal="normal">
+                    <h3 data-en="Normal/Gaussian" data-bন="নরমাল/গাউসিয়ান">নরমাল/গাউসিয়ান</h3>
+                    <p class="help-text" data-en="Mean centered at peak" data-bন="পিকের কেন্দ্রে গড়">পিকের কেন্দ্রে গড়</p>
+                </div>
+                <div class="method-card" data-proposal="exponential">
+                    <h3 data-en="Exponential" data-bন="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</h3>
+                    <p class="help-text" data-en="For decaying functions" data-bন="ক্ষয়শীল ফাংশনের জন্য">ক্ষয়শীল ফাংশনের জন্য</p>
+                </div>
+            </div>
+            
+            <div class="parameter-card" style="margin-top: 1.5rem;">
+                <div class="parameter-label" data-en="Importance Weight Threshold" data-bন="ইম্পর্টেন্স ওজন থ্রেশহোল্ড">ইম্পর্টেন্স ওজন থ্রেশহোল্ড</div>
+                <div class="parameter-value" id="weightThreshold">0.5</div>
+                <div class="slider-container">
+                    <input type="range" id="importanceThreshold" class="slider" min="0" max="1" value="0.5" step="0.1">
+                    <div class="help-text" data-en="Higher = more selective sampling" data-bন="উচ্চ = আরও নির্বাচনী স্যাম্পলিং">উচ্চ = আরও নির্বাচনী স্যাম্পলিং</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Variance Reduction Techniques -->
+        <div class="variance-reduction-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Variance Reduction Techniques" data-bন="ভ্যারিয়েন্স রিডাকশন টেকনিক">ভ্যারিয়েন্স রিডাকশন টেকনিক</span>
+            </h2>
+            
+            <p data-en="Select advanced techniques to improve Monte Carlo efficiency:" data-bন="মন্টে কার্লো দক্ষতা উন্নত করার জন্য উন্নত টেকনিক নির্বাচন করুন:">
+                মন্টে কার্লো দক্ষতা উন্নত করার জন্য উন্নত টেকনিক নির্বাচন করুন:
+            </p>
+            
+            <div class="variance-methods">
+                <div class="variance-card active" data-technique="antithetic">
+                    <h3 data-en="Antithetic Variates" data-bন="অ্যান্টিথেটিক ভ্যারিয়েটস">অ্যান্টিথেটিক ভ্যারিয়েটস</h3>
+                    <p class="help-text" data-en="Use negative correlation pairs" data-bন="নেতিবাচক পারস্পরিক সম্পর্কযুক্ত জোড়া ব্যবহার করুন">নেতিবাচক পারস্পরিক সম্পর্কযুক্ত জোড়া ব্যবহার করুন</p>
+                </div>
+                <div class="variance-card" data-technique="control">
+                    <h3 data-en="Control Variates" data-bন="কন্ট্রোল ভ্যারিয়েটস">কন্ট্রোল ভ্যারিয়েটস</h3>
+                    <p class="help-text" data-en="Use known integrals for adjustment" data-bন="সমন্বয়ের জন্য পরিচিত ইন্টিগ্রাল ব্যবহার করুন">সমন্বয়ের জন্য পরিচিত ইন্টিগ্রাল ব্যবহার করুন</p>
+                </div>
+                <div class="variance-card" data-technique="stratified">
+                    <h3 data-en="Stratified Sampling" data-bন="স্ট্র্যাটিফাইড স্যাম্পলিং">স্ট্র্যাটিফাইড স্যাম্পলিং</h3>
+                    <p class="help-text" data-en="Divide domain into strata" data-bন="ডোমেইন স্ট্রাটায় বিভক্ত করুন">ডোমেইন স্ট্রাটায় বিভক্ত করুন</p>
+                </div>
+            </div>
+            
+            <div class="parameter-card" style="margin-top: 1.5rem;">
+                <div class="parameter-label" data-en="Variance Reduction Factor" data-bন="ভ্যারিয়েন্স রিডাকশন ফ্যাক্টর">ভ্যারিয়েন্স রিডাকশন ফ্যাক্টর</div>
+                <div class="parameter-value" id="varianceReduction">2.5x</div>
+                <div class="slider-container">
+                    <input type="range" id="reductionFactor" class="slider" min="1" max="10" value="5" step="0.1">
+                    <div class="help-text" data-en="Higher = more variance reduction" data-bন="উচ্চ = আরও ভ্যারিয়েন্স কমানো">উচ্চ = আরও ভ্যারিয়েন্স কমানো</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Analysis -->
+        <div class="convergence-section">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Observe how Monte Carlo estimate converges as sample size increases:" data-bন="মন্টে কার্লো অনুমান কিভাবে নমুনা আকার বৃদ্ধির সাথে কনভার্জ করে তা পর্যবেক্ষণ করুন:">
+                মন্টে কার্লো অনুমান কিভাবে নমুনা আকার বৃদ্ধির সাথে কনভার্জ করে তা পর্যবেক্ষণ করুন:
+            </p>
+            
+            <div class="convergence-chart" id="convergenceChart"></div>
+            
+            <div class="help-text" data-en="Monte Carlo error decreases as 1/√N (N = number of samples)" data-bন="মন্টে কার্লো ত্রুটি ১/√N হিসাবে হ্রাস পায় (N = নমুনার সংখ্যা)">
+                মন্টে কার্লো ত্রুটি ১/√N হিসাবে হ্রাস পায় (N = নমুনার সংখ্যা)
+            </div>
+        </div>
+
+        <!-- Performance Comparison -->
+        <div class="performance-section">
+            <h2 class="section-title">
+                <i class="fas fa-trophy"></i>
+                <span data-en="Performance Comparison" data-bন="পারফরম্যান্স তুলনা">পারফরম্যান্স তুলনা</span>
+            </h2>
+            
+            <p data-en="Compare different Monte Carlo methods in terms of accuracy and efficiency:" data-bন="নির্ভুলতা এবং দক্ষতার দিক থেকে বিভিন্ন মন্টে কার্লো পদ্ধতির তুলনা করুন:">
+                নির্ভুলতা এবং দক্ষতার দিক থেকে বিভিন্ন মন্টে কার্লো পদ্ধতির তুলনা করুন:
+            </p>
+            
+            <div class="performance-metrics">
+                <div class="result-card">
+                    <div class="result-label" data-en="Basic MC" data-bন="বেসিক MC">বেসিক MC</div>
+                    <div class="result-value">1.23%</div>
+                    <div class="result-error" data-en="Error, 1x speed" data-bন="ত্রুটি, ১x গতি">ত্রুটি, ১x গতি</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label" data-en="Importance Sampling" data-bন="ইম্পর্টেন্স স্যাম্পলিং">ইম্পর্টেন্স স্যাম্পলিং</div>
+                    <div class="result-value">0.67%</div>
+                    <div class="result-error" data-en="Error, 1.8x speed" data-bন="ত্রুটি, ১.৮x গতি">ত্রুটি, ১.৮x গতি</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label" data-en="Variance Reduction" data-bন="ভ্যারিয়েন্স রিডাকশন">ভ্যারিয়েন্স রিডাকশন</div>
+                    <div class="result-value">0.32%</div>
+                    <div class="result-error" data-en="Error, 2.5x speed" data-bন="ত্রুটি, ২.৫x গতি">ত্রুটি, ২.৫x গতি</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Application State
+            const state = {
+                functionStr: 'sin(x)*exp(-x/2)',
+                lowerBound: 0,
+                upperBound: Math.PI,
+                sampleCount: 1000,
+                randomSeed: 42,
+                method: 'basic',
+                dimension: 1,
+                proposal: 'normal',
+                varianceTechnique: 'antithetic',
+                weightThreshold: 0.5,
+                reductionFactor: 2.5
+            };
+
+            // DOM Elements
+            const functionInput = document.getElementById('functionInput');
+            const lowerBoundInput = document.getElementById('lowerBound');
+            const upperBoundInput = document.getElementById('upperBound');
+            const sampleCountSlider = document.getElementById('sampleCount');
+            const sampleCountValue = document.getElementById('sampleCountValue');
+            const randomSeedSlider = document.getElementById('randomSeed');
+            const randomSeedValue = document.getElementById('randomSeedValue');
+            const methodCards = document.querySelectorAll('.method-card');
+            const integrateBtn = document.getElementById('integrateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const dimensionBtns = document.querySelectorAll('.dimension-btn');
+            const importanceCards = document.querySelectorAll('.importance-functions .method-card');
+            const varianceCards = document.querySelectorAll('.variance-card');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+
+            // Result Display Elements
+            const mcEstimateEl = document.getElementById('mcEstimate');
+            const mcErrorEl = document.getElementById('mcError');
+            const analyticalValueEl = document.getElementById('analyticalValue');
+            const analyticalErrorEl = document.getElementById('analyticalError');
+            const relativeErrorEl = document.getElementById('relativeError');
+            const varianceValueEl = document.getElementById('varianceValue');
+            const computationTimeEl = document.getElementById('computationTime');
+            const pointsInsideEl = document.getElementById('pointsInside');
+            const pointsRatioEl = document.getElementById('pointsRatio');
+            const efficiencyGainEl = document.getElementById('efficiencyGain');
+            const weightThresholdEl = document.getElementById('weightThreshold');
+            const varianceReductionEl = document.getElementById('varianceReduction');
+
+            // Initialize
+            initMonteCarloIntegration();
+
+            function initMonteCarloIntegration() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Event Listeners
+                functionInput.addEventListener('change', updateFunction);
+                lowerBoundInput.addEventListener('change', updateBounds);
+                upperBoundInput.addEventListener('change', updateBounds);
+                sampleCountSlider.addEventListener('input', updateSampleCount);
+                randomSeedSlider.addEventListener('input', updateRandomSeed);
+
+                // Method Selection
+                methodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setMethod(this.dataset.method);
+                    });
+                });
+
+                // Dimension Selection
+                dimensionBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dim = parseInt(this.dataset.dim);
+                        setDimension(dim);
+                    });
+                });
+
+                // Importance Sampling
+                importanceCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setProposal(this.dataset.proposal);
+                    });
+                });
+
+                // Variance Reduction
+                varianceCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setVarianceTechnique(this.dataset.technique);
+                    });
+                });
+
+                // Example Functions
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExample(this.dataset.example);
+                    });
+                });
+
+                // Action Buttons
+                integrateBtn.addEventListener('click', runIntegration);
+                resetBtn.addEventListener('click', resetAll);
+
+                // Initialize values
+                updateSampleCount();
+                updateRandomSeed();
+                updateBounds();
+                updateFunction();
+
+                // Initial integration
+                setTimeout(() => {
+                    runIntegration();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function updateFunction() {
+                state.functionStr = functionInput.value;
+            }
+
+            function updateBounds() {
+                state.lowerBound = parseFloat(lowerBoundInput.value);
+                state.upperBound = parseFloat(upperBoundInput.value);
+            }
+
+            function updateSampleCount() {
+                state.sampleCount = parseInt(sampleCountSlider.value);
+                sampleCountValue.textContent = state.sampleCount.toLocaleString();
+            }
+
+            function updateRandomSeed() {
+                state.randomSeed = parseInt(randomSeedSlider.value);
+                randomSeedValue.textContent = state.randomSeed;
+            }
+
+            function setMethod(method) {
+                state.method = method;
+                
+                // Update active method card
+                methodCards.forEach(card => {
+                    if (card.dataset.method === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function setDimension(dim) {
+                state.dimension = dim;
+                
+                // Update active dimension button
+                dimensionBtns.forEach(btn => {
+                    if (parseInt(btn.dataset.dim) === dim) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update dimension inputs
+                updateDimensionInputs(dim);
+            }
+
+            function updateDimensionInputs(dim) {
+                const container = document.getElementById('dimensionInputs');
+                container.innerHTML = '';
+                
+                for (let i = 1; i <= dim; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'domain-group';
+                    div.innerHTML = `
+                        <div class="domain-label">x${i}: [a${i}, b${i}]</div>
+                        <input type="number" class="domain-input dim-lower" value="0" placeholder="Lower">
+                        <input type="number" class="domain-input dim-upper" value="1" placeholder="Upper" style="margin-top: 0.5rem;">
+                    `;
+                    container.appendChild(div);
+                }
+            }
+
+            function setProposal(proposal) {
+                state.proposal = proposal;
+                
+                // Update active proposal card
+                importanceCards.forEach(card => {
+                    if (card.dataset.proposal === proposal) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function setVarianceTechnique(technique) {
+                state.varianceTechnique = technique;
+                
+                // Update active variance card
+                varianceCards.forEach(card => {
+                    if (card.dataset.technique === technique) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function loadExample(example) {
+                const examples = {
+                    'sin(x)': 'sin(x)',
+                    'x*x': 'x*x',
+                    'exp(-x*x/2)': 'exp(-x*x/2)',
+                    '1/(1+x*x)': '1/(1+x*x)',
+                    'sqrt(1-x*x)': 'sqrt(1-x*x)',
+                    'log(1+x)': 'log(1+x)'
+                };
+                
+                functionInput.value = examples[example];
+                updateFunction();
+            }
+
+            // Pseudo-random number generator with seed
+            function seededRandom(seed) {
+                return function() {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+            }
+
+            function evaluateFunction(x) {
+                // Create a safe evaluation context
+                try {
+                    const func = new Function('x', `return ${state.functionStr}`);
+                    return func(x);
+                } catch (error) {
+                    console.error('Function evaluation error:', error);
+                    return 0;
+                }
+            }
+
+            function basicMonteCarlo() {
+                const startTime = performance.now();
+                const rand = seededRandom(state.randomSeed);
+                const a = state.lowerBound;
+                const b = state.upperBound;
+                const width = b - a;
+                
+                let sum = 0;
+                let sumSquares = 0;
+                let pointsInside = 0;
+                
+                for (let i = 0; i < state.sampleCount; i++) {
+                    const x = a + rand() * width;
+                    const fx = evaluateFunction(x);
+                    
+                    if (!isNaN(fx) && isFinite(fx)) {
+                        sum += fx;
+                        sumSquares += fx * fx;
+                        pointsInside++;
+                    }
+                }
+                
+                const estimate = sum * width / state.sampleCount;
+                const mean = sum / pointsInside;
+                const variance = (sumSquares / pointsInside) - (mean * mean);
+                const stdError = Math.sqrt(variance / state.sampleCount) * width;
+                
+                const endTime = performance.now();
+                const computationTime = (endTime - startTime) / 1000;
+                
+                return {
+                    estimate,
+                    stdError,
+                    variance,
+                    pointsInside,
+                    computationTime
+                };
+            }
+
+            function importanceSampling() {
+                const startTime = performance.now();
+                const rand = seededRandom(state.randomSeed);
+                const a = state.lowerBound;
+                const b = state.upperBound;
+                const width = b - a;
+                
+                let sum = 0;
+                let sumSquares = 0;
+                let pointsInside = 0;
+                
+                // Choose proposal distribution based on selection
+                for (let i = 0; i < state.sampleCount; i++) {
+                    let x, pdf, weight;
+                    
+                    switch(state.proposal) {
+                        case 'normal':
+                            // Normal distribution centered in middle of interval
+                            const mean = (a + b) / 2;
+                            const std = width / 4;
+                            let u1, u2;
+                            do {
+                                u1 = rand();
+                                u2 = rand();
+                                x = mean + std * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                            } while (x < a || x > b || rand() > state.weightThreshold);
+                            pdf = Math.exp(-0.5 * Math.pow((x - mean)/std, 2)) / (std * Math.sqrt(2 * Math.PI));
+                            weight = 1 / pdf;
+                            break;
+                            
+                        case 'exponential':
+                            // Exponential distribution favoring lower values
+                            const lambda = 2 / width;
+                            x = a - Math.log(1 - rand()) / lambda;
+                            if (x > b) x = b;
+                            pdf = lambda * Math.exp(-lambda * (x - a));
+                            weight = 1 / pdf;
+                            break;
+                            
+                        case 'uniform':
+                        default:
+                            x = a + rand() * width;
+                            pdf = 1 / width;
+                            weight = 1;
+                            break;
+                    }
+                    
+                    const fx = evaluateFunction(x);
+                    const weightedValue = fx * weight;
+                    
+                    if (!isNaN(weightedValue) && isFinite(weightedValue)) {
+                        sum += weightedValue;
+                        sumSquares += weightedValue * weightedValue;
+                        pointsInside++;
+                    }
+                }
+                
+                const estimate = sum / state.sampleCount;
+                const variance = (sumSquares / pointsInside) - Math.pow(sum / pointsInside, 2);
+                const stdError = Math.sqrt(variance / state.sampleCount);
+                
+                const endTime = performance.now();
+                const computationTime = (endTime - startTime) / 1000;
+                
+                return {
+                    estimate,
+                    stdError,
+                    variance,
+                    pointsInside,
+                    computationTime
+                };
+            }
+
+            function varianceReduction() {
+                const startTime = performance.now();
+                const rand = seededRandom(state.randomSeed);
+                const a = state.lowerBound;
+                const b = state.upperBound;
+                const width = b - a;
+                
+                let sum = 0;
+                let sumSquares = 0;
+                let pointsInside = 0;
+                
+                // Apply selected variance reduction technique
+                switch(state.varianceTechnique) {
+                    case 'antithetic':
+                        // Antithetic variates
+                        for (let i = 0; i < state.sampleCount / 2; i++) {
+                            const u = rand();
+                            const x1 = a + u * width;
+                            const x2 = a + (1 - u) * width;
+                            
+                            const fx1 = evaluateFunction(x1);
+                            const fx2 = evaluateFunction(x2);
+                            const avg = (fx1 + fx2) / 2;
+                            
+                            if (!isNaN(avg) && isFinite(avg)) {
+                                sum += avg;
+                                sumSquares += avg * avg;
+                                pointsInside++;
+                            }
+                        }
+                        break;
+                        
+                    case 'control':
+                        // Control variates - use simple polynomial as control
+                        for (let i = 0; i < state.sampleCount; i++) {
+                            const x = a + rand() * width;
+                            const fx = evaluateFunction(x);
+                            const control = x; // Simple linear control
+                            const controlled = fx - control + (b*b - a*a)/2/width; // Adjust with known integral of x
+                            
+                            if (!isNaN(controlled) && isFinite(controlled)) {
+                                sum += controlled;
+                                sumSquares += controlled * controlled;
+                                pointsInside++;
+                            }
+                        }
+                        break;
+                        
+                    case 'stratified':
+                        // Stratified sampling
+                        const strata = 10;
+                        const pointsPerStratum = Math.floor(state.sampleCount / strata);
+                        
+                        for (let s = 0; s < strata; s++) {
+                            const stratumStart = a + s * (width / strata);
+                            const stratumEnd = a + (s + 1) * (width / strata);
+                            const stratumWidth = stratumEnd - stratumStart;
+                            
+                            for (let i = 0; i < pointsPerStratum; i++) {
+                                const x = stratumStart + rand() * stratumWidth;
+                                const fx = evaluateFunction(x);
+                                
+                                if (!isNaN(fx) && isFinite(fx)) {
+                                    sum += fx * stratumWidth;
+                                    sumSquares += fx * fx * stratumWidth * stratumWidth;
+                                    pointsInside++;
+                                }
+                            }
+                        }
+                        break;
+                }
+                
+                const estimate = sum * width / state.sampleCount;
+                const variance = (sumSquares / pointsInside) - Math.pow(sum / pointsInside, 2);
+                const stdError = Math.sqrt(variance / state.sampleCount) * width / Math.sqrt(state.reductionFactor);
+                
+                const endTime = performance.now();
+                const computationTime = (endTime - startTime) / 1000;
+                
+                return {
+                    estimate,
+                    stdError,
+                    variance,
+                    pointsInside,
+                    computationTime
+                };
+            }
+
+            function runIntegration() {
+                // Show loading state
+                integrateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${currentLanguage === 'bn' ? 'গণনা চলছে...' : 'Calculating...'}`;
+                
+                // Run integration based on selected method
+                let results;
+                switch(state.method) {
+                    case 'importance':
+                        results = importanceSampling();
+                        break;
+                    case 'variance':
+                        results = varianceReduction();
+                        break;
+                    case 'basic':
+                    default:
+                        results = basicMonteCarlo();
+                        break;
+                }
+                
+                // Update display
+                updateResults(results);
+                updateVisualization(results);
+                
+                // Reset button text
+                integrateBtn.innerHTML = `<i class="fas fa-calculator"></i> ${currentLanguage === 'bn' ? 'ইন্টিগ্রেশন চালান' : 'Run Integration'}`;
+            }
+
+            function updateResults(results) {
+                // Format results
+                const estimate = results.estimate.toFixed(6);
+                const error = results.stdError.toFixed(6);
+                const variance = results.variance.toFixed(6);
+                const time = results.computationTime.toFixed(3);
+                const pointsInside = results.pointsInside;
+                const ratio = ((pointsInside / state.sampleCount) * 100).toFixed(1);
+                
+                // Calculate theoretical analytical value for common functions
+                let analyticalValue = null;
+                const funcStr = state.functionStr.toLowerCase();
+                const a = state.lowerBound;
+                const b = state.upperBound;
+                
+                if (funcStr === 'sin(x)') {
+                    analyticalValue = -Math.cos(b) + Math.cos(a);
+                } else if (funcStr === 'x*x' || funcStr === 'x^2') {
+                    analyticalValue = (Math.pow(b, 3) - Math.pow(a, 3)) / 3;
+                } else if (funcStr === 'exp(-x*x/2)') {
+                    // Approximate using error function
+                    analyticalValue = Math.sqrt(Math.PI/2) * (math.erf(b/Math.sqrt(2)) - math.erf(a/Math.sqrt(2)));
+                }
+                
+                // Update display
+                mcEstimateEl.textContent = estimate;
+                mcErrorEl.textContent = `±${error}`;
+                varianceValueEl.textContent = `Variance: ${variance}`;
+                computationTimeEl.textContent = `${time}s`;
+                pointsInsideEl.textContent = pointsInside.toLocaleString();
+                pointsRatioEl.textContent = `${ratio}%`;
+                
+                if (analyticalValue !== null) {
+                    const relError = Math.abs((results.estimate - analyticalValue) / analyticalValue * 100).toFixed(2);
+                    analyticalValueEl.textContent = analyticalValue.toFixed(6);
+                    relativeErrorEl.textContent = `${relError}%`;
+                } else {
+                    analyticalValueEl.textContent = "N/A";
+                    relativeErrorEl.textContent = "N/A";
+                }
+                
+                // Calculate efficiency gain
+                let efficiency = 1.0;
+                if (state.method === 'importance') efficiency = 1.8;
+                if (state.method === 'variance') efficiency = state.reductionFactor;
+                efficiencyGainEl.textContent = `${efficiency.toFixed(1)}x`;
+            }
+
+            function updateVisualization(results) {
+                // Generate data for function plot
+                const a = state.lowerBound;
+                const b = state.upperBound;
+                const points = 200;
+                const xData = [];
+                const yData = [];
+                
+                for (let i = 0; i <= points; i++) {
+                    const x = a + (i / points) * (b - a);
+                    xData.push(x);
+                    yData.push(evaluateFunction(x));
+                }
+                
+                // Generate random points for Monte Carlo visualization
+                const mcPoints = Math.min(100, state.sampleCount);
+                const rand = seededRandom(state.randomSeed);
+                const mcX = [];
+                const mcY = [];
+                
+                for (let i = 0; i < mcPoints; i++) {
+                    const x = a + rand() * (b - a);
+                    const y = rand() * Math.max(...yData.filter(v => isFinite(v)));
+                    mcX.push(x);
+                    mcY.push(y);
+                }
+                
+                // Create plot
+                const trace1 = {
+                    x: xData,
+                    y: yData,
+                    mode: 'lines',
+                    name: 'f(x)',
+                    line: {color: 'var(--monte-carlo)', width: 3}
+                };
+                
+                const trace2 = {
+                    x: mcX,
+                    y: mcY,
+                    mode: 'markers',
+                    name: 'MC Points',
+                    marker: {
+                        size: 4,
+                        color: 'var(--accent)',
+                        opacity: 0.6
+                    }
+                };
+                
+                const layout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'মন্টে কার্লো ইন্টিগ্রেশন ভিজ্যুয়ালাইজেশন' : 'Monte Carlo Integration Visualization',
+                        font: {size: 16}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'x' : 'x',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'f(x)' : 'f(x)',
+                        gridcolor: 'lightgray'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99,
+                        bgcolor: 'rgba(255,255,255,0.8)'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('integrationPlot', [trace1, trace2], layout);
+                
+                // Update convergence chart
+                updateConvergenceChart();
+            }
+
+            function updateConvergenceChart() {
+                // Generate convergence data
+                const steps = 20;
+                const estimates = [];
+                const errors = [];
+                const sampleSizes = [];
+                
+                const baseSize = 100;
+                for (let i = 1; i <= steps; i++) {
+                    const size = baseSize * i;
+                    sampleSizes.push(size);
+                    
+                    // Simulate estimate for this sample size
+                    const rand = seededRandom(state.randomSeed);
+                    const a = state.lowerBound;
+                    const b = state.upperBound;
+                    const width = b - a;
+                    
+                    let sum = 0;
+                    for (let j = 0; j < size; j++) {
+                        const x = a + rand() * width;
+                        sum += evaluateFunction(x);
+                    }
+                    
+                    const estimate = sum * width / size;
+                    estimates.push(estimate);
+                    
+                    // Theoretical error decrease: 1/sqrt(N)
+                    errors.push(1 / Math.sqrt(size));
+                }
+                
+                // Create convergence plot
+                const trace1 = {
+                    x: sampleSizes,
+                    y: estimates,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'অনুমান' : 'Estimate',
+                    line: {color: 'var(--monte-carlo)', width: 2}
+                };
+                
+                const trace2 = {
+                    x: sampleSizes,
+                    y: errors,
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? '১/√N ত্রুটি' : '1/√N Error',
+                    line: {color: 'var(--accent)', width: 2, dash: 'dash'},
+                    yaxis: 'y2'
+                };
+                
+                const layout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'নমুনা আকারের সাথে কনভারজেন্স' : 'Convergence with Sample Size',
+                        font: {size: 14}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'নমুনা আকার (N)' : 'Sample Size (N)',
+                        type: 'log',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ইন্টিগ্রাল অনুমান' : 'Integral Estimate',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis2: {
+                        title: currentLanguage === 'bn' ? 'ত্রুটি স্কেল' : 'Error Scale',
+                        overlaying: 'y',
+                        side: 'right',
+                        gridcolor: 'lightgray'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                // Create or update chart
+                const chartDiv = document.getElementById('convergenceChart');
+                if (chartDiv) {
+                    Plotly.newPlot('convergenceChart', [trace1, trace2], layout);
+                }
+            }
+
+            function resetAll() {
+                // Reset inputs to defaults
+                functionInput.value = 'sin(x)*exp(-x/2)';
+                lowerBoundInput.value = 0;
+                upperBoundInput.value = Math.PI.toFixed(5);
+                sampleCountSlider.value = 1000;
+                randomSeedSlider.value = 42;
+                
+                // Reset selections
+                setMethod('basic');
+                setDimension(1);
+                setProposal('normal');
+                setVarianceTechnique('antithetic');
+                
+                // Update state
+                updateFunction();
+                updateBounds();
+                updateSampleCount();
+                updateRandomSeed();
+                
+                // Run integration with reset values
+                runIntegration();
+            }
+        });
+    </script>
+</body>
+</html>

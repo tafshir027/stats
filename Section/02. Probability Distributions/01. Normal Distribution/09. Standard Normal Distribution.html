@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজার | Normal Distribution</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #9C27B0;
+            --secondary: #7B1FA2;
+            --accent: #E91E63;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --info: #2196F3;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --bell-curve: #9C27B0;
+            --one-sd: #4CAF50;
+            --two-sd: #2196F3;
+            --three-sd: #FF9800;
+            --mean-line: #E91E63;
+            --z-score-line: #9C27B0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #ede7f6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Interactive Controls */
+        .interactive-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .interactive-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .control-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Z-Score Input */
+        .z-score-input {
+            margin-top: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-label i {
+            color: var(--primary);
+        }
+
+        .input-box {
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Quick Z-Score Buttons */
+        .quick-z-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .quick-z-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .quick-z-btn {
+            padding: 0.6rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .quick-z-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Visualization Options */
+        .viz-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .viz-option {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .viz-option:hover {
+            border-color: var(--primary);
+            background: var(--light-gray);
+        }
+
+        .viz-option.selected {
+            border-color: var(--primary);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .viz-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            margin-bottom: 2rem;
+        }
+
+        /* Empirical Rule Visualization */
+        .empirical-rule-viz {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .rule-visualization {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .rule-visualization {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .rule-visual {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rule-visual:hover {
+            transform: translateY(-5px);
+        }
+
+        .rule-visual.one-sd {
+            border-color: var(--one-sd);
+        }
+
+        .rule-visual.two-sd {
+            border-color: var(--two-sd);
+        }
+
+        .rule-visual.three-sd {
+            border-color: var(--three-sd);
+        }
+
+        .rule-visual::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .rule-visual.one-sd::before { background: var(--one-sd); }
+        .rule-visual.two-sd::before { background: var(--two-sd); }
+        .rule-visual.three-sd::before { background: var(--three-sd); }
+
+        .rule-percentage {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .one-sd .rule-percentage { color: var(--one-sd); }
+        .two-sd .rule-percentage { color: var(--two-sd); }
+        .three-sd .rule-percentage { color: var(--three-sd); }
+
+        .rule-range {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-area {
+            font-size: 0.9rem;
+            color: var(--dark);
+            background: white;
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        /* Standard Unit Comparison */
+        .standard-unit-comparison {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .comparison-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .comparison-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .comparison-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--info);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .comparison-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .comparison-list {
+            list-style: none;
+        }
+
+        .comparison-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .comparison-item i {
+            color: var(--info);
+            font-size: 0.9rem;
+        }
+
+        /* Interactive Bell Curve Properties */
+        .bell-curve-properties {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .property-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .property-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .property-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .property-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .property-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .property-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Area Calculation */
+        .area-calculation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .calculation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .calculation-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .calculation-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .calculation-title {
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .calculation-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .calculation-description {
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        /* Probability Calculator */
+        .probability-calculator {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .calculator-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .input-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-card h4 i {
+            color: var(--primary);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .bell-curve-legend { background: var(--bell-curve); }
+        .mean-line-legend { background: var(--mean-line); height: 3px; }
+        .z-score-legend { background: var(--z-score-line); }
+        .one-sd-legend { background: var(--one-sd); }
+        .two-sd-legend { background: var(--two-sd); }
+        .three-sd-legend { background: var(--three-sd); }
+
+        /* Formula Display */
+        .formula-display {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-content {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--dark);
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .formula-explanation {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+            margin-top: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .empirical-rule-viz,
+            .standard-unit-comparison,
+            .bell-curve-properties,
+            .area-calculation,
+            .probability-calculator,
+            .formula-display {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .rule-percentage {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .control-group {
+                padding: 1rem;
+            }
+            
+            .viz-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes highlightArea {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+            100% { opacity: 0.3; }
+        }
+
+        .highlight-area {
+            animation: highlightArea 2s ease infinite;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.8rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Standard Normal Distribution Visualizer" data-bn="স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজার">স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Visualize the standard normal distribution (μ=0, σ=1) with interactive controls, empirical rule visualization, and probability calculations" data-bn="ইন্টারেকটিভ কন্ট্রোল, এম্পিরিক্যাল রুল ভিজ্যুয়ালাইজেশন এবং প্রোবাবিলিটি গণনা সহ স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন (μ=0, σ=1) ভিজ্যুয়ালাইজ করুন">
+                ইন্টারেকটিভ কন্ট্রোল, এম্পিরিক্যাল রুল ভিজ্যুয়ালাইজেশন এবং প্রোবাবিলিটি গণনা সহ স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন (μ=0, σ=1) ভিজ্যুয়ালাইজ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Interactive Controls" data-bn="ইন্টারেকটিভ কন্ট্রোল">ইন্টারেকটিভ কন্ট্রোল</span>
+                </h2>
+                
+                <!-- Z-Score Controls -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <div class="control-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3 class="control-title" data-en="Z-Score Controls" data-bn="Z-স্কোর কন্ট্রোল">Z-স্কোর কন্ট্রোল</h3>
+                    </div>
+                    
+                    <div class="z-score-input">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span data-en="Z-Score Value" data-bন="Z-স্কোর মান">Z-স্কোর মান</span>
+                            </label>
+                            <input type="number" class="input-box" id="zScoreInput" value="0" step="0.1" min="-5" max="5">
+                            <div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.3rem;" data-en="Enter z-score between -5 and 5" data-bন="-৫ থেকে ৫ এর মধ্যে Z-স্কোর লিখুন">
+                                -৫ থেকে ৫ এর মধ্যে Z-স্কোর লিখুন
+                            </div>
+                        </div>
+                        
+                        <div class="quick-z-buttons">
+                            <button class="quick-z-btn" data-z="-3">-3σ</button>
+                            <button class="quick-z-btn" data-z="-2">-2σ</button>
+                            <button class="quick-z-btn" data-z="-1">-1σ</button>
+                            <button class="quick-z-btn" data-z="0">0 (μ)</button>
+                            <button class="quick-z-btn" data-z="1">1σ</button>
+                            <button class="quick-z-btn" data-z="2">2σ</button>
+                            <button class="quick-z-btn" data-z="3">3σ</button>
+                            <button class="quick-z-btn" data-z="1.96">1.96σ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Options -->
+                <div class="control-group">
+                    <div class="control-header">
+                        <div class="control-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3 class="control-title" data-en="Visualization Options" data-bন="ভিজ্যুয়ালাইজেশন অপশন">ভিজ্যুয়ালাইজেশন অপশন</h3>
+                    </div>
+                    
+                    <div class="viz-options">
+                        <label class="viz-option selected" id="showEmpiricalRuleLabel">
+                            <input type="checkbox" id="showEmpiricalRule" checked>
+                            <div>
+                                <div data-en="Empirical Rule" data-bন="এম্পিরিক্যাল রুল">এম্পিরিক্যাল রুল</div>
+                            </div>
+                        </label>
+                        
+                        <label class="viz-option selected" id="showMeanLineLabel">
+                            <input type="checkbox" id="showMeanLine" checked>
+                            <div>
+                                <div data-en="Mean Line" data-bন="মিন লাইন">মিন লাইন</div>
+                            </div>
+                        </label>
+                        
+                        <label class="viz-option selected" id="showZScoreLineLabel">
+                            <input type="checkbox" id="showZScoreLine" checked>
+                            <div>
+                                <div data-en="Z-Score Line" data-bন="Z-স্কোর লাইন">Z-স্কোর লাইন</div>
+                            </div>
+                        </label>
+                        
+                        <label class="viz-option" id="showAreaLabel">
+                            <input type="checkbox" id="showArea">
+                            <div>
+                                <div data-en="Shade Area" data-bন="এলাকা শেড করুন">এলাকা শেড করুন</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="updateVizBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Update Visualization" data-bন="ভিজ্যুয়ালাইজেশন আপডেট করুন">ভিজ্যুয়ালাইজেশন আপডেট করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="resetVizBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset to Default" data-bন="ডিফল্টে রিসেট করুন">ডিফল্টে রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Interactive Bell Curve" data-bন="ইন্টারেকটিভ বেল কার্ভ">ইন্টারেকটিভ বেল কার্ভ</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="bellCurveChart"></canvas>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color bell-curve-legend"></div>
+                        <span data-en="Bell Curve" data-bন="বেল কার্ভ">বেল কার্ভ</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color mean-line-legend"></div>
+                        <span data-en="Mean (μ=0)" data-bন="মিন (μ=০)">মিন (μ=০)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color z-score-legend"></div>
+                        <span data-en="Z-Score Line" data-bন="Z-স্কোর লাইন">Z-স্কোর লাইন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color one-sd-legend"></div>
+                        <span data-en="±1σ (68%)" data-bন="±১σ (৬৮%)">±১σ (৬৮%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color two-sd-legend"></div>
+                        <span data-en="±2σ (95%)" data-bন="±২σ (৯৫%)">±২σ (৯৫%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color three-sd-legend"></div>
+                        <span data-en="±3σ (99.7%)" data-bন="±৩σ (৯৯.৭%)">±৩σ (৯৯.৭%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empirical Rule Visualization -->
+        <div class="empirical-rule-viz">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-en="Empirical Rule Visualization (68-95-99.7 Rule)" data-bন="এম্পিরিক্যাল রুল ভিজ্যুয়ালাইজেশন (68-95-99.7 রুল)">এম্পিরিক্যাল রুল ভিজ্যুয়ালাইজেশন (68-95-99.7 রুল)</span>
+            </h2>
+            
+            <div class="rule-visualization">
+                <div class="rule-visual one-sd fade-in">
+                    <div class="rule-percentage">68.27%</div>
+                    <div class="rule-range" data-en="Within ±1 Standard Deviation" data-bন="±১ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে">±১ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে</div>
+                    <div class="rule-area">
+                        <div data-en="Area: -1σ to +1σ" data-bন="এলাকা: -১σ থেকে +১σ">এলাকা: -১σ থেকে +১σ</div>
+                        <div data-en="Probability: 0.6827" data-bন="প্রোবাবিলিটি: ০.৬৮২৭">প্রোবাবিলিটি: ০.৬৮২৭</div>
+                    </div>
+                </div>
+                
+                <div class="rule-visual two-sd fade-in">
+                    <div class="rule-percentage">95.45%</div>
+                    <div class="rule-range" data-en="Within ±2 Standard Deviations" data-bন="±২ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে">±২ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে</div>
+                    <div class="rule-area">
+                        <div data-en="Area: -2σ to +2σ" data-bন="এলাকা: -২σ থেকে +২σ">এলাকা: -২σ থেকে +২σ</div>
+                        <div data-en="Probability: 0.9545" data-bন="প্রোবাবিলিটি: ০.৯৫৪৫">প্রোবাবিলিটি: ০.৯৫৪৫</div>
+                    </div>
+                </div>
+                
+                <div class="rule-visual three-sd fade-in">
+                    <div class="rule-percentage">99.73%</div>
+                    <div class="rule-range" data-en="Within ±3 Standard Deviations" data-bন="±৩ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে">±৩ স্ট্যান্ডার্ড ডেভিয়েশন এর মধ্যে</div>
+                    <div class="rule-area">
+                        <div data-en="Area: -3σ to +3σ" data-bন="এলাকা: -৩σ থেকে +৩σ">এলাকা: -৩σ থেকে +৩σ</div>
+                        <div data-en="Probability: 0.9973" data-bন="প্রোবাবিলিটি: ০.৯৯৭৩">প্রোবাবিলিটি: ০.৯৯৭৩</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Standard Unit Comparison -->
+        <div class="standard-unit-comparison">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Standard Unit Comparison" data-bন="স্ট্যান্ডার্ড ইউনিট তুলনা">স্ট্যান্ডার্ড ইউনিট তুলনা</span>
+            </h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-card fade-in">
+                    <div class="comparison-header">
+                        <div class="comparison-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3 class="comparison-title" data-en="Z-Score Interpretation" data-bন="Z-স্কোর ইন্টারপ্রিটেশন">Z-স্কোর ইন্টারপ্রিটেশন</h3>
+                    </div>
+                    <ul class="comparison-list">
+                        <li class="comparison-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="z = 0: At the mean" data-bন="z = ০: মিনে">z = ০: মিনে</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="z = ±1: 1σ from mean" data-bন="z = ±১: মিন থেকে ১σ দূরে">z = ±১: মিন থেকে ১σ দূরে</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="z = ±2: 2σ from mean" data-bন="z = ±২: মিন থেকে ২σ দূরে">z = ±২: মিন থেকে ২σ দূরে</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="z = ±3: 3σ from mean" data-bন="z = ±৩: মিন থেকে ৩σ দূরে">z = ±৩: মিন থেকে ৩σ দূরে</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-card fade-in">
+                    <div class="comparison-header">
+                        <div class="comparison-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h3 class="comparison-title" data-en="Probability Equivalents" data-bন="প্রোবাবিলিটি সমতুল্য">প্রোবাবিলিটি সমতুল্য</h3>
+                    </div>
+                    <ul class="comparison-list">
+                        <li class="comparison-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="z = 1.645: 95% right tail" data-bন="z = ১.৬৪৫: ৯৫% ডান লেজ">z = ১.৬৪৫: ৯৫% ডান লেজ</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="z = 1.96: 97.5% right tail" data-bন="z = ১.৯৬: ৯৭.৫% ডান লেজ">z = ১.৯৬: ৯৭.৫% ডান লেজ</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="z = 2.576: 99.5% right tail" data-bন="z = ২.৫৭৬: ৯৯.৫% ডান লেজ">z = ২.৫৭৬: ৯৯.৫% ডান লেজ</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="z = 3.291: 99.9% right tail" data-bন="z = ৩.২৯১: ৯৯.৯% ডান লেজ">z = ৩.২৯১: ৯৯.৯% ডান লেজ</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-card fade-in">
+                    <div class="comparison-header">
+                        <div class="comparison-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="comparison-title" data-en="Real-world Examples" data-bন="বাস্তব-বিশ্ব উদাহরণ">বাস্তব-বিশ্ব উদাহরণ</h3>
+                    </div>
+                    <ul class="comparison-list">
+                        <li class="comparison-item">
+                            <i class="fas fa-user-graduate"></i>
+                            <span data-en="z = 1.5: Top 7% of class" data-bন="z = ১.৫: ক্লাসের শীর্ষ ৭%">z = ১.৫: ক্লাসের শীর্ষ ৭%</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-heartbeat"></i>
+                            <span data-en="z = -2: Unusually low BP" data-bন="z = -২: অস্বাভাবিক কম BP">z = -২: অস্বাভাবিক কম BP</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="z = 3: Extreme outlier" data-bন="z = ৩: চরম আউটলায়ার">z = ৩: চরম আউটলায়ার</span>
+                        </li>
+                        <li class="comparison-item">
+                            <i class="fas fa-balance-scale"></i>
+                            <span data-en="z = 0.67: Above average" data-bন="z = ০.৬৭: গড়ের উপরে">z = ০.৬৭: গড়ের উপরে</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Display -->
+        <div class="formula-display">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Standard Normal Distribution Formula" data-bন="স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন সূত্র">স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশন সূত্র</span>
+            </h2>
+            
+            <div class="formula-content" id="normalFormula">
+                \[ f(z) = \frac{1}{\sqrt{2\pi}} e^{-\frac{z^2}{2}} \]
+            </div>
+            
+            <div class="formula-explanation">
+                <p data-en="The standard normal distribution has mean μ = 0 and standard deviation σ = 1. Any normal distribution can be transformed to standard normal using: z = (x - μ)/σ" data-bন="স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশনের মিন μ = ০ এবং স্ট্যান্ডার্ড ডেভিয়েশন σ = ১। যেকোন নরমাল ডিস্ট্রিবিউশনকে স্ট্যান্ডার্ড নরমালে রূপান্তর করা যায়: z = (x - μ)/σ">
+                    স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশনের মিন μ = ০ এবং স্ট্যান্ডার্ড ডেভিয়েশন σ = ১। যেকোন নরমাল ডিস্ট্রিবিউশনকে স্ট্যান্ডার্ড নরমালে রূপান্তর করা যায়: z = (x - μ)/σ
+                </p>
+            </div>
+        </div>
+
+        <!-- Bell Curve Properties -->
+        <div class="bell-curve-properties">
+            <h2 class="section-title">
+                <i class="fas fa-shapes"></i>
+                <span data-en="Interactive Bell Curve Properties" data-bন="ইন্টারেকটিভ বেল কার্ভ বৈশিষ্ট্য">ইন্টারেকটিভ বেল কার্ভ বৈশিষ্ট্য</span>
+            </h2>
+            
+            <div class="properties-grid">
+                <div class="property-card fade-in">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Mean (μ)" data-bন="মিন (μ)">মিন (μ)</h3>
+                    </div>
+                    <div class="property-value">0</div>
+                    <div class="property-description" data-en="Center of the distribution, point of symmetry" data-bন="ডিস্ট্রিবিউশনের কেন্দ্র, প্রতিসাম্যের বিন্দু">
+                        ডিস্ট্রিবিউশনের কেন্দ্র, প্রতিসাম্যের বিন্দু
+                    </div>
+                </div>
+                
+                <div class="property-card fade-in">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-expand-alt"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Standard Deviation (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</h3>
+                    </div>
+                    <div class="property-value">1</div>
+                    <div class="property-description" data-en="Unit of measurement for standard normal distribution" data-bন="স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশনের পরিমাপের একক">
+                        স্ট্যান্ডার্ড নরমাল ডিস্ট্রিবিউশনের পরিমাপের একক
+                    </div>
+                </div>
+                
+                <div class="property-card fade-in">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Total Area" data-bন="মোট এলাকা">মোট এলাকা</h3>
+                    </div>
+                    <div class="property-value">1</div>
+                    <div class="property-description" data-en="Total probability under the curve equals 1" data-bন="কার্ভের নিচের মোট প্রোবাবিলিটি ১ এর সমান">
+                        কার্ভের নিচের মোট প্রোবাবিলিটি ১ এর সমান
+                    </div>
+                </div>
+                
+                <div class="property-card fade-in">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Range" data-bন="রেঞ্জ">রেঞ্জ</h3>
+                    </div>
+                    <div class="property-value">(-∞, +∞)</div>
+                    <div class="property-description" data-en="Extends infinitely in both directions, asymptotic to x-axis" data-bন="উভয় দিকে অসীম পর্যন্ত বিস্তৃত, x-অক্ষের সাথে অসিম্পটোটিক">
+                        উভয় দিকে অসীম পর্যন্ত বিস্তৃত, x-অক্ষের সাথে অসিম্পটোটিক
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Calculation -->
+        <div class="area-calculation">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="Area/Probability Calculation" data-bন="এলাকা/প্রোবাবিলিটি গণনা">এলাকা/প্রোবাবিলিটি গণনা</span>
+            </h2>
+            
+            <div class="calculation-grid">
+                <div class="calculation-card fade-in" id="leftTailCard">
+                    <div class="calculation-title" data-en="Left Tail Area" data-bন="বাম লেজ এলাকা">বাম লেজ এলাকা</div>
+                    <div class="calculation-value" id="leftTailArea">0.5000</div>
+                    <div class="calculation-description" id="leftTailDesc" data-en="P(Z ≤ z)" data-bন="P(Z ≤ z)">P(Z ≤ z)</div>
+                </div>
+                
+                <div class="calculation-card fade-in" id="rightTailCard">
+                    <div class="calculation-title" data-en="Right Tail Area" data-bন="ডান লেজ এলাকা">ডান লেজ এলাকা</div>
+                    <div class="calculation-value" id="rightTailArea">0.5000</div>
+                    <div class="calculation-description" id="rightTailDesc" data-en="P(Z ≥ z)" data-bন="P(Z ≥ z)">P(Z ≥ z)</div>
+                </div>
+                
+                <div class="calculation-card fade-in" id="betweenAreaCard">
+                    <div class="calculation-title" data-en="Between Area" data-bন="মধ্যবর্তী এলাকা">মধ্যবর্তী এলাকা</div>
+                    <div class="calculation-value" id="betweenArea">0.0000</div>
+                    <div class="calculation-description" id="betweenDesc" data-en="P(-|z| ≤ Z ≤ |z|)" data-bন="P(-|z| ≤ Z ≤ |z|)">P(-|z| ≤ Z ≤ |z|)</div>
+                </div>
+                
+                <div class="calculation-card fade-in" id="percentileCard">
+                    <div class="calculation-title" data-en="Percentile" data-bন="পার্সেন্টাইল">পার্সেন্টাইল</div>
+                    <div class="calculation-value" id="percentileValue">50.00%</div>
+                    <div class="calculation-description" id="percentileDesc" data-en="Percentage below z" data-bন="z এর নিচের শতকরা">z এর নিচের শতকরা</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Probability Calculator -->
+        <div class="probability-calculator">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                <span data-en="Probability Range Calculator" data-bন="প্রোবাবিলিটি রেঞ্জ ক্যালকুলেটর">প্রোবাবিলিটি রেঞ্জ ক্যালকুলেটর</span>
+            </h2>
+            
+            <div class="calculator-inputs">
+                <div class="input-card">
+                    <h4>
+                        <i class="fas fa-arrow-left"></i>
+                        <span data-en="Lower Bound (a)" data-bন="নিম্ন সীমা (a)">নিম্ন সীমা (a)</span>
+                    </h4>
+                    <input type="number" class="input-box" id="lowerBound" value="-1" step="0.1" min="-5" max="5">
+                    <div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;" data-en="Enter lower z-score" data-bন="নিম্ন Z-স্কোর লিখুন">
+                        নিম্ন Z-স্কোর লিখুন
+                    </div>
+                </div>
+                
+                <div class="input-card">
+                    <h4>
+                        <i class="fas fa-arrow-right"></i>
+                        <span data-en="Upper Bound (b)" data-bন="উচ্চ সীমা (b)">উচ্চ সীমা (b)</span>
+                    </h4>
+                    <input type="number" class="input-box" id="upperBound" value="1" step="0.1" min="-5" max="5">
+                    <div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem;" data-en="Enter upper z-score" data-bন="উচ্চ Z-স্কোর লিখুন">
+                        উচ্চ Z-স্কোর লিখুন
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 1.5rem;">
+                <button class="action-btn primary" id="calculateRangeBtn">
+                    <i class="fas fa-calculator"></i>
+                    <span data-en="Calculate Probability" data-bন="প্রোবাবিলিটি গণনা করুন">প্রোবাবিলিটি গণনা করুন</span>
+                </button>
+            </div>
+            
+            <div class="calculation-card fade-in" style="margin-top: 1.5rem;" id="rangeResultCard">
+                <div class="calculation-title" data-en="Probability between a and b" data-bন="a এবং b এর মধ্যবর্তী প্রোবাবিলিটি">a এবং b এর মধ্যবর্তী প্রোবাবিলিটি</div>
+                <div class="calculation-value" id="rangeProbability">0.6827</div>
+                <div class="calculation-description" id="rangeDesc" data-en="P(a ≤ Z ≤ b)" data-bন="P(a ≤ Z ≤ b)">P(a ≤ Z ≤ b)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let chart = null;
+            let currentZScore = 0;
+            let showEmpiricalRule = true;
+            let showMeanLine = true;
+            let showZScoreLine = true;
+            let showArea = false;
+            
+            // Initialize application
+            initStandardNormalVisualizer();
+            
+            function initStandardNormalVisualizer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Initialize event listeners
+                initializeEventListeners();
+                
+                // Initialize chart
+                initializeChart();
+                
+                // Initial visualization
+                updateVisualization();
+                
+                // Initialize MathJax
+                if (window.MathJax) {
+                    MathJax.typeset();
+                }
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+                
+                // Update chart labels
+                if (chart) {
+                    updateChartLabels();
+                }
+            }
+            
+            function initializeEventListeners() {
+                // Z-score input
+                document.getElementById('zScoreInput').addEventListener('input', function() {
+                    currentZScore = parseFloat(this.value) || 0;
+                    updateVisualization();
+                });
+                
+                // Quick z-score buttons
+                document.querySelectorAll('.quick-z-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const z = parseFloat(this.dataset.z);
+                        document.getElementById('zScoreInput').value = z;
+                        currentZScore = z;
+                        updateVisualization();
+                    });
+                });
+                
+                // Visualization options
+                document.getElementById('showEmpiricalRule').addEventListener('change', function() {
+                    showEmpiricalRule = this.checked;
+                    document.getElementById('showEmpiricalRuleLabel').classList.toggle('selected', this.checked);
+                    updateVisualization();
+                });
+                
+                document.getElementById('showMeanLine').addEventListener('change', function() {
+                    showMeanLine = this.checked;
+                    document.getElementById('showMeanLineLabel').classList.toggle('selected', this.checked);
+                    updateVisualization();
+                });
+                
+                document.getElementById('showZScoreLine').addEventListener('change', function() {
+                    showZScoreLine = this.checked;
+                    document.getElementById('showZScoreLineLabel').classList.toggle('selected', this.checked);
+                    updateVisualization();
+                });
+                
+                document.getElementById('showArea').addEventListener('change', function() {
+                    showArea = this.checked;
+                    document.getElementById('showAreaLabel').classList.toggle('selected', this.checked);
+                    updateVisualization();
+                });
+                
+                // Action buttons
+                document.getElementById('updateVizBtn').addEventListener('click', updateVisualization);
+                document.getElementById('resetVizBtn').addEventListener('click', resetVisualization);
+                document.getElementById('calculateRangeBtn').addEventListener('click', calculateRangeProbability);
+                
+                // Range inputs
+                document.getElementById('lowerBound').addEventListener('input', calculateRangeProbability);
+                document.getElementById('upperBound').addEventListener('input', calculateRangeProbability);
+            }
+            
+            function initializeChart() {
+                const ctx = document.getElementById('bellCurveChart').getContext('2d');
+                
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.dataset.label || '';
+                                        const value = context.parsed.y;
+                                        if (label.includes('Bell Curve')) {
+                                            return `${label}: ${value.toFixed(4)}`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Z-Score',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                min: -5,
+                                max: 5
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Density f(z)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                max: 0.5
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            }
+            
+            function updateChartLabels() {
+                if (!chart) return;
+                
+                chart.options.scales.x.title.text = 'Z-Score';
+                chart.options.scales.y.title.text = 'Density f(z)';
+                chart.update();
+            }
+            
+            function updateVisualization() {
+                if (!chart) return;
+                
+                // Clear existing datasets
+                chart.data.datasets = [];
+                
+                // Generate bell curve data
+                generateBellCurveData();
+                
+                // Add empirical rule visualization
+                if (showEmpiricalRule) {
+                    addEmpiricalRuleVisualization();
+                }
+                
+                // Add mean line
+                if (showMeanLine) {
+                    addMeanLine();
+                }
+                
+                // Add z-score line
+                if (showZScoreLine) {
+                    addZScoreLine();
+                }
+                
+                // Add shaded area
+                if (showArea) {
+                    addShadedArea();
+                }
+                
+                // Update chart
+                chart.update();
+                
+                // Update area calculations
+                updateAreaCalculations();
+                
+                // Add animation effect
+                document.getElementById('updateVizBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('updateVizBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function generateBellCurveData() {
+                const data = [];
+                const labels = [];
+                
+                // Generate points from -5 to 5
+                for (let z = -5; z <= 5; z += 0.1) {
+                    labels.push(z.toFixed(1));
+                    const density = normalPDF(z);
+                    data.push({x: z, y: density});
+                }
+                
+                chart.data.labels = labels;
+                
+                // Add bell curve dataset
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'বেল কার্ভ' : 'Bell Curve',
+                    data: data,
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            
+            function normalPDF(z) {
+                // Standard normal PDF: f(z) = (1/√(2π)) * e^(-z²/2)
+                return (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-z * z / 2);
+            }
+            
+            function normalCDF(z) {
+                // Approximation of standard normal CDF
+                const t = 1 / (1 + 0.2316419 * Math.abs(z));
+                const d = 0.3989423 * Math.exp(-z * z / 2);
+                let probability = 1 - d * (0.3193815 * t - 0.3565638 * t * t + 1.7814779 * 
+                    Math.pow(t, 3) - 1.821256 * Math.pow(t, 4) + 1.3302744 * Math.pow(t, 5));
+                
+                if (z < 0) probability = 1 - probability;
+                return probability;
+            }
+            
+            function addEmpiricalRuleVisualization() {
+                // Add ±1σ area
+                addStandardDeviationArea(-1, 1, 'rgba(76, 175, 80, 0.2)', '±1σ (68%)');
+                
+                // Add ±2σ area (outside ±1σ)
+                addStandardDeviationArea(-2, -1, 'rgba(33, 150, 243, 0.2)', '±2σ (95%)');
+                addStandardDeviationArea(1, 2, 'rgba(33, 150, 243, 0.2)', '');
+                
+                // Add ±3σ area (outside ±2σ)
+                addStandardDeviationArea(-3, -2, 'rgba(255, 152, 0, 0.2)', '±3σ (99.7%)');
+                addStandardDeviationArea(2, 3, 'rgba(255, 152, 0, 0.2)', '');
+            }
+            
+            function addStandardDeviationArea(minZ, maxZ, color, label) {
+                const data = [];
+                
+                // Start at x-axis
+                data.push({x: minZ, y: 0});
+                
+                // Add curve points
+                for (let z = minZ; z <= maxZ; z += 0.1) {
+                    data.push({x: z, y: normalPDF(z)});
+                }
+                
+                // End at x-axis
+                data.push({x: maxZ, y: 0});
+                
+                chart.data.datasets.push({
+                    label: label,
+                    data: data,
+                    backgroundColor: color,
+                    borderColor: color.replace('0.2', '0.5'),
+                    borderWidth: 1,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            
+            function addMeanLine() {
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'মিন (μ=০)' : 'Mean (μ=0)',
+                    data: [
+                        {x: 0, y: 0},
+                        {x: 0, y: normalPDF(0)}
+                    ],
+                    borderColor: 'rgba(233, 30, 99, 1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0
+                });
+            }
+            
+            function addZScoreLine() {
+                const z = currentZScore;
+                const maxY = normalPDF(z);
+                
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? `Z-স্কোর: ${z.toFixed(2)}` : `Z-Score: ${z.toFixed(2)}`,
+                    data: [
+                        {x: z, y: 0},
+                        {x: z, y: maxY}
+                    ],
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    borderWidth: 3,
+                    pointRadius: 0
+                });
+                
+                // Add point at the top of the line
+                chart.data.datasets.push({
+                    label: '',
+                    data: [{x: z, y: maxY}],
+                    backgroundColor: 'rgba(156, 39, 176, 1)',
+                    borderColor: 'white',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                });
+            }
+            
+            function addShadedArea() {
+                const z = currentZScore;
+                const data = [];
+                
+                if (z >= 0) {
+                    // Shade area from -∞ to z
+                    data.push({x: -5, y: 0});
+                    for (let x = -5; x <= z; x += 0.1) {
+                        data.push({x: x, y: normalPDF(x)});
+                    }
+                    data.push({x: z, y: 0});
+                } else {
+                    // Shade area from z to +∞
+                    data.push({x: z, y: 0});
+                    for (let x = z; x <= 5; x += 0.1) {
+                        data.push({x: x, y: normalPDF(x)});
+                    }
+                    data.push({x: 5, y: 0});
+                }
+                
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? `শেডেড এলাকা` : 'Shaded Area',
+                    data: data,
+                    backgroundColor: 'rgba(156, 39, 176, 0.3)',
+                    borderColor: 'rgba(156, 39, 176, 0.5)',
+                    borderWidth: 1,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            
+            function updateAreaCalculations() {
+                const z = currentZScore;
+                const cdf = normalCDF(z);
+                
+                // Left tail area: P(Z ≤ z)
+                const leftTail = cdf;
+                document.getElementById('leftTailArea').textContent = leftTail.toFixed(4);
+                
+                // Right tail area: P(Z ≥ z)
+                const rightTail = 1 - cdf;
+                document.getElementById('rightTailArea').textContent = rightTail.toFixed(4);
+                
+                // Area between -|z| and |z|
+                const betweenArea = normalCDF(Math.abs(z)) - normalCDF(-Math.abs(z));
+                document.getElementById('betweenArea').textContent = betweenArea.toFixed(4);
+                
+                // Percentile
+                const percentile = cdf * 100;
+                document.getElementById('percentileValue').textContent = percentile.toFixed(2) + '%';
+                
+                // Update descriptions
+                const zText = z.toFixed(2);
+                if (currentLanguage === 'bn') {
+                    document.getElementById('leftTailDesc').textContent = `P(Z ≤ ${zText})`;
+                    document.getElementById('rightTailDesc').textContent = `P(Z ≥ ${zText})`;
+                    document.getElementById('betweenDesc').textContent = `P(-${Math.abs(z).toFixed(2)} ≤ Z ≤ ${Math.abs(z).toFixed(2)})`;
+                    document.getElementById('percentileDesc').textContent = `${zText} এর নিচের শতকরা`;
+                } else {
+                    document.getElementById('leftTailDesc').textContent = `P(Z ≤ ${zText})`;
+                    document.getElementById('rightTailDesc').textContent = `P(Z ≥ ${zText})`;
+                    document.getElementById('betweenDesc').textContent = `P(-${Math.abs(z).toFixed(2)} ≤ Z ≤ ${Math.abs(z).toFixed(2)})`;
+                    document.getElementById('percentileDesc').textContent = `Percentage below ${zText}`;
+                }
+                
+                // Color code based on z-score
+                const cards = ['leftTailCard', 'rightTailCard', 'betweenAreaCard', 'percentileCard'];
+                cards.forEach(cardId => {
+                    const card = document.getElementById(cardId);
+                    card.style.borderColor = getColorForZScore(z);
+                });
+            }
+            
+            function getColorForZScore(z) {
+                const absZ = Math.abs(z);
+                if (absZ > 3) return '#F44336'; // Red for extreme
+                if (absZ > 2) return '#FF9800'; // Orange for moderate
+                if (absZ > 1) return '#2196F3'; // Blue for 1-2σ
+                return '#4CAF50'; // Green for within 1σ
+            }
+            
+            function calculateRangeProbability() {
+                const a = parseFloat(document.getElementById('lowerBound').value) || -1;
+                const b = parseFloat(document.getElementById('upperBound').value) || 1;
+                
+                if (a >= b) {
+                    alert(currentLanguage === 'bn' 
+                        ? 'উচ্চ সীমা নিম্ন সীমার চেয়ে বড় হতে হবে' 
+                        : 'Upper bound must be greater than lower bound');
+                    return;
+                }
+                
+                const prob = normalCDF(b) - normalCDF(a);
+                const percentage = prob * 100;
+                
+                document.getElementById('rangeProbability').textContent = prob.toFixed(4);
+                
+                // Update description
+                const aText = a.toFixed(2);
+                const bText = b.toFixed(2);
+                if (currentLanguage === 'bn') {
+                    document.getElementById('rangeDesc').textContent = `P(${aText} ≤ Z ≤ ${bText})`;
+                } else {
+                    document.getElementById('rangeDesc').textContent = `P(${aText} ≤ Z ≤ ${bText})`;
+                }
+                
+                // Color code based on probability
+                const card = document.getElementById('rangeResultCard');
+                if (prob > 0.9) {
+                    card.style.borderColor = '#4CAF50';
+                } else if (prob > 0.5) {
+                    card.style.borderColor = '#2196F3';
+                } else {
+                    card.style.borderColor = '#FF9800';
+                }
+                
+                // Add animation
+                card.classList.add('highlight-area');
+                setTimeout(() => {
+                    card.classList.remove('highlight-area');
+                }, 2000);
+            }
+            
+            function resetVisualization() {
+                // Reset inputs
+                document.getElementById('zScoreInput').value = 0;
+                document.getElementById('lowerBound').value = -1;
+                document.getElementById('upperBound').value = 1;
+                
+                // Reset checkboxes
+                document.getElementById('showEmpiricalRule').checked = true;
+                document.getElementById('showMeanLine').checked = true;
+                document.getElementById('showZScoreLine').checked = true;
+                document.getElementById('showArea').checked = false;
+                
+                document.getElementById('showEmpiricalRuleLabel').classList.add('selected');
+                document.getElementById('showMeanLineLabel').classList.add('selected');
+                document.getElementById('showZScoreLineLabel').classList.add('selected');
+                document.getElementById('showAreaLabel').classList.remove('selected');
+                
+                // Reset variables
+                currentZScore = 0;
+                showEmpiricalRule = true;
+                showMeanLine = true;
+                showZScoreLine = true;
+                showArea = false;
+                
+                // Update visualization
+                updateVisualization();
+                
+                // Add animation effect
+                document.getElementById('resetVizBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('resetVizBtn').classList.remove('pulse');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binomial Confidence Interval Calculator | Proportion Intervals</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --wald-color: #2196F3;
+            --wilson-color: #4CAF50;
+            --agresti-color: #9C27B0;
+            --ci-bg: #E3F2FD;
+            --interval-bg: #F3E5F5;
+            --comparison-bg: #E8F5E9;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--wald-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--wald-color), var(--wilson-color), var(--agresti-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Panel */
+        .input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--wald-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--ci-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--wald-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--wald-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        /* Confidence Level Selection */
+        .confidence-levels {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .confidence-levels {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .level-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .level-btn.active {
+            background: var(--wald-color);
+            color: white;
+            border-color: var(--wald-color);
+        }
+
+        /* Interval Methods */
+        .interval-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .interval-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .method-btn.active {
+            border-color: var(--wald-color);
+            background: var(--ci-bg);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+        }
+
+        .method-btn.wilson.active {
+            border-color: var(--wilson-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .method-btn.agresti.active {
+            border-color: var(--agresti-color);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .method-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .method-btn.wald .method-icon { color: var(--wald-color); }
+        .method-btn.wilson .method-icon { color: var(--wilson-color); }
+        .method-btn.agresti .method-icon { color: var(--agresti-color); }
+
+        /* Calculation Controls */
+        .calculation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .calculation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--wald-color);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sample Statistics */
+        .sample-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .sample-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Confidence Interval Display */
+        .interval-display {
+            background: var(--interval-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .interval-title {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        .interval-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .interval-range {
+            font-size: 1.2rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .interval-width {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        /* Interval Comparison */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+
+        .interval-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 1rem;
+            background: var(--comparison-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            height: 100%;
+        }
+
+        .interval-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .interval-label {
+            width: 100px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .interval-bar-container {
+            flex: 1;
+            height: 30px;
+            background: var(--light-gray);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interval-bar {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: var(--wald-color);
+            border-radius: 15px;
+            transition: all 0.5s ease;
+        }
+
+        .interval-bar.wilson { background: var(--wilson-color); }
+        .interval-bar.agresti { background: var(--agresti-color); }
+
+        .interval-endpoints {
+            width: 200px;
+            text-align: right;
+            font-family: 'Times New Roman', serif;
+            font-size: 0.9rem;
+        }
+
+        /* Formula Section */
+        .formula-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .wald-formula .formula-icon { background: var(--wald-color); }
+        .wilson-formula .formula-icon { background: var(--wilson-color); }
+        .agresti-formula .formula-icon { background: var(--agresti-color); }
+
+        .formula-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            font-family: 'Times New Roman', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Coverage Simulation */
+        .simulation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .simulation-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .simulation-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .simulation-btn:hover {
+            background: var(--wald-color);
+            color: white;
+            border-color: var(--wald-color);
+            transform: translateY(-2px);
+        }
+
+        .simulation-results {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--ci-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Real-world Examples */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .example-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .example-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .example-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--wald-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .example-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .example-content {
+            margin-bottom: 1rem;
+        }
+
+        .example-data {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .interval-value {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Visual Indicators */
+        .visual-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .confidence-band {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 20px;
+            background: rgba(33, 150, 243, 0.2);
+            border-top: 2px solid var(--wald-color);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--wald-color);
+        }
+
+        /* Coverage Visualization */
+        .coverage-viz {
+            height: 200px;
+            margin-top: 1rem;
+            position: relative;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        .coverage-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .coverage-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--wald-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Binomial Confidence Interval Calculator" data-bn="বাইনোমিয়াল কনফিডেন্স ইন্টারভ্যাল ক্যালকুলেটর">বাইনোমিয়াল কনফিডেন্স ইন্টারভ্যাল ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Construct confidence intervals for binomial proportions using Wald, Wilson score, and Agresti-Coull methods" data-bn="ওয়াল্ড, উইলসন স্কোর এবং আগ্রেস্টি-কুল পদ্ধতি ব্যবহার করে বাইনোমিয়াল প্রোপোরশনের জন্য কনফিডেন্স ইন্টারভ্যাল তৈরি করুন">
+                ওয়াল্ড, উইলসন স্কোর এবং আগ্রেস্টি-কুল পদ্ধতি ব্যবহার করে বাইনোমিয়াল প্রোপোরশনের জন্য কনফিডেন্স ইন্টারভ্যাল তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Sample Data" data-bn="নমুনা ডেটা">নমুনা ডেটা</span>
+                </h2>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="Sample Size (n)" data-bn="নমুনা আকার (n)">নমুনা আকার (n)</span>
+                        </div>
+                        <input type="number" id="sampleSize" class="value-input" min="1" max="10000" value="100">
+                        <div class="help-text" data-en="Total number of trials" data-bn="মোট ট্রায়াল সংখ্যা">মোট ট্রায়াল সংখ্যা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-check-circle"></i>
+                            <span data-en="Successes (x)" data-bn="সাফল্য (x)">সাফল্য (x)</span>
+                        </div>
+                        <input type="number" id="successCount" class="value-input" min="0" max="10000" value="50">
+                        <div class="help-text" data-en="Number of successful trials" data-bn="সফল ট্রায়ালের সংখ্যা">সফল ট্রায়ালের সংখ্যা</div>
+                    </div>
+                </div>
+
+                <!-- Confidence Level Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Confidence Level" data-bn="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</span>
+                </h2>
+
+                <div class="confidence-levels">
+                    <button class="level-btn" data-level="0.90">
+                        90% <small data-en="z=1.645" data-bn="z=1.645">z=1.645</small>
+                    </button>
+                    <button class="level-btn" data-level="0.95">
+                        95% <small data-en="z=1.960" data-bন="z=1.960">z=1.960</small>
+                    </button>
+                    <button class="level-btn active" data-level="0.99">
+                        99% <small data-en="z=2.576" data-bন="z=2.576">z=2.576</small>
+                    </button>
+                    <button class="level-btn" data-level="0.999">
+                        99.9% <small data-en="z=3.291" data-bন="z=3.291">z=3.291</small>
+                    </button>
+                </div>
+
+                <!-- Interval Methods -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Interval Method" data-bন="ইন্টারভ্যাল পদ্ধতি">ইন্টারভ্যাল পদ্ধতি</span>
+                </h2>
+
+                <div class="interval-methods">
+                    <button class="method-btn wald active" data-method="wald">
+                        <div class="method-icon">
+                            <i class="fas fa-ruler"></i>
+                        </div>
+                        <span data-en="Wald Interval" data-bন="ওয়াল্ড ইন্টারভ্যাল">ওয়াল্ড ইন্টারভ্যাল</span>
+                        <small data-en="Simple approximation" data-bন="সাধারণ আনুমানিক">সাধারণ আনুমানিক</small>
+                    </button>
+
+                    <button class="method-btn wilson" data-method="wilson">
+                        <div class="method-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <span data-en="Wilson Score" data-bন="উইলসন স্কোর">উইলসন স্কোর</span>
+                        <small data-en="Better coverage" data-bন="উত্তম কভারেজ">উত্তম কভারেজ</small>
+                    </button>
+
+                    <button class="method-btn agresti" data-method="agresti">
+                        <div class="method-icon">
+                            <i class="fas fa-adjust"></i>
+                        </div>
+                        <span data-en="Agresti-Coull" data-bন="আগ্রেস্টি-কুল">আগ্রেস্টি-কুল</span>
+                        <small data-en="Adjusted Wald" data-bন="সংশোধিত ওয়াল্ড">সংশোধিত ওয়াল্ড</small>
+                    </button>
+                </div>
+
+                <!-- Calculation Controls -->
+                <div class="calculation-controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Interval" data-bন="ইন্টারভ্যাল গণনা করুন">ইন্টারভ্যাল গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Confidence Interval" data-bন="কনফিডেন্স ইন্টারভ্যাল">কনফিডেন্স ইন্টারভ্যাল</span>
+                </h2>
+
+                <!-- Sample Statistics -->
+                <div class="sample-stats">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Proportion" data-bন="নমুনা প্রোপোরশন">নমুনা প্রোপোরশন</div>
+                        <div class="stat-value" id="sampleProportion">0.5000</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                        <div class="stat-value" id="standardError">0.0500</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Margin of Error" data-bন="এরর মার্জিন">এরর মার্জিন</div>
+                        <div class="stat-value" id="marginOfError">0.1288</div>
+                    </div>
+                </div>
+
+                <!-- Confidence Interval Display -->
+                <div class="interval-display">
+                    <div class="interval-title" data-en="95% Confidence Interval for Population Proportion" data-bন="জনসংখ্যা প্রোপোরশনের জন্য ৯৫% কনফিডেন্স ইন্টারভ্যাল">
+                        ৯৫% কনফিডেন্স ইন্টারভ্যাল
+                    </div>
+                    <div class="interval-value" id="intervalValue">
+                        0.3712 – 0.6288
+                    </div>
+                    <div class="interval-range">
+                        <span id="lowerBound">0.3712</span>
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span id="upperBound">0.6288</span>
+                    </div>
+                    <div class="interval-width">
+                        <span data-en="Interval Width:" data-bন="ইন্টারভ্যাল প্রস্থ:">ইন্টারভ্যাল প্রস্থ:</span>
+                        <span id="intervalWidth">0.2576</span>
+                    </div>
+                </div>
+
+                <!-- Coverage Visualization -->
+                <div class="coverage-viz">
+                    <div class="coverage-line">
+                        <div class="coverage-value" id="coverageValue">95%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interval Comparison -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Interval Comparison" data-bন="ইন্টারভ্যাল তুলনা">ইন্টারভ্যাল তুলনা</span>
+            </h2>
+            
+            <p data-en="Compare different confidence interval methods:" data-bন="বিভিন্ন কনফিডেন্স ইন্টারভ্যাল পদ্ধতি তুলনা করুন:">
+                বিভিন্ন কনফিডেন্স ইন্টারভ্যাল পদ্ধতি তুলনা করুন:
+            </p>
+            
+            <div class="comparison-chart">
+                <div class="interval-bars" id="intervalBars">
+                    <!-- Interval bars will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="formula-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Confidence Interval Formulas" data-bন="কনফিডেন্স ইন্টারভ্যাল সূত্র">কনফিডেন্স ইন্টারভ্যাল সূত্র</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Wald Formula -->
+                <div class="formula-card wald-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-ruler"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Wald Interval" data-bন="ওয়াল্ড ইন্টারভ্যাল">ওয়াল্ড ইন্টারভ্যাল</h3>
+                    </div>
+                    <div class="formula-content">
+                        p̂ ± z × √[p̂(1-p̂)/n]
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Simple and intuitive" data-bন="সহজ এবং সহজবোধ্য">সহজ এবং সহজবোধ্য</li>
+                        <li data-en="Works well for large samples" data-bন="বড় নমুনার জন্য ভাল কাজ করে">বড় নমুনার জন্য ভাল কাজ করে</li>
+                        <li data-en="Poor coverage for small samples or extreme p" data-bন="ছোট নমুনা বা চরম p-এর জন্য দুর্বল কভারেজ">ছোট নমুনা বা চরম p-এর জন্য দুর্বল কভারেজ</li>
+                    </ul>
+                </div>
+
+                <!-- Wilson Formula -->
+                <div class="formula-card wilson-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Wilson Score" data-bন="উইলসন স্কোর">উইলসন স্কোর</h3>
+                    </div>
+                    <div class="formula-content">
+                        [p̂ + z²/2n ± z√(p̂(1-p̂)/n + z²/4n²)] / (1 + z²/n)
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Better small-sample performance" data-bন="ভাল ছোট-নমুনা কার্যকারিতা">ভাল ছোট-নমুনা কার্যকারিতা</li>
+                        <li data-en="Works well for all p" data-bন="সব p-এর জন্য ভাল কাজ করে">সব p-এর জন্য ভাল কাজ করে</li>
+                        <li data-en="Recommended by statisticians" data-bন="পরিসংখ্যানবিদদের দ্বারা প্রস্তাবিত">পরিসংখ্যানবিদদের দ্বারা প্রস্তাবিত</li>
+                    </ul>
+                </div>
+
+                <!-- Agresti-Coull Formula -->
+                <div class="formula-card agresti-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-adjust"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Agresti-Coull" data-bন="আগ্রেস্টি-কুল">আগ্রেস্টি-কুল</h3>
+                    </div>
+                    <div class="formula-content">
+                        p̃ ± z√[p̃(1-p̃)/ñ] <br>where p̃ = (x + z²/2)/(n + z²)
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Adjusted Wald interval" data-bন="সংশোধিত ওয়াল্ড ইন্টারভ্যাল">সংশোধিত ওয়াল্ড ইন্টারভ্যাল</li>
+                        <li data-en="Simple adjustment to Wald" data-bন="ওয়াল্ডে সাধারণ সমন্বয়">ওয়াল্ডে সাধারণ সমন্বয়</li>
+                        <li data-en="Good performance for 95% CI" data-bন="৯৫% CI-এর জন্য ভাল কার্যকারিতা">৯৫% CI-এর জন্য ভাল কার্যকারিতা</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coverage Simulation -->
+        <div class="simulation-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Coverage Simulation" data-bন="কভারেজ সিমুলেশন">কভারেজ সিমুলেশন</span>
+            </h2>
+            
+            <p data-en="Simulate confidence interval coverage to see how often intervals contain the true proportion:" data-bন="কনফিডেন্স ইন্টারভ্যাল কভারেজ সিমুলেট করুন দেখতে ইন্টারভ্যালগুলো কতবার সত্যিকারের প্রোপোরশন ধারণ করে:">
+                কনফিডেন্স ইন্টারভ্যাল কভারেজ সিমুলেট করুন দেখতে ইন্টারভ্যালগুলো কতবার সত্যিকারের প্রোপোরশন ধারণ করে:
+            </p>
+            
+            <div class="simulation-controls">
+                <button class="simulation-btn" id="runSimulation">
+                    <i class="fas fa-play"></i>
+                    <span data-en="Run Simulation" data-bন="সিমুলেশন চালান">সিমুলেশন চালান</span>
+                </button>
+                <button class="simulation-btn" id="compareMethods">
+                    <i class="fas fa-balance-scale"></i>
+                    <span data-en="Compare Methods" data-bন="পদ্ধতি তুলনা করুন">পদ্ধতি তুলনা করুন</span>
+                </button>
+                <button class="simulation-btn" id="showCoverageCurve">
+                    <i class="fas fa-chart-area"></i>
+                    <span data-en="Show Coverage Curve" data-bন="কভারেজ কার্ভ দেখান">কভারেজ কার্ভ দেখান</span>
+                </button>
+            </div>
+            
+            <div class="simulation-results" id="simulationResults">
+                <p data-en="Click 'Run Simulation' to see coverage results" data-bন="কভারেজ ফলাফল দেখতে 'সিমুলেশন চালান' ক্লিক করুন">
+                    কভারেজ ফলাফল দেখতে 'সিমুলেশন চালান' ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Real-world Examples -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-globe-americas"></i>
+                <span data-en="Real-world Examples" data-bন="বাস্তব-বিশ্ব উদাহরণ">বাস্তব-বিশ্ব উদাহরণ</span>
+            </h2>
+            
+            <div class="examples-grid">
+                <div class="example-card" data-example="election">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-vote-yea"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Election Poll" data-bন="নির্বাচনী জরিপ">নির্বাচনী জরিপ</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Survey of 1000 voters, 550 support Candidate A" data-bন="১০০০ ভোটারের জরিপ, ৫৫০ জন প্রার্থী A-কে সমর্থন করেন">
+                            ১০০০ ভোটারের জরিপ, ৫৫০ জন প্রার্থী A-কে সমর্থন করেন
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        n = 1000, x = 550, p̂ = 0.55
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="medical">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Medical Trial" data-bন="চিকিৎসা পরীক্ষা">চিকিৎসা পরীক্ষা</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Clinical trial with 200 patients, 160 show improvement" data-bন="২০০ রোগীর ক্লিনিকাল ট্রায়াল, ১৬০ জন উন্নতি দেখান">
+                            ২০০ রোগীর ক্লিনিকাল ট্রায়াল, ১৬০ জন উন্নতি দেখান
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        n = 200, x = 160, p̂ = 0.80
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="quality">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Quality Control" data-bন="কোয়ালিটি কন্ট্রোল">কোয়ালিটি কন্ট্রোল</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Inspect 500 products, 485 pass quality test" data-bন="৫০০টি পণ্য পরীক্ষা করুন, ৪৮৫টি কোয়ালিটি টেস্ট পাস করে">
+                            ৫০০টি পণ্য পরীক্ষা করুন, ৪৮৫টি কোয়ালিটি টেস্ট পাস করে
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        n = 500, x = 485, p̂ = 0.97
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="small">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-microscope"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Small Sample" data-bন="ছোট নমুনা">ছোট নমুনা</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Pilot study with 20 subjects, 15 respond positively" data-bন="২০ জন বিষয়ের পাইলট স্টাডি, ১৫ জন ইতিবাচকভাবে সাড়া দেয়">
+                            ২০ জন বিষয়ের পাইলট স্টাডি, ১৫ জন ইতিবাচকভাবে সাড়া দেয়
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        n = 20, x = 15, p̂ = 0.75
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Calculation State
+            let calculationState = {
+                n: 100,
+                x: 50,
+                confidenceLevel: 0.99,
+                zValue: 2.576,
+                intervalMethod: 'wald',
+                sampleProportion: 0.5,
+                standardError: 0.05,
+                marginOfError: 0.1288,
+                lowerBound: 0.3712,
+                upperBound: 0.6288,
+                intervalWidth: 0.2576
+            };
+
+            // Z-values for different confidence levels
+            const zValues = {
+                0.90: 1.645,
+                0.95: 1.960,
+                0.99: 2.576,
+                0.999: 3.291
+            };
+
+            // Example Data Sets
+            const examples = {
+                election: { n: 1000, x: 550 },
+                medical: { n: 200, x: 160 },
+                quality: { n: 500, x: 485 },
+                small: { n: 20, x: 15 }
+            };
+
+            // DOM Elements
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const successCountInput = document.getElementById('successCount');
+            const levelBtns = document.querySelectorAll('.level-btn');
+            const methodBtns = document.querySelectorAll('.method-btn');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const sampleProportionEl = document.getElementById('sampleProportion');
+            const standardErrorEl = document.getElementById('standardError');
+            const marginOfErrorEl = document.getElementById('marginOfError');
+            const intervalValueEl = document.getElementById('intervalValue');
+            const lowerBoundEl = document.getElementById('lowerBound');
+            const upperBoundEl = document.getElementById('upperBound');
+            const intervalWidthEl = document.getElementById('intervalWidth');
+            const coverageValueEl = document.getElementById('coverageValue');
+            const intervalBars = document.getElementById('intervalBars');
+            const simulationResults = document.getElementById('simulationResults');
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Confidence Level Selection
+                levelBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const level = parseFloat(this.dataset.level);
+                        setConfidenceLevel(level);
+                    });
+                });
+
+                // Interval Method Selection
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setIntervalMethod(method);
+                    });
+                });
+
+                // Input Validation
+                sampleSizeInput.addEventListener('change', validateInputs);
+                successCountInput.addEventListener('change', validateInputs);
+
+                // Calculation Controls
+                calculateBtn.addEventListener('click', calculateInterval);
+                clearBtn.addEventListener('click', resetCalculator);
+
+                // Simulation Controls
+                document.getElementById('runSimulation').addEventListener('click', runSimulation);
+                document.getElementById('compareMethods').addEventListener('click', compareMethods);
+                document.getElementById('showCoverageCurve').addEventListener('click', showCoverageCurve);
+
+                // Example Cards
+                document.querySelectorAll('.example-card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        loadExample(this.dataset.example);
+                    });
+                });
+
+                // Calculate with initial values
+                setTimeout(() => {
+                    calculateInterval();
+                    updateComparisonChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setConfidenceLevel(level) {
+                calculationState.confidenceLevel = level;
+                calculationState.zValue = zValues[level];
+                
+                // Update active button
+                levelBtns.forEach(btn => {
+                    if (parseFloat(btn.dataset.level) === level) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update coverage visualization
+                coverageValueEl.textContent = `${(level * 100).toFixed(1)}%`;
+            }
+
+            function setIntervalMethod(method) {
+                calculationState.intervalMethod = method;
+                
+                // Update active button
+                methodBtns.forEach(btn => {
+                    if (btn.dataset.method === method) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function validateInputs() {
+                let n = parseInt(sampleSizeInput.value);
+                let x = parseInt(successCountInput.value);
+                
+                if (isNaN(n) || n < 1) n = 100;
+                if (n > 10000) n = 10000;
+                sampleSizeInput.value = n;
+                
+                if (isNaN(x) || x < 0) x = 0;
+                if (x > n) x = n;
+                successCountInput.value = x;
+                
+                calculationState.n = n;
+                calculationState.x = x;
+            }
+
+            function calculateWaldInterval(pHat, n, z) {
+                const se = Math.sqrt(pHat * (1 - pHat) / n);
+                const margin = z * se;
+                const lower = Math.max(0, pHat - margin);
+                const upper = Math.min(1, pHat + margin);
+                return { lower, upper, se, margin };
+            }
+
+            function calculateWilsonInterval(pHat, n, z) {
+                const z2 = z * z;
+                const denominator = 1 + z2 / n;
+                const center = (pHat + z2 / (2 * n)) / denominator;
+                const adjustment = z * Math.sqrt(pHat * (1 - pHat) / n + z2 / (4 * n * n)) / denominator;
+                const lower = Math.max(0, center - adjustment);
+                const upper = Math.min(1, center + adjustment);
+                const se = Math.sqrt(pHat * (1 - pHat) / n);
+                const margin = adjustment;
+                return { lower, upper, se, margin };
+            }
+
+            function calculateAgrestiCoullInterval(pHat, n, z) {
+                const z2 = z * z;
+                const nTilde = n + z2;
+                const pTilde = (calculationState.x + z2 / 2) / nTilde;
+                const se = Math.sqrt(pTilde * (1 - pTilde) / nTilde);
+                const margin = z * se;
+                const lower = Math.max(0, pTilde - margin);
+                const upper = Math.min(1, pTilde + margin);
+                return { lower, upper, se, margin };
+            }
+
+            function calculateInterval() {
+                validateInputs();
+                
+                const { n, x, zValue, intervalMethod } = calculationState;
+                const pHat = x / n;
+                
+                let interval;
+                let methodName;
+                
+                switch(intervalMethod) {
+                    case 'wald':
+                        interval = calculateWaldInterval(pHat, n, zValue);
+                        methodName = currentLanguage === 'bn' ? 'ওয়াল্ড' : 'Wald';
+                        break;
+                    case 'wilson':
+                        interval = calculateWilsonInterval(pHat, n, zValue);
+                        methodName = currentLanguage === 'bn' ? 'উইলসন' : 'Wilson';
+                        break;
+                    case 'agresti':
+                        interval = calculateAgrestiCoullInterval(pHat, n, zValue);
+                        methodName = currentLanguage === 'bn' ? 'আগ্রেস্টি-কুল' : 'Agresti-Coull';
+                        break;
+                }
+                
+                // Update state
+                calculationState.sampleProportion = pHat;
+                calculationState.standardError = interval.se;
+                calculationState.marginOfError = interval.margin;
+                calculationState.lowerBound = interval.lower;
+                calculationState.upperBound = interval.upper;
+                calculationState.intervalWidth = interval.upper - interval.lower;
+                
+                // Update display
+                updateResults(methodName);
+                updateComparisonChart();
+            }
+
+            function updateResults(methodName) {
+                // Format values
+                const pHat = calculationState.sampleProportion.toFixed(4);
+                const se = calculationState.standardError.toFixed(4);
+                const margin = calculationState.marginOfError.toFixed(4);
+                const lower = calculationState.lowerBound.toFixed(4);
+                const upper = calculationState.upperBound.toFixed(4);
+                const width = calculationState.intervalWidth.toFixed(4);
+                
+                // Update display
+                sampleProportionEl.textContent = pHat;
+                standardErrorEl.textContent = se;
+                marginOfErrorEl.textContent = margin;
+                intervalValueEl.textContent = `${lower} – ${upper}`;
+                lowerBoundEl.textContent = lower;
+                upperBoundEl.textContent = upper;
+                intervalWidthEl.textContent = width;
+                
+                // Update interval title
+                const confidencePercent = (calculationState.confidenceLevel * 100).toFixed(1);
+                const intervalTitle = document.querySelector('.interval-title');
+                intervalTitle.textContent = currentLanguage === 'bn' 
+                    ? `${confidencePercent}% কনফিডেন্স ইন্টারভ্যাল (${methodName})`
+                    : `${confidencePercent}% Confidence Interval (${methodName})`;
+                
+                // Add animation
+                intervalValueEl.classList.add('pulse');
+                setTimeout(() => intervalValueEl.classList.remove('pulse'), 500);
+            }
+
+            function updateComparisonChart() {
+                const { n, x, zValue } = calculationState;
+                const pHat = x / n;
+                
+                // Clear previous chart
+                intervalBars.innerHTML = '';
+                
+                // Calculate intervals for all methods
+                const methods = [
+                    { name: 'wald', label: currentLanguage === 'bn' ? 'ওয়াল্ড' : 'Wald', color: 'wald' },
+                    { name: 'wilson', label: currentLanguage === 'bn' ? 'উইলসন' : 'Wilson', color: 'wilson' },
+                    { name: 'agresti', label: currentLanguage === 'bn' ? 'আগ্রেস্টি-কুল' : 'Agresti-Coull', color: 'agresti' }
+                ];
+                
+                methods.forEach(method => {
+                    let interval;
+                    switch(method.name) {
+                        case 'wald':
+                            interval = calculateWaldInterval(pHat, n, zValue);
+                            break;
+                        case 'wilson':
+                            interval = calculateWilsonInterval(pHat, n, zValue);
+                            break;
+                        case 'agresti':
+                            interval = calculateAgrestiCoullInterval(pHat, n, zValue);
+                            break;
+                    }
+                    
+                    // Create interval row
+                    const row = document.createElement('div');
+                    row.className = 'interval-row fade-in';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'interval-label';
+                    label.textContent = method.label;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'interval-bar-container';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = `interval-bar ${method.color}`;
+                    
+                    // Position bar based on interval bounds
+                    const leftPosition = interval.lower * 100;
+                    const width = (interval.upper - interval.lower) * 100;
+                    
+                    bar.style.left = `${leftPosition}%`;
+                    bar.style.width = `${width}%`;
+                    
+                    // Highlight active method
+                    if (method.name === calculationState.intervalMethod) {
+                        bar.style.height = '35px';
+                        bar.style.top = '-2.5px';
+                        bar.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                    }
+                    
+                    const endpoints = document.createElement('div');
+                    endpoints.className = 'interval-endpoints';
+                    endpoints.textContent = `${interval.lower.toFixed(3)} – ${interval.upper.toFixed(3)}`;
+                    endpoints.style.color = method.name === calculationState.intervalMethod ? 
+                        (method.color === 'wald' ? 'var(--wald-color)' : 
+                         method.color === 'wilson' ? 'var(--wilson-color)' : 'var(--agresti-color)') : 
+                        'var(--gray)';
+                    
+                    barContainer.appendChild(bar);
+                    row.appendChild(label);
+                    row.appendChild(barContainer);
+                    row.appendChild(endpoints);
+                    intervalBars.appendChild(row);
+                });
+                
+                // Add sample proportion indicator
+                const indicator = document.createElement('div');
+                indicator.style.position = 'absolute';
+                indicator.style.left = `${pHat * 100}%`;
+                indicator.style.top = '0';
+                indicator.style.bottom = '0';
+                indicator.style.width = '2px';
+                indicator.style.background = 'var(--dark)';
+                indicator.style.zIndex = '1';
+                
+                const indicatorLabel = document.createElement('div');
+                indicatorLabel.style.position = 'absolute';
+                indicatorLabel.style.left = `${pHat * 100}%`;
+                indicatorLabel.style.top = '-25px';
+                indicatorLabel.style.transform = 'translateX(-50%)';
+                indicatorLabel.style.background = 'var(--dark)';
+                indicatorLabel.style.color = 'white';
+                indicatorLabel.style.padding = '2px 6px';
+                indicatorLabel.style.borderRadius = '4px';
+                indicatorLabel.style.fontSize = '0.8rem';
+                indicatorLabel.style.fontWeight = '600';
+                indicatorLabel.textContent = 'p̂ = ' + pHat.toFixed(2);
+                
+                intervalBars.appendChild(indicator);
+                intervalBars.appendChild(indicatorLabel);
+            }
+
+            function runSimulation() {
+                const { n, confidenceLevel, intervalMethod } = calculationState;
+                const trueP = calculationState.sampleProportion;
+                const z = calculationState.zValue;
+                const simulations = 1000;
+                let coverageCount = 0;
+                
+                simulationResults.innerHTML = `
+                    <div style="text-align: center; padding: 1rem;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>${currentLanguage === 'bn' ? 'সিমুলেশন চলছে...' : 'Running simulation...'}</p>
+                    </div>
+                `;
+                
+                // Run simulation after a delay to show loading
+                setTimeout(() => {
+                    for (let i = 0; i < simulations; i++) {
+                        // Generate random sample
+                        let successes = 0;
+                        for (let j = 0; j < n; j++) {
+                            if (Math.random() < trueP) successes++;
+                        }
+                        
+                        const pHat = successes / n;
+                        let interval;
+                        
+                        switch(intervalMethod) {
+                            case 'wald':
+                                interval = calculateWaldInterval(pHat, n, z);
+                                break;
+                            case 'wilson':
+                                interval = calculateWilsonInterval(pHat, n, z);
+                                break;
+                            case 'agresti':
+                                interval = calculateAgrestiCoullInterval(pHat, n, z);
+                                break;
+                        }
+                        
+                        // Check if interval covers true proportion
+                        if (interval.lower <= trueP && trueP <= interval.upper) {
+                            coverageCount++;
+                        }
+                    }
+                    
+                    const coverageRate = (coverageCount / simulations * 100).toFixed(1);
+                    const expectedCoverage = confidenceLevel * 100;
+                    const difference = (coverageRate - expectedCoverage).toFixed(1);
+                    
+                    simulationResults.innerHTML = `
+                        <h4>${currentLanguage === 'bn' ? 'সিমুলেশন ফলাফল' : 'Simulation Results'}</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 2px solid var(--border);">
+                                <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? 'আসল কভারেজ' : 'Actual Coverage'}</div>
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--wald-color);">${coverageRate}%</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 2px solid var(--border);">
+                                <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? 'প্রত্যাশিত কভারেজ' : 'Expected Coverage'}</div>
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--wilson-color);">${expectedCoverage.toFixed(1)}%</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: ${Math.abs(difference) > 5 ? '#FFEBEE' : '#E8F5E9'}; border-radius: 8px; border: 2px solid ${Math.abs(difference) > 5 ? '#FFCDD2' : '#C8E6C9'};">
+                            <strong>${currentLanguage === 'bn' ? 'পার্থক্য:' : 'Difference:'}</strong> ${difference}%
+                            <br>
+                            <small>${currentLanguage === 'bn' ? `${simulations} টি সিমুলেশন থেকে` : `From ${simulations} simulations`}</small>
+                        </div>
+                    `;
+                }, 500);
+            }
+
+            function compareMethods() {
+                const { n, confidenceLevel } = calculationState;
+                const trueP = calculationState.sampleProportion;
+                const z = calculationState.zValue;
+                const simulations = 500;
+                
+                const methods = [
+                    { name: 'wald', label: currentLanguage === 'bn' ? 'ওয়াল্ড' : 'Wald', color: 'var(--wald-color)' },
+                    { name: 'wilson', label: currentLanguage === 'bn' ? 'উইলসন' : 'Wilson', color: 'var(--wilson-color)' },
+                    { name: 'agresti', label: currentLanguage === 'bn' ? 'আগ্রেস্টি-কুল' : 'Agresti-Coull', color: 'var(--agresti-color)' }
+                ];
+                
+                const results = methods.map(method => {
+                    let coverageCount = 0;
+                    let totalWidth = 0;
+                    
+                    for (let i = 0; i < simulations; i++) {
+                        // Generate random sample
+                        let successes = 0;
+                        for (let j = 0; j < n; j++) {
+                            if (Math.random() < trueP) successes++;
+                        }
+                        
+                        const pHat = successes / n;
+                        let interval;
+                        
+                        switch(method.name) {
+                            case 'wald':
+                                interval = calculateWaldInterval(pHat, n, z);
+                                break;
+                            case 'wilson':
+                                interval = calculateWilsonInterval(pHat, n, z);
+                                break;
+                            case 'agresti':
+                                interval = calculateAgrestiCoullInterval(pHat, n, z);
+                                break;
+                        }
+                        
+                        // Check coverage
+                        if (interval.lower <= trueP && trueP <= interval.upper) {
+                            coverageCount++;
+                        }
+                        
+                        totalWidth += (interval.upper - interval.lower);
+                    }
+                    
+                    return {
+                        name: method.label,
+                        coverage: (coverageCount / simulations * 100).toFixed(1),
+                        avgWidth: (totalWidth / simulations).toFixed(4),
+                        color: method.color
+                    };
+                });
+                
+                simulationResults.innerHTML = `
+                    <h4>${currentLanguage === 'bn' ? 'পদ্ধতি তুলনা' : 'Method Comparison'}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        ${results.map(result => `
+                            <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; border: 2px solid ${result.color};">
+                                <div style="font-size: 1rem; font-weight: 600; color: ${result.color};">${result.name}</div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? 'কভারেজ' : 'Coverage'}</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700;">${result.coverage}%</div>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? 'গড় প্রস্থ' : 'Avg Width'}</div>
+                                    <div style="font-size: 1.2rem; font-weight: 600;">${result.avgWidth}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--ci-bg); border-radius: 8px; border: 2px solid var(--border);">
+                        <strong>${currentLanguage === 'bn' ? 'সারসংক্ষেপ:' : 'Summary:'}</strong>
+                        <br>
+                        <small>${currentLanguage === 'bn' ? 
+                            `• ওয়াল্ড: সহজ কিন্তু ছোট নমুনার জন্য দুর্বল<br>
+                            • উইলসন: উত্তম কভারেজ, সব প্যারামিটারে ভাল<br>
+                            • আগ্রেস্টি-কুল: ওয়াল্ডের সংশোধিত সংস্করণ, ৯৫% CI-এর জন্য ভাল` :
+                            `• Wald: Simple but poor for small samples<br>
+                            • Wilson: Better coverage, good for all parameters<br>
+                            • Agresti-Coull: Adjusted Wald, good for 95% CI`}</small>
+                    </div>
+                `;
+            }
+
+            function showCoverageCurve() {
+                const { n, confidenceLevel } = calculationState;
+                const z = calculationState.zValue;
+                
+                // Generate coverage curve for different true p values
+                const pValues = Array.from({length: 21}, (_, i) => i * 0.05);
+                const methods = ['wald', 'wilson', 'agresti'];
+                
+                simulationResults.innerHTML = `
+                    <h4>${currentLanguage === 'bn' ? 'কভারেজ কার্ভ' : 'Coverage Curves'}</h4>
+                    <div style="margin-top: 1rem;">
+                        <div style="height: 200px; position: relative; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; background: white;">
+                            <div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; display: flex; align-items: flex-end;">
+                                ${pValues.map((p, i) => {
+                                    // Calculate coverage for each method at this p
+                                    const coverage = confidenceLevel * 100;
+                                    const height = (coverage / 100) * 180;
+                                    const left = (i / 20) * 100;
+                                    
+                                    return `
+                                        <div style="position: absolute; left: ${left}%; bottom: 0; width: 4%; height: ${height}px; background: var(--wald-color); opacity: 0.6; border-radius: 2px 2px 0 0;"></div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.8rem; color: var(--gray);">
+                            <span>p = 0</span>
+                            <span>p = 0.5</span>
+                            <span>p = 1</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--ci-bg); border-radius: 8px; border: 2px solid var(--border);">
+                        <p>${currentLanguage === 'bn' ? 
+                            'কভারেজ কার্ভ দেখায় কিভাবে বিভিন্ন সত্য p-এর জন্য কনফিডেন্স ইন্টারভ্যাল পদ্ধতির কভারেজ পরিবর্তিত হয়। আদর্শ কার্ভ অনুভূমিক রেখা হবে যা প্রত্যাশিত কভারেজ লেভেলে থাকে।' :
+                            'Coverage curves show how confidence interval method coverage varies across different true p values. The ideal curve would be a horizontal line at the expected coverage level.'}</p>
+                    </div>
+                `;
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    sampleSizeInput.value = data.n;
+                    successCountInput.value = data.x;
+                    
+                    validateInputs();
+                    calculateInterval();
+                }
+            }
+
+            function resetCalculator() {
+                sampleSizeInput.value = 100;
+                successCountInput.value = 50;
+                
+                // Reset to default confidence level
+                setConfidenceLevel(0.99);
+                
+                // Reset to default method
+                setIntervalMethod('wald');
+                
+                validateInputs();
+                calculateInterval();
+            }
+        });
+    </script>
+</body>
+</html>

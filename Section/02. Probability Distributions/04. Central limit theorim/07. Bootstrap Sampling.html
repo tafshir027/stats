@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap Sampling Simulation | Resampling Methods</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #9C27B0;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --bootstrap-color: #9C27B0;
+            --bias-color: #FF9800;
+            --ci-color: #2196F3;
+            --original-color: #4CAF50;
+            --histogram-bg: #F3E5F5;
+            --comparison-bg: #E8F5E9;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--bootstrap-color), var(--bias-color), var(--ci-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Concept Explanation */
+        .concept-explanation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .concept-explanation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--bootstrap-color);
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        @media (max-width: 1024px) {
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .concept-text h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .concept-text p {
+            color: var(--gray);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .key-points {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .key-point {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .key-point-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--bootstrap-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .key-point-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--accent);
+        }
+
+        /* Original Sample Section */
+        .original-sample-section {
+            margin-bottom: 2rem;
+        }
+
+        .sample-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .sample-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--histogram-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--accent);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Data Input */
+        .data-input-section {
+            margin-bottom: 2rem;
+        }
+
+        .data-input-container {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1rem;
+        }
+
+        .data-input-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .data-point {
+            flex: 1;
+            text-align: center;
+        }
+
+        .data-value-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .data-value-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Bootstrap Settings */
+        .bootstrap-settings {
+            margin-bottom: 2rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setting-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .setting-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Resampling Method */
+        .resampling-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .resampling-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .method-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .method-btn.active {
+            background: var(--bootstrap-color);
+            color: white;
+            border-color: var(--bootstrap-color);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .sim-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .sim-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sim-btn.primary {
+            background: var(--bootstrap-color);
+            color: white;
+            border-color: var(--bootstrap-color);
+        }
+
+        .sim-btn.primary:hover {
+            background: #7B1FA2;
+        }
+
+        .sim-btn.success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .sim-btn.warning {
+            background: var(--warning);
+            color: white;
+            border-color: var(--warning);
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Statistics Overview */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.highlight {
+            background: var(--comparison-bg);
+            border-color: var(--success);
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Bootstrap Distribution */
+        .bootstrap-distribution {
+            margin-bottom: 2rem;
+        }
+
+        .distribution-container {
+            background: var(--histogram-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 2px solid var(--border);
+            position: relative;
+            height: 300px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Confidence Intervals */
+        .confidence-intervals {
+            margin-bottom: 2rem;
+        }
+
+        .ci-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .ci-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ci-method {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .ci-method.percentile {
+            border-color: var(--ci-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .ci-method.bc {
+            border-color: var(--bias-color);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .ci-method.bca {
+            border-color: var(--bootstrap-color);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .ci-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .ci-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 1rem 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .ci-range {
+            font-size: 1.1rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Bias Correction */
+        .bias-correction {
+            margin-bottom: 2rem;
+        }
+
+        .bias-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .bias-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .bias-method {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .bias-method.standard {
+            border-color: var(--ci-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .bias-method.bc {
+            border-color: var(--bias-color);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .bias-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 1rem 0;
+        }
+
+        /* Resampling Visualization */
+        .resampling-visualization {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .resampling-chart {
+            height: 250px;
+            margin-top: 1rem;
+            position: relative;
+            background: var(--histogram-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        .resampling-animation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .original-sample {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            z-index: 2;
+        }
+
+        .sample-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--original-color);
+            max-width: 300px;
+        }
+
+        .sample-item {
+            width: 30px;
+            height: 30px;
+            background: var(--original-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .sample-item.highlight {
+            background: var(--bootstrap-color);
+            transform: scale(1.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Animation Controls */
+        .animation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .anim-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .anim-btn:hover {
+            background: var(--bootstrap-color);
+            color: white;
+            border-color: var(--bootstrap-color);
+        }
+
+        /* Bootstrap Process Steps */
+        .process-steps {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .steps-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .step-card.active {
+            background: var(--histogram-bg);
+            border-color: var(--bootstrap-color);
+            transform: translateY(-5px);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bootstrap-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .step-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight-flash {
+            animation: highlightFlash 1s ease;
+        }
+
+        @keyframes highlightFlash {
+            0% { background: var(--light-gray); }
+            50% { background: var(--comparison-bg); }
+            100% { background: var(--light-gray); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--light-gray);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Canvas Styling */
+        .canvas-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .canvas-subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Bootstrap Sampling Simulation" data-bn="বুটস্ট্র্যাপ স্যাম্পলিং সিমুলেশন">বুটস্ট্র্যাপ স্যাম্পলিং সিমুলেশন</h1>
+            <p class="subtitle" data-en="Simulate bootstrap resampling methods with replacement sampling, confidence intervals, and bias correction" data-bn="উইথ-রিপ্লেসমেন্ট স্যাম্পলিং, কনফিডেন্স ইন্টারভ্যাল এবং বায়াস করেকশন সহ বুটস্ট্র্যাপ রিস্যাম্পলিং পদ্ধতি সিমুলেট করুন">
+                উইথ-রিপ্লেসমেন্ট স্যাম্পলিং, কনফিডেন্স ইন্টারভ্যাল এবং বায়াস করেকশন সহ বুটস্ট্র্যাপ রিস্যাম্পলিং পদ্ধতি সিমুলেট করুন
+            </p>
+        </div>
+
+        <!-- Concept Explanation -->
+        <div class="concept-explanation">
+            <div class="concept-grid">
+                <div class="concept-text">
+                    <h2 data-en="What is Bootstrap Sampling?" data-bn="বুটস্ট্র্যাপ স্যাম্পলিং কী?">বুটস্ট্র্যাপ স্যাম্পলিং কী?</h2>
+                    <p data-en="Bootstrap is a resampling technique used to estimate statistics on a population by sampling a dataset with replacement. It allows us to estimate the sampling distribution of almost any statistic using random sampling methods." data-bন="বুটস্ট্র্যাপ হল একটি রিস্যাম্পলিং টেকনিক যা রিপ্লেসমেন্ট সহ একটি ডেটাসেট স্যাম্পল করে পপুলেশনে পরিসংখ্যান অনুমান করতে ব্যবহৃত হয়। এটি আমাদের র্যান্ডম স্যাম্পলিং পদ্ধতি ব্যবহার করে প্রায় যেকোনো পরিসংখ্যানের স্যাম্পলিং ডিস্ট্রিবিউশন অনুমান করতে দেয়।">
+                        বুটস্ট্র্যাপ হল একটি রিস্যাম্পলিং টেকনিক যা রিপ্লেসমেন্ট সহ একটি ডেটাসেট স্যাম্পল করে পপুলেশনে পরিসংখ্যান অনুমান করতে ব্যবহৃত হয়।
+                    </p>
+                    <div class="help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Key Idea: Use your sample as a 'population' and resample from it!" data-bন="মূল ধারণা: আপনার নমুনাটিকে 'পপুলেশন' হিসাবে ব্যবহার করুন এবং এটি থেকে পুনরায় নমুনা নিন!">মূল ধারণা: আপনার নমুনাটিকে 'পপুলেশন' হিসাবে ব্যবহার করুন এবং এটি থেকে পুনরায় নমুনা নিন!</span>
+                    </div>
+                </div>
+                
+                <div class="key-points">
+                    <div class="key-point">
+                        <div class="key-point-icon">
+                            <i class="fas fa-recycle"></i>
+                        </div>
+                        <div class="key-point-title" data-en="With Replacement" data-bন="রিপ্লেসমেন্ট সহ">রিপ্লেসমেন্ট সহ</div>
+                        <small data-en="Same data point can be selected multiple times" data-bন="একই ডেটা পয়েন্ট একাধিকবার নির্বাচন করা যেতে পারে">একই ডেটা পয়েন্ট একাধিকবার নির্বাচন করা যেতে পারে</small>
+                    </div>
+                    
+                    <div class="key-point">
+                        <div class="key-point-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="key-point-title" data-en="Confidence Intervals" data-bন="কনফিডেন্স ইন্টারভ্যাল">কনফিডেন্স ইন্টারভ্যাল</div>
+                        <small data-en="Estimate uncertainty without distributional assumptions" data-bন="ডিস্ট্রিবিউশনাল ধারণা ছাড়া অনিশ্চয়তা অনুমান করুন">ডিস্ট্রিবিউশনাল ধারণা ছাড়া অনিশ্চয়তা অনুমান করুন</small>
+                    </div>
+                    
+                    <div class="key-point">
+                        <div class="key-point-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <div class="key-point-title" data-en="Bias Correction" data-bন="বায়াস করেকশন">বায়াস করেকশন</div>
+                        <small data-en="Adjust for bias in bootstrap estimates" data-bন="বুটস্ট্র্যাপ অনুমানে বায়াস জন্য সমন্বয় করুন">বুটস্ট্র্যাপ অনুমানে বায়াস জন্য সমন্বয় করুন</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <!-- Original Sample -->
+                <div class="original-sample-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Original Sample Data" data-bn="অরিজিনাল স্যাম্পল ডেটা">অরিজিনাল স্যাম্পল ডেটা</span>
+                    </h2>
+
+                    <div class="sample-controls">
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span data-en="Sample Size (n)" data-bন="নমুনা আকার (n)">নমুনা আকার (n)</span>
+                            </div>
+                            <input type="number" id="sampleSize" class="value-input" value="20" min="5" max="50" step="1">
+                            <div class="help-text" data-en="Number of observations in original sample" data-bন="অরিজিনাল নমুনায় পর্যবেক্ষণের সংখ্যা">অরিজিনাল নমুনায় পর্যবেক্ষণের সংখ্যা</div>
+                        </div>
+
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <i class="fas fa-ruler-horizontal"></i>
+                                <span data-en="Sample Mean" data-bন="নমুনা গড়">নমুনা গড়</span>
+                            </div>
+                            <div class="value-input" id="originalMean">50.0</div>
+                            <div class="help-text" data-en="Mean of original sample" data-bন="অরিজিনাল নমুনার গড়">অরিজিনাল নমুনার গড়</div>
+                        </div>
+                    </div>
+
+                    <div class="data-input-section">
+                        <div class="parameter-label">
+                            <i class="fas fa-sliders-h"></i>
+                            <span data-en="Data Distribution" data-bন="ডেটা ডিস্ট্রিবিউশন">ডেটা ডিস্ট্রিবিউশন</span>
+                        </div>
+                        
+                        <div class="data-input-container" id="dataInputContainer">
+                            <!-- Data points will be inserted here -->
+                        </div>
+                        
+                        <div class="help-text" data-en="Click 'Generate Data' to create random sample or edit values manually" data-bন="র্যান্ডম নমুনা তৈরি করতে 'ডেটা জেনারেট করুন' ক্লিক করুন বা ম্যানুয়ালি মান এডিট করুন">
+                            র্যান্ডম নমুনা তৈরি করতে 'ডেটা জেনারেট করুন' ক্লিক করুন বা ম্যানুয়ালি মান এডিট করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bootstrap Settings -->
+                <div class="bootstrap-settings">
+                    <h2 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Bootstrap Settings" data-bন="বুটস্ট্র্যাপ সেটিংস">বুটস্ট্র্যাপ সেটিংস</span>
+                    </h2>
+
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <div class="setting-label" data-en="Bootstrap Samples" data-bন="বুটস্ট্র্যাপ নমুনা">বুটস্ট্র্যাপ নমুনা</div>
+                            <div class="setting-value" id="bootstrapSamples">1000</div>
+                            <input type="range" id="samplesSlider" min="100" max="10000" value="1000" step="100" style="width: 100%; margin-top: 0.5rem;">
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label" data-en="Resample Size" data-bন="রিস্যাম্পল আকার">রিস্যাম্পল আকার</div>
+                            <div class="setting-value" id="resampleSize">20</div>
+                            <input type="range" id="sizeSlider" min="5" max="50" value="20" step="1" style="width: 100%; margin-top: 0.5rem;">
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label" data-en="Confidence Level" data-bন="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</div>
+                            <select id="confidenceLevel" class="value-input" style="font-size: 1rem;">
+                                <option value="0.90">90%</option>
+                                <option value="0.95" selected>95%</option>
+                                <option value="0.99">99%</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resampling Method -->
+                <div class="resampling-methods">
+                    <button class="method-btn active" data-method="standard">
+                        <i class="fas fa-retweet"></i>
+                        <span data-en="Standard" data-bন="স্ট্যান্ডার্ড">স্ট্যান্ডার্ড</span>
+                        <small data-en="Percentile method" data-bন="পারসেন্টাইল পদ্ধতি">পারসেন্টাইল পদ্ধতি</small>
+                    </button>
+                    <button class="method-btn" data-method="bc">
+                        <i class="fas fa-adjust"></i>
+                        <span data-en="Bias-Corrected" data-bন="বায়াস-সংশোধিত">বায়াস-সংশোধিত</span>
+                        <small data-en="BC method" data-bন="BC পদ্ধতি">BC পদ্ধতি</small>
+                    </button>
+                    <button class="method-btn" data-method="bca">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="BCa" data-bন="BCa">BCa</span>
+                        <small data-en="Accelerated BC" data-bন="এক্সেলারেটেড BC">এক্সেলারেটেড BC</small>
+                    </button>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="simulation-controls">
+                    <button class="sim-btn primary" id="runBootstrap">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Bootstrap" data-bন="বুটস্ট্র্যাপ চালান">বুটস্ট্র্যাপ চালান</span>
+                    </button>
+                    <button class="sim-btn" id="stepBootstrap">
+                        <i class="fas fa-step-forward"></i>
+                        <span data-en="Step" data-bন="ধাপ">ধাপ</span>
+                    </button>
+                    <button class="sim-btn warning" id="compareMethods">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Compare" data-bন="তুলনা">তুলনা</span>
+                    </button>
+                    <button class="sim-btn" id="resetSimulation">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+
+                <!-- Additional Controls -->
+                <div class="sample-controls" style="margin-top: 1.5rem;">
+                    <button class="sim-btn success" id="generateData">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Generate Data" data-bন="ডেটা জেনারেট করুন">ডেটা জেনারেট করুন</span>
+                    </button>
+                    <button class="sim-btn" id="showProcess">
+                        <i class="fas fa-eye"></i>
+                        <span data-en="Show Process" data-bন="প্রক্রিয়া দেখান">প্রক্রিয়া দেখান</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Statistics Overview -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Bootstrap Results" data-bn="বুটস্ট্র্যাপ ফলাফল">বুটস্ট্র্যাপ ফলাফল</span>
+                </h2>
+
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Original Mean" data-bন="অরিজিনাল গড়">অরিজিনাল গড়</div>
+                        <div class="stat-value" id="originalMeanResult">50.0</div>
+                    </div>
+
+                    <div class="stat-card highlight">
+                        <div class="stat-label" data-en="Bootstrap Mean" data-bন="বুটস্ট্র্যাপ গড়">বুটস্ট্র্যাপ গড়</div>
+                        <div class="stat-value" id="bootstrapMean">50.2</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Bootstrap SE" data-bন="বুটস্ট্র্যাপ SE">বুটস্ট্র্যাপ SE</div>
+                        <div class="stat-value" id="bootstrapSE">2.5</div>
+                    </div>
+                </div>
+
+                <!-- Bootstrap Distribution -->
+                <div class="bootstrap-distribution">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Bootstrap Distribution" data-bn="বুটস্ট্র্যাপ ডিস্ট্রিবিউশন">বুটস্ট্র্যাপ ডিস্ট্রিবিউশন</span>
+                    </h2>
+                    
+                    <div class="distribution-container">
+                        <canvas id="bootstrapCanvas"></canvas>
+                    </div>
+                    
+                    <div class="help-text" data-en="Distribution of bootstrap sample means (resampled with replacement)" data-bন="বুটস্ট্র্যাপ স্যাম্পল গড়ের ডিস্ট্রিবিউশন (রিপ্লেসমেন্ট সহ পুনঃনমুনাকৃত)">
+                        বুটস্ট্র্যাপ স্যাম্পল গড়ের ডিস্ট্রিবিউশন (রিপ্লেসমেন্ট সহ পুনঃনমুনাকৃত)
+                    </div>
+                </div>
+
+                <!-- Confidence Intervals -->
+                <div class="confidence-intervals">
+                    <h2 class="section-title">
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span data-en="Bootstrap Confidence Intervals" data-bন="বুটস্ট্র্যাপ কনফিডেন্স ইন্টারভ্যাল">বুটস্ট্র্যাপ কনফিডেন্স ইন্টারভ্যাল</span>
+                    </h2>
+                    
+                    <div class="ci-methods">
+                        <div class="ci-method percentile">
+                            <div class="ci-title" data-en="Percentile CI" data-bন="পারসেন্টাইল CI">পারসেন্টাইল CI</div>
+                            <div class="ci-value" id="percentileCI">45.5 – 54.8</div>
+                            <div class="ci-range">
+                                <span id="percentileLower">45.5</span>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <span id="percentileUpper">54.8</span>
+                            </div>
+                        </div>
+
+                        <div class="ci-method bc">
+                            <div class="ci-title" data-en="Bias-Corrected CI" data-bন="বায়াস-সংশোধিত CI">বায়াস-সংশোধিত CI</div>
+                            <div class="ci-value" id="bcCI">45.2 – 54.5</div>
+                            <div class="ci-range">
+                                <span id="bcLower">45.2</span>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <span id="bcUpper">54.5</span>
+                            </div>
+                        </div>
+
+                        <div class="ci-method bca">
+                            <div class="ci-title" data-en="BCa CI" data-bন="BCa CI">BCa CI</div>
+                            <div class="ci-value" id="bcaCI">45.0 – 54.3</div>
+                            <div class="ci-range">
+                                <span id="bcaLower">45.0</span>
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <span id="bcaUpper">54.3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bias Correction -->
+                <div class="bias-correction">
+                    <h2 class="section-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Bias Correction" data-bন="বায়াস করেকশন">বায়াস করেকশন</span>
+                    </h2>
+                    
+                    <div class="bias-methods">
+                        <div class="bias-method standard">
+                            <div class="ci-title" data-en="Standard Bias" data-bন="স্ট্যান্ডার্ড বায়াস">স্ট্যান্ডার্ড বায়াস</div>
+                            <div class="bias-value" id="standardBias">0.15</div>
+                            <div class="help-text" data-en="Original - Bootstrap mean" data-bন="অরিজিনাল - বুটস্ট্র্যাপ গড়">অরিজিনাল - বুটস্ট্র্যাপ গড়</div>
+                        </div>
+
+                        <div class="bias-method bc">
+                            <div class="ci-title" data-en="Bias Correction Factor" data-bন="বায়াস করেকশন ফ্যাক্টর">বায়াস করেকশন ফ্যাক্টর</div>
+                            <div class="bias-value" id="biasFactor">0.05</div>
+                            <div class="help-text" data-en="Φ⁻¹ proportion below original" data-bন="অরিজিনালের নিচে অনুপাত">অরিজিনালের নিচে অনুপাত</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resampling Visualization -->
+        <div class="resampling-visualization">
+            <h2 class="section-title">
+                <i class="fas fa-eye"></i>
+                <span data-en="Resampling Visualization" data-bন="রিস্যাম্পলিং ভিজ্যুয়ালাইজেশন">রিস্যাম্পলিং ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <p data-en="Watch how bootstrap resampling works with replacement:" data-bন="দেখুন কিভাবে বুটস্ট্র্যাপ রিস্যাম্পলিং রিপ্লেসমেন্ট সহ কাজ করে:">
+                দেখুন কিভাবে বুটস্ট্র্যাপ রিস্যাম্পলিং রিপ্লেসমেন্ট সহ কাজ করে:
+            </p>
+            
+            <div class="resampling-chart">
+                <div class="resampling-animation" id="resamplingAnimation">
+                    <div class="original-sample">
+                        <div class="canvas-subtitle" data-en="Original Sample" data-bন="অরিজিনাল নমুনা">অরিজিনাল নমুনা</div>
+                        <div class="sample-box" id="originalSampleBox">
+                            <!-- Original sample items will be inserted here -->
+                        </div>
+                        <div class="canvas-subtitle" data-en="Bootstrap Sample" data-bন="বুটস্ট্র্যাপ নমুনা">বুটস্ট্র্যাপ নমুনা</div>
+                        <div class="sample-box" id="bootstrapSampleBox">
+                            <!-- Bootstrap sample items will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="animation-controls">
+                <button class="anim-btn" id="startAnimation">
+                    <i class="fas fa-play"></i>
+                    <span data-en="Start Animation" data-bন="অ্যানিমেশন শুরু করুন">অ্যানিমেশন শুরু করুন</span>
+                </button>
+                <button class="anim-btn" id="nextResample">
+                    <i class="fas fa-forward"></i>
+                    <span data-en="Next Resample" data-bন="পরবর্তী রিস্যাম্পল">পরবর্তী রিস্যাম্পল</span>
+                </button>
+                <button class="anim-btn" id="resetAnimation">
+                    <i class="fas fa-redo"></i>
+                    <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bootstrap Process Steps -->
+        <div class="process-steps">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Bootstrap Process Steps" data-bন="বুটস্ট্র্যাপ প্রক্রিয়ার ধাপ">বুটস্ট্র্যাপ প্রক্রিয়ার ধাপ</span>
+            </h2>
+            
+            <p data-en="The bootstrap method follows these steps:" data-bন="বুটস্ট্র্যাপ পদ্ধতি এই ধাপগুলি অনুসরণ করে:">
+                বুটস্ট্র্যাপ পদ্ধতি এই ধাপগুলি অনুসরণ করে:
+            </p>
+            
+            <div class="steps-container">
+                <div class="step-card active">
+                    <div class="step-number">1</div>
+                    <div class="step-title" data-en="Original Sample" data-bন="অরিজিনাল নমুনা">অরিজিনাল নমুনা</div>
+                    <div class="step-description" data-en="Start with your original sample of size n" data-bন="আপনার অরিজিনাল n আকারের নমুনা দিয়ে শুরু করুন">আপনার অরিজিনাল n আকারের নমুনা দিয়ে শুরু করুন</div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-title" data-en="Draw Bootstrap Sample" data-bন="বুটস্ট্র্যাপ নমুনা নিন">বুটস্ট্র্যাপ নমুনা নিন</div>
+                    <div class="step-description" data-en="Resample n observations with replacement from original" data-bন="অরিজিনাল থেকে রিপ্লেসমেন্ট সহ n পর্যবেক্ষণ পুনঃনমুনা নিন">অরিজিনাল থেকে রিপ্লেসমেন্ট সহ n পর্যবেক্ষণ পুনঃনমুনা নিন</div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-title" data-en="Calculate Statistic" data-bন="পরিসংখ্যান গণনা করুন">পরিসংখ্যান গণনা করুন</div>
+                    <div class="step-description" data-en="Compute the statistic of interest (e.g., mean) on bootstrap sample" data-bন="বুটস্ট্র্যাপ নমুনায় আগ্রহের পরিসংখ্যান (যেমন, গড়) গণনা করুন">বুটস্ট্র্যাপ নমুনায় আগ্রহের পরিসংখ্যান (যেমন, গড়) গণনা করুন</div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-title" data-en="Repeat & Aggregate" data-bন="পুনরাবৃত্তি করুন এবং সমষ্টি করুন">পুনরাবৃত্তি করুন এবং সমষ্টি করুন</div>
+                    <div class="step-description" data-en="Repeat steps 2-3 many times (e.g., 1000) to create bootstrap distribution" data-bন="বুটস্ট্র্যাপ ডিস্ট্রিবিউশন তৈরি করতে ধাপ ২-৩ অনেকবার (যেমন, ১০০০ বার) পুনরাবৃত্তি করুন">বুটস্ট্র্যাপ ডিস্ট্রিবিউশন তৈরি করতে ধাপ ২-৩ অনেকবার (যেমন, ১০০০ বার) পুনরাবৃত্তি করুন</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                originalSample: [],
+                sampleSize: 20,
+                bootstrapSamples: 1000,
+                resampleSize: 20,
+                confidenceLevel: 0.95,
+                method: 'standard',
+                bootstrapMeans: [],
+                isRunning: false,
+                animationRunning: false,
+                currentResample: 0
+            };
+
+            // DOM Elements
+            const methodBtns = document.querySelectorAll('.method-btn');
+            const runBtn = document.getElementById('runBootstrap');
+            const stepBtn = document.getElementById('stepBootstrap');
+            const compareBtn = document.getElementById('compareMethods');
+            const resetBtn = document.getElementById('resetSimulation');
+            const generateBtn = document.getElementById('generateData');
+            const showProcessBtn = document.getElementById('showProcess');
+            const startAnimBtn = document.getElementById('startAnimation');
+            const nextResampleBtn = document.getElementById('nextResample');
+            const resetAnimBtn = document.getElementById('resetAnimation');
+            
+            // Input Elements
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const samplesSlider = document.getElementById('samplesSlider');
+            const sizeSlider = document.getElementById('sizeSlider');
+            const confidenceSelect = document.getElementById('confidenceLevel');
+            
+            // Display Elements
+            const originalMeanEl = document.getElementById('originalMean');
+            const originalMeanResult = document.getElementById('originalMeanResult');
+            const bootstrapMean = document.getElementById('bootstrapMean');
+            const bootstrapSE = document.getElementById('bootstrapSE');
+            const bootstrapSamplesEl = document.getElementById('bootstrapSamples');
+            const resampleSizeEl = document.getElementById('resampleSize');
+            
+            // CI Elements
+            const percentileCI = document.getElementById('percentileCI');
+            const percentileLower = document.getElementById('percentileLower');
+            const percentileUpper = document.getElementById('percentileUpper');
+            const bcCI = document.getElementById('bcCI');
+            const bcLower = document.getElementById('bcLower');
+            const bcUpper = document.getElementById('bcUpper');
+            const bcaCI = document.getElementById('bcaCI');
+            const bcaLower = document.getElementById('bcaLower');
+            const bcaUpper = document.getElementById('bcaUpper');
+            
+            // Bias Elements
+            const standardBias = document.getElementById('standardBias');
+            const biasFactor = document.getElementById('biasFactor');
+            
+            // Canvas Elements
+            const bootstrapCanvas = document.getElementById('bootstrapCanvas');
+            const bootstrapCtx = bootstrapCanvas.getContext('2d');
+            
+            // Data Input
+            const dataInputContainer = document.getElementById('dataInputContainer');
+            const originalSampleBox = document.getElementById('originalSampleBox');
+            const bootstrapSampleBox = document.getElementById('bootstrapSampleBox');
+            
+            // Canvas Dimensions
+            let canvasWidth, canvasHeight;
+            
+            // Tooltip
+            const tooltip = document.getElementById('tooltip');
+            
+            // Initialize
+            initBootstrap();
+
+            function initBootstrap() {
+                // Set canvas dimensions
+                updateCanvasDimensions();
+                window.addEventListener('resize', updateCanvasDimensions);
+                
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Method Selection
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setMethod(method);
+                    });
+                });
+
+                // Input Changes
+                sampleSizeInput.addEventListener('change', updateSampleSize);
+                samplesSlider.addEventListener('input', updateBootstrapSamples);
+                sizeSlider.addEventListener('input', updateResampleSize);
+                confidenceSelect.addEventListener('change', updateConfidenceLevel);
+
+                // Simulation Controls
+                runBtn.addEventListener('click', runBootstrap);
+                stepBtn.addEventListener('click', stepBootstrap);
+                compareBtn.addEventListener('click', compareBootstrapMethods);
+                resetBtn.addEventListener('click', resetBootstrap);
+                generateBtn.addEventListener('click', generateRandomData);
+                showProcessBtn.addEventListener('click', showBootstrapProcess);
+
+                // Animation Controls
+                startAnimBtn.addEventListener('click', startResamplingAnimation);
+                nextResampleBtn.addEventListener('click', performNextResample);
+                resetAnimBtn.addEventListener('click', resetAnimation);
+
+                // Generate initial data
+                generateRandomData();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setMethod(method) {
+                simulationState.method = method;
+                
+                // Update active button
+                methodBtns.forEach(btn => {
+                    if (btn.dataset.method === method) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update results if bootstrap has been run
+                if (simulationState.bootstrapMeans.length > 0) {
+                    updateConfidenceIntervals();
+                    updateBiasCorrection();
+                }
+            }
+
+            function updateSampleSize() {
+                const size = parseInt(sampleSizeInput.value) || 20;
+                simulationState.sampleSize = size;
+                simulationState.resampleSize = size;
+                
+                // Update resample size slider
+                sizeSlider.value = size;
+                resampleSizeEl.textContent = size;
+                
+                // Regenerate data
+                generateRandomData();
+            }
+
+            function updateBootstrapSamples() {
+                const samples = parseInt(samplesSlider.value) || 1000;
+                simulationState.bootstrapSamples = samples;
+                bootstrapSamplesEl.textContent = samples.toLocaleString();
+            }
+
+            function updateResampleSize() {
+                const size = parseInt(sizeSlider.value) || 20;
+                simulationState.resampleSize = size;
+                resampleSizeEl.textContent = size;
+            }
+
+            function updateConfidenceLevel() {
+                simulationState.confidenceLevel = parseFloat(confidenceSelect.value);
+                
+                // Update results if bootstrap has been run
+                if (simulationState.bootstrapMeans.length > 0) {
+                    updateConfidenceIntervals();
+                }
+            }
+
+            function updateCanvasDimensions() {
+                const container = bootstrapCanvas.parentElement;
+                canvasWidth = container.clientWidth;
+                canvasHeight = container.clientHeight;
+                bootstrapCanvas.width = canvasWidth;
+                bootstrapCanvas.height = canvasHeight;
+            }
+
+            function generateRandomData() {
+                const size = simulationState.sampleSize;
+                const mean = 50 + (Math.random() * 20 - 10); // Random mean between 40-60
+                const stdDev = 10 + Math.random() * 5; // Random SD between 10-15
+                
+                // Generate random normal data
+                const data = [];
+                for (let i = 0; i < size; i++) {
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+                    const value = mean + stdDev * z;
+                    data.push(Math.round(value * 10) / 10); // Round to 1 decimal
+                }
+                
+                simulationState.originalSample = data;
+                
+                // Update data input display
+                updateDataInputDisplay();
+                
+                // Update original mean
+                const originalMean = calculateMean(data);
+                originalMeanEl.textContent = originalMean.toFixed(1);
+                originalMeanResult.textContent = originalMean.toFixed(1);
+                
+                // Reset bootstrap results
+                simulationState.bootstrapMeans = [];
+                clearCanvas();
+                resetResults();
+            }
+
+            function updateDataInputDisplay() {
+                const data = simulationState.originalSample;
+                
+                // Clear previous inputs
+                dataInputContainer.innerHTML = '';
+                originalSampleBox.innerHTML = '';
+                
+                // Create data point inputs
+                const numRows = Math.ceil(data.length / 5);
+                
+                for (let row = 0; row < numRows; row++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'data-input-row';
+                    
+                    for (let col = 0; col < 5; col++) {
+                        const index = row * 5 + col;
+                        if (index >= data.length) break;
+                        
+                        const pointDiv = document.createElement('div');
+                        pointDiv.className = 'data-point';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'data-value-input';
+                        input.value = data[index].toFixed(1);
+                        input.step = '0.1';
+                        
+                        input.addEventListener('change', function() {
+                            const newValue = parseFloat(this.value);
+                            if (!isNaN(newValue)) {
+                                data[index] = newValue;
+                                
+                                // Update original mean
+                                const originalMean = calculateMean(data);
+                                originalMeanEl.textContent = originalMean.toFixed(1);
+                                originalMeanResult.textContent = originalMean.toFixed(1);
+                            }
+                        });
+                        
+                        pointDiv.appendChild(input);
+                        rowDiv.appendChild(pointDiv);
+                    }
+                    
+                    dataInputContainer.appendChild(rowDiv);
+                }
+                
+                // Create original sample visualization
+                data.forEach((value, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'sample-item';
+                    item.textContent = value.toFixed(0);
+                    item.title = `Value: ${value.toFixed(1)}`;
+                    item.dataset.index = index;
+                    originalSampleBox.appendChild(item);
+                });
+            }
+
+            function calculateMean(data) {
+                return data.reduce((a, b) => a + b, 0) / data.length;
+            }
+
+            function clearCanvas() {
+                bootstrapCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            }
+
+            function resetResults() {
+                bootstrapMean.textContent = '0.0';
+                bootstrapSE.textContent = '0.0';
+                percentileCI.textContent = '–';
+                percentileLower.textContent = '0.0';
+                percentileUpper.textContent = '0.0';
+                bcCI.textContent = '–';
+                bcLower.textContent = '0.0';
+                bcUpper.textContent = '0.0';
+                bcaCI.textContent = '–';
+                bcaLower.textContent = '0.0';
+                bcaUpper.textContent = '0.0';
+                standardBias.textContent = '0.00';
+                biasFactor.textContent = '0.00';
+            }
+
+            function runBootstrap() {
+                if (simulationState.isRunning) return;
+                
+                simulationState.isRunning = true;
+                
+                // Update button states
+                runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + 
+                    (currentLanguage === 'bn' ? 'চলছে...' : 'Running...');
+                runBtn.disabled = true;
+                
+                // Clear previous results
+                simulationState.bootstrapMeans = [];
+                clearCanvas();
+                
+                const { originalSample, bootstrapSamples, resampleSize } = simulationState;
+                
+                // Generate bootstrap samples
+                for (let i = 0; i < bootstrapSamples; i++) {
+                    // Draw bootstrap sample with replacement
+                    const bootstrapSample = [];
+                    for (let j = 0; j < resampleSize; j++) {
+                        const randomIndex = Math.floor(Math.random() * originalSample.length);
+                        bootstrapSample.push(originalSample[randomIndex]);
+                    }
+                    
+                    // Calculate mean of bootstrap sample
+                    const bootstrapMean = calculateMean(bootstrapSample);
+                    simulationState.bootstrapMeans.push(bootstrapMean);
+                }
+                
+                // Sort bootstrap means
+                simulationState.bootstrapMeans.sort((a, b) => a - b);
+                
+                // Update results
+                updateBootstrapResults();
+                drawBootstrapDistribution();
+                updateConfidenceIntervals();
+                updateBiasCorrection();
+                
+                // Reset button states
+                simulationState.isRunning = false;
+                runBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'বুটস্ট্র্যাপ চালান' : 'Run Bootstrap');
+                runBtn.disabled = false;
+            }
+
+            function stepBootstrap() {
+                const { originalSample, resampleSize } = simulationState;
+                
+                // Draw a single bootstrap sample
+                const bootstrapSample = [];
+                for (let j = 0; j < resampleSize; j++) {
+                    const randomIndex = Math.floor(Math.random() * originalSample.length);
+                    bootstrapSample.push(originalSample[randomIndex]);
+                }
+                
+                // Calculate mean
+                const bootstrapMean = calculateMean(bootstrapSample);
+                simulationState.bootstrapMeans.push(bootstrapMean);
+                
+                // Sort if needed
+                simulationState.bootstrapMeans.sort((a, b) => a - b);
+                
+                // Update results
+                updateBootstrapResults();
+                drawBootstrapDistribution();
+                updateConfidenceIntervals();
+                
+                // Update step count
+                simulationState.currentResample++;
+            }
+
+            function updateBootstrapResults() {
+                const { bootstrapMeans } = simulationState;
+                if (bootstrapMeans.length === 0) return;
+                
+                // Calculate bootstrap statistics
+                const bootMean = calculateMean(bootstrapMeans);
+                const bootSE = calculateStandardError(bootstrapMeans);
+                
+                // Update display
+                bootstrapMean.textContent = bootMean.toFixed(1);
+                bootstrapSE.textContent = bootSE.toFixed(2);
+            }
+
+            function calculateStandardError(data) {
+                const mean = calculateMean(data);
+                const squaredDiffs = data.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / data.length;
+                return Math.sqrt(variance);
+            }
+
+            function drawBootstrapDistribution() {
+                const { bootstrapMeans } = simulationState;
+                if (bootstrapMeans.length === 0) return;
+                
+                // Clear canvas
+                clearCanvas();
+                
+                // Calculate statistics
+                const min = Math.min(...bootstrapMeans);
+                const max = Math.max(...bootstrapMeans);
+                const range = max - min;
+                const mean = calculateMean(bootstrapMeans);
+                
+                // Create histogram bins
+                const numBins = 30;
+                const bins = new Array(numBins).fill(0);
+                
+                bootstrapMeans.forEach(value => {
+                    const binIndex = Math.min(
+                        Math.floor(((value - min) / range) * numBins),
+                        numBins - 1
+                    );
+                    bins[binIndex]++;
+                });
+                
+                // Find maximum bin count
+                const maxCount = Math.max(...bins);
+                
+                // Draw axes
+                bootstrapCtx.strokeStyle = '#666';
+                bootstrapCtx.lineWidth = 1;
+                
+                // X-axis
+                bootstrapCtx.beginPath();
+                bootstrapCtx.moveTo(40, canvasHeight - 40);
+                bootstrapCtx.lineTo(canvasWidth - 20, canvasHeight - 40);
+                bootstrapCtx.stroke();
+                
+                // Y-axis
+                bootstrapCtx.beginPath();
+                bootstrapCtx.moveTo(40, canvasHeight - 40);
+                bootstrapCtx.lineTo(40, 20);
+                bootstrapCtx.stroke();
+                
+                // Draw histogram bars
+                const barWidth = (canvasWidth - 60) / numBins;
+                const scale = (canvasHeight - 60) / maxCount;
+                
+                for (let i = 0; i < numBins; i++) {
+                    const barHeight = bins[i] * scale;
+                    const x = 40 + i * barWidth;
+                    const y = canvasHeight - 40 - barHeight;
+                    
+                    // Gradient fill
+                    const gradient = bootstrapCtx.createLinearGradient(x, y, x, y + barHeight);
+                    gradient.addColorStop(0, 'rgba(156, 39, 176, 0.8)');
+                    gradient.addColorStop(1, 'rgba(156, 39, 176, 0.2)');
+                    
+                    bootstrapCtx.fillStyle = gradient;
+                    bootstrapCtx.fillRect(x, y, barWidth - 1, barHeight);
+                    
+                    // Border
+                    bootstrapCtx.strokeStyle = '#7B1FA2';
+                    bootstrapCtx.lineWidth = 0.5;
+                    bootstrapCtx.strokeRect(x, y, barWidth - 1, barHeight);
+                }
+                
+                // Draw mean line
+                const meanX = 40 + ((mean - min) / range) * (canvasWidth - 60);
+                bootstrapCtx.strokeStyle = '#4CAF50';
+                bootstrapCtx.lineWidth = 2;
+                bootstrapCtx.beginPath();
+                bootstrapCtx.moveTo(meanX, canvasHeight - 40);
+                bootstrapCtx.lineTo(meanX, 20);
+                bootstrapCtx.stroke();
+                
+                // Draw labels
+                bootstrapCtx.fillStyle = '#333';
+                bootstrapCtx.font = '12px Arial';
+                bootstrapCtx.textAlign = 'center';
+                
+                // X-axis label
+                bootstrapCtx.fillText('Bootstrap Sample Mean', canvasWidth / 2, canvasHeight - 15);
+                
+                // Y-axis label
+                bootstrapCtx.save();
+                bootstrapCtx.translate(20, canvasHeight / 2);
+                bootstrapCtx.rotate(-Math.PI / 2);
+                bootstrapCtx.textAlign = 'center';
+                bootstrapCtx.fillText('Frequency', 0, 0);
+                bootstrapCtx.restore();
+                
+                // Title
+                bootstrapCtx.fillStyle = '#7B1FA2';
+                bootstrapCtx.font = 'bold 14px Arial';
+                bootstrapCtx.fillText(`Bootstrap Distribution (n=${simulationState.bootstrapMeans.length})`, canvasWidth / 2, 30);
+                
+                // Original mean line
+                const originalMean = calculateMean(simulationState.originalSample);
+                const originalMeanX = 40 + ((originalMean - min) / range) * (canvasWidth - 60);
+                bootstrapCtx.strokeStyle = '#FF9800';
+                bootstrapCtx.lineWidth = 2;
+                bootstrapCtx.setLineDash([5, 5]);
+                bootstrapCtx.beginPath();
+                bootstrapCtx.moveTo(originalMeanX, canvasHeight - 40);
+                bootstrapCtx.lineTo(originalMeanX, 20);
+                bootstrapCtx.stroke();
+                bootstrapCtx.setLineDash([]);
+                
+                // Add legend
+                bootstrapCtx.fillStyle = '#4CAF50';
+                bootstrapCtx.fillRect(canvasWidth - 150, 50, 10, 10);
+                bootstrapCtx.fillStyle = '#333';
+                bootstrapCtx.font = '10px Arial';
+                bootstrapCtx.textAlign = 'left';
+                bootstrapCtx.fillText('Bootstrap Mean', canvasWidth - 135, 58);
+                
+                bootstrapCtx.fillStyle = '#FF9800';
+                bootstrapCtx.fillRect(canvasWidth - 150, 65, 10, 10);
+                bootstrapCtx.fillStyle = '#333';
+                bootstrapCtx.fillText('Original Mean', canvasWidth - 135, 73);
+            }
+
+            function updateConfidenceIntervals() {
+                const { bootstrapMeans, confidenceLevel } = simulationState;
+                if (bootstrapMeans.length === 0) return;
+                
+                // Calculate percentile CI
+                const lowerPercentile = (1 - confidenceLevel) / 2;
+                const upperPercentile = 1 - lowerPercentile;
+                
+                const lowerIndex = Math.floor(lowerPercentile * bootstrapMeans.length);
+                const upperIndex = Math.ceil(upperPercentile * bootstrapMeans.length) - 1;
+                
+                const percentileLowerVal = bootstrapMeans[lowerIndex];
+                const percentileUpperVal = bootstrapMeans[upperIndex];
+                
+                // Update percentile CI display
+                percentileCI.textContent = `${percentileLowerVal.toFixed(1)} – ${percentileUpperVal.toFixed(1)}`;
+                percentileLower.textContent = percentileLowerVal.toFixed(1);
+                percentileUpper.textContent = percentileUpperVal.toFixed(1);
+                
+                // Calculate bias-corrected CI (simplified)
+                const originalMean = calculateMean(simulationState.originalSample);
+                const bootstrapMean = calculateMean(bootstrapMeans);
+                
+                // Proportion of bootstrap means less than original mean
+                const propLess = bootstrapMeans.filter(x => x < originalMean).length / bootstrapMeans.length;
+                const z0 = inverseNormalCDF(propLess);
+                
+                // Bias-corrected percentiles
+                const bcLowerZ = 2 * z0 + normalCDF(lowerPercentile * 2 - 1);
+                const bcUpperZ = 2 * z0 + normalCDF(upperPercentile * 2 - 1);
+                
+                const bcLowerIndex = Math.floor(normalCDF(bcLowerZ) * bootstrapMeans.length);
+                const bcUpperIndex = Math.ceil(normalCDF(bcUpperZ) * bootstrapMeans.length) - 1;
+                
+                const bcLowerVal = bootstrapMeans[bcLowerIndex];
+                const bcUpperVal = bootstrapMeans[bcUpperIndex];
+                
+                // Update BC CI display
+                bcCI.textContent = `${bcLowerVal.toFixed(1)} – ${bcUpperVal.toFixed(1)}`;
+                bcLower.textContent = bcLowerVal.toFixed(1);
+                bcUpper.textContent = bcUpperVal.toFixed(1);
+                
+                // BCa CI (simplified - using same as BC for demo)
+                bcaCI.textContent = `${bcLowerVal.toFixed(1)} – ${bcUpperVal.toFixed(1)}`;
+                bcaLower.textContent = bcLowerVal.toFixed(1);
+                bcaUpper.textContent = bcUpperVal.toFixed(1);
+            }
+
+            function updateBiasCorrection() {
+                const { bootstrapMeans } = simulationState;
+                if (bootstrapMeans.length === 0) return;
+                
+                const originalMean = calculateMean(simulationState.originalSample);
+                const bootstrapMean = calculateMean(bootstrapMeans);
+                
+                // Standard bias
+                const bias = originalMean - bootstrapMean;
+                standardBias.textContent = bias.toFixed(2);
+                
+                // Bias correction factor
+                const propLess = bootstrapMeans.filter(x => x < originalMean).length / bootstrapMeans.length;
+                const z0 = inverseNormalCDF(propLess);
+                biasFactor.textContent = z0.toFixed(2);
+            }
+
+            // Normal distribution functions
+            function normalCDF(x) {
+                // Approximation of standard normal CDF
+                const t = 1 / (1 + 0.2316419 * Math.abs(x));
+                const d = 0.3989423 * Math.exp(-x * x / 2);
+                let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+                if (x > 0) prob = 1 - prob;
+                return prob;
+            }
+
+            function inverseNormalCDF(p) {
+                // Approximation of inverse standard normal CDF
+                if (p <= 0 || p >= 1) return 0;
+                
+                const a = [-3.969683, 1.841594, -0.304582, 0.053144, -0.002216];
+                const b = [-1.432788, 0.189269, -0.001308, 0.001381];
+                
+                let q = p - 0.5;
+                let r;
+                
+                if (Math.abs(q) <= 0.425) {
+                    r = 0.180625 - q * q;
+                    const num = ((((a[4] * r + a[3]) * r + a[2]) * r + a[1]) * r + a[0]);
+                    const den = ((((b[3] * r + b[2]) * r + b[1]) * r + b[0]) * r + 1);
+                    return q * num / den;
+                } else {
+                    r = q < 0 ? p : 1 - p;
+                    r = Math.sqrt(-Math.log(r));
+                    const num = ((((b[3] * r + b[2]) * r + b[1]) * r + b[0]) * r + 1);
+                    const den = ((((a[4] * r + a[3]) * r + a[2]) * r + a[1]) * r + a[0]);
+                    const x = num / den;
+                    return q < 0 ? -x : x;
+                }
+            }
+
+            function compareBootstrapMethods() {
+                // This would compare different bootstrap methods
+                alert(currentLanguage === 'bn' 
+                    ? 'বুটস্ট্র্যাপ পদ্ধতির তুলনা চালানো হচ্ছে... (ডেমো মোড)' 
+                    : 'Running bootstrap method comparison... (Demo Mode)');
+                
+                // Update step cards to show comparison
+                const stepCards = document.querySelectorAll('.step-card');
+                stepCards.forEach(card => card.classList.add('active'));
+                
+                // Highlight comparison button
+                compareBtn.classList.add('pulse');
+                setTimeout(() => compareBtn.classList.remove('pulse'), 1000);
+            }
+
+            function showBootstrapProcess() {
+                // Animate through the bootstrap process steps
+                const stepCards = document.querySelectorAll('.step-card');
+                
+                stepCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        // Reset all cards
+                        stepCards.forEach(c => c.classList.remove('active'));
+                        // Activate current card
+                        card.classList.add('active');
+                    }, index * 1000);
+                });
+                
+                // Reset after animation
+                setTimeout(() => {
+                    stepCards.forEach(card => card.classList.remove('active'));
+                    stepCards[0].classList.add('active');
+                }, stepCards.length * 1000);
+            }
+
+            function startResamplingAnimation() {
+                if (simulationState.animationRunning) return;
+                
+                simulationState.animationRunning = true;
+                startAnimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + 
+                    (currentLanguage === 'bn' ? 'চলছে...' : 'Running...');
+                startAnimBtn.disabled = true;
+                
+                // Perform multiple resamples with animation
+                let count = 0;
+                const maxCount = 10;
+                
+                const interval = setInterval(() => {
+                    performAnimatedResample();
+                    count++;
+                    
+                    if (count >= maxCount) {
+                        clearInterval(interval);
+                        simulationState.animationRunning = false;
+                        startAnimBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                            (currentLanguage === 'bn' ? 'অ্যানিমেশন শুরু করুন' : 'Start Animation');
+                        startAnimBtn.disabled = false;
+                    }
+                }, 500);
+            }
+
+            function performAnimatedResample() {
+                const { originalSample, resampleSize } = simulationState;
+                
+                // Clear bootstrap sample box
+                bootstrapSampleBox.innerHTML = '';
+                
+                // Highlight original sample items as they are selected
+                const originalItems = originalSampleBox.querySelectorAll('.sample-item');
+                originalItems.forEach(item => item.classList.remove('highlight'));
+                
+                // Draw bootstrap sample with animation
+                const selectedIndices = [];
+                for (let i = 0; i < resampleSize; i++) {
+                    setTimeout(() => {
+                        const randomIndex = Math.floor(Math.random() * originalSample.length);
+                        selectedIndices.push(randomIndex);
+                        
+                        // Highlight original item
+                        originalItems[randomIndex].classList.add('highlight');
+                        
+                        // Add to bootstrap sample box
+                        const value = originalSample[randomIndex];
+                        const item = document.createElement('div');
+                        item.className = 'sample-item highlight';
+                        item.textContent = value.toFixed(0);
+                        item.style.animationDelay = `${i * 0.1}s`;
+                        bootstrapSampleBox.appendChild(item);
+                        
+                        // Remove highlight after delay
+                        setTimeout(() => {
+                            originalItems[randomIndex].classList.remove('highlight');
+                        }, 300);
+                    }, i * 100);
+                }
+                
+                // Update step cards
+                const stepCards = document.querySelectorAll('.step-card');
+                stepCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        stepCards.forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                    }, index * 300);
+                });
+                
+                // Reset step cards after animation
+                setTimeout(() => {
+                    stepCards.forEach(card => card.classList.remove('active'));
+                    stepCards[0].classList.add('active');
+                }, stepCards.length * 300);
+            }
+
+            function performNextResample() {
+                performAnimatedResample();
+            }
+
+            function resetAnimation() {
+                // Clear bootstrap sample box
+                bootstrapSampleBox.innerHTML = '';
+                
+                // Remove highlights
+                const originalItems = originalSampleBox.querySelectorAll('.sample-item');
+                originalItems.forEach(item => item.classList.remove('highlight'));
+                
+                // Reset step cards
+                const stepCards = document.querySelectorAll('.step-card');
+                stepCards.forEach(card => card.classList.remove('active'));
+                stepCards[0].classList.add('active');
+            }
+
+            function resetBootstrap() {
+                // Reset state
+                simulationState.bootstrapMeans = [];
+                simulationState.isRunning = false;
+                simulationState.animationRunning = false;
+                simulationState.currentResample = 0;
+                
+                // Reset UI
+                runBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'বুটস্ট্র্যাপ চালান' : 'Run Bootstrap');
+                runBtn.disabled = false;
+                startAnimBtn.innerHTML = '<i class="fas fa-play"></i> ' + 
+                    (currentLanguage === 'bn' ? 'অ্যানিমেশন শুরু করুন' : 'Start Animation');
+                startAnimBtn.disabled = false;
+                
+                // Clear canvas and results
+                clearCanvas();
+                resetResults();
+                resetAnimation();
+            }
+        });
+    </script>
+</body>
+</html>

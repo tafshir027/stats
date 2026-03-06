@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resampling Methods Demo | রিস্যাম্পলিং পদ্ধতি প্রদর্শন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --jackknife-color: #2196F3;
+            --bootstrap-color: #4CAF50;
+            --cv-color: #9C27B0;
+            --permutation-color: #FF5722;
+            --montecarlo-color: #FF9800;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--jackknife-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--jackknife-color), var(--bootstrap-color), var(--cv-color), var(--permutation-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Method Selection Panel */
+        .method-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--jackknife-color);
+        }
+
+        /* Method Cards */
+        .method-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .method-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .method-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .method-card.active {
+            border-color: var(--jackknife-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .method-card.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--jackknife-color);
+        }
+
+        .method-card.bootstrap.active {
+            border-color: var(--bootstrap-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .method-card.bootstrap.active::before {
+            background: var(--bootstrap-color);
+        }
+
+        .method-card.cv.active {
+            border-color: var(--cv-color);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .method-card.cv.active::before {
+            background: var(--cv-color);
+        }
+
+        .method-card.permutation.active {
+            border-color: var(--permutation-color);
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .method-card.permutation.active::before {
+            background: var(--permutation-color);
+        }
+
+        .method-card.montecarlo.active {
+            border-color: var(--montecarlo-color);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .method-card.montecarlo.active::before {
+            background: var(--montecarlo-color);
+        }
+
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--jackknife-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .method-card.bootstrap .method-icon {
+            background: var(--bootstrap-color);
+        }
+
+        .method-card.cv .method-icon {
+            background: var(--cv-color);
+        }
+
+        .method-card.permutation .method-icon {
+            background: var(--permutation-color);
+        }
+
+        .method-card.montecarlo .method-icon {
+            background: var(--montecarlo-color);
+        }
+
+        .method-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .method-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .method-features {
+            list-style: none;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .method-features li {
+            margin-bottom: 0.3rem;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+
+        .method-features li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Data Parameters */
+        .data-parameters {
+            margin-bottom: 2rem;
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--jackknife-color);
+        }
+
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .input-field {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--jackknife-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 2rem;
+        }
+
+        /* Method Visualization */
+        .method-visualization {
+            height: 300px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            position: relative;
+        }
+
+        .visualization-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 1.2rem;
+            gap: 1rem;
+        }
+
+        /* Sample Visualization */
+        .sample-visualization {
+            height: 200px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        /* Resampling Controls */
+        .resampling-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .resampling-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .resample-btn {
+            background: var(--jackknife-color);
+            color: white;
+        }
+
+        .resample-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .compare-btn {
+            background: var(--cv-color);
+            color: white;
+        }
+
+        .compare-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-description {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Comparison Section */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-chart-container {
+            height: 300px;
+            margin-top: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            position: relative;
+        }
+
+        /* Step-by-Step Explanation */
+        .explanation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--jackknife-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .step-content p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .step-visual {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--jackknife-color);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Visual Effects */
+        .resample-animation {
+            animation: resample 0.5s ease;
+        }
+
+        @keyframes resample {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .method-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .resampling-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Data Points Visualization */
+        .data-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .data-point {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .data-point.sampled {
+            transform: scale(1.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .data-point.removed {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Resampling Methods Demo" data-bn="রিস্যাম্পলিং পদ্ধতি প্রদর্শন">রিস্যাম্পলিং পদ্ধতি প্রদর্শন</h1>
+            <p class="subtitle" data-en="Demonstrate various resampling techniques: Jackknife, Bootstrap, Cross-Validation, Permutation Tests, and Monte Carlo" data-bন="বিভিন্ন রিস্যাম্পলিং টেকনিক প্রদর্শন করুন: জ্যাকনাইফ, বুটস্ট্র্যাপ, ক্রস-ভ্যালিডেশন, পার্মুটেশন টেস্ট এবং মন্টে কার্লো">
+                বিভিন্ন রিস্যাম্পলিং টেকনিক প্রদর্শন করুন: জ্যাকনাইফ, বুটস্ট্র্যাপ, ক্রস-ভ্যালিডেশন, পার্মুটেশন টেস্ট এবং মন্টে কার্লো
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Method Selection Panel -->
+            <div class="method-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Resampling Methods" data-bন="রিস্যাম্পলিং পদ্ধতি">রিস্যাম্পলিং পদ্ধতি</span>
+                </h2>
+
+                <!-- Method Cards -->
+                <div class="method-cards">
+                    <div class="method-card active" data-method="jackknife">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-cut"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Jackknife" data-bন="জ্যাকনাইফ">জ্যাকনাইফ</div>
+                                <small data-en="Leave-one-out resampling" data-bন="লিভ-ওয়ান-আউট রিস্যাম্পলিং">লিভ-ওয়ান-আউট রিস্যাম্পলিং</small>
+                            </div>
+                        </div>
+                        <div class="method-description" data-en="Systematically remove one observation at a time to estimate bias and variance" data-bন="প্রতিবারে একটি পর্যবেক্ষণ সিস্টেম্যাটিকভাবে সরান বায়াস এবং ভ্যারিয়েন্স অনুমানের জন্য">
+                            প্রতিবারে একটি পর্যবেক্ষণ সিস্টেম্যাটিকভাবে সরান বায়াস এবং ভ্যারিয়েন্স অনুমানের জন্য
+                        </div>
+                        <ul class="method-features">
+                            <li data-en="Simple implementation" data-bন="সহজ বাস্তবায়ন">সহজ বাস্তবায়ন</li>
+                            <li data-en="Good for bias estimation" data-bন="বায়াস অনুমানের জন্য ভাল">বায়াস অনুমানের জন্য ভাল</li>
+                            <li data-en="Computationally efficient" data-bন="কম্পিউটেশনালি দক্ষ">কম্পিউটেশনালি দক্ষ</li>
+                        </ul>
+                    </div>
+
+                    <div class="method-card bootstrap" data-method="bootstrap">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Bootstrap" data-bন="বুটস্ট্র্যাপ">বুটস্ট্র্যাপ</div>
+                                <small data-en="With-replacement sampling" data-bন="উইথ-রিপ্লেসমেন্ট স্যাম্পলিং">উইথ-রিপ্লেসমেন্ট স্যাম্পলিং</small>
+                            </div>
+                        </div>
+                        <div class="method-description" data-en="Resample with replacement to estimate sampling distribution and confidence intervals" data-bন="প্রতিস্থাপন সহ রিস্যাম্পল করুন স্যাম্পলিং ডিস্ট্রিবিউশন এবং কনফিডেন্স ইন্টারভ্যাল অনুমানের জন্য">
+                            প্রতিস্থাপন সহ রিস্যাম্পল করুন স্যাম্পলিং ডিস্ট্রিবিউশন এবং কনফিডেন্স ইন্টারভ্যাল অনুমানের জন্য
+                        </div>
+                        <ul class="method-features">
+                            <li data-en="Most popular resampling method" data-bন="সবচেয়ে জনপ্রিয় রিস্যাম্পলিং পদ্ধতি">সবচেয়ে জনপ্রিয় রিস্যাম্পলিং পদ্ধতি</li>
+                            <li data-en="Works with complex statistics" data-bন="জটিল পরিসংখ্যানের সাথে কাজ করে">জটিল পরিসংখ্যানের সাথে কাজ করে</li>
+                            <li data-en="Confidence interval construction" data-bন="কনফিডেন্স ইন্টারভ্যাল নির্মাণ">কনফিডেন্স ইন্টারভ্যাল নির্মাণ</li>
+                        </ul>
+                    </div>
+
+                    <div class="method-card cv" data-method="crossvalidation">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Cross-Validation" data-bন="ক্রস-ভ্যালিডেশন">ক্রস-ভ্যালিডেশন</div>
+                                <small data-en="Model performance assessment" data-bন="মডেল পারফরমেন্স মূল্যায়ন">মডেল পারফরমেন্স মূল্যায়ন</small>
+                            </div>
+                        </div>
+                        <div class="method-description" data-en="Split data into training and validation sets to assess model performance" data-bন="ডেটাকে ট্রেনিং এবং ভ্যালিডেশন সেটে বিভক্ত করুন মডেল পারফরমেন্স মূল্যায়নের জন্য">
+                            ডেটাকে ট্রেনিং এবং ভ্যালিডেশন সেটে বিভক্ত করুন মডেল পারফরমেন্স মূল্যায়নের জন্য
+                        </div>
+                        <ul class="method-features">
+                            <li data-en="Essential for machine learning" data-bন="মেশিন লার্নিং-এর জন্য অপরিহার্য">মেশিন লার্নিং-এর জন্য অপরিহার্য</li>
+                            <li data-en="Prevents overfitting" data-bন="ওভারফিটিং প্রতিরোধ করে">ওভারফিটিং প্রতিরোধ করে</li>
+                            <li data-en="k-fold and leave-one-out" data-bন="k-ফোল্ড এবং লিভ-ওয়ান-আউট">k-ফোল্ড এবং লিভ-ওয়ান-আউট</li>
+                        </ul>
+                    </div>
+
+                    <div class="method-card permutation" data-method="permutation">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-random"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Permutation Tests" data-bন="পার্মুটেশন টেস্ট">পার্মুটেশন টেস্ট</div>
+                                <small data-en="Random label shuffling" data-bন="র্যান্ডম লেবেল শাফলিং">র্যান্ডম লেবেল শাফলিং</small>
+                            </div>
+                        </div>
+                        <div class="method-description" data-en="Shuffle group labels to assess statistical significance without distributional assumptions" data-bন="ডিস্ট্রিবিউশনাল অ্যাসাম্পশন ছাড়াই পরিসংখ্যানগত তাত্পর্য মূল্যায়নের জন্য গ্রুপ লেবেল শাফল করুন">
+                            ডিস্ট্রিবিউশনাল অ্যাসাম্পশন ছাড়াই পরিসংখ্যানগত তাত্পর্য মূল্যায়নের জন্য গ্রুপ লেবেল শাফল করুন
+                        </div>
+                        <ul class="method-features">
+                            <li data-en="Distribution-free testing" data-bন="ডিস্ট্রিবিউশন-ফ্রি টেস্টিং">ডিস্ট্রিবিউশন-ফ্রি টেস্টিং</li>
+                            <li data-en="Exact p-values" data-bন="সঠিক p-মান">সঠিক p-মান</li>
+                            <li data-en="Robust to outliers" data-bন="আউটলায়ার-এর জন্য রোবাস্ট">আউটলায়ার-এর জন্য রোবাস্ট</li>
+                        </ul>
+                    </div>
+
+                    <div class="method-card montecarlo" data-method="montecarlo">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                            <div>
+                                <div class="method-title" data-en="Monte Carlo" data-bন="মন্টে কার্লো">মন্টে কার্লো</div>
+                                <small data-en="Random sampling simulation" data-bন="র্যান্ডম স্যাম্পলিং সিমুলেশন">র্যান্ডম স্যাম্পলিং সিমুলেশন</small>
+                            </div>
+                        </div>
+                        <div class="method-description" data-en="Generate random samples from theoretical distributions to approximate complex quantities" data-bন="জটিল পরিমাণ আনুমানিক করার জন্য তাত্ত্বিক ডিস্ট্রিবিউশন থেকে র্যান্ডম নমুনা তৈরি করুন">
+                            জটিল পরিমাণ আনুমানিক করার জন্য তাত্ত্বিক ডিস্ট্রিবিউশন থেকে র্যান্ডম নমুনা তৈরি করুন
+                        </div>
+                        <ul class="method-features">
+                            <li data-en="Numerical integration" data-bন="নিউমেরিক্যাল ইন্টিগ্রেশন">নিউমেরিক্যাল ইন্টিগ্রেশন</li>
+                            <li data-en="Approximate complex integrals" data-bন="জটিল ইন্টিগ্রাল আনুমানিক করুন">জটিল ইন্টিগ্রাল আনুমানিক করুন</li>
+                            <li data-en="Simulation-based inference" data-bন="সিমুলেশন-ভিত্তিক ইনফারেন্স">সিমুলেশন-ভিত্তিক ইনফারেন্স</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Data Parameters" data-bন="ডেটা প্যারামিটার">ডেটা প্যারামিটার</span>
+                </h2>
+
+                <!-- Data Parameters -->
+                <div class="data-parameters">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-list-ol"></i>
+                            <span data-en="Sample Size" data-bন="নমুনা আকার">নমুনা আকার</span>
+                        </div>
+                        <div class="parameter-controls">
+                            <div class="input-group">
+                                <label class="input-label" data-en="Original Sample (n)" data-bন="মূল নমুনা (n)">মূল নমুনা (n)</label>
+                                <input type="number" id="sampleSize" class="input-field" min="5" max="50" value="20">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label" data-en="Bootstrap Replicates" data-bন="বুটস্ট্র্যাপ রিপ্লিকেট">বুটস্ট্র্যাপ রিপ্লিকেট</label>
+                                <input type="number" id="bootstrapReplicates" class="input-field" min="100" max="10000" value="1000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="Distribution Parameters" data-bন="ডিস্ট্রিবিউশন প্যারামিটার">ডিস্ট্রিবিউশন প্যারামিটার</span>
+                        </div>
+                        <div class="parameter-controls">
+                            <div class="input-group">
+                                <label class="input-label" data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</label>
+                                <input type="number" id="populationMean" class="input-field" min="0" max="100" value="50">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label" data-en="Std Dev (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</label>
+                                <input type="number" id="populationStd" class="input-field" min="1" max="20" value="10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-code-branch"></i>
+                            <span data-en="Cross-Validation Folds" data-bন="ক্রস-ভ্যালিডেশন ফোল্ড">ক্রস-ভ্যালিডেশন ফোল্ড</span>
+                        </div>
+                        <div class="parameter-controls">
+                            <div class="input-group">
+                                <label class="input-label" data-en="Number of Folds (k)" data-bন="ফোল্ড সংখ্যা (k)">ফোল্ড সংখ্যা (k)</label>
+                                <input type="number" id="cvFolds" class="input-field" min="2" max="10" value="5">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label" data-en="Permutation Tests" data-bন="পার্মুটেশন টেস্ট">পার্মুটেশন টেস্ট</label>
+                                <input type="number" id="permutationTests" class="input-field" min="100" max="10000" value="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resampling Controls -->
+                <div class="resampling-controls">
+                    <button class="control-btn resample-btn" id="resampleBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Run Resampling" data-bন="রিস্যাম্পলিং চালান">রিস্যাম্পলিং চালান</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                    <button class="control-btn compare-btn" id="compareBtn">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Compare Methods" data-bন="পদ্ধতি তুলনা করুন">পদ্ধতি তুলনা করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-eye"></i>
+                    <span data-en="Method Visualization" data-bন="পদ্ধতি ভিজ্যুয়ালাইজেশন">পদ্ধতি ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+
+                <!-- Method Visualization -->
+                <div class="method-visualization" id="methodVisualization">
+                    <div class="visualization-placeholder">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                        <div data-en="Select a resampling method and click 'Run Resampling'" data-bন="একটি রিস্যাম্পলিং পদ্ধতি নির্বাচন করুন এবং 'রিস্যাম্পলিং চালান' ক্লিক করুন">
+                            একটি রিস্যাম্পলিং পদ্ধতি নির্বাচন করুন এবং 'রিস্যাম্পলিং চালান' ক্লিক করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Visualization -->
+                <div class="sample-visualization" id="sampleVisualization">
+                    <div style="text-align: center; color: var(--gray);">
+                        <i class="fas fa-cubes"></i>
+                        <div data-en="Original Data Points" data-bন="মূল ডেটা পয়েন্ট">মূল ডেটা পয়েন্ট</div>
+                    </div>
+                    <div class="data-points" id="dataPoints">
+                        <!-- Data points will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Resampling Results" data-bন="রিস্যাম্পলিং ফলাফল">রিস্যাম্পলিং ফলাফল</span>
+            </h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-title" data-en="Original Mean" data-bন="মূল গড়">মূল গড়</div>
+                    <div class="result-value" id="originalMean">50.0</div>
+                    <div class="result-description" data-en="Mean of original sample" data-bন="মূল নমুনার গড়">মূল নমুনার গড়</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" data-en="Resampled Mean" data-bন="রিস্যাম্পলকৃত গড়">রিস্যাম্পলকৃত গড়</div>
+                    <div class="result-value" id="resampledMean">50.2</div>
+                    <div class="result-description" data-en="Mean of resampled distribution" data-bন="রিস্যাম্পলকৃত ডিস্ট্রিবিউশনের গড়">রিস্যাম্পলকৃত ডিস্ট্রিবিউশনের গড়</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" data-en="Bias Estimate" data-bন="বায়াস অনুমান">বায়াস অনুমান</div>
+                    <div class="result-value" id="biasEstimate">0.2</div>
+                    <div class="result-description" data-en="Estimated bias of statistic" data-bন="পরিসংখ্যানের অনুমানকৃত বায়াস">পরিসংখ্যানের অনুমানকৃত বায়াস</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                    <div class="result-value" id="standardError">2.3</div>
+                    <div class="result-description" data-en="Estimated standard error" data-bন="অনুমানকৃত স্ট্যান্ডার্ড এরর">অনুমানকৃত স্ট্যান্ডার্ড এরর</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" data-en="95% CI Width" data-bন="৯৫% CI প্রস্থ">৯৫% CI প্রস্থ</div>
+                    <div class="result-value" id="ciWidth">9.0</div>
+                    <div class="result-description" data-en="Confidence interval width" data-bন="কনফিডেন্স ইন্টারভ্যাল প্রস্থ">কনফিডেন্স ইন্টারভ্যাল প্রস্থ</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title" data-en="Computations" data-bন="গণনা">গণনা</div>
+                    <div class="result-value" id="computations">1000</div>
+                    <div class="result-description" data-en="Number of resamples" data-bন="রিস্যাম্পল সংখ্যা">রিস্যাম্পল সংখ্যা</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Section -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Method Comparison" data-bন="পদ্ধতি তুলনা">পদ্ধতি তুলনা</span>
+            </h2>
+            
+            <p data-en="Compare performance of different resampling methods:" data-bন="বিভিন্ন রিস্যাম্পলিং পদ্ধতির পারফরমেন্স তুলনা করুন:">
+                বিভিন্ন রিস্যাম্পলিং পদ্ধতির পারফরমেন্স তুলনা করুন:
+            </p>
+            
+            <div class="comparison-chart-container" id="comparisonChartContainer">
+                <canvas id="comparisonChart"></canvas>
+                <div class="visualization-placeholder" id="comparisonPlaceholder">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                    <div data-en="Click 'Compare Methods' to generate comparison" data-bন="তুলনা তৈরি করতে 'পদ্ধতি তুলনা করুন' ক্লিক করুন">
+                        তুলনা তৈরি করতে 'পদ্ধতি তুলনা করুন' ক্লিক করুন
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Explanation -->
+        <div class="explanation-section">
+            <h2 class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                <span data-en="Step-by-Step Resampling" data-bন="ধাপে ধাপে রিস্যাম্পলিং">ধাপে ধাপে রিস্যাম্পলিং</span>
+            </h2>
+            
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">১</div>
+                    <div class="step-content">
+                        <h3 data-en="Collect Original Sample" data-bন="মূল নমুনা সংগ্রহ করুন">মূল নমুনা সংগ্রহ করুন</h3>
+                        <p data-en="Start with an original sample of size n from the population. This is your observed data." data-bন="জনসংখ্যা থেকে আকার n-এর একটি মূল নমুনা দিয়ে শুরু করুন। এটি আপনার পর্যবেক্ষিত ডেটা।">
+                            জনসংখ্যা থেকে আকার n-এর একটি মূল নমুনা দিয়ে শুরু করুন। এটি আপনার পর্যবেক্ষিত ডেটা।
+                        </p>
+                        <div class="step-visual" id="step1Visual">
+                            Original sample: n = <span id="step1n">20</span>, x̄ = <span id="step1mean">50.0</span>, s = <span id="step1std">10.0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">২</div>
+                    <div class="step-content">
+                        <h3 data-en="Apply Resampling Method" data-bন="রিস্যাম্পলিং পদ্ধতি প্রয়োগ করুন">রিস্যাম্পলিং পদ্ধতি প্রয়োগ করুন</h3>
+                        <p data-en="Depending on the selected method (Jackknife, Bootstrap, etc.), resample from the original data using the specific algorithm." data-bন="নির্বাচিত পদ্ধতি (জ্যাকনাইফ, বুটস্ট্র্যাপ, ইত্যাদি) এর উপর নির্ভর করে, নির্দিষ্ট অ্যালগরিদম ব্যবহার করে মূল ডেটা থেকে রিস্যাম্পল করুন।">
+                            নির্বাচিত পদ্ধতি (জ্যাকনাইফ, বুটস্ট্র্যাপ, ইত্যাদি) এর উপর নির্ভর করে, নির্দিষ্ট অ্যালগরিদম ব্যবহার করে মূল ডেটা থেকে রিস্যাম্পল করুন।
+                        </p>
+                        <div class="step-visual" id="step2Visual">
+                            Method: <span id="currentMethod">Jackknife</span>
+                            <br>
+                            Resamples: <span id="step2Resamples">19</span> jackknife samples
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">৩</div>
+                    <div class="step-content">
+                        <h3 data-en="Compute Statistics" data-bন="পরিসংখ্যান গণনা করুন">পরিসংখ্যান গণনা করুন</h3>
+                        <p data-en="For each resample, compute the statistic of interest (e.g., mean, median, variance). This creates a distribution of the statistic." data-bন="প্রতিটি রিস্যাম্পলের জন্য, আগ্রহের পরিসংখ্যান গণনা করুন (যেমন, গড়, মধ্যমা, ভ্যারিয়েন্স)। এটি পরিসংখ্যানের একটি ডিস্ট্রিবিউশন তৈরি করে।">
+                            প্রতিটি রিস্যাম্পলের জন্য, আগ্রহের পরিসংখ্যান গণনা করুন (যেমন, গড়, মধ্যমা, ভ্যারিয়েন্স)। এটি পরিসংখ্যানের একটি ডিস্ট্রিবিউশন তৈরি করে।
+                        </p>
+                        <div class="step-visual" id="step3Visual">
+                            Statistics computed: <span id="step3Count">19</span>
+                            <br>
+                            Statistic distribution created
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">৪</div>
+                    <div class="step-content">
+                        <h3 data-en="Estimate Properties" data-bন="বৈশিষ্ট্য অনুমান করুন">বৈশিষ্ট্য অনুমান করুন</h3>
+                        <p data-en="From the resampled distribution, estimate properties like bias, standard error, confidence intervals, or p-values." data-bন="রিস্যাম্পলকৃত ডিস্ট্রিবিউশন থেকে, বায়াস, স্ট্যান্ডার্ড এরর, কনফিডেন্স ইন্টারভ্যাল বা p-মানের মতো বৈশিষ্ট্য অনুমান করুন।">
+                            রিস্যাম্পলকৃত ডিস্ট্রিবিউশন থেকে, বায়াস, স্ট্যান্ডার্ড এরর, কনফিডেন্স ইন্টারভ্যাল বা p-মানের মতো বৈশিষ্ট্য অনুমান করুন।
+                        </p>
+                        <div class="step-visual" id="step4Visual">
+                            Bias = <span id="step4Bias">0.2</span>, SE = <span id="step4SE">2.3</span>
+                            <br>
+                            95% CI: [<span id="step4CILower">45.5</span>, <span id="step4CIUpper">54.5</span>]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                method: 'jackknife',
+                sampleSize: 20,
+                bootstrapReplicates: 1000,
+                populationMean: 50,
+                populationStd: 10,
+                cvFolds: 5,
+                permutationTests: 1000,
+                originalData: [],
+                resampledData: [],
+                currentStep: 0
+            };
+
+            // Charts
+            let methodChart = null;
+            let comparisonChart = null;
+
+            // DOM Elements
+            const methodCards = document.querySelectorAll('.method-card');
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const bootstrapReplicatesInput = document.getElementById('bootstrapReplicates');
+            const populationMeanInput = document.getElementById('populationMean');
+            const populationStdInput = document.getElementById('populationStd');
+            const cvFoldsInput = document.getElementById('cvFolds');
+            const permutationTestsInput = document.getElementById('permutationTests');
+            const resampleBtn = document.getElementById('resampleBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const compareBtn = document.getElementById('compareBtn');
+
+            // Results Elements
+            const originalMean = document.getElementById('originalMean');
+            const resampledMean = document.getElementById('resampledMean');
+            const biasEstimate = document.getElementById('biasEstimate');
+            const standardError = document.getElementById('standardError');
+            const ciWidth = document.getElementById('ciWidth');
+            const computations = document.getElementById('computations');
+
+            // Step Elements
+            const step1n = document.getElementById('step1n');
+            const step1mean = document.getElementById('step1mean');
+            const step1std = document.getElementById('step1std');
+            const currentMethod = document.getElementById('currentMethod');
+            const step2Resamples = document.getElementById('step2Resamples');
+            const step3Count = document.getElementById('step3Count');
+            const step4Bias = document.getElementById('step4Bias');
+            const step4SE = document.getElementById('step4SE');
+            const step4CILower = document.getElementById('step4CILower');
+            const step4CIUpper = document.getElementById('step4CIUpper');
+
+            // Data Points Container
+            const dataPoints = document.getElementById('dataPoints');
+
+            // Initialize
+            initResamplingDemo();
+
+            function initResamplingDemo() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Method Selection
+                methodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setMethod(method);
+                    });
+                });
+
+                // Parameter Controls
+                sampleSizeInput.addEventListener('input', function() {
+                    simulationState.sampleSize = parseInt(this.value);
+                    generateOriginalData();
+                });
+
+                bootstrapReplicatesInput.addEventListener('input', function() {
+                    simulationState.bootstrapReplicates = parseInt(this.value);
+                });
+
+                populationMeanInput.addEventListener('input', function() {
+                    simulationState.populationMean = parseFloat(this.value);
+                    generateOriginalData();
+                });
+
+                populationStdInput.addEventListener('input', function() {
+                    simulationState.populationStd = parseFloat(this.value);
+                    generateOriginalData();
+                });
+
+                cvFoldsInput.addEventListener('input', function() {
+                    simulationState.cvFolds = parseInt(this.value);
+                });
+
+                permutationTestsInput.addEventListener('input', function() {
+                    simulationState.permutationTests = parseInt(this.value);
+                });
+
+                // Resampling Controls
+                resampleBtn.addEventListener('click', runResampling);
+                resetBtn.addEventListener('click', resetSimulation);
+                compareBtn.addEventListener('click', compareMethods);
+
+                // Generate initial data
+                generateOriginalData();
+                updateDataPoints();
+                updateStep1();
+                
+                // Run initial resampling
+                setTimeout(() => {
+                    runResampling();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setMethod(method) {
+                simulationState.method = method;
+                
+                // Update active card
+                methodCards.forEach(card => {
+                    if (card.dataset.method === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                // Update method name in step 2
+                const methodNames = {
+                    jackknife: currentLanguage === 'bn' ? 'জ্যাকনাইফ' : 'Jackknife',
+                    bootstrap: currentLanguage === 'bn' ? 'বুটস্ট্র্যাপ' : 'Bootstrap',
+                    crossvalidation: currentLanguage === 'bn' ? 'ক্রস-ভ্যালিডেশন' : 'Cross-Validation',
+                    permutation: currentLanguage === 'bn' ? 'পার্মুটেশন টেস্ট' : 'Permutation Test',
+                    montecarlo: currentLanguage === 'bn' ? 'মন্টে কার্লো' : 'Monte Carlo'
+                };
+                currentMethod.textContent = methodNames[method];
+            }
+
+            function generateOriginalData() {
+                const { sampleSize, populationMean, populationStd } = simulationState;
+                const data = [];
+                
+                // Generate normal data
+                for (let i = 0; i < sampleSize; i++) {
+                    const u = Math.random();
+                    const v = Math.random();
+                    const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                    data.push(populationMean + populationStd * z);
+                }
+                
+                simulationState.originalData = data;
+                updateDataPoints();
+                updateStep1();
+            }
+
+            function updateDataPoints() {
+                const data = simulationState.originalData;
+                dataPoints.innerHTML = '';
+                
+                data.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'data-point';
+                    point.textContent = Math.round(value);
+                    
+                    // Color based on value (gradient from blue to red)
+                    const normalized = (value - (simulationState.populationMean - 3 * simulationState.populationStd)) / 
+                                     (6 * simulationState.populationStd);
+                    const hue = (1 - Math.max(0, Math.min(1, normalized))) * 240; // Blue (0) to Red (240)
+                    point.style.background = `hsl(${hue}, 70%, 50%)`;
+                    
+                    point.title = `Value: ${value.toFixed(2)}, Index: ${index}`;
+                    dataPoints.appendChild(point);
+                });
+            }
+
+            function runJackknife() {
+                const data = simulationState.originalData;
+                const n = data.length;
+                const jackknifeStats = [];
+                
+                // Create jackknife samples (leave-one-out)
+                for (let i = 0; i < n; i++) {
+                    const jackknifeSample = data.slice(0, i).concat(data.slice(i + 1));
+                    const mean = jackknifeSample.reduce((a, b) => a + b, 0) / (n - 1);
+                    jackknifeStats.push(mean);
+                }
+                
+                simulationState.resampledData = jackknifeStats;
+                return jackknifeStats;
+            }
+
+            function runBootstrap() {
+                const data = simulationState.originalData;
+                const n = data.length;
+                const replicates = simulationState.bootstrapReplicates;
+                const bootstrapStats = [];
+                
+                // Create bootstrap samples
+                for (let i = 0; i < replicates; i++) {
+                    const bootstrapSample = [];
+                    for (let j = 0; j < n; j++) {
+                        const randomIndex = Math.floor(Math.random() * n);
+                        bootstrapSample.push(data[randomIndex]);
+                    }
+                    const mean = bootstrapSample.reduce((a, b) => a + b, 0) / n;
+                    bootstrapStats.push(mean);
+                }
+                
+                simulationState.resampledData = bootstrapStats;
+                return bootstrapStats;
+            }
+
+            function runCrossValidation() {
+                const data = simulationState.originalData;
+                const n = data.length;
+                const k = simulationState.cvFolds;
+                const cvStats = [];
+                
+                // Shuffle data
+                const shuffled = [...data].sort(() => Math.random() - 0.5);
+                const foldSize = Math.floor(n / k);
+                
+                // k-fold cross validation
+                for (let i = 0; i < k; i++) {
+                    const testStart = i * foldSize;
+                    const testEnd = (i + 1) * foldSize;
+                    const testSet = shuffled.slice(testStart, testEnd);
+                    const trainSet = shuffled.slice(0, testStart).concat(shuffled.slice(testEnd));
+                    
+                    // Simple model: predict mean of training set
+                    const trainMean = trainSet.reduce((a, b) => a + b, 0) / trainSet.length;
+                    const testMean = testSet.reduce((a, b) => a + b, 0) / testSet.length;
+                    
+                    // Calculate prediction error (MSE)
+                    const mse = testSet.reduce((sum, x) => sum + Math.pow(x - trainMean, 2), 0) / testSet.length;
+                    cvStats.push(mse);
+                }
+                
+                simulationState.resampledData = cvStats;
+                return cvStats;
+            }
+
+            function runPermutationTest() {
+                const data = simulationState.originalData;
+                const n = data.length;
+                const tests = simulationState.permutationTests;
+                const permutationStats = [];
+                
+                // Split data into two groups (simulated A/B test)
+                const groupA = data.slice(0, Math.floor(n / 2));
+                const groupB = data.slice(Math.floor(n / 2));
+                const originalDiff = Math.abs(
+                    groupA.reduce((a, b) => a + b, 0) / groupA.length - 
+                    groupB.reduce((a, b) => a + b, 0) / groupB.length
+                );
+                
+                const combined = [...groupA, ...groupB];
+                
+                // Permutation tests
+                let countMoreExtreme = 0;
+                for (let i = 0; i < tests; i++) {
+                    // Shuffle labels
+                    const shuffled = [...combined].sort(() => Math.random() - 0.5);
+                    const permGroupA = shuffled.slice(0, groupA.length);
+                    const permGroupB = shuffled.slice(groupA.length);
+                    
+                    const permDiff = Math.abs(
+                        permGroupA.reduce((a, b) => a + b, 0) / permGroupA.length - 
+                        permGroupB.reduce((a, b) => a + b, 0) / permGroupB.length
+                    );
+                    
+                    permutationStats.push(permDiff);
+                    if (permDiff >= originalDiff) {
+                        countMoreExtreme++;
+                    }
+                }
+                
+                // Calculate p-value
+                const pValue = countMoreExtreme / tests;
+                permutationStats.pValue = pValue;
+                permutationStats.originalDiff = originalDiff;
+                
+                simulationState.resampledData = permutationStats;
+                return permutationStats;
+            }
+
+            function runMonteCarlo() {
+                const { populationMean, populationStd, sampleSize, bootstrapReplicates } = simulationState;
+                const monteCarloStats = [];
+                
+                // Monte Carlo simulation: sample from theoretical distribution
+                for (let i = 0; i < bootstrapReplicates; i++) {
+                    const sample = [];
+                    for (let j = 0; j < sampleSize; j++) {
+                        const u = Math.random();
+                        const v = Math.random();
+                        const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+                        sample.push(populationMean + populationStd * z);
+                    }
+                    const mean = sample.reduce((a, b) => a + b, 0) / sampleSize;
+                    monteCarloStats.push(mean);
+                }
+                
+                simulationState.resampledData = monteCarloStats;
+                return monteCarloStats;
+            }
+
+            function updateMethodChart() {
+                const ctx = document.getElementById('methodVisualization').querySelector('canvas')?.getContext('2d') || 
+                           document.createElement('canvas').getContext('2d');
+                const methodVisualization = document.getElementById('methodVisualization');
+                
+                // Clear previous canvas
+                methodVisualization.innerHTML = '';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = methodVisualization.clientWidth;
+                canvas.height = methodVisualization.clientHeight;
+                methodVisualization.appendChild(canvas);
+                
+                const resampledData = simulationState.resampledData;
+                
+                if (!resampledData || resampledData.length === 0) {
+                    methodVisualization.innerHTML = `
+                        <div class="visualization-placeholder">
+                            <i class="fas fa-chart-bar fa-2x"></i>
+                            <div>${currentLanguage === 'bn' ? 'রিস্যাম্পলিং ফলাফল নেই' : 'No resampling results'}</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Destroy existing chart
+                if (methodChart) {
+                    methodChart.destroy();
+                }
+                
+                // Prepare data for histogram
+                const data = resampledData.filter(d => typeof d === 'number');
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binCount = Math.min(20, Math.floor(Math.sqrt(data.length)));
+                const binSize = (max - min) / binCount;
+                
+                const bins = new Array(binCount).fill(0);
+                data.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binSize), binCount - 1);
+                    bins[binIndex]++;
+                });
+                
+                // Get method-specific color
+                const methodColors = {
+                    jackknife: 'rgba(33, 150, 243, 0.6)',
+                    bootstrap: 'rgba(76, 175, 80, 0.6)',
+                    crossvalidation: 'rgba(156, 39, 176, 0.6)',
+                    permutation: 'rgba(255, 87, 34, 0.6)',
+                    montecarlo: 'rgba(255, 152, 0, 0.6)'
+                };
+                
+                const borderColors = {
+                    jackknife: 'rgba(33, 150, 243, 1)',
+                    bootstrap: 'rgba(76, 175, 80, 1)',
+                    crossvalidation: 'rgba(156, 39, 176, 1)',
+                    permutation: 'rgba(255, 87, 34, 1)',
+                    montecarlo: 'rgba(255, 152, 0, 1)'
+                };
+                
+                // Create chart
+                methodChart = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: bins.map((_, i) => {
+                            const binStart = min + i * binSize;
+                            const binEnd = binStart + binSize;
+                            return `${binStart.toFixed(1)} - ${binEnd.toFixed(1)}`;
+                        }),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'রিস্যাম্পলকৃত ডিস্ট্রিবিউশন' : 'Resampled Distribution',
+                            data: bins,
+                            backgroundColor: methodColors[simulationState.method],
+                            borderColor: borderColors[simulationState.method],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'পরিসংখ্যান মান' : 'Statistic Value'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কাউন্ট' : 'Count'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateResults() {
+                const originalData = simulationState.originalData;
+                const resampledData = simulationState.resampledData.filter(d => typeof d === 'number');
+                
+                if (originalData.length === 0 || resampledData.length === 0) return;
+                
+                // Calculate original statistics
+                const origMean = originalData.reduce((a, b) => a + b, 0) / originalData.length;
+                const origStd = Math.sqrt(originalData.reduce((sum, x) => sum + Math.pow(x - origMean, 2), 0) / originalData.length);
+                
+                // Calculate resampled statistics
+                const resampledMean = resampledData.reduce((a, b) => a + b, 0) / resampledData.length;
+                const resampledStd = Math.sqrt(resampledData.reduce((sum, x) => sum + Math.pow(x - resampledMean, 2), 0) / resampledData.length);
+                
+                // Calculate bias and standard error
+                let bias = 0;
+                let se = 0;
+                
+                if (simulationState.method === 'jackknife') {
+                    // Jackknife bias and SE
+                    const n = originalData.length;
+                    const pseudovalues = originalData.map((_, i) => {
+                        const sample = originalData.slice(0, i).concat(originalData.slice(i + 1));
+                        return n * origMean - (n - 1) * (sample.reduce((a, b) => a + b, 0) / (n - 1));
+                    });
+                    
+                    const jackknifeMean = pseudovalues.reduce((a, b) => a + b, 0) / n;
+                    bias = (n - 1) * (jackknifeMean - origMean);
+                    se = Math.sqrt(pseudovalues.reduce((sum, x) => sum + Math.pow(x - jackknifeMean, 2), 0) / (n * (n - 1)));
+                } else if (simulationState.method === 'bootstrap' || simulationState.method === 'montecarlo') {
+                    // Bootstrap/Monte Carlo SE
+                    bias = resampledMean - origMean;
+                    se = resampledStd;
+                } else if (simulationState.method === 'crossvalidation') {
+                    // Cross-validation MSE
+                    bias = 0; // Not applicable
+                    se = Math.sqrt(resampledData.reduce((sum, x) => sum + Math.pow(x - resampledMean, 2), 0) / resampledData.length);
+                } else if (simulationState.method === 'permutation') {
+                    // Permutation test
+                    bias = 0; // Not applicable
+                    se = resampledStd;
+                }
+                
+                // Calculate confidence interval
+                const z = 1.96; // 95% CI
+                const ciLower = origMean - z * se;
+                const ciUpper = origMean + z * se;
+                const ciWidthVal = ciUpper - ciLower;
+                
+                // Update display values
+                originalMean.textContent = origMean.toFixed(2);
+                resampledMean.textContent = resampledMean.toFixed(2);
+                biasEstimate.textContent = bias.toFixed(2);
+                standardError.textContent = se.toFixed(2);
+                ciWidth.textContent = ciWidthVal.toFixed(2);
+                computations.textContent = resampledData.length;
+                
+                // Update step values
+                updateStep4(bias, se, ciLower, ciUpper);
+                updateStep2();
+                updateStep3();
+            }
+
+            function updateStep1() {
+                const data = simulationState.originalData;
+                if (data.length === 0) return;
+                
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const variance = data.reduce((sum, x) => sum + Math.pow(x - mean, 2), 0) / data.length;
+                const std = Math.sqrt(variance);
+                
+                step1n.textContent = data.length;
+                step1mean.textContent = mean.toFixed(2);
+                step1std.textContent = std.toFixed(2);
+            }
+
+            function updateStep2() {
+                const method = simulationState.method;
+                let resamples = 0;
+                
+                switch(method) {
+                    case 'jackknife':
+                        resamples = simulationState.originalData.length;
+                        break;
+                    case 'bootstrap':
+                    case 'montecarlo':
+                        resamples = simulationState.bootstrapReplicates;
+                        break;
+                    case 'crossvalidation':
+                        resamples = simulationState.cvFolds;
+                        break;
+                    case 'permutation':
+                        resamples = simulationState.permutationTests;
+                        break;
+                }
+                
+                step2Resamples.textContent = resamples;
+            }
+
+            function updateStep3() {
+                const resampledData = simulationState.resampledData.filter(d => typeof d === 'number');
+                step3Count.textContent = resampledData.length;
+            }
+
+            function updateStep4(bias, se, ciLower, ciUpper) {
+                step4Bias.textContent = bias.toFixed(2);
+                step4SE.textContent = se.toFixed(2);
+                step4CILower.textContent = ciLower.toFixed(2);
+                step4CIUpper.textContent = ciUpper.toFixed(2);
+            }
+
+            function compareMethods() {
+                const methods = ['jackknife', 'bootstrap', 'crossvalidation', 'permutation', 'montecarlo'];
+                const comparisonData = [];
+                
+                // Hide placeholder
+                document.getElementById('comparisonPlaceholder').style.display = 'none';
+                
+                // Destroy existing chart
+                if (comparisonChart) {
+                    comparisonChart.destroy();
+                }
+                
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                
+                // Simulate each method
+                methods.forEach(method => {
+                    simulationState.method = method;
+                    let resampledData;
+                    
+                    switch(method) {
+                        case 'jackknife':
+                            resampledData = runJackknife();
+                            break;
+                        case 'bootstrap':
+                            resampledData = runBootstrap();
+                            break;
+                        case 'crossvalidation':
+                            resampledData = runCrossValidation();
+                            break;
+                        case 'permutation':
+                            resampledData = runPermutationTest();
+                            break;
+                        case 'montecarlo':
+                            resampledData = runMonteCarlo();
+                            break;
+                    }
+                    
+                    // Calculate standard error for comparison
+                    const resampledMean = resampledData.filter(d => typeof d === 'number').reduce((a, b) => a + b, 0) / resampledData.length;
+                    const variance = resampledData.filter(d => typeof d === 'number').reduce((sum, x) => sum + Math.pow(x - resampledMean, 2), 0) / resampledData.length;
+                    const se = Math.sqrt(variance);
+                    
+                    comparisonData.push({
+                        method: method,
+                        se: se,
+                        samples: resampledData.length
+                    });
+                });
+                
+                // Reset to original method
+                simulationState.method = 'jackknife';
+                setMethod('jackknife');
+                
+                // Create comparison chart
+                comparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: comparisonData.map(d => {
+                            const names = {
+                                jackknife: currentLanguage === 'bn' ? 'জ্যাকনাইফ' : 'Jackknife',
+                                bootstrap: currentLanguage === 'bn' ? 'বুটস্ট্র্যাপ' : 'Bootstrap',
+                                crossvalidation: currentLanguage === 'bn' ? 'CV' : 'CV',
+                                permutation: currentLanguage === 'bn' ? 'পার্মুটেশন' : 'Permutation',
+                                montecarlo: currentLanguage === 'bn' ? 'মন্টে কার্লো' : 'Monte Carlo'
+                            };
+                            return names[d.method];
+                        }),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error',
+                            data: comparisonData.map(d => d.se),
+                            backgroundColor: [
+                                'rgba(33, 150, 243, 0.6)',
+                                'rgba(76, 175, 80, 0.6)',
+                                'rgba(156, 39, 176, 0.6)',
+                                'rgba(255, 87, 34, 0.6)',
+                                'rgba(255, 152, 0, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(33, 150, 243, 1)',
+                                'rgba(76, 175, 80, 1)',
+                                'rgba(156, 39, 176, 1)',
+                                'rgba(255, 87, 34, 1)',
+                                'rgba(255, 152, 0, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const samples = comparisonData[context.dataIndex].samples;
+                                        return `SE: ${context.parsed.y.toFixed(2)}, Samples: ${samples}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'রিস্যাম্পলিং পদ্ধতি' : 'Resampling Method'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            function runResampling() {
+                const method = simulationState.method;
+                let resampledData;
+                
+                switch(method) {
+                    case 'jackknife':
+                        resampledData = runJackknife();
+                        break;
+                    case 'bootstrap':
+                        resampledData = runBootstrap();
+                        break;
+                    case 'crossvalidation':
+                        resampledData = runCrossValidation();
+                        break;
+                    case 'permutation':
+                        resampledData = runPermutationTest();
+                        break;
+                    case 'montecarlo':
+                        resampledData = runMonteCarlo();
+                        break;
+                }
+                
+                // Update visualizations
+                updateMethodChart();
+                updateResults();
+                
+                // Add animation effect
+                resampleBtn.classList.add('pulse');
+                setTimeout(() => resampleBtn.classList.remove('pulse'), 1000);
+                
+                // Visualize resampling process
+                visualizeResampling();
+            }
+
+            function visualizeResampling() {
+                const dataPoints = document.querySelectorAll('.data-point');
+                const method = simulationState.method;
+                
+                // Reset all points
+                dataPoints.forEach(point => {
+                    point.classList.remove('sampled', 'removed');
+                });
+                
+                // Animate based on method
+                if (method === 'jackknife') {
+                    // For jackknife, show leave-one-out
+                    const removeIndex = Math.floor(Math.random() * dataPoints.length);
+                    dataPoints[removeIndex].classList.add('removed');
+                    
+                    setTimeout(() => {
+                        dataPoints[removeIndex].classList.remove('removed');
+                    }, 1000);
+                } else if (method === 'bootstrap') {
+                    // For bootstrap, highlight some points (with replacement)
+                    for (let i = 0; i < 5; i++) {
+                        const index = Math.floor(Math.random() * dataPoints.length);
+                        dataPoints[index].classList.add('sampled');
+                        
+                        setTimeout(() => {
+                            dataPoints[index].classList.remove('sampled');
+                        }, 500 * (i + 1));
+                    }
+                }
+            }
+
+            function resetSimulation() {
+                // Reset parameters to defaults
+                simulationState.sampleSize = 20;
+                simulationState.bootstrapReplicates = 1000;
+                simulationState.populationMean = 50;
+                simulationState.populationStd = 10;
+                simulationState.cvFolds = 5;
+                simulationState.permutationTests = 1000;
+                
+                // Update inputs
+                sampleSizeInput.value = simulationState.sampleSize;
+                bootstrapReplicatesInput.value = simulationState.bootstrapReplicates;
+                populationMeanInput.value = simulationState.populationMean;
+                populationStdInput.value = simulationState.populationStd;
+                cvFoldsInput.value = simulationState.cvFolds;
+                permutationTestsInput.value = simulationState.permutationTests;
+                
+                // Regenerate data
+                generateOriginalData();
+                
+                // Reset charts
+                if (methodChart) {
+                    methodChart.destroy();
+                    methodChart = null;
+                }
+                
+                if (comparisonChart) {
+                    comparisonChart.destroy();
+                    comparisonChart = null;
+                }
+                
+                // Show placeholders
+                document.getElementById('methodVisualization').innerHTML = `
+                    <div class="visualization-placeholder">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                        <div>${currentLanguage === 'bn' ? 'রিস্যাম্পলিং ফলাফল নেই' : 'No resampling results'}</div>
+                    </div>
+                `;
+                
+                document.getElementById('comparisonPlaceholder').style.display = 'flex';
+                
+                // Reset results
+                originalMean.textContent = "0.0";
+                resampledMean.textContent = "0.0";
+                biasEstimate.textContent = "0.0";
+                standardError.textContent = "0.0";
+                ciWidth.textContent = "0.0";
+                computations.textContent = "0";
+            }
+        });
+    </script>
+</body>
+</html>

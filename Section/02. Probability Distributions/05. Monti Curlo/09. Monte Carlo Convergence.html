@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Convergence Visualizer | Probability Distributions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --warning: #FF9A3D;
+            --info: #5B86E5;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --pi-color: #4CAF50;
+            --integral-color: #2196F3;
+            --mean-color: #9C27B0;
+            --error-color: #FF5722;
+            --ci-color: #FFC107;
+            --convergence-bg: #E3F2FD;
+            --rate-bg: #F3E5F5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--pi-color), var(--integral-color), var(--mean-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Target Function Selection */
+        .function-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .function-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .function-btn {
+            padding: 1.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .function-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .function-btn.active {
+            background: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .function-btn.pi.active {
+            border-color: var(--pi-color);
+        }
+
+        .function-btn.integral.active {
+            border-color: var(--integral-color);
+        }
+
+        .function-btn.mean.active {
+            border-color: var(--mean-color);
+        }
+
+        .function-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .function-btn.pi .function-icon { color: var(--pi-color); }
+        .function-btn.integral .function-icon { color: var(--integral-color); }
+        .function-btn.mean .function-icon { color: var(--mean-color); }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .label-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .label-text i {
+            color: var(--primary);
+        }
+
+        .value-display {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--light-gray), var(--primary));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .slider.samples::-webkit-slider-thumb {
+            background: var(--pi-color);
+        }
+
+        .slider.runs::-webkit-slider-thumb {
+            background: var(--integral-color);
+        }
+
+        .slider.error::-webkit-slider-thumb {
+            background: var(--error-color);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* Convergence Rate Options */
+        .rate-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .rate-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .rate-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .rate-btn.active {
+            background: var(--rate-bg);
+            border-color: var(--mean-color);
+        }
+
+        .rate-icon {
+            font-size: 1.5rem;
+            color: var(--mean-color);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .pause-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #FF8A00;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Convergence Tabs */
+        .visualization-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .viz-tab-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .viz-tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Convergence Plots */
+        .convergence-plots {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .plot-container {
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #convergencePlot, #errorPlot, #ciPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Real-time Statistics */
+        .real-time-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .real-time-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .real-time-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'Times New Roman', serif;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .positive {
+            color: var(--success);
+        }
+
+        .negative {
+            color: var(--error-color);
+        }
+
+        /* Convergence Analysis */
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .analysis-card {
+            background: var(--convergence-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .analysis-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analysis-plot {
+            height: 250px;
+            margin-top: 1rem;
+        }
+
+        .analysis-stats {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Theoretical Comparison */
+        .theory-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .theory-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .theory-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .theory-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .theory-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .theory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .theory-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .theory-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .theory-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .theory-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .theory-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Convergence Examples */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .example-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .example-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .example-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .example-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .example-content {
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+
+        .example-data {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Convergence Line Animation */
+        .convergence-line {
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Convergence Animation */
+        @keyframes converge {
+            0% { stroke-dashoffset: 1000; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .converging {
+            stroke-dasharray: 1000;
+            animation: converge 2s linear forwards;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Confidence Interval Bands */
+        .ci-band {
+            fill-opacity: 0.2;
+            stroke-width: 0;
+        }
+
+        /* Error Decay Visualization */
+        .error-bar {
+            stroke-width: 1;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Convergence Visualizer" data-bn="মন্টে কার্লো কনভারজেন্স ভিজুয়ালাইজার">মন্টে কার্লো কনভারজেন্স ভিজুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Visualize the convergence of Monte Carlo estimates with error decay, confidence interval shrinking, and rate analysis" data-bn="এরর ডিকে, কনফিডেন্স ইন্টারভ্যাল সঙ্কুচিতকরণ, এবং রেট বিশ্লেষণের মাধ্যমে মন্টে কার্লো অনুমানের কনভারজেন্স ভিজ্যুয়ালাইজ করুন">
+                এরর ডিকে, কনফিডেন্স ইন্টারভ্যাল সঙ্কুচিতকরণ, এবং রেট বিশ্লেষণের মাধ্যমে মন্টে কার্লো অনুমানের কনভারজেন্স ভিজ্যুয়ালাইজ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Simulation Settings" data-bn="সিমুলেশন সেটিংস">সিমুলেশন সেটিংস</span>
+                </h2>
+
+                <!-- Target Function Selection -->
+                <div class="function-selection">
+                    <button class="function-btn pi active" data-function="pi">
+                        <div class="function-icon">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <span data-en="π Estimation" data-bn="π অনুমান">π অনুমান</span>
+                        <small data-en="Area of circle method" data-bn="বৃত্তের ক্ষেত্রফল পদ্ধতি">বৃত্তের ক্ষেত্রফল পদ্ধতি</small>
+                    </button>
+
+                    <button class="function-btn integral" data-function="integral">
+                        <div class="function-icon">
+                            <i class="fas fa-integral"></i>
+                        </div>
+                        <span data-en="Integration" data-bন="ইন্টিগ্রেশন">ইন্টিগ্রেশন</span>
+                        <small data-en="∫₀¹ x² dx = 1/3" data-bন="∫₀¹ x² dx = ১/৩">∫₀¹ x² dx = ১/৩</small>
+                    </button>
+
+                    <button class="function-btn mean" data-function="mean">
+                        <div class="function-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span data-en="Mean Estimation" data-bন="গড় অনুমান">গড় অনুমান</span>
+                        <small data-en="E[exp(-X²)] for X~N(0,1)" data-bন="E[exp(-X²)] for X~N(0,1)">E[exp(-X²)] for X~N(0,1)</small>
+                    </button>
+                </div>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-hashtag"></i>
+                                <span data-en="Sample Size" data-bন="নমুনা আকার">নমুনা আকার</span>
+                            </div>
+                            <div class="value-display" id="sampleSizeValue">10,000</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="sampleSize" class="slider samples" min="100" max="100000" value="10000" step="100">
+                            <div class="slider-labels">
+                                <span>100</span>
+                                <span>10k</span>
+                                <span>100k</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Number of Monte Carlo samples" data-bন="মন্টে কার্লো নমুনার সংখ্যা">মন্টে কার্লো নমুনার সংখ্যা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-redo"></i>
+                                <span data-en="Number of Runs" data-bন="রানের সংখ্যা">রানের সংখ্যা</span>
+                            </div>
+                            <div class="value-display" id="runCountValue">50</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="runCount" class="slider runs" min="1" max="200" value="50" step="1">
+                            <div class="slider-labels">
+                                <span>1</span>
+                                <span>50</span>
+                                <span>200</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Independent Monte Carlo runs for statistics" data-bন="পরিসংখ্যানের জন্য স্বাধীন মন্টে কার্লো রান">পরিসংখ্যানের জন্য স্বাধীন মন্টে কার্লো রান</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-bullseye"></i>
+                                <span data-en="Target Error" data-bন="লক্ষ্য ত্রুটি">লক্ষ্য ত্রুটি</span>
+                            </div>
+                            <div class="value-display" id="targetErrorValue">0.001</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="targetError" class="slider error" min="0.0001" max="0.1" value="0.001" step="0.0001">
+                            <div class="slider-labels">
+                                <span>0.0001</span>
+                                <span>0.001</span>
+                                <span>0.1</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Desired accuracy level" data-bন="কাঙ্ক্ষিত নির্ভুলতা স্তর">কাঙ্ক্ষিত নির্ভুলতা স্তর</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <div class="label-text">
+                                <i class="fas fa-chart-bar"></i>
+                                <span data-en="Confidence Level" data-bন="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</span>
+                            </div>
+                            <div class="value-display" id="confidenceLevelValue">95%</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="confidenceLevel" class="slider" min="80" max="99.9" value="95" step="0.1">
+                            <div class="slider-labels">
+                                <span>80%</span>
+                                <span>95%</span>
+                                <span>99.9%</span>
+                            </div>
+                        </div>
+                        <div class="help-text" data-en="Confidence interval coverage probability" data-bন="কনফিডেন্স ইন্টারভ্যাল কভারেজ সম্ভাবনা">কনফিডেন্স ইন্টারভ্যাল কভারেজ সম্ভাবনা</div>
+                    </div>
+                </div>
+
+                <!-- Convergence Rate Options -->
+                <h2 class="section-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span data-en="Convergence Rate Analysis" data-bন="কনভারজেন্স রেট বিশ্লেষণ">কনভারজেন্স রেট বিশ্লেষণ</span>
+                </h2>
+
+                <div class="rate-options">
+                    <button class="rate-btn active" data-rate="1/sqrt(n)">
+                        <div class="rate-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span data-en="1/√n Rate" data-bন="১/√n রেট">১/√n রেট</span>
+                        <small data-en="Standard MC convergence" data-bন="স্ট্যান্ডার্ড MC কনভারজেন্স">স্ট্যান্ডার্ড MC কনভারজেন্স</small>
+                    </button>
+
+                    <button class="rate-btn" data-rate="1/n">
+                        <div class="rate-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <span data-en="1/n Rate" data-bন="১/n রেট">১/n রেট</span>
+                        <small data-en="Variance reduction methods" data-bন="ভ্যারিয়েন্স রিডাকশন পদ্ধতি">ভ্যারিয়েন্স রিডাকশন পদ্ধতি</small>
+                    </button>
+
+                    <button class="rate-btn" data-rate="log(n)/n">
+                        <div class="rate-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <span data-en="log(n)/n Rate" data-bন="log(n)/n রেট">log(n)/n রেট</span>
+                        <small data-en="Quasi-Monte Carlo" data-bন="কোয়াজি-মন্টে কার্লো">কোয়াজি-মন্টে কার্লো</small>
+                    </button>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="simulation-controls">
+                    <button class="control-btn start-btn" id="startSimulation">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Start Simulation" data-bন="সিমুলেশন শুরু করুন">সিমুলেশন শুরু করুন</span>
+                    </button>
+                    <button class="control-btn pause-btn" id="pauseSimulation">
+                        <i class="fas fa-pause"></i>
+                        <span data-en="Pause" data-bন="বিরতি">বিরতি</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetSimulation">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <div class="visualization-tabs">
+                    <button class="viz-tab-btn active" data-tab="convergence">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Convergence" data-bন="কনভারজেন্স">কনভারজেন্স</span>
+                    </button>
+                    <button class="viz-tab-btn" data-tab="error">
+                        <i class="fas fa-chart-line-down"></i>
+                        <span data-en="Error Decay" data-bন="ত্রুটি হ্রাস">ত্রুটি হ্রাস</span>
+                    </button>
+                    <button class="viz-tab-btn" data-tab="ci">
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span data-en="CI Shrinking" data-bন="CI সঙ্কুচিতকরণ">CI সঙ্কুচিতকরণ</span>
+                    </button>
+                </div>
+
+                <div class="convergence-plots">
+                    <div class="plot-container">
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <div class="loader"></div>
+                        </div>
+                        <div id="convergencePlot"></div>
+                    </div>
+                </div>
+
+                <!-- Real-time Statistics -->
+                <div class="real-time-stats">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Current Estimate" data-bন="বর্তমান অনুমান">বর্তমান অনুমান</div>
+                        <div class="stat-value" id="currentEstimate">3.1416</div>
+                        <div class="stat-change" id="estimateChange">
+                            <span class="positive">+0.0001</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Relative Error" data-bন="আপেক্ষিক ত্রুটি">আপেক্ষিক ত্রুটি</div>
+                        <div class="stat-value" id="relativeError">0.0012%</div>
+                        <div class="stat-change" id="errorChange">
+                            <span class="negative">-0.0003%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="CI Width" data-bন="CI প্রস্থ">CI প্রস্থ</div>
+                        <div class="stat-value" id="ciWidth">0.0025</div>
+                        <div class="stat-change" id="widthChange">
+                            <span class="negative">-0.0001</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Samples/sec" data-bন="নমুনা/সেকেন্ড">নমুনা/সেকেন্ড</div>
+                        <div class="stat-value" id="samplesPerSec">12,345</div>
+                        <div class="stat-change" id="rateChange">
+                            <span class="positive">+5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Analysis -->
+        <div class="analysis-section">
+            <h2 class="section-title">
+                <i class="fas fa-search-chart"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="analysis-title">
+                        <i class="fas fa-wave-square"></i>
+                        <span data-en="Error Decay Pattern" data-bন="ত্রুটি হ্রাস প্যাটার্ন">ত্রুটি হ্রাস প্যাটার্ন</span>
+                    </div>
+                    <div class="analysis-plot" id="errorDecayPlot"></div>
+                    <div class="analysis-stats">
+                        <div class="stat-row">
+                            <span data-en="Decay Rate:" data-bন="হ্রাস হার:">হ্রাস হার:</span>
+                            <span id="decayRate">O(1/√n)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span data-en="Slope on log-log:" data-bন="লগ-লগ ঢাল:">লগ-লগ ঢাল:</span>
+                            <span id="logSlope">-0.501</span>
+                        </div>
+                        <div class="stat-row">
+                            <span data-en="R² Fit:" data-bন="R² ফিট:">R² ফিট:</span>
+                            <span id="rSquared">0.998</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-card">
+                    <div class="analysis-title">
+                        <i class="fas fa-arrows-alt-h"></i>
+                        <span data-en="Confidence Interval Evolution" data-bন="কনফিডেন্স ইন্টারভ্যাল বিবর্তন">কনফিডেন্স ইন্টারভ্যাল বিবর্তন</span>
+                    </div>
+                    <div class="analysis-plot" id="ciEvolutionPlot"></div>
+                    <div class="analysis-stats">
+                        <div class="stat-row">
+                            <span data-en="Final CI Width:" data-bন="চূড়ান্ত CI প্রস্থ:">চূড়ান্ত CI প্রস্থ:</span>
+                            <span id="finalCIWidth">0.0025</span>
+                        </div>
+                        <div class="stat-row">
+                            <span data-en="Shrinking Rate:" data-bন="সঙ্কুচিত হার:">সঙ্কুচিত হার:</span>
+                            <span id="shrinkingRate">O(1/√n)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span data-en="Coverage Probability:" data-bন="কভারেজ সম্ভাবনা:">কভারেজ সম্ভাবনা:</span>
+                            <span id="coverageProb">95.2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theoretical Comparison -->
+        <div class="theory-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Theoretical Convergence Rates" data-bন="তাত্ত্বিক কনভারজেন্স রেট">তাত্ত্বিক কনভারজেন্স রেট</span>
+            </h2>
+            
+            <div class="theory-cards">
+                <div class="theory-card">
+                    <div class="theory-header">
+                        <div class="theory-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="theory-title" data-en="Standard Monte Carlo" data-bন="স্ট্যান্ডার্ড মন্টে কার্লো">স্ট্যান্ডার্ড মন্টে কার্লো</h3>
+                    </div>
+                    <div class="theory-formula">
+                        ε ∝ 1/√N
+                    </div>
+                    <p class="theory-description" data-en="Error decreases with square root of sample size. Fundamental limit for independent sampling." data-bন="ত্রুটি নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়। স্বাধীন স্যাম্পলিংয়ের জন্য মৌলিক সীমা।">
+                        ত্রুটি নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়। স্বাধীন স্যাম্পলিংয়ের জন্য মৌলিক সীমা।
+                    </p>
+                </div>
+
+                <div class="theory-card">
+                    <div class="theory-header">
+                        <div class="theory-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="theory-title" data-en="Variance Reduction" data-bন="ভ্যারিয়েন্স হ্রাস">ভ্যারিয়েন্স হ্রাস</h3>
+                    </div>
+                    <div class="theory-formula">
+                        ε ∝ 1/N
+                    </div>
+                    <p class="theory-description" data-en="Importance sampling, control variates, and antithetic variates can achieve 1/N convergence." data-bন="ইম্পর্টেন্স স্যাম্পলিং, কন্ট্রোল ভ্যারিয়েটস এবং অ্যান্টিথেটিক ভ্যারিয়েটস ১/N কনভারজেন্স অর্জন করতে পারে।">
+                        ইম্পর্টেন্স স্যাম্পলিং, কন্ট্রোল ভ্যারিয়েটস এবং অ্যান্টিথেটিক ভ্যারিয়েটস ১/N কনভারজেন্স অর্জন করতে পারে।
+                    </p>
+                </div>
+
+                <div class="theory-card">
+                    <div class="theory-header">
+                        <div class="theory-icon">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                        <h3 class="theory-title" data-en="Quasi-Monte Carlo" data-bন="কোয়াজি-মন্টে কার্লো">কোয়াজি-মন্টে কার্লো</h3>
+                    </div>
+                    <div class="theory-formula">
+                        ε ∝ log(N)ᵈ/N
+                    </div>
+                    <p class="theory-description" data-en="Using low-discrepancy sequences (Sobol, Halton) for faster convergence, especially in low dimensions." data-bন="দ্রুত কনভারজেন্সের জন্য লো-ডিসক্রিপ্যান্সি সিকোয়েন্স (সোবল, হল্টন) ব্যবহার, বিশেষত নিম্ন মাত্রায়।">
+                        দ্রুত কনভারজেন্সের জন্য লো-ডিসক্রিপ্যান্সি সিকোয়েন্স (সোবল, হল্টন) ব্যবহার, বিশেষত নিম্ন মাত্রায়।
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Examples -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-vial"></i>
+                <span data-en="Convergence Examples" data-bন="কনভারজেন্স উদাহরণ">কনভারজেন্স উদাহরণ</span>
+            </h2>
+            
+            <div class="examples-grid">
+                <div class="example-card" data-example="fast">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Fast Convergence" data-bন="দ্রুত কনভারজেন্স">দ্রুত কনভারজেন্স</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Example with low variance and smooth integrand" data-bন="নিম্ন ভ্যারিয়েন্স এবং মসৃণ ইন্টিগ্র্যান্ড সহ উদাহরণ">
+                            নিম্ন ভ্যারিয়েন্স এবং মসৃণ ইন্টিগ্র্যান্ড সহ উদাহরণ
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        f(x) = exp(-x²), N = 1000, Error = 0.001%
+                    </div>
+                    <button class="control-btn start-btn" onclick="loadExample('fast')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Load Example" data-bন="উদাহরণ লোড করুন">উদাহরণ লোড করুন</span>
+                    </button>
+                </div>
+
+                <div class="example-card" data-example="slow">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-tachometer-alt-slow"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Slow Convergence" data-bন="ধীর কনভারজেন্স">ধীর কনভারজেন্স</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="High variance problem with rare events" data-bন="দুর্লভ ঘটনা সহ উচ্চ ভ্যারিয়েন্স সমস্যা">
+                            দুর্লভ ঘটনা সহ উচ্চ ভ্যারিয়েন্স সমস্যা
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        f(x) = 1/(1+100x²), N = 10000, Error = 1.5%
+                    </div>
+                    <button class="control-btn start-btn" onclick="loadExample('slow')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Load Example" data-bন="উদাহরণ লোড করুন">উদাহরণ লোড করুন</span>
+                    </button>
+                </div>
+
+                <div class="example-card" data-example="oscillatory">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Oscillatory Function" data-bন="দোদুল্যমান ফাংশন">দোদুল্যমান ফাংশন</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Highly oscillatory integrand requires many samples" data-bন="অত্যন্ত দোদুল্যমান ইন্টিগ্র্যান্ডের জন্য অনেক নমুনা প্রয়োজন">
+                            অত্যন্ত দোদুল্যমান ইন্টিগ্র্যান্ডের জন্য অনেক নমুনা প্রয়োজন
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        f(x) = sin(100x), N = 50000, Error = 0.5%
+                    </div>
+                    <button class="control-btn start-btn" onclick="loadExample('oscillatory')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Load Example" data-bন="উদাহরণ লোড করুন">উদাহরণ লোড করুন</span>
+                    </button>
+                </div>
+
+                <div class="example-card" data-example="discontinuous">
+                    <div class="example-header">
+                        <div class="example-icon">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                        <h3 class="example-title" data-en="Discontinuous Function" data-bন="অসতত ফাংশন">অসতত ফাংশন</h3>
+                    </div>
+                    <div class="example-content">
+                        <p data-en="Step function with discontinuity affects convergence rate" data-bন="অসততাযুক্ত ধাপ ফাংশন কনভারজেন্স রেটকে প্রভাবিত করে">
+                            অসততাযুক্ত ধাপ ফাংশন কনভারজেন্স রেটকে প্রভাবিত করে
+                        </p>
+                    </div>
+                    <div class="example-data">
+                        f(x) = 1(x > 0.5), N = 20000, Error = 0.8%
+                    </div>
+                    <button class="control-btn start-btn" onclick="loadExample('discontinuous')" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Load Example" data-bন="উদাহরণ লোড করুন">উদাহরণ লোড করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                function: 'pi',
+                sampleSize: 10000,
+                runCount: 50,
+                targetError: 0.001,
+                confidenceLevel: 0.95,
+                convergenceRate: '1/sqrt(n)',
+                isRunning: false,
+                currentRun: 0,
+                estimates: [],
+                errors: [],
+                confidenceIntervals: [],
+                trueValues: {
+                    pi: Math.PI,
+                    integral: 1/3,
+                    mean: 0.5 * Math.sqrt(Math.PI) // E[exp(-X²)] for X~N(0,1)
+                }
+            };
+
+            // DOM Elements
+            const sampleSizeSlider = document.getElementById('sampleSize');
+            const sampleSizeValue = document.getElementById('sampleSizeValue');
+            const runCountSlider = document.getElementById('runCount');
+            const runCountValue = document.getElementById('runCountValue');
+            const targetErrorSlider = document.getElementById('targetError');
+            const targetErrorValue = document.getElementById('targetErrorValue');
+            const confidenceLevelSlider = document.getElementById('confidenceLevel');
+            const confidenceLevelValue = document.getElementById('confidenceLevelValue');
+            const functionBtns = document.querySelectorAll('.function-btn');
+            const rateBtns = document.querySelectorAll('.rate-btn');
+            const vizTabBtns = document.querySelectorAll('.viz-tab-btn');
+            const startBtn = document.getElementById('startSimulation');
+            const pauseBtn = document.getElementById('pauseSimulation');
+            const resetBtn = document.getElementById('resetSimulation');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            // Statistics Display
+            const currentEstimateEl = document.getElementById('currentEstimate');
+            const relativeErrorEl = document.getElementById('relativeError');
+            const ciWidthEl = document.getElementById('ciWidth');
+            const samplesPerSecEl = document.getElementById('samplesPerSec');
+            const estimateChangeEl = document.getElementById('estimateChange');
+            const errorChangeEl = document.getElementById('errorChange');
+            const widthChangeEl = document.getElementById('widthChange');
+            const rateChangeEl = document.getElementById('rateChange');
+            
+            // Analysis Display
+            const decayRateEl = document.getElementById('decayRate');
+            const logSlopeEl = document.getElementById('logSlope');
+            const rSquaredEl = document.getElementById('rSquared');
+            const finalCIWidthEl = document.getElementById('finalCIWidth');
+            const shrinkingRateEl = document.getElementById('shrinkingRate');
+            const coverageProbEl = document.getElementById('coverageProb');
+            
+            // Plot Elements
+            const convergencePlot = document.getElementById('convergencePlot');
+            const errorDecayPlot = document.getElementById('errorDecayPlot');
+            const ciEvolutionPlot = document.getElementById('ciEvolutionPlot');
+            
+            // Simulation Variables
+            let simulationInterval;
+            let lastUpdateTime = Date.now();
+            let sampleCount = 0;
+            let startTime = Date.now();
+            
+            // Initialize
+            initConvergenceVisualizer();
+
+            function initConvergenceVisualizer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Function Selection
+                functionBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const func = this.dataset.function;
+                        setTargetFunction(func);
+                    });
+                });
+
+                // Rate Selection
+                rateBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const rate = this.dataset.rate;
+                        setConvergenceRate(rate);
+                    });
+                });
+
+                // Visualization Tabs
+                vizTabBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const tab = this.dataset.tab;
+                        setVisualizationTab(tab);
+                    });
+                });
+
+                // Parameter Sliders
+                sampleSizeSlider.addEventListener('input', updateSampleSize);
+                runCountSlider.addEventListener('input', updateRunCount);
+                targetErrorSlider.addEventListener('input', updateTargetError);
+                confidenceLevelSlider.addEventListener('input', updateConfidenceLevel);
+
+                // Simulation Controls
+                startBtn.addEventListener('click', startSimulation);
+                pauseBtn.addEventListener('click', pauseSimulation);
+                resetBtn.addEventListener('click', resetSimulation);
+
+                // Initialize plots
+                initializePlots();
+                updateStatistics();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setTargetFunction(func) {
+                simulationState.function = func;
+                
+                // Update active button
+                functionBtns.forEach(btn => {
+                    if (btn.dataset.function === func) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function setConvergenceRate(rate) {
+                simulationState.convergenceRate = rate;
+                
+                // Update active button
+                rateBtns.forEach(btn => {
+                    if (btn.dataset.rate === rate) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function setVisualizationTab(tab) {
+                // Update active tab
+                vizTabBtns.forEach(btn => {
+                    if (btn.dataset.tab === tab) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update plot based on selected tab
+                updateMainPlot(tab);
+            }
+
+            function updateSampleSize() {
+                simulationState.sampleSize = parseInt(sampleSizeSlider.value);
+                sampleSizeValue.textContent = simulationState.sampleSize.toLocaleString();
+            }
+
+            function updateRunCount() {
+                simulationState.runCount = parseInt(runCountSlider.value);
+                runCountValue.textContent = simulationState.runCount;
+            }
+
+            function updateTargetError() {
+                simulationState.targetError = parseFloat(targetErrorSlider.value);
+                targetErrorValue.textContent = simulationState.targetError.toFixed(4);
+            }
+
+            function updateConfidenceLevel() {
+                simulationState.confidenceLevel = parseFloat(confidenceLevelSlider.value) / 100;
+                confidenceLevelValue.textContent = `${(simulationState.confidenceLevel * 100).toFixed(1)}%`;
+            }
+
+            function monteCarloEstimatePi(samples) {
+                let insideCircle = 0;
+                for (let i = 0; i < samples; i++) {
+                    const x = Math.random() * 2 - 1;
+                    const y = Math.random() * 2 - 1;
+                    if (x * x + y * y <= 1) {
+                        insideCircle++;
+                    }
+                }
+                return (insideCircle / samples) * 4;
+            }
+
+            function monteCarloIntegral(samples) {
+                let sum = 0;
+                for (let i = 0; i < samples; i++) {
+                    const x = Math.random();
+                    sum += x * x;
+                }
+                return sum / samples;
+            }
+
+            function monteCarloMean(samples) {
+                let sum = 0;
+                for (let i = 0; i < samples; i++) {
+                    const x = Math.random();
+                    sum += Math.exp(-x * x);
+                }
+                return sum / samples;
+            }
+
+            function runMonteCarlo(samples) {
+                switch(simulationState.function) {
+                    case 'pi':
+                        return monteCarloEstimatePi(samples);
+                    case 'integral':
+                        return monteCarloIntegral(samples);
+                    case 'mean':
+                        return monteCarloMean(samples);
+                    default:
+                        return 0;
+                }
+            }
+
+            function getTrueValue() {
+                return simulationState.trueValues[simulationState.function];
+            }
+
+            function calculateStandardError(estimates) {
+                const n = estimates.length;
+                if (n < 2) return 0;
+                
+                const mean = estimates.reduce((a, b) => a + b, 0) / n;
+                const variance = estimates.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / (n - 1);
+                return Math.sqrt(variance / n);
+            }
+
+            function calculateConfidenceInterval(estimates, confidenceLevel) {
+                const n = estimates.length;
+                if (n < 2) return { lower: 0, upper: 0, width: 0 };
+                
+                const mean = estimates.reduce((a, b) => a + b, 0) / n;
+                const se = calculateStandardError(estimates);
+                
+                // Z-value for given confidence level
+                const z = getZValue(confidenceLevel);
+                const margin = z * se;
+                
+                return {
+                    lower: mean - margin,
+                    upper: mean + margin,
+                    width: 2 * margin
+                };
+            }
+
+            function getZValue(confidenceLevel) {
+                // Common z-values for normal distribution
+                const zMap = {
+                    0.80: 1.282,
+                    0.90: 1.645,
+                    0.95: 1.960,
+                    0.99: 2.576,
+                    0.999: 3.291
+                };
+                
+                // Linear interpolation for other values
+                const levels = Object.keys(zMap).map(Number).sort((a, b) => a - b);
+                if (confidenceLevel <= levels[0]) return zMap[levels[0]];
+                if (confidenceLevel >= levels[levels.length - 1]) return zMap[levels[levels.length - 1]];
+                
+                for (let i = 0; i < levels.length - 1; i++) {
+                    if (confidenceLevel >= levels[i] && confidenceLevel <= levels[i + 1]) {
+                        const t = (confidenceLevel - levels[i]) / (levels[i + 1] - levels[i]);
+                        return zMap[levels[i]] + t * (zMap[levels[i + 1]] - zMap[levels[i]]);
+                    }
+                }
+                
+                return 1.960; // Default 95% z-value
+            }
+
+            function startSimulation() {
+                if (simulationState.isRunning) return;
+                
+                simulationState.isRunning = true;
+                simulationState.currentRun = 0;
+                simulationState.estimates = [];
+                simulationState.errors = [];
+                simulationState.confidenceIntervals = [];
+                
+                sampleCount = 0;
+                startTime = Date.now();
+                lastUpdateTime = Date.now();
+                
+                // Update button states
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                // Start simulation loop
+                simulationInterval = setInterval(runSimulationStep, 50);
+            }
+
+            function runSimulationStep() {
+                if (!simulationState.isRunning) return;
+                
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastUpdateTime;
+                
+                // Calculate samples to process based on time
+                const samplesPerStep = Math.max(10, Math.floor(simulationState.sampleSize / 100));
+                const estimate = runMonteCarlo(samplesPerStep);
+                
+                sampleCount += samplesPerStep;
+                simulationState.estimates.push(estimate);
+                
+                // Calculate error
+                const trueValue = getTrueValue();
+                const error = Math.abs(estimate - trueValue);
+                simulationState.errors.push(error);
+                
+                // Calculate confidence interval
+                if (simulationState.estimates.length >= 2) {
+                    const ci = calculateConfidenceInterval(simulationState.estimates, simulationState.confidenceLevel);
+                    simulationState.confidenceIntervals.push(ci);
+                }
+                
+                // Update statistics
+                updateStatistics();
+                updateMainPlot('convergence');
+                
+                // Check if we've reached target error or sample size
+                if (simulationState.estimates.length >= simulationState.runCount || 
+                    (simulationState.errors.length > 0 && 
+                     simulationState.errors[simulationState.errors.length - 1] < simulationState.targetError)) {
+                    pauseSimulation();
+                }
+                
+                lastUpdateTime = currentTime;
+                simulationState.currentRun++;
+            }
+
+            function pauseSimulation() {
+                simulationState.isRunning = false;
+                clearInterval(simulationInterval);
+                
+                // Update button states
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                
+                // Update analysis plots
+                updateAnalysisPlots();
+            }
+
+            function resetSimulation() {
+                pauseSimulation();
+                
+                simulationState.currentRun = 0;
+                simulationState.estimates = [];
+                simulationState.errors = [];
+                simulationState.confidenceIntervals = [];
+                
+                sampleCount = 0;
+                startTime = Date.now();
+                
+                initializePlots();
+                updateStatistics();
+            }
+
+            function updateStatistics() {
+                const trueValue = getTrueValue();
+                const currentEstimate = simulationState.estimates.length > 0 ? 
+                    simulationState.estimates[simulationState.estimates.length - 1] : 0;
+                const relativeError = simulationState.estimates.length > 0 ? 
+                    Math.abs((currentEstimate - trueValue) / trueValue) * 100 : 0;
+                const ciWidth = simulationState.confidenceIntervals.length > 0 ? 
+                    simulationState.confidenceIntervals[simulationState.confidenceIntervals.length - 1].width : 0;
+                
+                // Calculate samples per second
+                const currentTime = Date.now();
+                const elapsedSeconds = (currentTime - startTime) / 1000;
+                const samplesPerSec = elapsedSeconds > 0 ? Math.floor(sampleCount / elapsedSeconds) : 0;
+                
+                // Update display
+                currentEstimateEl.textContent = currentEstimate.toFixed(6);
+                relativeErrorEl.textContent = relativeError.toFixed(4) + '%';
+                ciWidthEl.textContent = ciWidth.toFixed(6);
+                samplesPerSecEl.textContent = samplesPerSec.toLocaleString();
+                
+                // Update change indicators
+                updateChangeIndicators();
+            }
+
+            function updateChangeIndicators() {
+                // This would track changes over time and update the indicators
+                // For now, using sample data
+                estimateChangeEl.innerHTML = '<span class="positive">+0.0001</span>';
+                errorChangeEl.innerHTML = '<span class="negative">-0.0003%</span>';
+                widthChangeEl.innerHTML = '<span class="negative">-0.0001</span>';
+                rateChangeEl.innerHTML = '<span class="positive">+5%</span>';
+            }
+
+            function updateMainPlot(tab) {
+                const data = [];
+                const layout = {
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white',
+                    font: {
+                        family: 'Poppins, Hind Siliguri, sans-serif'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.8)',
+                        bordercolor: 'lightgray',
+                        borderwidth: 1
+                    }
+                };
+                
+                switch(tab) {
+                    case 'convergence':
+                        // Convergence plot
+                        if (simulationState.estimates.length > 0) {
+                            const x = Array.from({length: simulationState.estimates.length}, (_, i) => i + 1);
+                            const trueValue = getTrueValue();
+                            
+                            data.push({
+                                x: x,
+                                y: simulationState.estimates,
+                                type: 'scatter',
+                                mode: 'lines+markers',
+                                name: currentLanguage === 'bn' ? 'মন্টে কার্লো অনুমান' : 'Monte Carlo Estimate',
+                                line: {
+                                    color: 'var(--primary)',
+                                    width: 2
+                                },
+                                marker: {
+                                    size: 4,
+                                    color: 'var(--primary)'
+                                }
+                            });
+                            
+                            // True value line
+                            data.push({
+                                x: [1, simulationState.estimates.length],
+                                y: [trueValue, trueValue],
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: currentLanguage === 'bn' ? 'সত্য মান' : 'True Value',
+                                line: {
+                                    color: 'var(--success)',
+                                    width: 2,
+                                    dash: 'dash'
+                                }
+                            });
+                            
+                            // Confidence intervals if available
+                            if (simulationState.confidenceIntervals.length > 0) {
+                                const ciX = Array.from({length: simulationState.confidenceIntervals.length}, (_, i) => i + 1);
+                                const ciLower = simulationState.confidenceIntervals.map(ci => ci.lower);
+                                const ciUpper = simulationState.confidenceIntervals.map(ci => ci.upper);
+                                
+                                data.push({
+                                    x: ciX.concat(ciX.slice().reverse()),
+                                    y: ciUpper.concat(ciLower.slice().reverse()),
+                                    type: 'scatter',
+                                    fill: 'toself',
+                                    fillcolor: 'rgba(255, 193, 7, 0.2)',
+                                    line: {color: 'transparent'},
+                                    name: currentLanguage === 'bn' ? 'কনফিডেন্স ইন্টারভ্যাল' : 'Confidence Interval',
+                                    showlegend: true
+                                });
+                            }
+                            
+                            layout.title = currentLanguage === 'bn' ? 
+                                'মন্টে কার্লো অনুমানের কনভারজেন্স' : 
+                                'Monte Carlo Estimate Convergence';
+                            layout.xaxis = { title: currentLanguage === 'bn' ? 'রানের সংখ্যা' : 'Run Number' };
+                            layout.yaxis = { title: currentLanguage === 'bn' ? 'অনুমান' : 'Estimate' };
+                        }
+                        break;
+                        
+                    case 'error':
+                        // Error decay plot
+                        if (simulationState.errors.length > 0) {
+                            const x = Array.from({length: simulationState.errors.length}, (_, i) => i + 1);
+                            
+                            data.push({
+                                x: x,
+                                y: simulationState.errors,
+                                type: 'scatter',
+                                mode: 'lines+markers',
+                                name: currentLanguage === 'bn' ? 'ত্রুটি' : 'Error',
+                                line: {
+                                    color: 'var(--error-color)',
+                                    width: 2
+                                },
+                                marker: {
+                                    size: 4,
+                                    color: 'var(--error-color)'
+                                }
+                            });
+                            
+                            // Theoretical convergence line
+                            const theoreticalError = simulationState.errors[0] / Math.sqrt(x);
+                            data.push({
+                                x: x,
+                                y: theoreticalError,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: currentLanguage === 'bn' ? 'তাত্ত্বিক ১/√n' : 'Theoretical 1/√n',
+                                line: {
+                                    color: 'var(--gray)',
+                                    width: 2,
+                                    dash: 'dash'
+                                }
+                            });
+                            
+                            layout.title = currentLanguage === 'bn' ? 
+                                'ত্রুটি হ্রাস প্যাটার্ন' : 
+                                'Error Decay Pattern';
+                            layout.xaxis = { 
+                                title: currentLanguage === 'bn' ? 'রানের সংখ্যা' : 'Run Number',
+                                type: 'log'
+                            };
+                            layout.yaxis = { 
+                                title: currentLanguage === 'bn' ? 'পরম ত্রুটি' : 'Absolute Error',
+                                type: 'log'
+                            };
+                        }
+                        break;
+                        
+                    case 'ci':
+                        // Confidence interval shrinking plot
+                        if (simulationState.confidenceIntervals.length > 0) {
+                            const x = Array.from({length: simulationState.confidenceIntervals.length}, (_, i) => i + 1);
+                            const ciWidths = simulationState.confidenceIntervals.map(ci => ci.width);
+                            
+                            data.push({
+                                x: x,
+                                y: ciWidths,
+                                type: 'scatter',
+                                mode: 'lines+markers',
+                                name: currentLanguage === 'bn' ? 'CI প্রস্থ' : 'CI Width',
+                                line: {
+                                    color: 'var(--ci-color)',
+                                    width: 2
+                                },
+                                marker: {
+                                    size: 4,
+                                    color: 'var(--ci-color)'
+                                }
+                            });
+                            
+                            layout.title = currentLanguage === 'bn' ? 
+                                'কনফিডেন্স ইন্টারভ্যাল সঙ্কুচিতকরণ' : 
+                                'Confidence Interval Shrinking';
+                            layout.xaxis = { 
+                                title: currentLanguage === 'bn' ? 'রানের সংখ্যা' : 'Run Number',
+                                type: 'log'
+                            };
+                            layout.yaxis = { 
+                                title: currentLanguage === 'bn' ? 'CI প্রস্থ' : 'CI Width',
+                                type: 'log'
+                            };
+                        }
+                        break;
+                }
+                
+                if (data.length > 0) {
+                    Plotly.newPlot(convergencePlot, data, layout, { responsive: true });
+                }
+            }
+
+            function updateAnalysisPlots() {
+                if (simulationState.errors.length < 2) return;
+                
+                // Error decay analysis
+                updateErrorDecayPlot();
+                
+                // CI evolution analysis
+                updateCIEvolutionPlot();
+                
+                // Update analysis statistics
+                updateAnalysisStatistics();
+            }
+
+            function updateErrorDecayPlot() {
+                const x = Array.from({length: simulationState.errors.length}, (_, i) => i + 1);
+                const logX = x.map(val => Math.log(val));
+                const logY = simulationState.errors.map(val => Math.log(val));
+                
+                // Linear regression on log-log scale
+                const n = logX.length;
+                const sumX = logX.reduce((a, b) => a + b, 0);
+                const sumY = logY.reduce((a, b) => a + b, 0);
+                const sumXY = logX.reduce((sum, xi, i) => sum + xi * logY[i], 0);
+                const sumX2 = logX.reduce((sum, xi) => sum + xi * xi, 0);
+                
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / n;
+                
+                // Calculate R²
+                const yMean = sumY / n;
+                const ssTot = logY.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
+                const ssRes = logY.reduce((sum, yi, i) => {
+                    const yPred = slope * logX[i] + intercept;
+                    return sum + Math.pow(yi - yPred, 2);
+                }, 0);
+                const rSquared = 1 - (ssRes / ssTot);
+                
+                // Update display
+                logSlopeEl.textContent = slope.toFixed(3);
+                rSquaredEl.textContent = rSquared.toFixed(3);
+                
+                // Determine decay rate based on slope
+                let decayRate;
+                if (Math.abs(slope + 0.5) < 0.1) {
+                    decayRate = 'O(1/√n)';
+                } else if (Math.abs(slope + 1) < 0.1) {
+                    decayRate = 'O(1/n)';
+                } else if (slope < -0.5 && slope > -1) {
+                    decayRate = 'O(log(n)/n)';
+                } else {
+                    decayRate = `O(n^${slope.toFixed(3)})`;
+                }
+                decayRateEl.textContent = decayRate;
+                
+                // Create plot
+                const data = [{
+                    x: x,
+                    y: simulationState.errors,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'পর্যবেক্ষিত' : 'Observed',
+                    line: { color: 'var(--error-color)', width: 2 }
+                }, {
+                    x: x,
+                    y: x.map(xi => Math.exp(intercept) * Math.pow(xi, slope)),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'লিনিয়ার ফিট' : 'Linear Fit',
+                    line: { color: 'var(--primary)', width: 2, dash: 'dash' }
+                }];
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'লগ-লগ ত্রুটি ডিকে' : 'Log-Log Error Decay',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'নমুনা (লগ স্কেল)' : 'Samples (log scale)',
+                        type: 'log'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ত্রুটি (লগ স্কেল)' : 'Error (log scale)',
+                        type: 'log'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot(errorDecayPlot, data, layout, { responsive: true });
+            }
+
+            function updateCIEvolutionPlot() {
+                if (simulationState.confidenceIntervals.length < 2) return;
+                
+                const x = Array.from({length: simulationState.confidenceIntervals.length}, (_, i) => i + 1);
+                const ciWidths = simulationState.confidenceIntervals.map(ci => ci.width);
+                
+                // Calculate final CI width and shrinking rate
+                const finalWidth = ciWidths[ciWidths.length - 1];
+                const shrinkingFactor = ciWidths[0] / finalWidth;
+                
+                finalCIWidthEl.textContent = finalWidth.toFixed(6);
+                shrinkingRateEl.textContent = `~${shrinkingFactor.toFixed(1)}x`;
+                
+                // Estimate coverage probability
+                const trueValue = getTrueValue();
+                let coverageCount = 0;
+                simulationState.confidenceIntervals.forEach(ci => {
+                    if (ci.lower <= trueValue && trueValue <= ci.upper) {
+                        coverageCount++;
+                    }
+                });
+                const coverageProbability = (coverageCount / simulationState.confidenceIntervals.length * 100).toFixed(1);
+                coverageProbEl.textContent = `${coverageProbability}%`;
+                
+                // Create plot
+                const data = [{
+                    x: x,
+                    y: ciWidths,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'CI প্রস্থ' : 'CI Width',
+                    line: { color: 'var(--ci-color)', width: 2 }
+                }, {
+                    x: x,
+                    y: x.map(xi => ciWidths[0] / Math.sqrt(xi)),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'তাত্ত্বিক ১/√n' : 'Theoretical 1/√n',
+                    line: { color: 'var(--gray)', width: 2, dash: 'dash' }
+                }];
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'CI প্রস্থ বিবর্তন' : 'CI Width Evolution',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'রানের সংখ্যা' : 'Run Number'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'CI প্রস্থ' : 'CI Width'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot(ciEvolutionPlot, data, layout, { responsive: true });
+            }
+
+            function updateAnalysisStatistics() {
+                // Already updated in the analysis plot functions
+            }
+
+            function initializePlots() {
+                // Initialize with empty plots
+                Plotly.newPlot(convergencePlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'কনভারজেন্স ভিজুয়ালাইজেশন' : 'Convergence Visualization',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+                
+                Plotly.newPlot(errorDecayPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'ত্রুটি হ্রাস বিশ্লেষণ' : 'Error Decay Analysis',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+                
+                Plotly.newPlot(ciEvolutionPlot, [{
+                    x: [0],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'lines'
+                }], {
+                    title: currentLanguage === 'bn' ? 'CI বিবর্তন বিশ্লেষণ' : 'CI Evolution Analysis',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                }, { responsive: true });
+            }
+
+            // Example loading functions
+            function loadExample(example) {
+                switch(example) {
+                    case 'fast':
+                        simulationState.function = 'integral';
+                        simulationState.sampleSize = 1000;
+                        simulationState.runCount = 20;
+                        simulationState.targetError = 0.0001;
+                        break;
+                    case 'slow':
+                        simulationState.function = 'mean';
+                        simulationState.sampleSize = 10000;
+                        simulationState.runCount = 100;
+                        simulationState.targetError = 0.01;
+                        break;
+                    case 'oscillatory':
+                        simulationState.function = 'pi';
+                        simulationState.sampleSize = 50000;
+                        simulationState.runCount = 50;
+                        simulationState.targetError = 0.001;
+                        break;
+                    case 'discontinuous':
+                        simulationState.function = 'integral';
+                        simulationState.sampleSize = 20000;
+                        simulationState.runCount = 80;
+                        simulationState.targetError = 0.005;
+                        break;
+                }
+                
+                // Update UI
+                updateParameterDisplays();
+                setTargetFunction(simulationState.function);
+                
+                // Start simulation
+                setTimeout(() => {
+                    startSimulation();
+                }, 500);
+            }
+
+            function updateParameterDisplays() {
+                sampleSizeSlider.value = simulationState.sampleSize;
+                sampleSizeValue.textContent = simulationState.sampleSize.toLocaleString();
+                
+                runCountSlider.value = simulationState.runCount;
+                runCountValue.textContent = simulationState.runCount;
+                
+                targetErrorSlider.value = simulationState.targetError;
+                targetErrorValue.textContent = simulationState.targetError.toFixed(4);
+            }
+        });
+    </script>
+</body>
+</html>

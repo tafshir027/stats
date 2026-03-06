@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF প্লটার | নরমাল ডিস্ট্রিবিউশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #2196F3;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --pdf-curve: #4CAF50;
+            --area-fill: rgba(76, 175, 80, 0.1);
+            --grid-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Parameter Controls */
+        .parameter-group {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .parameter-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .parameter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Area Controls */
+        .area-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .area-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .area-input-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .area-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .area-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        /* Curve Options */
+        .curve-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .curve-option {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .curve-option:hover {
+            border-color: var(--primary);
+            background: var(--light-gray);
+        }
+
+        .curve-option.selected {
+            border-color: var(--primary);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .curve-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Display */
+        .formula-display {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .formula-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .formula-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            font-size: 1.2rem;
+            color: var(--dark);
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .formula-parameters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .parameter-display {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .parameter-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Interactive Controls */
+        .interactive-controls {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .control-title i {
+            color: var(--primary);
+        }
+
+        .curve-manipulation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .manipulation-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .manipulation-label {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .manipulation-slider {
+            width: 100%;
+        }
+
+        /* Bell Curve Properties */
+        .curve-properties {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .property-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .property-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .property-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .property-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .property-list {
+            list-style: none;
+        }
+
+        .property-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .property-item i {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* Area Calculation */
+        .area-calculation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .calculation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .calculation-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .calculation-title {
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .calculation-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .calculation-description {
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .pdf-curve-legend { background: var(--pdf-curve); }
+        .area-fill-legend { background: var(--area-fill); border: 1px solid var(--primary); }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .formula-display,
+            .interactive-controls,
+            .curve-properties,
+            .area-calculation {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .area-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .parameter-group {
+                padding: 1rem;
+            }
+            
+            .curve-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        /* MathJax Styling */
+        .MathJax {
+            font-size: 1.1em !important;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.8rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="PDF Plotter - Normal Distribution" data-bn="PDF প্লটার - নরমাল ডিস্ট্রিবিউশন">PDF প্লটার - নরমাল ডিস্ট্রিবিউশন</h1>
+            <p class="subtitle" data-en="Plot and explore the Probability Density Function of normal distributions with interactive controls" data-bn="ইন্টারেকটিভ কন্ট্রোল সহ নরমাল ডিস্ট্রিবিউশনের প্রোবাবিলিটি ডেনসিটি ফাংশন প্লট করুন এবং এক্সপ্লোর করুন">
+                ইন্টারেকটিভ কন্ট্রোল সহ নরমাল ডিস্ট্রিবিউশনের প্রোবাবিলিটি ডেনসিটি ফাংশন প্লট করুন এবং এক্সপ্লোর করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="PDF Parameters" data-bn="PDF প্যারামিটার">PDF প্যারামিটার</span>
+                </h2>
+                
+                <!-- Mean Parameter -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Mean (μ)" data-bn="মিন (μ)">মিন (μ)</h3>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span data-en="Center of Distribution" data-bn="ডিস্ট্রিবিউশনের কেন্দ্র">ডিস্ট্রিবিউশনের কেন্দ্র</span>
+                            <span class="slider-value" id="meanValue">0</span>
+                        </div>
+                        <input type="range" min="-5" max="5" step="0.1" value="0" class="slider" id="meanSlider">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray);">
+                            <span>-5</span>
+                            <span>0</span>
+                            <span>5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standard Deviation Parameter -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-expand-alt"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Standard Deviation (σ)" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</h3>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span data-en="Spread of Distribution" data-bন="ডিস্ট্রিবিউশনের বিস্তার">ডিস্ট্রিবিউশনের বিস্তার</span>
+                            <span class="slider-value" id="sdValue">1</span>
+                        </div>
+                        <input type="range" min="0.1" max="3" step="0.1" value="1" class="slider" id="sdSlider">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray);">
+                            <span>0.1</span>
+                            <span>1.5</span>
+                            <span>3.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Area Calculation -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <div class="parameter-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="parameter-title" data-en="Area Calculation" data-bন="এলাকা গণনা">এলাকা গণনা</h3>
+                    </div>
+                    
+                    <div class="area-controls">
+                        <div class="area-input-group">
+                            <label class="area-input-label" data-en="Lower Bound (a)" data-bন="নিম্ন সীমা (a)">নিম্ন সীমা (a)</label>
+                            <input type="number" class="area-input" id="lowerBound" value="-1" step="0.1">
+                        </div>
+                        <div class="area-input-group">
+                            <label class="area-input-label" data-en="Upper Bound (b)" data-bন="উচ্চ সীমা (b)">উচ্চ সীমা (b)</label>
+                            <input type="number" class="area-input" id="upperBound" value="1" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <div class="curve-options">
+                        <label class="curve-option selected" id="showAreaLabel">
+                            <input type="checkbox" id="showArea" checked>
+                            <div>
+                                <div data-en="Show Area" data-bন="এলাকা দেখান">এলাকা দেখান</div>
+                            </div>
+                        </label>
+                        
+                        <label class="curve-option selected" id="showGridLabel">
+                            <input type="checkbox" id="showGrid" checked>
+                            <div>
+                                <div data-en="Show Grid" data-bন="গ্রিড দেখান">গ্রিড দেখান</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="updatePlotBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Update Plot" data-bন="প্লট আপডেট করুন">প্লট আপডেট করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset Parameters" data-bন="প্যারামিটার রিসেট করুন">প্যারামিটার রিসেট করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="downloadBtn">
+                        <i class="fas fa-download"></i>
+                        <span data-en="Download Plot" data-bন="প্লট ডাউনলোড করুন">প্লট ডাউনলোড করুন</span>
+                    </button>
+                    <button class="action-btn secondary" id="exportDataBtn">
+                        <i class="fas fa-file-export"></i>
+                        <span data-en="Export Data" data-bন="ডেটা এক্সপোর্ট করুন">ডেটা এক্সপোর্ট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="PDF Visualization" data-bন="PDF ভিজ্যুয়ালাইজেশন">PDF ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="pdfChart"></canvas>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color pdf-curve-legend"></div>
+                        <span data-en="PDF Curve" data-bন="PDF কার্ভ">PDF কার্ভ</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color area-fill-legend"></div>
+                        <span data-en="Area under curve" data-bন="কার্ভের নিচের এলাকা">কার্ভের নিচের এলাকা</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Display -->
+        <div class="formula-display">
+            <div class="formula-header">
+                <div class="formula-icon">
+                    <i class="fas fa-square-root-alt"></i>
+                </div>
+                <h2 class="formula-title" data-en="PDF Formula" data-bন="PDF সূত্র">PDF সূত্র</h2>
+            </div>
+            
+            <div class="formula-content" id="pdfFormula">
+                \[ f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x-\mu)^2}{2\sigma^2}} \]
+            </div>
+            
+            <div class="formula-parameters">
+                <div class="parameter-display">
+                    <div class="parameter-name" data-en="Mean (μ)" data-bন="মিন (μ)">মিন (μ)</div>
+                    <div class="parameter-value" id="currentMean">0.0</div>
+                </div>
+                <div class="parameter-display">
+                    <div class="parameter-name" data-en="Standard Deviation (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</div>
+                    <div class="parameter-value" id="currentSD">1.0</div>
+                </div>
+                <div class="parameter-display">
+                    <div class="parameter-name" data-en="Variance (σ²)" data-bন="ভ্যারিয়েন্স (σ²)">ভ্যারিয়েন্স (σ²)</div>
+                    <div class="parameter-value" id="currentVariance">1.0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Controls -->
+        <div class="interactive-controls">
+            <h2 class="section-title">
+                <i class="fas fa-mouse-pointer"></i>
+                <span data-en="Interactive Curve Manipulation" data-bন="ইন্টারেকটিভ কার্ভ ম্যানিপুলেশন">ইন্টারেকটিভ কার্ভ ম্যানিপুলেশন</span>
+            </h2>
+            
+            <div class="control-group">
+                <h3 class="control-title">
+                    <i class="fas fa-hand-pointer"></i>
+                    <span data-en="Real-time Parameter Adjustment" data-bন="রিয়েল-টাইম প্যারামিটার অ্যাডজাস্টমেন্ট">রিয়েল-টাইম প্যারামিটার অ্যাডজাস্টমেন্ট</span>
+                </h3>
+                <div class="curve-manipulation">
+                    <div class="manipulation-control">
+                        <div class="manipulation-label" data-en="Adjust μ (Mean)" data-bন="μ (মিন) অ্যাডজাস্ট করুন">μ (মিন) অ্যাডজাস্ট করুন</div>
+                        <input type="range" min="-5" max="5" step="0.1" value="0" class="manipulation-slider" id="liveMeanSlider">
+                    </div>
+                    <div class="manipulation-control">
+                        <div class="manipulation-label" data-en="Adjust σ (Standard Deviation)" data-bন="σ (স্ট্যান্ডার্ড ডেভিয়েশন) অ্যাডজাস্ট করুন">σ (স্ট্যান্ডার্ড ডেভিয়েশন) অ্যাডজাস্ট করুন</div>
+                        <input type="range" min="0.1" max="3" step="0.1" value="1" class="manipulation-slider" id="liveSDSlider">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3 class="control-title">
+                    <i class="fas fa-expand"></i>
+                    <span data-en="View Controls" data-bন="ভিউ কন্ট্রোল">ভিউ কন্ট্রোল</span>
+                </h3>
+                <div class="curve-manipulation">
+                    <div class="manipulation-control">
+                        <div class="manipulation-label" data-en="X-axis Range" data-bন="X-অক্ষ রেঞ্জ">X-অক্ষ রেঞ্জ</div>
+                        <input type="range" min="1" max="10" step="0.5" value="4" class="manipulation-slider" id="xRangeSlider">
+                        <div style="text-align: center; font-size: 0.9rem; color: var(--gray);" id="xRangeValue" data-en="± 4σ" data-bন="± 4σ">± 4σ</div>
+                    </div>
+                    <div class="manipulation-control">
+                        <div class="manipulation-label" data-en="Curve Smoothness" data-bন="কার্ভ স্মুথনেস">কার্ভ স্মুথনেস</div>
+                        <input type="range" min="10" max="1000" step="10" value="200" class="manipulation-slider" id="smoothnessSlider">
+                        <div style="text-align: center; font-size: 0.9rem; color: var(--gray);" id="smoothnessValue">200 points</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bell Curve Properties -->
+        <div class="curve-properties">
+            <h2 class="section-title">
+                <i class="fas fa-shapes"></i>
+                <span data-en="Bell Curve Properties" data-bন="বেল কার্ভ বৈশিষ্ট্য">বেল কার্ভ বৈশিষ্ট্য</span>
+            </h2>
+            
+            <div class="properties-grid">
+                <div class="property-card">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Shape Characteristics" data-bন="আকৃতির বৈশিষ্ট্য">আকৃতির বৈশিষ্ট্য</h3>
+                    </div>
+                    <ul class="property-list">
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Symmetric about μ" data-bন="μ সম্পর্কে প্রতিসম">μ সম্পর্কে প্রতিসম</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Unimodal (single peak)" data-bন="ইউনিমোডাল (একটি পিক)">ইউনিমোডাল (একটি পিক)</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Asymptotic to x-axis" data-bন="X-অক্ষের সাথে অসিম্পটোটিক">X-অক্ষের সাথে অসিম্পটোটিক</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Inflection points at μ ± σ" data-bন="ইনফ্লেকশন পয়েন্ট μ ± σ">ইনফ্লেকশন পয়েন্ট μ ± σ</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="property-card">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Area Properties" data-bন="এলাকা বৈশিষ্ট্য">এলাকা বৈশিষ্ট্য</h3>
+                    </div>
+                    <ul class="property-list">
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Total area under curve = 1" data-bন="মোট এলাকা = ১">মোট এলাকা = ১</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Area between μ ± σ ≈ 0.6827" data-bন="μ ± σ এর মধ্যে এলাকা ≈ ০.৬৮২৭">μ ± σ এর মধ্যে এলাকা ≈ ০.৬৮২৭</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Area between μ ± 2σ ≈ 0.9545" data-bন="μ ± ২σ এর মধ্যে এলাকা ≈ ০.৯৫৪৫">μ ± ২σ এর মধ্যে এলাকা ≈ ০.৯৫৪৫</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-check"></i>
+                            <span data-en="Area between μ ± 3σ ≈ 0.9973" data-bন="μ ± ৩σ এর মধ্যে এলাকা ≈ ০.৯৯৭৩">μ ± ৩σ এর মধ্যে এলাকা ≈ ০.৯৯৭৩</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="property-card">
+                    <div class="property-header">
+                        <div class="property-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="property-title" data-en="Parameter Effects" data-bন="প্যারামিটার ইফেক্ট">প্যারামিটার ইফেক্ট</h3>
+                    </div>
+                    <ul class="property-list">
+                        <li class="property-item">
+                            <i class="fas fa-arrows-alt-h"></i>
+                            <span data-en="μ shifts curve left/right" data-bন="μ কার্ভ বাম/ডানে সিফট করে">μ কার্ভ বাম/ডানে সিফট করে</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-compress-alt"></i>
+                            <span data-en="σ controls spread (width)" data-bন="σ বিস্তার (প্রস্থ) নিয়ন্ত্রণ করে">σ বিস্তার (প্রস্থ) নিয়ন্ত্রণ করে</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-chart-bar"></i>
+                            <span data-en="Small σ = tall, narrow curve" data-bন="ছোট σ = লম্বা, সরু কার্ভ">ছোট σ = লম্বা, সরু কার্ভ</span>
+                        </li>
+                        <li class="property-item">
+                            <i class="fas fa-chart-bar"></i>
+                            <span data-en="Large σ = short, wide curve" data-bন="বড় σ = খাটো, চওড়া কার্ভ">বড় σ = খাটো, চওড়া কার্ভ</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Calculation -->
+        <div class="area-calculation">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="Area Calculation Results" data-bন="এলাকা গণনা ফলাফল">এলাকা গণনা ফলাফল</span>
+            </h2>
+            
+            <div class="calculation-grid">
+                <div class="calculation-card">
+                    <div class="calculation-title" data-en="Area between a and b" data-bন="a এবং b এর মধ্যবর্তী এলাকা">a এবং b এর মধ্যবর্তী এলাকা</div>
+                    <div class="calculation-value" id="areaValue">0.6827</div>
+                    <div class="calculation-description" data-en="Probability P(a ≤ X ≤ b)" data-bন="প্রোবাবিলিটি P(a ≤ X ≤ b)">প্রোবাবিলিটি P(a ≤ X ≤ b)</div>
+                </div>
+                
+                <div class="calculation-card">
+                    <div class="calculation-title" data-en="Left Tail Area" data-bন="বাম লেজ এলাকা">বাম লেজ এলাকা</div>
+                    <div class="calculation-value" id="leftTailArea">0.1587</div>
+                    <div class="calculation-description" data-en="Probability P(X ≤ a)" data-bন="প্রোবাবিলিটি P(X ≤ a)">প্রোবাবিলিটি P(X ≤ a)</div>
+                </div>
+                
+                <div class="calculation-card">
+                    <div class="calculation-title" data-en="Right Tail Area" data-bন="ডান লেজ এলাকা">ডান লেজ এলাকা</div>
+                    <div class="calculation-value" id="rightTailArea">0.1587</div>
+                    <div class="calculation-description" data-en="Probability P(X ≥ b)" data-bন="প্রোবাবিলিটি P(X ≥ b)">প্রোবাবিলিটি P(X ≥ b)</div>
+                </div>
+                
+                <div class="calculation-card">
+                    <div class="calculation-title" data-en="Complement Area" data-bন="কমপ্লিমেন্ট এলাকা">কমপ্লিমেন্ট এলাকা</div>
+                    <div class="calculation-value" id="complementArea">0.3173</div>
+                    <div class="calculation-description" data-en="1 - P(a ≤ X ≤ b)" data-bন="১ - P(a ≤ X ≤ b)">১ - P(a ≤ X ≤ b)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let chart = null;
+            let pdfData = [];
+            
+            // Normal distribution parameters
+            let mean = 0;
+            let sd = 1;
+            let xRange = 4; // ± xRange * σ
+            let smoothness = 200;
+            let showArea = true;
+            let showGrid = true;
+            let lowerBound = -1;
+            let upperBound = 1;
+            
+            // Initialize application
+            initPDFPlotter();
+            
+            function initPDFPlotter() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Initialize event listeners
+                initializeEventListeners();
+                
+                // Initialize chart
+                initializeChart();
+                
+                // Generate initial PDF plot
+                updatePDFPlot();
+                
+                // Initialize MathJax
+                if (window.MathJax) {
+                    MathJax.typeset();
+                }
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+                
+                // Update chart labels
+                if (chart) {
+                    updateChartLabels();
+                }
+            }
+            
+            function initializeEventListeners() {
+                // Slider event listeners
+                document.getElementById('meanSlider').addEventListener('input', updateMean);
+                document.getElementById('sdSlider').addEventListener('input', updateSD);
+                document.getElementById('liveMeanSlider').addEventListener('input', updateLiveMean);
+                document.getElementById('liveSDSlider').addEventListener('input', updateLiveSD);
+                document.getElementById('xRangeSlider').addEventListener('input', updateXRange);
+                document.getElementById('smoothnessSlider').addEventListener('input', updateSmoothness);
+                
+                // Area bounds event listeners
+                document.getElementById('lowerBound').addEventListener('input', updateAreaBounds);
+                document.getElementById('upperBound').addEventListener('input', updateAreaBounds);
+                
+                // Checkbox event listeners
+                document.getElementById('showArea').addEventListener('change', toggleShowArea);
+                document.getElementById('showGrid').addEventListener('change', toggleShowGrid);
+                
+                // Button event listeners
+                document.getElementById('updatePlotBtn').addEventListener('click', updatePDFPlot);
+                document.getElementById('resetBtn').addEventListener('click', resetParameters);
+                document.getElementById('downloadBtn').addEventListener('click', downloadPlot);
+                document.getElementById('exportDataBtn').addEventListener('click', exportData);
+                
+                // Real-time updates
+                document.getElementById('liveMeanSlider').addEventListener('input', updatePDFPlot);
+                document.getElementById('liveSDSlider').addEventListener('input', updatePDFPlot);
+                document.getElementById('xRangeSlider').addEventListener('input', updatePDFPlot);
+                document.getElementById('smoothnessSlider').addEventListener('input', updatePDFPlot);
+            }
+            
+            function updateMean() {
+                const slider = document.getElementById('meanSlider');
+                mean = parseFloat(slider.value);
+                document.getElementById('meanValue').textContent = mean.toFixed(1);
+                document.getElementById('currentMean').textContent = mean.toFixed(1);
+                document.getElementById('liveMeanSlider').value = mean;
+                updatePDFPlot();
+            }
+            
+            function updateSD() {
+                const slider = document.getElementById('sdSlider');
+                sd = parseFloat(slider.value);
+                document.getElementById('sdValue').textContent = sd.toFixed(1);
+                document.getElementById('currentSD').textContent = sd.toFixed(1);
+                document.getElementById('currentVariance').textContent = (sd * sd).toFixed(2);
+                document.getElementById('liveSDSlider').value = sd;
+                updatePDFPlot();
+            }
+            
+            function updateLiveMean() {
+                const slider = document.getElementById('liveMeanSlider');
+                mean = parseFloat(slider.value);
+                document.getElementById('meanSlider').value = mean;
+                document.getElementById('meanValue').textContent = mean.toFixed(1);
+                document.getElementById('currentMean').textContent = mean.toFixed(1);
+            }
+            
+            function updateLiveSD() {
+                const slider = document.getElementById('liveSDSlider');
+                sd = parseFloat(slider.value);
+                document.getElementById('sdSlider').value = sd;
+                document.getElementById('sdValue').textContent = sd.toFixed(1);
+                document.getElementById('currentSD').textContent = sd.toFixed(1);
+                document.getElementById('currentVariance').textContent = (sd * sd).toFixed(2);
+            }
+            
+            function updateXRange() {
+                const slider = document.getElementById('xRangeSlider');
+                xRange = parseFloat(slider.value);
+                const rangeText = currentLanguage === 'bn' 
+                    ? `± ${xRange}σ` 
+                    : `± ${xRange}σ`;
+                document.getElementById('xRangeValue').textContent = rangeText;
+            }
+            
+            function updateSmoothness() {
+                const slider = document.getElementById('smoothnessSlider');
+                smoothness = parseInt(slider.value);
+                document.getElementById('smoothnessValue').textContent = `${smoothness} points`;
+            }
+            
+            function updateAreaBounds() {
+                lowerBound = parseFloat(document.getElementById('lowerBound').value);
+                upperBound = parseFloat(document.getElementById('upperBound').value);
+                updatePDFPlot();
+            }
+            
+            function toggleShowArea() {
+                showArea = document.getElementById('showArea').checked;
+                document.getElementById('showAreaLabel').classList.toggle('selected', showArea);
+                updatePDFPlot();
+            }
+            
+            function toggleShowGrid() {
+                showGrid = document.getElementById('showGrid').checked;
+                document.getElementById('showGridLabel').classList.toggle('selected', showGrid);
+                updatePDFPlot();
+            }
+            
+            function initializeChart() {
+                const ctx = document.getElementById('pdfChart').getContext('2d');
+                
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 800,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.dataset.label || '';
+                                        const value = context.parsed.y;
+                                        return `${label}: ${value.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'x',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                grid: {
+                                    display: showGrid,
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'f(x)' : 'f(x)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    display: showGrid,
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            }
+            
+            function updateChartLabels() {
+                if (!chart) return;
+                
+                chart.options.scales.y.title.text = 'f(x)';
+                chart.update();
+            }
+            
+            function updatePDFPlot() {
+                if (!chart) return;
+                
+                // Clear existing datasets
+                chart.data.datasets = [];
+                
+                // Generate PDF data
+                generatePDFData();
+                
+                // Add PDF curve dataset
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'PDF কার্ভ' : 'PDF Curve',
+                    data: pdfData,
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+                
+                // Add area under curve if enabled
+                if (showArea && lowerBound < upperBound) {
+                    const areaData = pdfData.filter(point => 
+                        point.x >= lowerBound && point.x <= upperBound
+                    );
+                    
+                    if (areaData.length > 0) {
+                        // Add points at x-axis to close the area
+                        const areaDataset = [
+                            { x: lowerBound, y: 0 },
+                            ...areaData,
+                            { x: upperBound, y: 0 }
+                        ];
+                        
+                        chart.data.datasets.push({
+                            label: currentLanguage === 'bn' ? 'কার্ভের নিচের এলাকা' : 'Area under curve',
+                            data: areaDataset,
+                            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                            borderColor: 'rgba(76, 175, 80, 0.5)',
+                            borderWidth: 1,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        });
+                    }
+                }
+                
+                // Update x-axis range
+                const xMin = mean - xRange * sd;
+                const xMax = mean + xRange * sd;
+                const step = (xMax - xMin) / smoothness;
+                
+                const labels = [];
+                for (let x = xMin; x <= xMax; x += step * 5) {
+                    labels.push(x.toFixed(1));
+                }
+                chart.data.labels = labels;
+                
+                // Update chart options
+                chart.options.scales.x.grid.display = showGrid;
+                chart.options.scales.y.grid.display = showGrid;
+                
+                // Calculate and display area
+                calculateAreaUnderCurve();
+                
+                // Update chart
+                chart.update();
+                
+                // Add animation effect
+                document.getElementById('updatePlotBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('updatePlotBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function generatePDFData() {
+                pdfData = [];
+                const xMin = mean - xRange * sd;
+                const xMax = mean + xRange * sd;
+                const step = (xMax - xMin) / smoothness;
+                
+                for (let x = xMin; x <= xMax; x += step) {
+                    const y = normalPDF(x, mean, sd);
+                    pdfData.push({ x: x, y: y });
+                }
+            }
+            
+            function normalPDF(x, mu, sigma) {
+                const variance = sigma * sigma;
+                const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+                const exponent = -Math.pow(x - mu, 2) / (2 * variance);
+                return coefficient * Math.exp(exponent);
+            }
+            
+            function calculateAreaUnderCurve() {
+                if (lowerBound >= upperBound) return;
+                
+                // Numerical integration using Simpson's rule
+                const n = 1000; // Number of subdivisions
+                const h = (upperBound - lowerBound) / n;
+                let area = normalPDF(lowerBound, mean, sd) + normalPDF(upperBound, mean, sd);
+                
+                for (let i = 1; i < n; i++) {
+                    const x = lowerBound + i * h;
+                    const weight = (i % 2 === 0) ? 2 : 4;
+                    area += weight * normalPDF(x, mean, sd);
+                }
+                
+                area = (h / 3) * area;
+                
+                // Calculate tail areas
+                const totalArea = 1; // Total area under PDF is 1
+                const leftTailArea = integratePDF(-Infinity, lowerBound);
+                const rightTailArea = integratePDF(upperBound, Infinity);
+                const complementArea = 1 - area;
+                
+                // Update display
+                document.getElementById('areaValue').textContent = area.toFixed(4);
+                document.getElementById('leftTailArea').textContent = leftTailArea.toFixed(4);
+                document.getElementById('rightTailArea').textContent = rightTailArea.toFixed(4);
+                document.getElementById('complementArea').textContent = complementArea.toFixed(4);
+            }
+            
+            function integratePDF(a, b) {
+                // Use numerical integration for finite bounds
+                if (a === -Infinity) a = mean - 10 * sd;
+                if (b === Infinity) b = mean + 10 * sd;
+                
+                const n = 1000;
+                const h = (b - a) / n;
+                let sum = normalPDF(a, mean, sd) + normalPDF(b, mean, sd);
+                
+                for (let i = 1; i < n; i++) {
+                    const x = a + i * h;
+                    const weight = (i % 2 === 0) ? 2 : 4;
+                    sum += weight * normalPDF(x, mean, sd);
+                }
+                
+                return (h / 3) * sum;
+            }
+            
+            function resetParameters() {
+                // Reset sliders
+                document.getElementById('meanSlider').value = 0;
+                document.getElementById('sdSlider').value = 1;
+                document.getElementById('liveMeanSlider').value = 0;
+                document.getElementById('liveSDSlider').value = 1;
+                document.getElementById('xRangeSlider').value = 4;
+                document.getElementById('smoothnessSlider').value = 200;
+                
+                // Reset area bounds
+                document.getElementById('lowerBound').value = -1;
+                document.getElementById('upperBound').value = 1;
+                
+                // Reset checkboxes
+                document.getElementById('showArea').checked = true;
+                document.getElementById('showGrid').checked = true;
+                document.getElementById('showAreaLabel').classList.add('selected');
+                document.getElementById('showGridLabel').classList.add('selected');
+                
+                // Reset parameters
+                mean = 0;
+                sd = 1;
+                xRange = 4;
+                smoothness = 200;
+                showArea = true;
+                showGrid = true;
+                lowerBound = -1;
+                upperBound = 1;
+                
+                // Update displays
+                document.getElementById('meanValue').textContent = '0';
+                document.getElementById('sdValue').textContent = '1';
+                document.getElementById('currentMean').textContent = '0.0';
+                document.getElementById('currentSD').textContent = '1.0';
+                document.getElementById('currentVariance').textContent = '1.0';
+                document.getElementById('xRangeValue').textContent = currentLanguage === 'bn' ? '± 4σ' : '± 4σ';
+                document.getElementById('smoothnessValue').textContent = '200 points';
+                
+                // Update plot
+                updatePDFPlot();
+                
+                // Add animation effect
+                document.getElementById('resetBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('resetBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function downloadPlot() {
+                if (!chart) return;
+                
+                const link = document.createElement('a');
+                link.download = `pdf_plot_μ=${mean}_σ=${sd}.png`;
+                link.href = chart.toBase64Image();
+                link.click();
+                
+                // Add animation effect
+                document.getElementById('downloadBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('downloadBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function exportData() {
+                if (pdfData.length === 0) return;
+                
+                // Create CSV content
+                let csvContent = 'data:text/csv;charset=utf-8,';
+                csvContent += currentLanguage === 'bn' ? 'x,f(x)\n' : 'x,f(x)\n';
+                
+                pdfData.forEach(point => {
+                    csvContent += `${point.x.toFixed(4)},${point.y.toFixed(6)}\n`;
+                });
+                
+                // Create download link
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `pdf_data_μ=${mean}_σ=${sd}.csv`);
+                document.body.appendChild(link);
+                
+                // Trigger download
+                link.click();
+                document.body.removeChild(link);
+                
+                // Add animation effect
+                document.getElementById('exportDataBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('exportDataBtn').classList.remove('pulse');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

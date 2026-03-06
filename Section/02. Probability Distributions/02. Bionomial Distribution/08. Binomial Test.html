@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binomial Test Simulation | Hypothesis Testing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #2196F3;
+            --secondary: #1976D2;
+            --accent: #FF4081;
+            --success: #4CAF50;
+            --info: #00BCD4;
+            --warning: #FF9800;
+            --danger: #f44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --null-color: #757575;
+            --alt-color: #2196F3;
+            --pvalue-color: #FF4081;
+            --reject-color: #f44336;
+            --accept-color: #4CAF50;
+            --critical-region: rgba(244, 67, 54, 0.1);
+            --acceptance-region: rgba(76, 175, 80, 0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--danger), var(--success));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #2196F3, #f44336);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Back Navigation */
+        .back-nav {
+            margin-bottom: 1.5rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateX(-3px);
+            box-shadow: 0 6px 18px rgba(33, 150, 243, 0.2);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Test Configuration */
+        .test-configuration {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Test Type Selection */
+        .test-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .test-types {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .test-type-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .test-type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .test-type-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            margin-bottom: 2rem;
+        }
+
+        .parameter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .parameter-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .slider-container {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .parameter-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--light-gray), var(--primary));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .parameter-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .parameter-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4);
+        }
+
+        .parameter-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .parameter-input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .parameter-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Alpha Level */
+        .alpha-level {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .alpha-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: linear-gradient(to right, var(--success), var(--warning), var(--danger));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .alpha-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Test Actions */
+        .test-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .test-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .run-test-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .run-test-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .simulate-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .simulate-btn:hover {
+            background: #43a047;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+            grid-column: span 2;
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Display */
+        .results-display {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Decision Card */
+        .decision-card {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decision-card.reject {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 2px solid var(--reject-color);
+        }
+
+        .decision-card.accept {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 2px solid var(--accept-color);
+        }
+
+        .decision-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .decision-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .decision-subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        /* Test Statistics */
+        .test-statistics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .test-statistics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .p-value-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid var(--pvalue-color);
+        }
+
+        .p-value-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .p-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--pvalue-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Critical Region Display */
+        .critical-region {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .region-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .region-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .region-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .critical-region-item {
+            background: var(--critical-region);
+            color: var(--reject-color);
+            border: 2px solid var(--reject-color);
+        }
+
+        .acceptance-region-item {
+            background: var(--acceptance-region);
+            color: var(--accept-color);
+            border: 2px solid var(--accept-color);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1100px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 450px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Test Explanation */
+        .test-explanation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .explanation-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .explanation-step {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--dark);
+        }
+
+        .step-content {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Simulation Results */
+        .simulation-results {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .simulation-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .simulation-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 120px;
+            text-align: center;
+        }
+
+        .simulation-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1.2rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Confidence Interval */
+        .confidence-interval {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 2px solid var(--info);
+        }
+
+        .interval-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .interval-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--info);
+        }
+
+        /* Power Analysis */
+        .power-analysis {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 350px;
+            }
+            
+            .test-types {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .reset-btn {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .decision-icon {
+                font-size: 2.5rem;
+            }
+            
+            .decision-title {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Mathematical Notation */
+        .math-notation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+        }
+
+        .hypothesis {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .back-nav,
+            .test-actions,
+            .examples-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .test-configuration,
+            .results-display,
+            .charts-section,
+            .test-explanation,
+            .simulation-results {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Navigation -->
+        <div class="back-nav">
+            <a href="../../probability-distributions.html" class="back-btn" data-en="Back to Binomial Distribution" data-bn="বাইনোমিয়াল ডিস্ট্রিবিউশনে ফিরুন">
+                <i class="fas fa-arrow-left"></i>
+                <span>বাইনোমিয়াল ডিস্ট্রিবিউশনে ফিরুন</span>
+            </a>
+        </div>
+
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Binomial Test Simulation" data-bn="বাইনোমিয়াল টেস্ট সিমুলেশন">বাইনোমিয়াল টেস্ট সিমুলেশন</h1>
+            <p class="subtitle" data-en="Simulate binomial hypothesis tests including one-sample proportion test, exact binomial test, and p-value calculation with detailed visualization" data-bn="এক-স্যাম্পল প্রোপোরশন টেস্ট, এক্সাক্ট বাইনোমিয়াল টেস্ট এবং পি-ভ্যালু গণনা সহ বিস্তারিত ভিজ্যুয়ালাইজেশন সহ বাইনোমিয়াল হাইপোথিসিস টেস্ট সিমুলেট করুন">
+                এক-স্যাম্পল প্রোপোরশন টেস্ট, এক্সাক্ট বাইনোমিয়াল টেস্ট এবং পি-ভ্যালু গণনা সহ বিস্তারিত ভিজ্যুয়ালাইজেশন সহ বাইনোমিয়াল হাইপোথিসিস টেস্ট সিমুলেট করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Test Configuration -->
+            <div class="test-configuration">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Test Configuration" data-bn="টেস্ট কনফিগারেশন">টেস্ট কনফিগারেশন</span>
+                </h2>
+                
+                <!-- Test Type Selection -->
+                <div class="test-types">
+                    <button class="test-type-btn active" data-test="one-tailed-left">
+                        <i class="test-type-icon fas fa-arrow-left"></i>
+                        <span data-en="Left-Tailed" data-bn="বাম-টেইলড">বাম-টেইলড</span>
+                        <small data-en="H₁: p < p₀" data-bn="H₁: p < p₀">H₁: p < p₀</small>
+                    </button>
+                    <button class="test-type-btn" data-test="two-tailed">
+                        <i class="test-type-icon fas fa-arrows-alt-h"></i>
+                        <span data-en="Two-Tailed" data-bn="দুই-টেইলড">দুই-টেইলড</span>
+                        <small data-en="H₁: p ≠ p₀" data-bn="H₁: p ≠ p₀">H₁: p ≠ p₀</small>
+                    </button>
+                    <button class="test-type-btn" data-test="one-tailed-right">
+                        <i class="test-type-icon fas fa-arrow-right"></i>
+                        <span data-en="Right-Tailed" data-bn="ডান-টেইলড">ডান-টেইলড</span>
+                        <small data-en="H₁: p > p₀" data-bn="H₁: p > p₀">H₁: p > p₀</small>
+                    </button>
+                </div>
+
+                <!-- Hypothesis Display -->
+                <div class="hypothesis">
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong data-en="Null Hypothesis (H₀):" data-bn="নাল হাইপোথিসিস (H₀):">নাল হাইপোথিসিস (H₀):</strong>
+                        <span class="math-notation" id="nullHypothesis">p = 0.5</span>
+                    </div>
+                    <div>
+                        <strong data-en="Alternative Hypothesis (H₁):" data-bn="অলটারনেটিভ হাইপোথিসিস (H₁):">অলটারনেটিভ হাইপোথিসিস (H₁):</strong>
+                        <span class="math-notation" id="altHypothesis">p < 0.5</span>
+                    </div>
+                </div>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <!-- Sample Size (n) -->
+                    <div class="parameter-group">
+                        <label class="parameter-label">
+                            <span data-en="Sample Size (n)" data-bn="স্যাম্পল সাইজ (n)">স্যাম্পল সাইজ (n)</span>
+                            <span class="parameter-value" id="nValue">100</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="nSlider" class="parameter-slider" min="10" max="500" value="100" step="1">
+                        </div>
+                        <input type="number" id="nInput" class="parameter-input" min="10" max="1000" value="100">
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Number of trials/observations" data-bn="ট্রায়াল/পর্যবেক্ষণের সংখ্যা">
+                                ট্রায়াল/পর্যবেক্ষণের সংখ্যা
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Observed Successes (x) -->
+                    <div class="parameter-group">
+                        <label class="parameter-label">
+                            <span data-en="Observed Successes (x)" data-bn="পর্যবেক্ষিত সফলতা (x)">পর্যবেক্ষিত সফলতা (x)</span>
+                            <span class="parameter-value" id="xValue">45</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="xSlider" class="parameter-slider" min="0" max="100" value="45" step="1">
+                        </div>
+                        <input type="number" id="xInput" class="parameter-input" min="0" max="100" value="45">
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Number of successes in sample" data-bn="স্যাম্পলে সফলতার সংখ্যা">
+                                স্যাম্পলে সফলতার সংখ্যা
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Hypothesized Proportion (p₀) -->
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <span data-en="Hypothesized Proportion (p₀)" data-bn="হাইপোথেসাইজড প্রোপোরশন (p₀)">হাইপোথেসাইজড প্রোপোরশন (p₀)</span>
+                            <span class="parameter-value" id="p0Value">0.50</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="p0Slider" class="parameter-slider" min="0.01" max="0.99" value="0.5" step="0.01">
+                        </div>
+                        <div class="parameter-input-group">
+                            <input type="number" id="p0Input" class="parameter-input" min="0.01" max="0.99" value="0.5" step="0.01">
+                            <span style="display: flex; align-items: center; justify-content: center;">
+                                <span data-en="Sample Proportion:" data-bn="স্যাম্পল প্রোপোরশন:">স্যাম্পল প্রোপোরশন:</span>
+                                <strong style="margin-left: 0.5rem;" id="sampleProp">0.45</strong>
+                            </span>
+                        </div>
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Proportion under null hypothesis" data-bn="নাল হাইপোথিসিসের অধীনে প্রোপোরশন">
+                                নাল হাইপোথিসিসের অধীনে প্রোপোরশন
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alpha Level -->
+                <div class="parameter-group">
+                    <label class="parameter-label">
+                        <span data-en="Significance Level (α)" data-bn="সিগনিফিক্যান্স লেভেল (α)">সিগনিফিক্যান্স লেভেল (α)</span>
+                    </label>
+                    <div class="alpha-level">
+                        <input type="range" id="alphaSlider" class="alpha-slider" min="0.001" max="0.2" value="0.05" step="0.001">
+                        <span class="alpha-value" id="alphaValue">0.05</span>
+                    </div>
+                    <div class="parameter-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Probability of Type I error (rejecting true H₀)" data-bn="টাইপ I এরর সম্ভাবনা (সত্য H₀ প্রত্যাখ্যান)">
+                            টাইপ I এরর সম্ভাবনা (সত্য H₀ প্রত্যাখ্যান)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Test Actions -->
+                <div class="test-actions">
+                    <button class="action-btn run-test-btn" id="runTestBtn">
+                        <i class="fas fa-play-circle"></i>
+                        <span data-en="Run Test" data-bn="টেস্ট রান করুন">টেস্ট রান করুন</span>
+                    </button>
+                    <button class="action-btn simulate-btn" id="simulateBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Simulate 1000 Tests" data-bn="১০০০ টেস্ট সিমুলেট করুন">১০০০ টেস্ট সিমুলেট করুন</span>
+                    </button>
+                    <button class="action-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bn="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Display -->
+            <div class="results-display">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Test Results" data-bn="টেস্ট ফলাফল">টেস্ট ফলাফল</span>
+                </h2>
+                
+                <!-- Decision Card -->
+                <div class="decision-card" id="decisionCard">
+                    <div class="decision-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="decision-title" data-en="Test Not Run" data-bn="টেস্ট রান হয়নি">টেস্ট রান হয়নি</div>
+                    <div class="decision-subtitle" data-en="Click 'Run Test' to see results" data-bn="ফলাফল দেখতে 'টেস্ট রান করুন' ক্লিক করুন">
+                        ফলাফল দেখতে 'টেস্ট রান করুন' ক্লিক করুন
+                    </div>
+                </div>
+
+                <!-- P-Value Display -->
+                <div class="p-value-card">
+                    <div class="p-value-label" data-en="Exact Binomial Test P-Value" data-bn="এক্সাক্ট বাইনোমিয়াল টেস্ট পি-ভ্যালু">
+                        এক্সাক্ট বাইনোমিয়াল টেস্ট পি-ভ্যালু
+                    </div>
+                    <div class="p-value" id="pValue">--</div>
+                    <div class="parameter-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Probability under null hypothesis" data-bn="নাল হাইপোথিসিসের অধীনে সম্ভাবনা">
+                            নাল হাইপোথিসিসের অধীনে সম্ভাবনা
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Test Statistics -->
+                <div class="test-statistics">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Test Statistic" data-bn="টেস্ট স্ট্যাটিস্টিক">টেস্ট স্ট্যাটিস্টিক</div>
+                        <div class="stat-value" id="testStatistic">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Critical Value" data-bn="ক্রিটিক্যাল ভ্যালু">ক্রিটিক্যাল ভ্যালু</div>
+                        <div class="stat-value" id="criticalValue">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Standard Error" data-bn="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                        <div class="stat-value" id="standardError">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Z-Score" data-bন="জেড-স্কোর">জেড-স্কোর</div>
+                        <div class="stat-value" id="zScore">--</div>
+                    </div>
+                </div>
+
+                <!-- Critical Region Display -->
+                <div class="critical-region">
+                    <div class="region-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span data-en="Decision Regions" data-bন="ডিসিশন রিজিয়ন">ডিসিশন রিজিয়ন</span>
+                    </div>
+                    <div class="region-values">
+                        <div class="region-item acceptance-region-item">
+                            <div data-en="Acceptance Region" data-bন="অ্যাকসেপ্টেন্স রিজিয়ন">অ্যাকসেপ্টেন্স রিজিয়ন</div>
+                            <div id="acceptanceRegion">--</div>
+                        </div>
+                        <div class="region-item critical-region-item">
+                            <div data-en="Critical Region" data-bন="ক্রিটিক্যাল রিজিয়ন">ক্রিটিক্যাল রিজিয়ন</div>
+                            <div id="criticalRegion">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confidence Interval -->
+                <div class="confidence-interval">
+                    <div class="region-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="95% Confidence Interval" data-bন="৯৫% কনফিডেন্স ইন্টারভ্যাল">৯৫% কনফিডেন্স ইন্টারভ্যাল</span>
+                    </div>
+                    <div class="interval-display">
+                        <span data-en="Proportion:" data-bন="প্রোপোরশন:">প্রোপোরশন:</span>
+                        <span class="interval-value" id="confidenceInterval">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Visualization" data-bন="ভিজ্যুয়ালাইজেশন">ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Binomial Distribution under H₀" data-bন="H₀ অধীনে বাইনোমিয়াল ডিস্ট্রিবিউশন">H₀ অধীনে বাইনোমিয়াল ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div id="distributionChart" style="width: 100%; height: 350px;"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="P-Value Visualization" data-bন="পি-ভ্যালু ভিজ্যুয়ালাইজেশন">পি-ভ্যালু ভিজ্যুয়ালাইজেশন</span>
+                    </div>
+                    <div id="pvalueChart" style="width: 100%; height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Explanation -->
+        <div class="test-explanation">
+            <h2 class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                <span data-en="Step-by-Step Explanation" data-bন="ধাপে ধাপে ব্যাখ্যা">ধাপে ধাপে ব্যাখ্যা</span>
+            </h2>
+            
+            <div class="explanation-steps">
+                <div class="explanation-step">
+                    <div class="step-number">১</div>
+                    <div class="step-title" data-en="Hypothesis Formulation" data-bন="হাইপোথিসিস ফরমুলেশন">হাইপোথিসিস ফরমুলেশন</div>
+                    <div class="step-content">
+                        <p data-en="Define null and alternative hypotheses based on research question" data-bন="গবেষণা প্রশ্নের উপর ভিত্তি করে নাল ও অলটারনেটিভ হাইপোথিসিস সংজ্ঞায়িত করুন">
+                            গবেষণা প্রশ্নের উপর ভিত্তি করে নাল ও অলটারনেটিভ হাইপোথিসিস সংজ্ঞায়িত করুন
+                        </p>
+                    </div>
+                </div>
+
+                <div class="explanation-step">
+                    <div class="step-number">২</div>
+                    <div class="step-title" data-en="Test Statistic Calculation" data-bন="টেস্ট স্ট্যাটিস্টিক গণনা">টেস্ট স্ট্যাটিস্টিক গণনা</div>
+                    <div class="step-content">
+                        <p data-en="Calculate test statistic: z = (p̂ - p₀) / √[p₀(1-p₀)/n]" data-bন="টেস্ট স্ট্যাটিস্টিক গণনা করুন: z = (p̂ - p₀) / √[p₀(1-p₀)/n]">
+                            টেস্ট স্ট্যাটিস্টিক গণনা করুন: z = (p̂ - p₀) / √[p₀(1-p₀)/n]
+                        </p>
+                    </div>
+                </div>
+
+                <div class="explanation-step">
+                    <div class="step-number">৩</div>
+                    <div class="step-title" data-en="P-Value Calculation" data-bন="পি-ভ্যালু গণনা">পি-ভ্যালু গণনা</div>
+                    <div class="step-content">
+                        <p data-en="Compute exact binomial probability or normal approximation" data-bন="এক্সাক্ট বাইনোমিয়াল প্রোবাবিলিটি বা নরমাল অ্যাপ্রক্সিমেশন গণনা করুন">
+                            এক্সাক্ট বাইনোমিয়াল প্রোবাবিলিটি বা নরমাল অ্যাপ্রক্সিমেশন গণনা করুন
+                        </p>
+                    </div>
+                </div>
+
+                <div class="explanation-step">
+                    <div class="step-number">৪</div>
+                    <div class="step-title" data-en="Decision Rule" data-bন="ডিসিশন রুল">ডিসিশন রুল</div>
+                    <div class="step-content">
+                        <p data-en="Reject H₀ if p-value ≤ α, otherwise fail to reject H₀" data-bন="যদি p-ভ্যালু ≤ α হয় তবে H₀ প্রত্যাখ্যান করুন, অন্যথায় H₀ প্রত্যাখ্যান করতে ব্যর্থ হন">
+                            যদি p-ভ্যালু ≤ α হয় তবে H₀ প্রত্যাখ্যান করুন, অন্যথায় H₀ প্রত্যাখ্যান করতে ব্যর্থ হন
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Results -->
+        <div class="simulation-results">
+            <h2 class="section-title">
+                <i class="fas fa-dice"></i>
+                <span data-en="Monte Carlo Simulation" data-bন="মন্টে কার্লো সিমুলেশন">মন্টে কার্লো সিমুলেশন</span>
+            </h2>
+            
+            <div class="simulation-controls">
+                <span data-en="Number of simulations:" data-bন="সিমুলেশনের সংখ্যা:">সিমুলেশনের সংখ্যা:</span>
+                <input type="number" id="numSimulations" class="simulation-input" value="1000" min="100" max="10000">
+                <button class="action-btn simulate-btn" id="runSimulationBtn">
+                    <i class="fas fa-play"></i>
+                    <span data-en="Run Simulation" data-bন="সিমুলেশন রান করুন">সিমুলেশন রান করুন</span>
+                </button>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Simulation Results Distribution" data-bন="সিমুলেশন ফলাফল ডিস্ট্রিবিউশন">সিমুলেশন ফলাফল ডিস্ট্রিবিউশন</span>
+                </div>
+                <div id="simulationChart" style="width: 100%; height: 350px;"></div>
+            </div>
+
+            <div class="simulation-stats">
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Rejection Rate" data-bন="রিজেকশন রেট">রিজেকশন রেট</div>
+                    <div class="stat-value" id="rejectionRate">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Average P-Value" data-bন="গড় পি-ভ্যালু">গড় পি-ভ্যালু</div>
+                    <div class="stat-value" id="avgPValue">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Type I Error Rate" data-bন="টাইপ I এরর রেট">টাইপ I এরর রেট</div>
+                    <div class="stat-value" id="type1Error">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Power (1-β)" data-bন="পাওয়ার (1-β)">পাওয়ার (1-β)</div>
+                    <div class="stat-value" id="powerValue">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples Section -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Scenarios" data-bন="উদাহরণ সিনারিও">উদাহরণ সিনারিও</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on examples to load test scenarios:" data-bন="টেস্ট সিনারিও লোড করতে উদাহরণে ক্লিক করুন:">
+                টেস্ট সিনারিও লোড করতে উদাহরণে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="coinFairness">
+                    <div class="example-title" data-en="Coin Fairness Test" data-bন="কয়েন ফেয়ারনেস টেস্ট">কয়েন ফেয়ারনেস টেস্ট</div>
+                    <div class="example-desc" data-en="100 tosses, 40 heads, test if coin is fair" data-bন="১০০ টস, ৪০ হেড, কয়েন ফেয়ার কিনা পরীক্ষা">
+                        ১০০ টস, ৪০ হেড, কয়েন ফেয়ার কিনা পরীক্ষা
+                    </div>
+                </button>
+                <button class="example-btn" data-example="drugEffectiveness">
+                    <div class="example-title" data-en="Drug Effectiveness" data-bন="ড্রাগ এফেক্টিভনেস">ড্রাগ এফেক্টিভনেস</div>
+                    <div class="example-desc" data-en="200 patients, 150 recovered, test if drug works" data-bন="২০০ রোগী, ১৫০ সুস্থ, ড্রাগ কাজ করে কিনা পরীক্ষা">
+                        ২০০ রোগী, ১৫০ সুস্থ, ড্রাগ কাজ করে কিনা পরীক্ষা
+                    </div>
+                </button>
+                <button class="example-btn" data-example="manufacturingDefect">
+                    <div class="example-title" data-en="Manufacturing Defect" data-bন="ম্যানুফ্যাকচারিং ডিফেক্ট">ম্যানুফ্যাকচারিং ডিফেক্ট</div>
+                    <div class="example-desc" data-en="500 items, 20 defective, test if defect rate ≤ 5%" data-bন="৫০০ আইটেম, ২০ ত্রুটিপূর্ণ, ডিফেক্ট রেট ≤ ৫% কিনা পরীক্ষা">
+                        ৫০০ আইটেম, ২০ ত্রুটিপূর্ণ, ডিফেক্ট রেট ≤ ৫% কিনা পরীক্ষা
+                    </div>
+                </button>
+                <button class="example-btn" data-example="surveyResult">
+                    <div class="example-title" data-en="Survey Result" data-bন="সার্ভে রেজাল্ট">সার্ভে রেজাল্ট</div>
+                    <div class="example-desc" data-en="300 respondents, 180 agree, test if majority agrees" data-bন="৩০০ উত্তরদাতা, ১৮০ সম্মত, সংখ্যাগরিষ্ঠ সম্মত কিনা পরীক্ষা">
+                        ৩০০ উত্তরদাতা, ১৮০ সম্মত, সংখ্যাগরিষ্ঠ সম্মত কিনা পরীক্ষা
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Current parameters
+            let currentTestType = 'one-tailed-left';
+            let currentN = 100;
+            let currentX = 45;
+            let currentP0 = 0.5;
+            let currentAlpha = 0.05;
+            let currentLanguage = 'bn';
+            
+            // Test results
+            let testResults = null;
+            let simulationResults = null;
+            
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            
+            // Example configurations
+            const examples = {
+                coinFairness: {
+                    test: 'two-tailed',
+                    n: 100,
+                    x: 40,
+                    p0: 0.5,
+                    alpha: 0.05
+                },
+                drugEffectiveness: {
+                    test: 'one-tailed-right',
+                    n: 200,
+                    x: 150,
+                    p0: 0.7,
+                    alpha: 0.05
+                },
+                manufacturingDefect: {
+                    test: 'one-tailed-left',
+                    n: 500,
+                    x: 20,
+                    p0: 0.05,
+                    alpha: 0.05
+                },
+                surveyResult: {
+                    test: 'one-tailed-right',
+                    n: 300,
+                    x: 180,
+                    p0: 0.5,
+                    alpha: 0.05
+                }
+            };
+
+            // Initialize the application
+            init();
+
+            function init() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Initialize UI controls
+                initControls();
+                
+                // Initialize charts
+                initCharts();
+                
+                // Run initial test
+                runBinomialTest();
+            }
+
+            function initControls() {
+                // Test type selection
+                document.querySelectorAll('.test-type-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.test-type-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentTestType = this.dataset.test;
+                        updateHypotheses();
+                        runBinomialTest();
+                    });
+                });
+
+                // n parameter controls
+                const nSlider = document.getElementById('nSlider');
+                const nInput = document.getElementById('nInput');
+                const nValue = document.getElementById('nValue');
+                
+                nSlider.addEventListener('input', function() {
+                    currentN = parseInt(this.value);
+                    nInput.value = currentN;
+                    nValue.textContent = currentN;
+                    updateXSliderMax();
+                    updateSampleProportion();
+                    runBinomialTest();
+                });
+                
+                nInput.addEventListener('input', function() {
+                    let value = parseInt(this.value);
+                    if (value < 10) value = 10;
+                    if (value > 1000) value = 1000;
+                    currentN = value;
+                    nSlider.value = currentN;
+                    nValue.textContent = currentN;
+                    updateXSliderMax();
+                    updateSampleProportion();
+                    runBinomialTest();
+                });
+                
+                // x parameter controls
+                const xSlider = document.getElementById('xSlider');
+                const xInput = document.getElementById('xInput');
+                const xValue = document.getElementById('xValue');
+                
+                xSlider.addEventListener('input', function() {
+                    currentX = parseInt(this.value);
+                    xInput.value = currentX;
+                    xValue.textContent = currentX;
+                    updateSampleProportion();
+                    runBinomialTest();
+                });
+                
+                xInput.addEventListener('input', function() {
+                    let value = parseInt(this.value);
+                    if (value < 0) value = 0;
+                    if (value > currentN) value = currentN;
+                    currentX = value;
+                    xSlider.value = currentX;
+                    xValue.textContent = currentX;
+                    updateSampleProportion();
+                    runBinomialTest();
+                });
+                
+                // p0 parameter controls
+                const p0Slider = document.getElementById('p0Slider');
+                const p0Input = document.getElementById('p0Input');
+                const p0Value = document.getElementById('p0Value');
+                
+                p0Slider.addEventListener('input', function() {
+                    currentP0 = parseFloat(this.value);
+                    p0Input.value = currentP0.toFixed(2);
+                    p0Value.textContent = currentP0.toFixed(2);
+                    updateHypotheses();
+                    runBinomialTest();
+                });
+                
+                p0Input.addEventListener('input', function() {
+                    let value = parseFloat(this.value);
+                    if (value < 0.01) value = 0.01;
+                    if (value > 0.99) value = 0.99;
+                    currentP0 = value;
+                    p0Slider.value = currentP0;
+                    p0Value.textContent = currentP0.toFixed(2);
+                    updateHypotheses();
+                    runBinomialTest();
+                });
+                
+                // Alpha level control
+                const alphaSlider = document.getElementById('alphaSlider');
+                const alphaValue = document.getElementById('alphaValue');
+                
+                alphaSlider.addEventListener('input', function() {
+                    currentAlpha = parseFloat(this.value);
+                    alphaValue.textContent = currentAlpha.toFixed(3);
+                    runBinomialTest();
+                });
+                
+                // Action buttons
+                document.getElementById('runTestBtn').addEventListener('click', function() {
+                    runBinomialTest();
+                });
+                
+                document.getElementById('simulateBtn').addEventListener('click', function() {
+                    runSimulation(1000);
+                });
+                
+                document.getElementById('runSimulationBtn').addEventListener('click', function() {
+                    const numSims = parseInt(document.getElementById('numSimulations').value);
+                    runSimulation(numSims);
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', function() {
+                    resetTest();
+                });
+                
+                // Example buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+                
+                // Initialize x slider max
+                updateXSliderMax();
+                updateSampleProportion();
+                updateHypotheses();
+            }
+
+            function updateXSliderMax() {
+                const xSlider = document.getElementById('xSlider');
+                xSlider.max = currentN;
+                document.getElementById('xInput').max = currentN;
+            }
+
+            function updateSampleProportion() {
+                const sampleProp = currentN > 0 ? (currentX / currentN).toFixed(3) : '0.000';
+                document.getElementById('sampleProp').textContent = sampleProp;
+            }
+
+            function updateHypotheses() {
+                const nullHyp = `p = ${currentP0.toFixed(2)}`;
+                let altHyp = '';
+                
+                switch (currentTestType) {
+                    case 'one-tailed-left':
+                        altHyp = `p < ${currentP0.toFixed(2)}`;
+                        break;
+                    case 'one-tailed-right':
+                        altHyp = `p > ${currentP0.toFixed(2)}`;
+                        break;
+                    case 'two-tailed':
+                        altHyp = `p ≠ ${currentP0.toFixed(2)}`;
+                        break;
+                }
+                
+                document.getElementById('nullHypothesis').textContent = nullHyp;
+                document.getElementById('altHypothesis').textContent = altHyp;
+            }
+
+            function calculateExactBinomialPValue(n, x, p0, testType) {
+                let pValue = 0;
+                
+                switch (testType) {
+                    case 'one-tailed-left':
+                        // P(X ≤ x)
+                        for (let k = 0; k <= x; k++) {
+                            pValue += binomialProbability(n, p0, k);
+                        }
+                        break;
+                        
+                    case 'one-tailed-right':
+                        // P(X ≥ x)
+                        for (let k = x; k <= n; k++) {
+                            pValue += binomialProbability(n, p0, k);
+                        }
+                        break;
+                        
+                    case 'two-tailed':
+                        // Two-tailed: twice the smaller tail
+                        const pObs = binomialProbability(n, p0, x);
+                        let tailProb = 0;
+                        
+                        // Sum probabilities as extreme or more extreme than observed
+                        for (let k = 0; k <= n; k++) {
+                            const pK = binomialProbability(n, p0, k);
+                            if (pK <= pObs) {
+                                tailProb += pK;
+                            }
+                        }
+                        
+                        pValue = Math.min(1, 2 * tailProb);
+                        break;
+                }
+                
+                return pValue;
+            }
+
+            function binomialProbability(n, p, k) {
+                if (k < 0 || k > n) return 0;
+                const coeff = binomialCoefficient(n, k);
+                return coeff * Math.pow(p, k) * Math.pow(1 - p, n - k);
+            }
+
+            function binomialCoefficient(n, k) {
+                if (k < 0 || k > n) return 0;
+                if (k === 0 || k === n) return 1;
+                
+                k = Math.min(k, n - k);
+                let result = 1;
+                
+                for (let i = 1; i <= k; i++) {
+                    result *= (n - k + i) / i;
+                }
+                
+                return Math.round(result);
+            }
+
+            function calculateNormalApproximation(n, x, p0) {
+                const pHat = x / n;
+                const se = Math.sqrt(p0 * (1 - p0) / n);
+                const z = (pHat - p0) / se;
+                
+                return {
+                    z: z,
+                    se: se,
+                    pHat: pHat
+                };
+            }
+
+            function calculateCriticalValues(n, p0, alpha, testType) {
+                let criticalLeft = null;
+                let criticalRight = null;
+                
+                // For exact binomial test, find critical values by summing probabilities
+                let cumulative = 0;
+                
+                switch (testType) {
+                    case 'one-tailed-left':
+                        // Find largest k such that P(X ≤ k) ≤ α
+                        for (let k = 0; k <= n; k++) {
+                            cumulative += binomialProbability(n, p0, k);
+                            if (cumulative > alpha) {
+                                criticalLeft = k - 1;
+                                break;
+                            }
+                        }
+                        break;
+                        
+                    case 'one-tailed-right':
+                        // Find smallest k such that P(X ≥ k) ≤ α
+                        cumulative = 0;
+                        for (let k = n; k >= 0; k--) {
+                            cumulative += binomialProbability(n, p0, k);
+                            if (cumulative > alpha) {
+                                criticalRight = k + 1;
+                                break;
+                            }
+                        }
+                        break;
+                        
+                    case 'two-tailed':
+                        // Find critical values for two-tailed test (α/2 in each tail)
+                        let leftCumulative = 0;
+                        for (let k = 0; k <= n; k++) {
+                            leftCumulative += binomialProbability(n, p0, k);
+                            if (leftCumulative > alpha / 2) {
+                                criticalLeft = k - 1;
+                                break;
+                            }
+                        }
+                        
+                        let rightCumulative = 0;
+                        for (let k = n; k >= 0; k--) {
+                            rightCumulative += binomialProbability(n, p0, k);
+                            if (rightCumulative > alpha / 2) {
+                                criticalRight = k + 1;
+                                break;
+                            }
+                        }
+                        break;
+                }
+                
+                return {
+                    left: criticalLeft,
+                    right: criticalRight
+                };
+            }
+
+            function calculateConfidenceInterval(x, n, confidence = 0.95) {
+                const z = 1.96; // For 95% confidence
+                const p = x / n;
+                const se = Math.sqrt(p * (1 - p) / n);
+                
+                const lower = Math.max(0, p - z * se);
+                const upper = Math.min(1, p + z * se);
+                
+                return {
+                    lower: lower.toFixed(4),
+                    upper: upper.toFixed(4),
+                    width: (upper - lower).toFixed(4)
+                };
+            }
+
+            function runBinomialTest() {
+                // Calculate exact binomial p-value
+                const exactPValue = calculateExactBinomialPValue(currentN, currentX, currentP0, currentTestType);
+                
+                // Calculate normal approximation
+                const normalApprox = calculateNormalApproximation(currentN, currentX, currentP0);
+                
+                // Calculate critical values
+                const criticalValues = calculateCriticalValues(currentN, currentP0, currentAlpha, currentTestType);
+                
+                // Calculate confidence interval
+                const ci = calculateConfidenceInterval(currentX, currentN);
+                
+                // Store results
+                testResults = {
+                    exactPValue: exactPValue,
+                    normalApprox: normalApprox,
+                    criticalValues: criticalValues,
+                    ci: ci,
+                    decision: exactPValue <= currentAlpha ? 'reject' : 'accept'
+                };
+                
+                // Update UI with results
+                updateResultsUI();
+                
+                // Update charts
+                updateCharts();
+            }
+
+            function updateResultsUI() {
+                if (!testResults) return;
+                
+                // Update p-value
+                document.getElementById('pValue').textContent = testResults.exactPValue.toFixed(4);
+                
+                // Update decision card
+                const decisionCard = document.getElementById('decisionCard');
+                const decisionIcon = decisionCard.querySelector('.decision-icon i');
+                const decisionTitle = decisionCard.querySelector('.decision-title');
+                const decisionSubtitle = decisionCard.querySelector('.decision-subtitle');
+                
+                if (testResults.decision === 'reject') {
+                    decisionCard.className = 'decision-card reject';
+                    decisionIcon.className = 'fas fa-times-circle';
+                    decisionTitle.textContent = currentLanguage === 'bn' ? 'নাল হাইপোথিসিস প্রত্যাখ্যান করুন' : 'Reject Null Hypothesis';
+                    decisionSubtitle.textContent = currentLanguage === 'bn' ? 
+                        'পর্যাপ্ত প্রমাণ আছে যে H₀ মিথ্যা' : 
+                        'Sufficient evidence that H₀ is false';
+                } else {
+                    decisionCard.className = 'decision-card accept';
+                    decisionIcon.className = 'fas fa-check-circle';
+                    decisionTitle.textContent = currentLanguage === 'bn' ? 'নাল হাইপোথিসিস প্রত্যাখ্যান করবেন না' : 'Fail to Reject Null Hypothesis';
+                    decisionSubtitle.textContent = currentLanguage === 'bn' ? 
+                        'H₀ প্রত্যাখ্যান করার পর্যাপ্ত প্রমাণ নেই' : 
+                        'Insufficient evidence to reject H₀';
+                }
+                
+                // Update test statistics
+                document.getElementById('testStatistic').textContent = testResults.normalApprox.z.toFixed(4);
+                document.getElementById('standardError').textContent = testResults.normalApprox.se.toFixed(4);
+                document.getElementById('zScore').textContent = testResults.normalApprox.z.toFixed(2);
+                
+                // Update critical value
+                let criticalValueText = '--';
+                if (currentTestType === 'one-tailed-left' && testResults.criticalValues.left !== null) {
+                    criticalValueText = `x ≤ ${testResults.criticalValues.left}`;
+                } else if (currentTestType === 'one-tailed-right' && testResults.criticalValues.right !== null) {
+                    criticalValueText = `x ≥ ${testResults.criticalValues.right}`;
+                } else if (currentTestType === 'two-tailed') {
+                    criticalValueText = `x ≤ ${testResults.criticalValues.left} or x ≥ ${testResults.criticalValues.right}`;
+                }
+                document.getElementById('criticalValue').textContent = criticalValueText;
+                
+                // Update decision regions
+                updateDecisionRegions();
+                
+                // Update confidence interval
+                document.getElementById('confidenceInterval').textContent = 
+                    `${testResults.ci.lower} - ${testResults.ci.upper}`;
+            }
+
+            function updateDecisionRegions() {
+                if (!testResults) return;
+                
+                let acceptanceRegion = '';
+                let criticalRegion = '';
+                
+                switch (currentTestType) {
+                    case 'one-tailed-left':
+                        if (testResults.criticalValues.left !== null) {
+                            acceptanceRegion = `x > ${testResults.criticalValues.left}`;
+                            criticalRegion = `x ≤ ${testResults.criticalValues.left}`;
+                        }
+                        break;
+                        
+                    case 'one-tailed-right':
+                        if (testResults.criticalValues.right !== null) {
+                            acceptanceRegion = `x < ${testResults.criticalValues.right}`;
+                            criticalRegion = `x ≥ ${testResults.criticalValues.right}`;
+                        }
+                        break;
+                        
+                    case 'two-tailed':
+                        if (testResults.criticalValues.left !== null && testResults.criticalValues.right !== null) {
+                            acceptanceRegion = `${testResults.criticalValues.left} < x < ${testResults.criticalValues.right}`;
+                            criticalRegion = `x ≤ ${testResults.criticalValues.left} or x ≥ ${testResults.criticalValues.right}`;
+                        }
+                        break;
+                }
+                
+                document.getElementById('acceptanceRegion').textContent = acceptanceRegion;
+                document.getElementById('criticalRegion').textContent = criticalRegion;
+            }
+
+            function initCharts() {
+                // Initialize empty charts
+                Plotly.newPlot('distributionChart', [], {
+                    title: currentLanguage === 'bn' ? 'H₀ অধীনে বাইনোমিয়াল ডিস্ট্রিবিউশন' : 'Binomial Distribution under H₀',
+                    xaxis: {title: currentLanguage === 'bn' ? 'সফলতার সংখ্যা (x)' : 'Number of Successes (x)'},
+                    yaxis: {title: currentLanguage === 'bn' ? 'প্রোবাবিলিটি' : 'Probability'}
+                });
+                
+                Plotly.newPlot('pvalueChart', [], {
+                    title: currentLanguage === 'bn' ? 'পি-ভ্যালু ভিজ্যুয়ালাইজেশন' : 'P-Value Visualization',
+                    xaxis: {title: currentLanguage === 'bn' ? 'সফলতার সংখ্যা (x)' : 'Number of Successes (x)'},
+                    yaxis: {title: currentLanguage === 'bn' ? 'প্রোবাবিলিটি' : 'Probability'}
+                });
+                
+                Plotly.newPlot('simulationChart', [], {
+                    title: currentLanguage === 'bn' ? 'সিমুলেশন ফলাফল ডিস্ট্রিবিউশন' : 'Simulation Results Distribution',
+                    xaxis: {title: currentLanguage === 'bn' ? 'পি-ভ্যালু' : 'P-Value'},
+                    yaxis: {title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density'}
+                });
+            }
+
+            function updateCharts() {
+                if (!testResults) return;
+                
+                // Distribution Chart
+                const xValues = Array.from({length: currentN + 1}, (_, i) => i);
+                const yValues = xValues.map(k => binomialProbability(currentN, currentP0, k));
+                
+                // Create bars
+                const bars = {
+                    x: xValues,
+                    y: yValues,
+                    type: 'bar',
+                    name: currentLanguage === 'bn' ? 'বাইনোমিয়াল ডিস্ট্রিবিউশন' : 'Binomial Distribution',
+                    marker: {
+                        color: xValues.map(x => {
+                            // Color based on critical region
+                            if (currentTestType === 'one-tailed-left' && x <= testResults.criticalValues.left) {
+                                return '#f44336'; // Critical region
+                            } else if (currentTestType === 'one-tailed-right' && x >= testResults.criticalValues.right) {
+                                return '#f44336'; // Critical region
+                            } else if (currentTestType === 'two-tailed' && 
+                                      (x <= testResults.criticalValues.left || x >= testResults.criticalValues.right)) {
+                                return '#f44336'; // Critical region
+                            } else {
+                                return '#2196F3'; // Acceptance region
+                            }
+                        })
+                    }
+                };
+                
+                // Add observed value line
+                const observedLine = {
+                    x: [currentX, currentX],
+                    y: [0, Math.max(...yValues) * 1.1],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'পর্যবেক্ষিত মান' : 'Observed Value',
+                    line: {
+                        color: '#FF9800',
+                        width: 3,
+                        dash: 'dash'
+                    }
+                };
+                
+                Plotly.newPlot('distributionChart', [bars, observedLine], {
+                    title: currentLanguage === 'bn' ? 'H₀ অধীনে বাইনোমিয়াল ডিস্ট্রিবিউশন' : 'Binomial Distribution under H₀',
+                    xaxis: {title: currentLanguage === 'bn' ? 'সফলতার সংখ্যা (x)' : 'Number of Successes (x)'},
+                    yaxis: {title: currentLanguage === 'bn' ? 'প্রোবাবিলিটি' : 'Probability'},
+                    showlegend: true,
+                    legend: {x: 0.8, y: 0.9}
+                });
+                
+                // P-Value Chart
+                updatePValueChart();
+            }
+
+            function updatePValueChart() {
+                if (!testResults) return;
+                
+                // Create distribution for p-value visualization
+                const xValues = Array.from({length: 100}, (_, i) => i / 100);
+                const pdfValues = xValues.map(p => {
+                    // Normal approximation PDF
+                    const mean = currentP0;
+                    const std = Math.sqrt(currentP0 * (1 - currentP0) / currentN);
+                    return Math.exp(-0.5 * Math.pow((p - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI));
+                });
+                
+                const pdfTrace = {
+                    x: xValues,
+                    y: pdfValues,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'নরমাল অ্যাপ্রক্সিমেশন' : 'Normal Approximation',
+                    line: {color: '#2196F3', width: 2},
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(33, 150, 243, 0.1)'
+                };
+                
+                // Add p-value region
+                const pHat = currentX / currentN;
+                let pValueX = [];
+                let pValueY = [];
+                
+                if (currentTestType === 'one-tailed-left') {
+                    pValueX = xValues.filter(x => x <= pHat);
+                    pValueY = pValueX.map(x => {
+                        const mean = currentP0;
+                        const std = Math.sqrt(currentP0 * (1 - currentP0) / currentN);
+                        return Math.exp(-0.5 * Math.pow((x - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI));
+                    });
+                } else if (currentTestType === 'one-tailed-right') {
+                    pValueX = xValues.filter(x => x >= pHat);
+                    pValueY = pValueX.map(x => {
+                        const mean = currentP0;
+                        const std = Math.sqrt(currentP0 * (1 - currentP0) / currentN);
+                        return Math.exp(-0.5 * Math.pow((x - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI));
+                    });
+                } else {
+                    // Two-tailed: both tails
+                    const mean = currentP0;
+                    const distance = Math.abs(pHat - mean);
+                    pValueX = xValues.filter(x => Math.abs(x - mean) >= distance);
+                    pValueY = pValueX.map(x => {
+                        const std = Math.sqrt(currentP0 * (1 - currentP0) / currentN);
+                        return Math.exp(-0.5 * Math.pow((x - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI));
+                    });
+                }
+                
+                const pValueTrace = {
+                    x: pValueX,
+                    y: pValueY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'পি-ভ্যালু এলাকা' : 'P-Value Area',
+                    line: {color: '#FF4081', width: 2},
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(255, 64, 129, 0.3)'
+                };
+                
+                Plotly.newPlot('pvalueChart', [pdfTrace, pValueTrace], {
+                    title: currentLanguage === 'bn' ? 'পি-ভ্যালু ভিজ্যুয়ালাইজেশন' : 'P-Value Visualization',
+                    xaxis: {title: currentLanguage === 'bn' ? 'নমুনা প্রোপোরশন (p̂)' : 'Sample Proportion (p̂)'},
+                    yaxis: {title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density'},
+                    showlegend: true,
+                    legend: {x: 0.8, y: 0.9}
+                });
+            }
+
+            async function runSimulation(numSimulations) {
+                // Show loading state
+                const simulationChart = document.getElementById('simulationChart');
+                simulationChart.innerHTML = '<div class="loading-state" style="display: flex;"><div class="loading-spinner"></div><p>সিমুলেশন চলছে...</p></div>';
+                
+                // Run simulation asynchronously
+                setTimeout(() => {
+                    const pValues = [];
+                    let rejections = 0;
+                    
+                    for (let i = 0; i < numSimulations; i++) {
+                        // Generate random sample from null distribution
+                        let successes = 0;
+                        for (let j = 0; j < currentN; j++) {
+                            if (Math.random() < currentP0) successes++;
+                        }
+                        
+                        // Calculate p-value for this simulation
+                        const pValue = calculateExactBinomialPValue(currentN, successes, currentP0, currentTestType);
+                        pValues.push(pValue);
+                        
+                        // Count rejections
+                        if (pValue <= currentAlpha) {
+                            rejections++;
+                        }
+                    }
+                    
+                    simulationResults = {
+                        pValues: pValues,
+                        rejections: rejections,
+                        total: numSimulations
+                    };
+                    
+                    // Update simulation chart
+                    updateSimulationChart();
+                    
+                    // Update simulation statistics
+                    updateSimulationStats();
+                }, 100);
+            }
+
+            function updateSimulationChart() {
+                if (!simulationResults) return;
+                
+                // Create histogram of p-values
+                const histogram = {
+                    x: simulationResults.pValues,
+                    type: 'histogram',
+                    name: currentLanguage === 'bn' ? 'পি-ভ্যালু বণ্টন' : 'P-Value Distribution',
+                    marker: {color: '#2196F3'},
+                    opacity: 0.7,
+                    nbinsx: 20
+                };
+                
+                // Add uniform distribution line (expected under H₀)
+                const xUniform = Array.from({length: 101}, (_, i) => i / 100);
+                const yUniform = xUniform.map(() => simulationResults.total / 20); // Expected frequency per bin
+                
+                const uniformTrace = {
+                    x: xUniform,
+                    y: yUniform,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'ইউনিফর্ম (H₀ অধীনে)' : 'Uniform (under H₀)',
+                    line: {color: '#f44336', width: 2, dash: 'dash'}
+                };
+                
+                // Add alpha line
+                const alphaLine = {
+                    x: [currentAlpha, currentAlpha],
+                    y: [0, Math.max(...yUniform) * 1.2],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: `α = ${currentAlpha}`,
+                    line: {color: '#FF9800', width: 2}
+                };
+                
+                Plotly.newPlot('simulationChart', [histogram, uniformTrace, alphaLine], {
+                    title: currentLanguage === 'bn' ? 'পি-ভ্যালু সিমুলেশন বণ্টন' : 'P-Value Simulation Distribution',
+                    xaxis: {title: currentLanguage === 'bn' ? 'পি-ভ্যালু' : 'P-Value', range: [0, 1]},
+                    yaxis: {title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density'},
+                    showlegend: true,
+                    legend: {x: 0.8, y: 0.9}
+                });
+            }
+
+            function updateSimulationStats() {
+                if (!simulationResults) return;
+                
+                const avgPValue = simulationResults.pValues.reduce((a, b) => a + b, 0) / simulationResults.pValues.length;
+                const rejectionRate = (simulationResults.rejections / simulationResults.total);
+                const type1Error = rejectionRate; // Under H₀, rejection rate = Type I error rate
+                const power = 1 - type1Error; // Simplified - actual power calculation needs alternative hypothesis
+                
+                document.getElementById('rejectionRate').textContent = (rejectionRate * 100).toFixed(1) + '%';
+                document.getElementById('avgPValue').textContent = avgPValue.toFixed(4);
+                document.getElementById('type1Error').textContent = (type1Error * 100).toFixed(1) + '%';
+                document.getElementById('powerValue').textContent = power.toFixed(3);
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    // Update test type
+                    currentTestType = data.test;
+                    document.querySelectorAll('.test-type-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.test === currentTestType) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    // Update parameters
+                    currentN = data.n;
+                    currentX = data.x;
+                    currentP0 = data.p0;
+                    currentAlpha = data.alpha;
+                    
+                    // Update UI controls
+                    document.getElementById('nSlider').value = currentN;
+                    document.getElementById('nInput').value = currentN;
+                    document.getElementById('nValue').textContent = currentN;
+                    
+                    document.getElementById('xSlider').value = currentX;
+                    document.getElementById('xInput').value = currentX;
+                    document.getElementById('xValue').textContent = currentX;
+                    
+                    document.getElementById('p0Slider').value = currentP0;
+                    document.getElementById('p0Input').value = currentP0.toFixed(2);
+                    document.getElementById('p0Value').textContent = currentP0.toFixed(2);
+                    
+                    document.getElementById('alphaSlider').value = currentAlpha;
+                    document.getElementById('alphaValue').textContent = currentAlpha.toFixed(3);
+                    
+                    // Update derived values
+                    updateXSliderMax();
+                    updateSampleProportion();
+                    updateHypotheses();
+                    
+                    // Run test
+                    runBinomialTest();
+                }
+            }
+
+            function resetTest() {
+                // Reset to default values
+                currentN = 100;
+                currentX = 45;
+                currentP0 = 0.5;
+                currentAlpha = 0.05;
+                currentTestType = 'one-tailed-left';
+                
+                // Reset UI controls
+                document.getElementById('nSlider').value = currentN;
+                document.getElementById('nInput').value = currentN;
+                document.getElementById('nValue').textContent = currentN;
+                
+                document.getElementById('xSlider').value = currentX;
+                document.getElementById('xInput').value = currentX;
+                document.getElementById('xValue').textContent = currentX;
+                
+                document.getElementById('p0Slider').value = currentP0;
+                document.getElementById('p0Input').value = currentP0.toFixed(2);
+                document.getElementById('p0Value').textContent = currentP0.toFixed(2);
+                
+                document.getElementById('alphaSlider').value = currentAlpha;
+                document.getElementById('alphaValue').textContent = currentAlpha.toFixed(3);
+                
+                // Reset test type
+                document.querySelectorAll('.test-type-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.test === currentTestType) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Update derived values
+                updateXSliderMax();
+                updateSampleProportion();
+                updateHypotheses();
+                
+                // Clear results
+                testResults = null;
+                simulationResults = null;
+                
+                // Reset UI
+                const decisionCard = document.getElementById('decisionCard');
+                decisionCard.className = 'decision-card';
+                decisionCard.querySelector('.decision-icon i').className = 'fas fa-question-circle';
+                decisionCard.querySelector('.decision-title').textContent = 
+                    currentLanguage === 'bn' ? 'টেস্ট রান হয়নি' : 'Test Not Run';
+                decisionCard.querySelector('.decision-subtitle').textContent = 
+                    currentLanguage === 'bn' ? 'ফলাফল দেখতে টেস্ট রান করুন' : 'Run test to see results';
+                
+                document.getElementById('pValue').textContent = '--';
+                document.getElementById('testStatistic').textContent = '--';
+                document.getElementById('criticalValue').textContent = '--';
+                document.getElementById('standardError').textContent = '--';
+                document.getElementById('zScore').textContent = '--';
+                document.getElementById('acceptanceRegion').textContent = '--';
+                document.getElementById('criticalRegion').textContent = '--';
+                document.getElementById('confidenceInterval').textContent = '--';
+                
+                // Reset simulation stats
+                document.getElementById('rejectionRate').textContent = '--';
+                document.getElementById('avgPValue').textContent = '--';
+                document.getElementById('type1Error').textContent = '--';
+                document.getElementById('powerValue').textContent = '--';
+                
+                // Reset charts
+                initCharts();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update dynamic content
+                if (testResults) {
+                    updateResultsUI();
+                    updateCharts();
+                }
+                
+                if (simulationResults) {
+                    updateSimulationChart();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

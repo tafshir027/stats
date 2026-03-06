@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Goodness-of-Fit Test | Distribution Testing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.9.1/lib/browser/math.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --chi-square-color: #2196F3;
+            --dispersion-color: #4CAF50;
+            --zero-inflation-color: #FF9800;
+            --observed-color: #E91E63;
+            --expected-color: #3F51B5;
+            --residual-color: #FF5722;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--chi-square-color), var(--dispersion-color), var(--zero-inflation-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Data Input Panel */
+        .data-input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1.2rem;
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .method-btn.active {
+            border-color: var(--poisson-color);
+            background: #F3E5F5;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .method-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Text Area Input */
+        .text-input-container {
+            margin-bottom: 2rem;
+        }
+
+        .data-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: var(--light-gray);
+        }
+
+        .data-textarea:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .textarea-help {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Generated Data Controls */
+        .generation-controls {
+            background: #F3E5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--poisson-color);
+        }
+
+        .parameter-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parameter-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .parameter-value-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        /* Range Sliders */
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .test-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .test-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Data Preview */
+        .data-preview-container {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .data-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .data-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            text-align: center;
+            background: white;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'Times New Roman', serif;
+        }
+
+        .data-distribution {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .data-point {
+            padding: 0.5rem;
+            text-align: center;
+            background: var(--light-gray);
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .data-point:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Test Results Grid */
+        .test-results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .test-results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .test-results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .test-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 3px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .test-card.chi-square {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-color: var(--chi-square-color);
+        }
+
+        .test-card.dispersion {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-color: var(--dispersion-color);
+        }
+
+        .test-card.zero-inflation {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-color: var(--zero-inflation-color);
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .test-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .test-card.chi-square .test-icon { background: var(--chi-square-color); }
+        .test-card.dispersion .test-icon { background: var(--dispersion-color); }
+        .test-card.zero-inflation .test-icon { background: var(--zero-inflation-color); }
+
+        .test-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .test-result {
+            margin-top: 1rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .result-value {
+            font-weight: 700;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .test-card.chi-square .result-value { color: var(--chi-square-color); }
+        .test-card.dispersion .result-value { color: var(--dispersion-color); }
+        .test-card.zero-inflation .result-value { color: var(--zero-inflation-color); }
+
+        .test-conclusion {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .conclusion-pass {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 2px solid #4CAF50;
+        }
+
+        .conclusion-fail {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 2px solid #F44336;
+        }
+
+        .conclusion-warning {
+            background: #FFF3E0;
+            color: #EF6C00;
+            border: 2px solid #FF9800;
+        }
+
+        /* Chi-square Table */
+        .chi-square-table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chi-square-table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .chi-square-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .chi-square-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .chi-square-table td {
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chi-square-table tr:hover {
+            background: #F3E5F5;
+        }
+
+        .observed-cell {
+            color: var(--observed-color);
+            font-weight: 600;
+        }
+
+        .expected-cell {
+            color: var(--expected-color);
+            font-weight: 600;
+        }
+
+        .residual-cell {
+            color: var(--residual-color);
+            font-weight: 600;
+        }
+
+        .chi-square-cell {
+            color: var(--chi-square-color);
+            font-weight: 700;
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .visualization-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Zero-inflation Analysis */
+        .zero-inflation-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .zero-inflation-chart-container {
+            height: 250px;
+            margin-top: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Distribution Fitting */
+        .distribution-fitting {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .fitting-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .fitting-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .fitting-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+            background: var(--light-gray);
+        }
+
+        .fitting-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .fitting-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--poisson-color);
+            font-family: 'Times New Roman', serif;
+            margin-bottom: 0.5rem;
+        }
+
+        .fitting-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            
+            .fitting-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Example Data Sets */
+        .example-datasets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--light-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .example-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            border-color: var(--poisson-color);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--poisson-color);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson Goodness-of-Fit Test" data-bn="পয়সন গুডনেস-অফ-ফিট টেস্ট">পয়সন গুডনেস-অফ-ফিট টেস্ট</h1>
+            <p class="subtitle" data-en="Test if data follows Poisson distribution using Chi-square test, dispersion index test, and zero-inflation detection" data-bn="চি-স্কয়ার টেস্ট, ডিসপারশন ইনডেক্স টেস্ট, এবং জিরো-ইনফ্লেশন ডিটেকশন ব্যবহার করে ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে কিনা তা পরীক্ষা করুন">
+                চি-স্কয়ার টেস্ট, ডিসপারশন ইনডেক্স টেস্ট, এবং জিরো-ইনফ্লেশন ডিটেকশন ব্যবহার করে ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে কিনা তা পরীক্ষা করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Data Input Panel -->
+            <div class="data-input-panel">
+                <!-- Input Methods -->
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Data Input Method" data-bn="ডেটা ইনপুট পদ্ধতি">ডেটা ইনপুট পদ্ধতি</span>
+                </h2>
+
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="text">
+                        <div class="method-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <span data-en="Paste Data" data-bn="ডেটা পেস্ট করুন">ডেটা পেস্ট করুন</span>
+                        <small data-en="Comma/space separated values" data-bn="কমা/স্পেস দ্বারা পৃথক মান">কমা/স্পেস দ্বারা পৃথক মান</small>
+                    </button>
+
+                    <button class="method-btn" data-method="generate">
+                        <div class="method-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <span data-en="Generate Data" data-bn="ডেটা জেনারেট করুন">ডেটা জেনারেট করুন</span>
+                        <small data-en="Simulate Poisson distribution" data-bn="পয়সন ডিস্ট্রিবিউশন সিমুলেট করুন">পয়সন ডিস্ট্রিবিউশন সিমুলেট করুন</small>
+                    </button>
+                </div>
+
+                <!-- Text Input Area -->
+                <div class="text-input-container" id="textInputContainer">
+                    <label for="dataTextarea" class="parameter-label">
+                        <i class="fas fa-paste"></i>
+                        <span data-en="Enter your data:" data-bn="আপনার ডেটা লিখুন:">আপনার ডেটা লিখুন:</span>
+                    </label>
+                    <textarea id="dataTextarea" class="data-textarea" placeholder="উদাহরণ: 0, 1, 2, 2, 3, 1, 0, 4, 2, 1, 3, 2, 0, 1, 2&#10;বা: 0 1 2 2 3 1 0 4 2 1 3 2 0 1 2" data-en-placeholder="Example: 0, 1, 2, 2, 3, 1, 0, 4, 2, 1, 3, 2, 0, 1, 2&#10;or: 0 1 2 2 3 1 0 4 2 1 3 2 0 1 2">
+0, 1, 2, 2, 3, 1, 0, 4, 2, 1, 3, 2, 0, 1, 2, 2, 3, 1, 2, 1, 0, 2, 3, 1, 2
+                    </textarea>
+                    <div class="textarea-help">
+                        <span data-en="Enter comma or space separated integers" data-bn="কমা বা স্পেস দ্বারা পৃথক পূর্ণসংখ্যা লিখুন">কমা বা স্পেস দ্বারা পৃথক পূর্ণসংখ্যা লিখুন</span>
+                        <span id="dataCount">25 data points</span>
+                    </div>
+                </div>
+
+                <!-- Generated Data Controls -->
+                <div class="generation-controls" id="generationControls" style="display: none;">
+                    <div class="parameter-label">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Poisson Data Generation" data-bn="পয়সন ডেটা জেনারেশন">পয়সন ডেটা জেনারেশন</span>
+                    </div>
+
+                    <div class="parameter-controls">
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <i class="fas fa-bolt"></i>
+                                <span data-en="Lambda (λ)" data-bn="ল্যাম্বডা (λ)">ল্যাম্বডা (λ)</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <input type="range" class="range-slider" id="lambdaSlider" min="0.5" max="10" step="0.1" value="2.0">
+                                <input type="number" class="parameter-input" id="lambdaInput" min="0.5" max="10" step="0.1" value="2.0">
+                                <span class="parameter-value-display" id="lambdaValue">2.0</span>
+                            </div>
+                        </div>
+
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <i class="fas fa-chart-bar"></i>
+                                <span data-en="Sample Size" data-bn="নমুনা আকার">নমুনা আকার</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <input type="range" class="range-slider" id="sampleSizeSlider" min="20" max="500" step="10" value="100">
+                                <input type="number" class="parameter-input" id="sampleSizeInput" min="20" max="500" step="10" value="100">
+                                <span class="parameter-value-display" id="sampleSizeValue">100</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zero-inflation option -->
+                    <div class="parameter-group" style="margin-top: 1rem;">
+                        <div class="parameter-label">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span data-en="Add Zero-Inflation" data-bn="জিরো-ইনফ্লেশন যোগ করুন">জিরো-ইনফ্লেশন যোগ করুন</span>
+                            <label class="toggle-switch" style="margin-left: auto;">
+                                <input type="checkbox" id="zeroInflationToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="parameter-controls" id="zeroInflationControls" style="display: none; margin-top: 0.5rem;">
+                            <div class="parameter-group">
+                                <div class="parameter-label">
+                                    <i class="fas fa-percentage"></i>
+                                    <span data-en="Zero Inflation %" data-bn="জিরো ইনফ্লেশন %">জিরো ইনফ্লেশন %</span>
+                                </div>
+                                <div class="parameter-input-group">
+                                    <input type="range" class="range-slider" id="zeroInflationSlider" min="10" max="50" step="1" value="20">
+                                    <input type="number" class="parameter-input" id="zeroInflationInput" min="10" max="50" step="1" value="20">
+                                    <span class="parameter-value-display" id="zeroInflationValue">20%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Example Datasets -->
+                <div class="example-datasets">
+                    <button class="example-btn" data-example="poisson">
+                        <span data-en="Pure Poisson" data-bn="বিশুদ্ধ পয়সন">বিশুদ্ধ পয়সন</span>
+                    </button>
+                    <button class="example-btn active" data-example="mixed">
+                        <span data-en="Mixed Distribution" data-bn="মিশ্র ডিস্ট্রিবিউশন">মিশ্র ডিস্ট্রিবিউশন</span>
+                    </button>
+                    <button class="example-btn" data-example="overdispersed">
+                        <span data-en="Overdispersed" data-bn="ওভারডিসপার্সড">ওভারডিসপার্সড</span>
+                    </button>
+                    <button class="example-btn" data-example="zeroinflated">
+                        <span data-en="Zero-Inflated" data-bn="জিরো-ইনফ্লেটেড">জিরো-ইনফ্লেটেড</span>
+                    </button>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn test-btn" id="testBtn">
+                        <i class="fas fa-vial"></i>
+                        <span data-en="Run Goodness-of-Fit Tests" data-bn="গুডনেস-অফ-ফিট টেস্ট চালান">গুডনেস-অফ-ফিট টেস্ট চালান</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bn="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+
+                <!-- Data Preview -->
+                <div class="data-preview-container">
+                    <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Data Summary" data-bn="ডেটা সারসংক্ষেপ">ডেটা সারসংক্ষেপ</span>
+                    </h3>
+                    
+                    <div class="data-stats">
+                        <div class="stat-card">
+                            <div class="stat-label" data-en="Sample Size" data-bn="নমুনা আকার">নমুনা আকার</div>
+                            <div class="stat-value" id="statSampleSize">25</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label" data-en="Mean" data-bn="গড়">গড়</div>
+                            <div class="stat-value" id="statMean">1.68</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label" data-en="Variance" data-bn="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                            <div class="stat-value" id="statVariance">1.23</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-label" data-en="Zero Count" data-bn="জিরো কাউন্ট">জিরো কাউন্ট</div>
+                            <div class="stat-value" id="statZeroCount">4</div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-distribution" id="dataDistribution">
+                        <!-- Data points will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Test Results -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Goodness-of-Fit Test Results" data-bn="গুডনেস-অফ-ফিট টেস্ট ফলাফল">গুডনেস-অফ-ফিট টেস্ট ফলাফল</span>
+                </h2>
+
+                <div class="test-results-grid">
+                    <!-- Chi-square Test -->
+                    <div class="test-card chi-square fade-in">
+                        <div class="test-header">
+                            <div class="test-icon">
+                                <i class="fas fa-square-root-alt"></i>
+                            </div>
+                            <h3 class="test-title" data-en="Chi-square Test" data-bn="চি-স্কয়ার টেস্ট">চি-স্কয়ার টেস্ট</h3>
+                        </div>
+                        
+                        <div class="test-result">
+                            <div class="result-row">
+                                <span class="result-label" data-en="Chi-square Statistic" data-bn="চি-স্কয়ার স্ট্যাটিস্টিক">চি-স্কয়ার স্ট্যাটিস্টিক</span>
+                                <span class="result-value" id="chiSquareStat">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Degrees of Freedom" data-bn="ডিগ্রি অফ ফ্রিডম">ডিগ্রি অফ ফ্রিডম</span>
+                                <span class="result-value" id="chiSquareDF">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="p-value" data-bn="p-মান">p-মান</span>
+                                <span class="result-value" id="chiSquarePValue">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Expected ≥ 5" data-bn="প্রত্যাশিত ≥ ৫">প্রত্যাশিত ≥ ৫</span>
+                                <span class="result-value" id="chiSquareValid">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="test-conclusion" id="chiSquareConclusion">
+                            <span data-en="Run test to see results" data-bn="ফলাফল দেখতে টেস্ট চালান">ফলাফল দেখতে টেস্ট চালান</span>
+                        </div>
+                    </div>
+
+                    <!-- Dispersion Index Test -->
+                    <div class="test-card dispersion fade-in">
+                        <div class="test-header">
+                            <div class="test-icon">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </div>
+                            <h3 class="test-title" data-en="Dispersion Test" data-bn="ডিসপারশন টেস্ট">ডিসপারশন টেস্ট</h3>
+                        </div>
+                        
+                        <div class="test-result">
+                            <div class="result-row">
+                                <span class="result-label" data-en="Variance/Mean Ratio" data-bn="ভ্যারিয়েন্স/গড় অনুপাত">ভ্যারিয়েন্স/গড় অনুপাত</span>
+                                <span class="result-value" id="dispersionRatio">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Test Statistic" data-bn="টেস্ট স্ট্যাটিস্টিক">টেস্ট স্ট্যাটিস্টিক</span>
+                                <span class="result-value" id="dispersionStat">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="p-value" data-bn="p-মান">p-মান</span>
+                                <span class="result-value" id="dispersionPValue">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Expected = 1" data-bn="প্রত্যাশিত = ১">প্রত্যাশিত = ১</span>
+                                <span class="result-value" id="dispersionExpected">1.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="test-conclusion" id="dispersionConclusion">
+                            <span data-en="Run test to see results" data-bn="ফলাফল দেখতে টেস্ট চালান">ফলাফল দেখতে টেস্ট চালান</span>
+                        </div>
+                    </div>
+
+                    <!-- Zero-Inflation Test -->
+                    <div class="test-card zero-inflation fade-in">
+                        <div class="test-header">
+                            <div class="test-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 class="test-title" data-en="Zero-Inflation Test" data-bn="জিরো-ইনফ্লেশন টেস্ট">জিরো-ইনফ্লেশন টেস্ট</h3>
+                        </div>
+                        
+                        <div class="test-result">
+                            <div class="result-row">
+                                <span class="result-label" data-en="Observed Zeros" data-bn="পর্যবেক্ষিত জিরো">পর্যবেক্ষিত জিরো</span>
+                                <span class="result-value" id="zeroObserved">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Expected Zeros" data-bn="প্রত্যাশিত জিরো">প্রত্যাশিত জিরো</span>
+                                <span class="result-value" id="zeroExpected">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Zero Ratio" data-bn="জিরো অনুপাত">জিরো অনুপাত</span>
+                                <span class="result-value" id="zeroRatio">-</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label" data-en="Test Statistic" data-bn="টেস্ট স্ট্যাটিস্টিক">টেস্ট স্ট্যাটিস্টিক</span>
+                                <span class="result-value" id="zeroStat">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="test-conclusion" id="zeroConclusion">
+                            <span data-en="Run test to see results" data-bn="ফলাফল দেখতে টেস্ট চালান">ফলাফল দেখতে টেস্ট চালান</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Conclusion -->
+                <div class="test-conclusion" style="margin-top: 2rem; padding: 1.5rem; font-size: 1.2rem;" id="overallConclusion">
+                    <i class="fas fa-info-circle"></i>
+                    <span data-en="Run tests to see if data follows Poisson distribution" data-bn="ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে কিনা দেখতে টেস্ট চালান">ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে কিনা দেখতে টেস্ট চালান</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chi-square Table -->
+        <div class="chi-square-table-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Chi-square Test Details" data-bn="চি-স্কয়ার টেস্ট বিস্তারিত">চি-স্কয়ার টেস্ট বিস্তারিত</span>
+            </h2>
+            
+            <p data-en="Observed vs Expected frequencies and chi-square contributions:" data-bn="পর্যবেক্ষিত বনাম প্রত্যাশিত ফ্রিকোয়েন্সি এবং চি-স্কয়ার অবদান:">
+                পর্যবেক্ষিত বনাম প্রত্যাশিত ফ্রিকোয়েন্সি এবং চি-স্কয়ার অবদান:
+            </p>
+            
+            <div class="chi-square-table-container">
+                <table class="chi-square-table">
+                    <thead>
+                        <tr>
+                            <th data-en="k" data-bn="k">k</th>
+                            <th data-en="Observed (O)" data-bn="পর্যবেক্ষিত (O)">পর্যবেক্ষিত (O)</th>
+                            <th data-en="Expected (E)" data-bn="প্রত্যাশিত (E)">প্রত্যাশিত (E)</th>
+                            <th data-en="Residual (O-E)" data-bn="রেসিডুয়াল (O-E)">রেসিডুয়াল (O-E)</th>
+                            <th data-en="Standardized Residual" data-bn="স্ট্যান্ডার্ডাইজড রেসিডুয়াল">স্ট্যান্ডার্ডাইজড রেসিডুয়াল</th>
+                            <th data-en="Chi-square Contribution" data-bn="চি-স্কয়ার অবদান">চি-স্কয়ার অবদান</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chiSquareTableBody">
+                        <!-- Rows will be inserted here -->
+                    </tbody>
+                    <tfoot>
+                        <tr id="chiSquareTotalRow" style="display: none;">
+                            <td><strong>Total</strong></td>
+                            <td class="observed-cell" id="totalObserved">-</td>
+                            <td class="expected-cell" id="totalExpected">-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="chi-square-cell" id="totalChiSquare">-</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Distribution Visualization" data-bn="ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজেশন">ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="visualization-grid">
+                <div class="chart-container" id="obsVsExpChart">
+                    <!-- Observed vs Expected chart -->
+                </div>
+                <div class="chart-container" id="residualChart">
+                    <!-- Residual chart -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Zero-inflation Analysis -->
+        <div class="zero-inflation-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-en="Zero-Inflation Analysis" data-bn="জিরো-ইনফ্লেশন অ্যানালাইসিস">জিরো-ইনফ্লেশন অ্যানালাইসিস</span>
+            </h2>
+            
+            <div class="zero-inflation-chart-container" id="zeroInflationChart">
+                <!-- Zero-inflation chart -->
+            </div>
+        </div>
+
+        <!-- Distribution Fitting -->
+        <div class="distribution-fitting">
+            <h2 class="section-title">
+                <i class="fas fa-ruler-combined"></i>
+                <span data-en="Distribution Fitting" data-bn="ডিস্ট্রিবিউশন ফিটিং">ডিস্ট্রিবিউশন ফিটিং</span>
+            </h2>
+            
+            <div class="fitting-results">
+                <div class="fitting-card">
+                    <div class="fitting-title" data-en="Maximum Likelihood Estimate" data-bn="সর্বোচ্চ সম্ভাবনা অনুমান">সর্বোচ্চ সম্ভাবনা অনুমান</div>
+                    <div class="fitting-value" id="mleLambda">-</div>
+                    <div class="fitting-formula">
+                        λ̂ = x̄
+                    </div>
+                </div>
+                
+                <div class="fitting-card">
+                    <div class="fitting-title" data-en="Method of Moments" data-bn="মোমেন্টের পদ্ধতি">মোমেন্টের পদ্ধতি</div>
+                    <div class="fitting-value" id="momLambda">-</div>
+                    <div class="fitting-formula">
+                        λ̂ = x̄
+                    </div>
+                </div>
+                
+                <div class="fitting-card">
+                    <div class="fitting-title" data-en="Standard Error" data-bn="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                    <div class="fitting-value" id="standardError">-</div>
+                    <div class="fitting-formula">
+                        SE(λ̂) = √(λ̂/n)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Application State
+            let appState = {
+                data: [],
+                method: 'text',
+                lambda: 2.0,
+                sampleSize: 100,
+                zeroInflation: false,
+                zeroInflationPercent: 20,
+                
+                // Test results
+                chiSquareResult: null,
+                dispersionResult: null,
+                zeroInflationResult: null,
+                
+                // Distribution fitting
+                fittedLambda: null
+            };
+
+            // Example datasets
+            const examples = {
+                poisson: [0,1,2,2,1,3,2,1,2,0,1,2,3,1,2,1,2,1,3,2,1,2,1,0,2,1,2,3,1,2],
+                mixed: [0,1,2,2,3,1,0,4,2,1,3,2,0,1,2,2,3,1,2,1,0,2,3,1,2,5,2,1,3,2],
+                overdispersed: [0,3,1,4,2,0,5,1,3,2,4,1,2,3,0,6,2,1,3,4,2,1,5,2,3],
+                zeroinflated: [0,0,0,1,0,2,0,0,1,0,3,0,2,0,1,0,0,2,0,1,0,3,0,0,2]
+            };
+
+            // DOM Elements
+            // Input method selection
+            const methodBtns = document.querySelectorAll('.method-btn');
+            const textInputContainer = document.getElementById('textInputContainer');
+            const generationControls = document.getElementById('generationControls');
+            
+            // Text input
+            const dataTextarea = document.getElementById('dataTextarea');
+            const dataCount = document.getElementById('dataCount');
+            
+            // Generation controls
+            const lambdaSlider = document.getElementById('lambdaSlider');
+            const lambdaInput = document.getElementById('lambdaInput');
+            const lambdaValue = document.getElementById('lambdaValue');
+            const sampleSizeSlider = document.getElementById('sampleSizeSlider');
+            const sampleSizeInput = document.getElementById('sampleSizeInput');
+            const sampleSizeValue = document.getElementById('sampleSizeValue');
+            const zeroInflationToggle = document.getElementById('zeroInflationToggle');
+            const zeroInflationControls = document.getElementById('zeroInflationControls');
+            const zeroInflationSlider = document.getElementById('zeroInflationSlider');
+            const zeroInflationInput = document.getElementById('zeroInflationInput');
+            const zeroInflationValue = document.getElementById('zeroInflationValue');
+            
+            // Example buttons
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            
+            // Control buttons
+            const testBtn = document.getElementById('testBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            // Data statistics
+            const statSampleSize = document.getElementById('statSampleSize');
+            const statMean = document.getElementById('statMean');
+            const statVariance = document.getElementById('statVariance');
+            const statZeroCount = document.getElementById('statZeroCount');
+            const dataDistribution = document.getElementById('dataDistribution');
+            
+            // Test results
+            // Chi-square test
+            const chiSquareStat = document.getElementById('chiSquareStat');
+            const chiSquareDF = document.getElementById('chiSquareDF');
+            const chiSquarePValue = document.getElementById('chiSquarePValue');
+            const chiSquareValid = document.getElementById('chiSquareValid');
+            const chiSquareConclusion = document.getElementById('chiSquareConclusion');
+            
+            // Dispersion test
+            const dispersionRatio = document.getElementById('dispersionRatio');
+            const dispersionStat = document.getElementById('dispersionStat');
+            const dispersionPValue = document.getElementById('dispersionPValue');
+            const dispersionConclusion = document.getElementById('dispersionConclusion');
+            
+            // Zero-inflation test
+            const zeroObserved = document.getElementById('zeroObserved');
+            const zeroExpected = document.getElementById('zeroExpected');
+            const zeroRatio = document.getElementById('zeroRatio');
+            const zeroStat = document.getElementById('zeroStat');
+            const zeroConclusion = document.getElementById('zeroConclusion');
+            
+            // Overall conclusion
+            const overallConclusion = document.getElementById('overallConclusion');
+            
+            // Chi-square table
+            const chiSquareTableBody = document.getElementById('chiSquareTableBody');
+            const chiSquareTotalRow = document.getElementById('chiSquareTotalRow');
+            const totalObserved = document.getElementById('totalObserved');
+            const totalExpected = document.getElementById('totalExpected');
+            const totalChiSquare = document.getElementById('totalChiSquare');
+            
+            // Distribution fitting
+            const mleLambda = document.getElementById('mleLambda');
+            const momLambda = document.getElementById('momLambda');
+            const standardError = document.getElementById('standardError');
+            
+            // Charts
+            const obsVsExpChart = document.getElementById('obsVsExpChart');
+            const residualChart = document.getElementById('residualChart');
+            const zeroInflationChart = document.getElementById('zeroInflationChart');
+
+            // Initialize
+            initTool();
+
+            function initTool() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input method selection
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        setInputMethod(method);
+                    });
+                });
+
+                // Text input handling
+                dataTextarea.addEventListener('input', function() {
+                    parseDataFromTextarea();
+                    updateDataPreview();
+                });
+
+                // Generation controls
+                setupParameterSync(lambdaSlider, lambdaInput, lambdaValue, 'lambda');
+                setupParameterSync(sampleSizeSlider, sampleSizeInput, sampleSizeValue, 'sampleSize');
+                setupParameterSync(zeroInflationSlider, zeroInflationInput, zeroInflationValue, 'zeroInflationPercent');
+                zeroInflationValue.textContent += '%';
+
+                zeroInflationToggle.addEventListener('change', function() {
+                    appState.zeroInflation = this.checked;
+                    zeroInflationControls.style.display = this.checked ? 'block' : 'none';
+                });
+
+                // Example datasets
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Control buttons
+                testBtn.addEventListener('click', runAllTests);
+                resetBtn.addEventListener('click', resetTool);
+
+                // Initialize with default data
+                setTimeout(() => {
+                    parseDataFromTextarea();
+                    updateDataPreview();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update textarea placeholder
+                if (dataTextarea.hasAttribute(`data-${lang}-placeholder`)) {
+                    dataTextarea.placeholder = dataTextarea.getAttribute(`data-${lang}-placeholder`);
+                }
+            }
+
+            function setInputMethod(method) {
+                appState.method = method;
+                
+                // Update active button
+                methodBtns.forEach(btn => {
+                    if (btn.dataset.method === method) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Show/hide appropriate controls
+                if (method === 'text') {
+                    textInputContainer.style.display = 'block';
+                    generationControls.style.display = 'none';
+                } else {
+                    textInputContainer.style.display = 'none';
+                    generationControls.style.display = 'block';
+                    generateData();
+                }
+            }
+
+            function setupParameterSync(slider, input, display, stateKey, decimals = 1) {
+                slider.addEventListener('input', function() {
+                    let value = parseFloat(this.value);
+                    if (stateKey === 'zeroInflationPercent') {
+                        display.textContent = value + '%';
+                    } else {
+                        display.textContent = value.toFixed(decimals);
+                    }
+                    
+                    if (input) {
+                        input.value = value;
+                    }
+                    
+                    appState[stateKey] = value;
+                    
+                    if (appState.method === 'generate') {
+                        generateData();
+                    }
+                });
+
+                if (input) {
+                    input.addEventListener('input', function() {
+                        let value = parseFloat(this.value);
+                        const min = parseFloat(this.min);
+                        const max = parseFloat(this.max);
+                        
+                        if (!isNaN(value) && value >= min && value <= max) {
+                            slider.value = value;
+                            if (stateKey === 'zeroInflationPercent') {
+                                display.textContent = value + '%';
+                            } else {
+                                display.textContent = value.toFixed(decimals);
+                            }
+                            appState[stateKey] = value;
+                            
+                            if (appState.method === 'generate') {
+                                generateData();
+                            }
+                        }
+                    });
+                }
+            }
+
+            function generatePoisson(lambda) {
+                // Simple Poisson generator using algorithm from Knuth
+                let L = Math.exp(-lambda);
+                let k = 0;
+                let p = 1;
+                
+                do {
+                    k++;
+                    p *= Math.random();
+                } while (p > L);
+                
+                return k - 1;
+            }
+
+            function generateData() {
+                const { lambda, sampleSize, zeroInflation, zeroInflationPercent } = appState;
+                
+                const data = [];
+                
+                if (zeroInflation) {
+                    // Generate zero-inflated Poisson data
+                    const zeroInflationProb = zeroInflationPercent / 100;
+                    
+                    for (let i = 0; i < sampleSize; i++) {
+                        if (Math.random() < zeroInflationProb) {
+                            // Generate a zero (inflation component)
+                            data.push(0);
+                        } else {
+                            // Generate from regular Poisson
+                            data.push(generatePoisson(lambda));
+                        }
+                    }
+                } else {
+                    // Generate regular Poisson data
+                    for (let i = 0; i < sampleSize; i++) {
+                        data.push(generatePoisson(lambda));
+                    }
+                }
+                
+                appState.data = data;
+                updateDataPreview();
+            }
+
+            function parseDataFromTextarea() {
+                const text = dataTextarea.value.trim();
+                
+                if (!text) {
+                    appState.data = [];
+                    return;
+                }
+                
+                // Parse comma or space separated integers
+                const numbers = text.split(/[, \t\n]+/).map(num => {
+                    return parseInt(num.trim(), 10);
+                }).filter(num => !isNaN(num));
+                
+                appState.data = numbers;
+                
+                // Update data count display
+                const count = numbers.length;
+                if (currentLanguage === 'bn') {
+                    dataCount.textContent = `${count} টি ডেটা পয়েন্ট`;
+                } else {
+                    dataCount.textContent = `${count} data points`;
+                }
+            }
+
+            function updateDataPreview() {
+                const data = appState.data;
+                const n = data.length;
+                
+                if (n === 0) {
+                    statSampleSize.textContent = '0';
+                    statMean.textContent = '-';
+                    statVariance.textContent = '-';
+                    statZeroCount.textContent = '-';
+                    dataDistribution.innerHTML = '';
+                    return;
+                }
+                
+                // Calculate statistics
+                const sum = data.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n - 1);
+                const zeroCount = data.filter(x => x === 0).length;
+                
+                // Update statistics displays
+                statSampleSize.textContent = n;
+                statMean.textContent = mean.toFixed(2);
+                statVariance.textContent = variance.toFixed(2);
+                statZeroCount.textContent = zeroCount;
+                
+                // Update data distribution preview
+                dataDistribution.innerHTML = '';
+                const displayCount = Math.min(data.length, 50);
+                
+                for (let i = 0; i < displayCount; i++) {
+                    const dataPoint = document.createElement('div');
+                    dataPoint.className = 'data-point';
+                    dataPoint.textContent = data[i];
+                    dataPoint.title = currentLanguage === 'bn' 
+                        ? `মান: ${data[i]}, ইন্ডেক্স: ${i}` 
+                        : `Value: ${data[i]}, Index: ${i}`;
+                    dataDistribution.appendChild(dataPoint);
+                }
+                
+                if (data.length > 50) {
+                    const moreInfo = document.createElement('div');
+                    moreInfo.style.gridColumn = '1 / -1';
+                    moreInfo.style.textAlign = 'center';
+                    moreInfo.style.padding = '0.5rem';
+                    moreInfo.style.fontStyle = 'italic';
+                    moreInfo.style.color = 'var(--gray)';
+                    moreInfo.textContent = currentLanguage === 'bn'
+                        ? `... এবং ${data.length - 50} টি অতিরিক্ত ডেটা পয়েন্ট`
+                        : `... and ${data.length - 50} more data points`;
+                    dataDistribution.appendChild(moreInfo);
+                }
+            }
+
+            function loadExample(exampleName) {
+                const exampleData = examples[exampleName];
+                if (!exampleData) return;
+                
+                // Update example buttons
+                exampleBtns.forEach(btn => {
+                    if (btn.dataset.example === exampleName) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Load data
+                appState.data = [...exampleData];
+                
+                // Update textarea
+                dataTextarea.value = exampleData.join(', ');
+                
+                // Update preview
+                parseDataFromTextarea();
+                updateDataPreview();
+                
+                // Run tests if there's enough data
+                if (exampleData.length >= 10) {
+                    setTimeout(runAllTests, 100);
+                }
+            }
+
+            function factorial(n) {
+                if (n < 0) return 0;
+                if (n === 0 || n === 1) return 1;
+                
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            }
+
+            function poissonPMF(lambda, k) {
+                if (k < 0) return 0;
+                
+                // Use logarithms for numerical stability
+                const logProb = k * Math.log(lambda) - lambda - Math.log(factorial(k));
+                return Math.exp(logProb);
+            }
+
+            function chiSquareCDF(x, df) {
+                // Approximation of Chi-square CDF using Wilson-Hilferty transformation
+                if (df <= 0) return 0;
+                
+                const z = (Math.pow(x / df, 1/3) - (1 - 2/(9 * df))) / Math.sqrt(2/(9 * df));
+                return normalCDF(z);
+            }
+
+            function normalCDF(x) {
+                // Approximation of standard normal CDF
+                const t = 1 / (1 + 0.2316419 * Math.abs(x));
+                const d = 0.3989423 * Math.exp(-x * x / 2);
+                let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+                
+                if (x > 0) prob = 1 - prob;
+                return prob;
+            }
+
+            function normalPDF(x) {
+                // Standard normal PDF
+                return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
+            }
+
+            function runAllTests() {
+                const data = appState.data;
+                
+                if (data.length < 10) {
+                    alert(currentLanguage === 'bn' 
+                        ? 'দয়া করে কমপক্ষে ১০টি ডেটা পয়েন্ট লিখুন' 
+                        : 'Please enter at least 10 data points');
+                    return;
+                }
+                
+                // Run all tests
+                runChiSquareTest();
+                runDispersionTest();
+                runZeroInflationTest();
+                fitDistribution();
+                updateVisualizations();
+                
+                // Update overall conclusion
+                updateOverallConclusion();
+            }
+
+            function runChiSquareTest() {
+                const data = appState.data;
+                const n = data.length;
+                
+                // Calculate lambda estimate (sample mean)
+                const lambda = data.reduce((a, b) => a + b, 0) / n;
+                appState.fittedLambda = lambda;
+                
+                // Create frequency distribution
+                const maxObserved = Math.max(...data);
+                const categories = Math.min(maxObserved + 1, 10); // Limit categories
+                
+                const observedFreq = new Array(categories).fill(0);
+                const expectedFreq = new Array(categories).fill(0);
+                
+                // Count observed frequencies
+                data.forEach(x => {
+                    const category = Math.min(x, categories - 1);
+                    observedFreq[category]++;
+                });
+                
+                // Calculate expected frequencies
+                let totalExpected = 0;
+                for (let k = 0; k < categories - 1; k++) {
+                    expectedFreq[k] = n * poissonPMF(lambda, k);
+                    totalExpected += expectedFreq[k];
+                }
+                // Last category gets remaining probability
+                expectedFreq[categories - 1] = n - totalExpected;
+                
+                // Combine categories with expected < 5
+                const combinedObserved = [];
+                const combinedExpected = [];
+                let currentObserved = 0;
+                let currentExpected = 0;
+                let df = 0;
+                
+                for (let i = 0; i < categories; i++) {
+                    currentObserved += observedFreq[i];
+                    currentExpected += expectedFreq[i];
+                    
+                    if (currentExpected >= 5 || i === categories - 1) {
+                        combinedObserved.push(currentObserved);
+                        combinedExpected.push(currentExpected);
+                        currentObserved = 0;
+                        currentExpected = 0;
+                        df++;
+                    }
+                }
+                
+                // Adjust degrees of freedom
+                df = df - 2; // One parameter estimated from data
+                
+                // Calculate chi-square statistic
+                let chiSquare = 0;
+                const contributions = [];
+                const residuals = [];
+                const stdResiduals = [];
+                
+                for (let i = 0; i < combinedObserved.length; i++) {
+                    const O = combinedObserved[i];
+                    const E = combinedExpected[i];
+                    
+                    if (E > 0) {
+                        const contribution = Math.pow(O - E, 2) / E;
+                        chiSquare += contribution;
+                        
+                        const residual = O - E;
+                        const stdResidual = residual / Math.sqrt(E);
+                        
+                        contributions.push(contribution);
+                        residuals.push(residual);
+                        stdResiduals.push(stdResidual);
+                    }
+                }
+                
+                // Calculate p-value
+                const pValue = 1 - chiSquareCDF(chiSquare, df);
+                
+                // Check validity (expected frequencies >= 5)
+                const valid = combinedExpected.every(e => e >= 5);
+                
+                // Store results
+                appState.chiSquareResult = {
+                    chiSquare: chiSquare,
+                    df: df,
+                    pValue: pValue,
+                    valid: valid,
+                    observed: combinedObserved,
+                    expected: combinedExpected,
+                    residuals: residuals,
+                    stdResiduals: stdResiduals,
+                    contributions: contributions,
+                    lambda: lambda
+                };
+                
+                // Update display
+                updateChiSquareResults();
+                updateChiSquareTable();
+            }
+
+            function updateChiSquareResults() {
+                const result = appState.chiSquareResult;
+                
+                if (!result) {
+                    chiSquareStat.textContent = '-';
+                    chiSquareDF.textContent = '-';
+                    chiSquarePValue.textContent = '-';
+                    chiSquareValid.textContent = '-';
+                    chiSquareConclusion.innerHTML = currentLanguage === 'bn'
+                        ? 'ফলাফল দেখতে টেস্ট চালান'
+                        : 'Run test to see results';
+                    return;
+                }
+                
+                chiSquareStat.textContent = result.chiSquare.toFixed(3);
+                chiSquareDF.textContent = result.df;
+                chiSquarePValue.textContent = result.pValue.toFixed(4);
+                chiSquareValid.textContent = result.valid ? '✓' : '✗';
+                
+                // Update conclusion
+                const alpha = 0.05;
+                chiSquareConclusion.className = 'test-conclusion';
+                
+                if (!result.valid) {
+                    chiSquareConclusion.classList.add('conclusion-warning');
+                    chiSquareConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-exclamation-triangle"></i> কম প্রত্যাশিত ফ্রিকোয়েন্সি'
+                        : '<i class="fas fa-exclamation-triangle"></i> Low expected frequencies';
+                } else if (result.pValue < alpha) {
+                    chiSquareConclusion.classList.add('conclusion-fail');
+                    chiSquareConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-times-circle"></i> পয়সন ডিস্ট্রিবিউশন নয়'
+                        : '<i class="fas fa-times-circle"></i> Not Poisson distribution';
+                } else {
+                    chiSquareConclusion.classList.add('conclusion-pass');
+                    chiSquareConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-check-circle"></i> পয়সন ডিস্ট্রিবিউশন হতে পারে'
+                        : '<i class="fas fa-check-circle"></i> Could be Poisson distribution';
+                }
+            }
+
+            function updateChiSquareTable() {
+                const result = appState.chiSquareResult;
+                const tableBody = document.getElementById('chiSquareTableBody');
+                
+                if (!result) {
+                    tableBody.innerHTML = '';
+                    chiSquareTotalRow.style.display = 'none';
+                    return;
+                }
+                
+                tableBody.innerHTML = '';
+                
+                const { observed, expected, residuals, stdResiduals, contributions } = result;
+                let totalObservedSum = 0;
+                let totalExpectedSum = 0;
+                let totalChiSquareSum = 0;
+                
+                for (let i = 0; i < observed.length; i++) {
+                    const O = observed[i];
+                    const E = expected[i];
+                    const R = residuals[i];
+                    const SR = stdResiduals[i];
+                    const C = contributions[i];
+                    
+                    totalObservedSum += O;
+                    totalExpectedSum += E;
+                    totalChiSquareSum += C;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${i < observed.length - 1 ? i : '≥' + (observed.length - 1)}</td>
+                        <td class="observed-cell">${O.toFixed(1)}</td>
+                        <td class="expected-cell">${E.toFixed(1)}</td>
+                        <td class="residual-cell">${R.toFixed(1)}</td>
+                        <td class="residual-cell">${SR.toFixed(2)}</td>
+                        <td class="chi-square-cell">${C.toFixed(3)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+                
+                // Update totals
+                totalObserved.textContent = totalObservedSum.toFixed(1);
+                totalExpected.textContent = totalExpectedSum.toFixed(1);
+                totalChiSquare.textContent = totalChiSquareSum.toFixed(3);
+                chiSquareTotalRow.style.display = '';
+            }
+
+            function runDispersionTest() {
+                const data = appState.data;
+                const n = data.length;
+                
+                // Calculate mean and variance
+                const mean = data.reduce((a, b) => a + b, 0) / n;
+                const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n - 1);
+                
+                // Dispersion ratio (variance/mean)
+                const ratio = variance / mean;
+                
+                // Test statistic for dispersion test (C = (n-1) * s² / x̄ ~ χ²(n-1) under Poisson)
+                const C = (n - 1) * variance / mean;
+                
+                // p-value from chi-square distribution
+                const pValue = 2 * Math.min(
+                    1 - chiSquareCDF(C, n - 1),
+                    chiSquareCDF(C, n - 1)
+                );
+                
+                // Store results
+                appState.dispersionResult = {
+                    ratio: ratio,
+                    statistic: C,
+                    pValue: pValue,
+                    mean: mean,
+                    variance: variance
+                };
+                
+                // Update display
+                updateDispersionResults();
+            }
+
+            function updateDispersionResults() {
+                const result = appState.dispersionResult;
+                
+                if (!result) {
+                    dispersionRatio.textContent = '-';
+                    dispersionStat.textContent = '-';
+                    dispersionPValue.textContent = '-';
+                    dispersionConclusion.innerHTML = currentLanguage === 'bn'
+                        ? 'ফলাফল দেখতে টেস্ট চালান'
+                        : 'Run test to see results';
+                    return;
+                }
+                
+                dispersionRatio.textContent = result.ratio.toFixed(3);
+                dispersionStat.textContent = result.statistic.toFixed(3);
+                dispersionPValue.textContent = result.pValue.toFixed(4);
+                
+                // Update conclusion
+                const alpha = 0.05;
+                dispersionConclusion.className = 'test-conclusion';
+                
+                if (result.pValue < alpha) {
+                    if (result.ratio > 1) {
+                        dispersionConclusion.classList.add('conclusion-fail');
+                        dispersionConclusion.innerHTML = currentLanguage === 'bn'
+                            ? '<i class="fas fa-times-circle"></i> ওভারডিসপার্সড (ভ্যারিয়েন্স > গড়)'
+                            : '<i class="fas fa-times-circle"></i> Overdispersed (variance > mean)';
+                    } else {
+                        dispersionConclusion.classList.add('conclusion-fail');
+                        dispersionConclusion.innerHTML = currentLanguage === 'bn'
+                            ? '<i class="fas fa-times-circle"></i> আন্ডারডিসপার্সড (ভ্যারিয়েন্স < গড়)'
+                            : '<i class="fas fa-times-circle"></i> Underdispersed (variance < mean)';
+                    }
+                } else {
+                    dispersionConclusion.classList.add('conclusion-pass');
+                    dispersionConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-check-circle"></i> ভ্যারিয়েন্স ≈ গড় (ডিসপার্সন OK)'
+                        : '<i class="fas fa-check-circle"></i> Variance ≈ mean (dispersion OK)';
+                }
+            }
+
+            function runZeroInflationTest() {
+                const data = appState.data;
+                const n = data.length;
+                
+                // Calculate observed zeros
+                const observedZeros = data.filter(x => x === 0).length;
+                
+                // Calculate lambda estimate
+                const lambda = data.reduce((a, b) => a + b, 0) / n;
+                
+                // Expected zeros under Poisson
+                const expectedZeros = n * Math.exp(-lambda);
+                
+                // Zero ratio
+                const zeroRatio = observedZeros / n;
+                
+                // Test statistic (Vuong test for zero-inflation)
+                // For simplicity, we use a binomial test
+                const p0 = Math.exp(-lambda);
+                const testStat = (observedZeros - expectedZeros) / Math.sqrt(n * p0 * (1 - p0));
+                
+                // p-value (two-sided normal test)
+                const pValue = 2 * (1 - normalCDF(Math.abs(testStat)));
+                
+                // Store results
+                appState.zeroInflationResult = {
+                    observedZeros: observedZeros,
+                    expectedZeros: expectedZeros,
+                    zeroRatio: zeroRatio,
+                    testStat: testStat,
+                    pValue: pValue,
+                    lambda: lambda
+                };
+                
+                // Update display
+                updateZeroInflationResults();
+            }
+
+            function updateZeroInflationResults() {
+                const result = appState.zeroInflationResult;
+                
+                if (!result) {
+                    zeroObserved.textContent = '-';
+                    zeroExpected.textContent = '-';
+                    zeroRatio.textContent = '-';
+                    zeroStat.textContent = '-';
+                    zeroConclusion.innerHTML = currentLanguage === 'bn'
+                        ? 'ফলাফল দেখতে টেস্ট চালান'
+                        : 'Run test to see results';
+                    return;
+                }
+                
+                zeroObserved.textContent = result.observedZeros;
+                zeroExpected.textContent = result.expectedZeros.toFixed(1);
+                zeroRatio.textContent = result.zeroRatio.toFixed(3);
+                zeroStat.textContent = result.testStat.toFixed(3);
+                
+                // Update conclusion
+                const alpha = 0.05;
+                zeroConclusion.className = 'test-conclusion';
+                
+                if (result.pValue < alpha) {
+                    if (result.observedZeros > result.expectedZeros) {
+                        zeroConclusion.classList.add('conclusion-fail');
+                        zeroConclusion.innerHTML = currentLanguage === 'bn'
+                            ? '<i class="fas fa-exclamation-triangle"></i> জিরো-ইনফ্লেশন শনাক্ত'
+                            : '<i class="fas fa-exclamation-triangle"></i> Zero-inflation detected';
+                    } else {
+                        zeroConclusion.classList.add('conclusion-fail');
+                        zeroConclusion.innerHTML = currentLanguage === 'bn'
+                            ? '<i class="fas fa-exclamation-triangle"></i> জিরো-ডিফ্লেশন শনাক্ত'
+                            : '<i class="fas fa-exclamation-triangle"></i> Zero-deflation detected';
+                    }
+                } else {
+                    zeroConclusion.classList.add('conclusion-pass');
+                    zeroConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-check-circle"></i> জিরো-ইনফ্লেশন নেই'
+                        : '<i class="fas fa-check-circle"></i> No zero-inflation';
+                }
+            }
+
+            function fitDistribution() {
+                const data = appState.data;
+                const n = data.length;
+                
+                if (n === 0) {
+                    mleLambda.textContent = '-';
+                    momLambda.textContent = '-';
+                    standardError.textContent = '-';
+                    return;
+                }
+                
+                // Both MLE and MOM give the same estimate for Poisson: sample mean
+                const lambda = data.reduce((a, b) => a + b, 0) / n;
+                const se = Math.sqrt(lambda / n);
+                
+                // Update displays
+                mleLambda.textContent = lambda.toFixed(3);
+                momLambda.textContent = lambda.toFixed(3);
+                standardError.textContent = se.toFixed(3);
+            }
+
+            function updateVisualizations() {
+                const chiSquareResult = appState.chiSquareResult;
+                const zeroResult = appState.zeroInflationResult;
+                
+                if (!chiSquareResult) return;
+                
+                // Observed vs Expected Chart
+                const observed = chiSquareResult.observed;
+                const expected = chiSquareResult.expected;
+                
+                const categories = observed.map((_, i) => i < observed.length - 1 ? i : `≥${observed.length - 1}`);
+                
+                const obsVsExpTrace1 = {
+                    x: categories,
+                    y: observed,
+                    name: currentLanguage === 'bn' ? 'পর্যবেক্ষিত' : 'Observed',
+                    type: 'bar',
+                    marker: {
+                        color: 'rgba(233, 30, 99, 0.7)',
+                        line: {
+                            color: 'rgba(233, 30, 99, 1)',
+                            width: 2
+                        }
+                    }
+                };
+                
+                const obsVsExpTrace2 = {
+                    x: categories,
+                    y: expected,
+                    name: currentLanguage === 'bn' ? 'প্রত্যাশিত' : 'Expected',
+                    type: 'line',
+                    line: {
+                        color: 'rgb(63, 81, 181)',
+                        width: 4
+                    },
+                    marker: {
+                        size: 10,
+                        symbol: 'diamond'
+                    }
+                };
+                
+                const obsVsExpLayout = {
+                    title: currentLanguage === 'bn' ? 'পর্যবেক্ষিত বনাম প্রত্যাশিত ফ্রিকোয়েন্সি' : 'Observed vs Expected Frequencies',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'মান (k)' : 'Value (k)',
+                        titlefont: { size: 14 }
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি' : 'Frequency',
+                        titlefont: { size: 14 }
+                    },
+                    plot_bgcolor: '#F7FAFC',
+                    paper_bgcolor: '#F7FAFC',
+                    showlegend: true,
+                    legend: {
+                        x: 0.8,
+                        y: 0.95
+                    },
+                    margin: { t: 50, b: 50, l: 60, r: 40 }
+                };
+                
+                Plotly.newPlot('obsVsExpChart', [obsVsExpTrace1, obsVsExpTrace2], obsVsExpLayout);
+                
+                // Residual Chart
+                const residuals = chiSquareResult.stdResiduals;
+                
+                const residualTrace = {
+                    x: categories,
+                    y: residuals,
+                    type: 'bar',
+                    marker: {
+                        color: residuals.map(r => r >= 0 ? 'rgba(255, 87, 34, 0.7)' : 'rgba(33, 150, 243, 0.7)'),
+                        line: {
+                            color: residuals.map(r => r >= 0 ? 'rgba(255, 87, 34, 1)' : 'rgba(33, 150, 243, 1)'),
+                            width: 1
+                        }
+                    }
+                };
+                
+                const residualLayout = {
+                    title: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ডাইজড রেসিডুয়াল' : 'Standardized Residuals',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'মান (k)' : 'Value (k)',
+                        titlefont: { size: 14 }
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'রেসিডুয়াল' : 'Residual',
+                        titlefont: { size: 14 }
+                    },
+                    plot_bgcolor: '#F7FAFC',
+                    paper_bgcolor: '#F7FAFC',
+                    shapes: [
+                        {
+                            type: 'line',
+                            x0: -0.5,
+                            x1: categories.length - 0.5,
+                            y0: 0,
+                            y1: 0,
+                            line: {
+                                color: 'rgba(0, 0, 0, 0.5)',
+                                width: 2,
+                                dash: 'dash'
+                            }
+                        }
+                    ],
+                    margin: { t: 50, b: 50, l: 60, r: 40 }
+                };
+                
+                Plotly.newPlot('residualChart', [residualTrace], residualLayout);
+                
+                // Zero-Inflation Chart
+                if (zeroResult) {
+                    const zeroLabels = [
+                        currentLanguage === 'bn' ? 'পর্যবেক্ষিত জিরো' : 'Observed Zeros',
+                        currentLanguage === 'bn' ? 'অন্যান্য মান' : 'Other Values'
+                    ];
+                    
+                    const zeroValues = [zeroResult.observedZeros, appState.data.length - zeroResult.observedZeros];
+                    
+                    const zeroTrace = {
+                        labels: zeroLabels,
+                        values: zeroValues,
+                        type: 'pie',
+                        hole: 0.4,
+                        marker: {
+                            colors: ['rgba(255, 152, 0, 0.7)', 'rgba(156, 39, 176, 0.3)'],
+                            line: {
+                                color: '#FFFFFF',
+                                width: 2
+                            }
+                        },
+                        textinfo: 'value+percent',
+                        hoverinfo: 'label+value+percent'
+                    };
+                    
+                    const zeroLayout = {
+                        title: currentLanguage === 'bn' ? 'জিরো মানের বন্টন' : 'Distribution of Zero Values',
+                        plot_bgcolor: '#F7FAFC',
+                        paper_bgcolor: '#F7FAFC',
+                        showlegend: true,
+                        legend: {
+                            x: 0.8,
+                            y: 0.5
+                        },
+                        margin: { t: 50, b: 50, l: 40, r: 40 }
+                    };
+                    
+                    Plotly.newPlot('zeroInflationChart', [zeroTrace], zeroLayout);
+                }
+            }
+
+            function updateOverallConclusion() {
+                const chiSquareResult = appState.chiSquareResult;
+                const dispersionResult = appState.dispersionResult;
+                const zeroResult = appState.zeroInflationResult;
+                
+                if (!chiSquareResult || !dispersionResult || !zeroResult) {
+                    return;
+                }
+                
+                const alpha = 0.05;
+                const chiSquarePass = chiSquareResult.valid && chiSquareResult.pValue >= alpha;
+                const dispersionPass = dispersionResult.pValue >= alpha;
+                const zeroPass = zeroResult.pValue >= alpha;
+                
+                overallConclusion.className = 'test-conclusion';
+                
+                if (chiSquarePass && dispersionPass && zeroPass) {
+                    overallConclusion.classList.add('conclusion-pass');
+                    overallConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-check-circle"></i> ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে বলে মনে হচ্ছে'
+                        : '<i class="fas fa-check-circle"></i> Data appears to follow Poisson distribution';
+                } else if (!chiSquareResult.valid) {
+                    overallConclusion.classList.add('conclusion-warning');
+                    overallConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-exclamation-triangle"></i> টেস্টের ফলাফল নির্ভরযোগ্য নয় (কম প্রত্যাশিত ফ্রিকোয়েন্সি)'
+                        : '<i class="fas fa-exclamation-triangle"></i> Test results not reliable (low expected frequencies)';
+                } else {
+                    overallConclusion.classList.add('conclusion-fail');
+                    overallConclusion.innerHTML = currentLanguage === 'bn'
+                        ? '<i class="fas fa-times-circle"></i> ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে না'
+                        : '<i class="fas fa-times-circle"></i> Data does not follow Poisson distribution';
+                }
+            }
+
+            function resetTool() {
+                // Reset state
+                appState = {
+                    data: [],
+                    method: 'text',
+                    lambda: 2.0,
+                    sampleSize: 100,
+                    zeroInflation: false,
+                    zeroInflationPercent: 20,
+                    chiSquareResult: null,
+                    dispersionResult: null,
+                    zeroInflationResult: null,
+                    fittedLambda: null
+                };
+                
+                // Reset UI
+                dataTextarea.value = '';
+                parseDataFromTextarea();
+                updateDataPreview();
+                
+                // Reset test results
+                chiSquareStat.textContent = '-';
+                chiSquareDF.textContent = '-';
+                chiSquarePValue.textContent = '-';
+                chiSquareValid.textContent = '-';
+                chiSquareConclusion.innerHTML = currentLanguage === 'bn'
+                    ? 'ফলাফল দেখতে টেস্ট চালান'
+                    : 'Run test to see results';
+                chiSquareConclusion.className = 'test-conclusion';
+                
+                dispersionRatio.textContent = '-';
+                dispersionStat.textContent = '-';
+                dispersionPValue.textContent = '-';
+                dispersionConclusion.innerHTML = currentLanguage === 'bn'
+                    ? 'ফলাফল দেখতে টেস্ট চালান'
+                    : 'Run test to see results';
+                dispersionConclusion.className = 'test-conclusion';
+                
+                zeroObserved.textContent = '-';
+                zeroExpected.textContent = '-';
+                zeroRatio.textContent = '-';
+                zeroStat.textContent = '-';
+                zeroConclusion.innerHTML = currentLanguage === 'bn'
+                    ? 'ফলাফল দেখতে টেস্ট চালান'
+                    : 'Run test to see results';
+                zeroConclusion.className = 'test-conclusion';
+                
+                // Reset table
+                chiSquareTableBody.innerHTML = '';
+                chiSquareTotalRow.style.display = 'none';
+                
+                // Reset distribution fitting
+                mleLambda.textContent = '-';
+                momLambda.textContent = '-';
+                standardError.textContent = '-';
+                
+                // Reset overall conclusion
+                overallConclusion.innerHTML = currentLanguage === 'bn'
+                    ? '<i class="fas fa-info-circle"></i> ডেটা পয়সন ডিস্ট্রিবিউশন অনুসরণ করে কিনা দেখতে টেস্ট চালান'
+                    : '<i class="fas fa-info-circle"></i> Run tests to see if data follows Poisson distribution';
+                overallConclusion.className = 'test-conclusion';
+                
+                // Clear charts
+                Plotly.purge('obsVsExpChart');
+                Plotly.purge('residualChart');
+                Plotly.purge('zeroInflationChart');
+                
+                // Reset example buttons
+                exampleBtns.forEach(btn => {
+                    if (btn.dataset.example === 'mixed') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

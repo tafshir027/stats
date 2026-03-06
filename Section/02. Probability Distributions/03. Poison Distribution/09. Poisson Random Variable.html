@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Random Variable Generator | Statistical Simulation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --knuth-color: #2196F3;
+            --inverse-color: #4CAF50;
+            --rejection-color: #FF9800;
+            --algorithm-bg: #F3E5F5;
+            --distribution-bg: #E8F5E9;
+            --simulation-bg: #E3F2FD;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 50%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem 1rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--knuth-color), var(--inverse-color), var(--rejection-color));
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .header .subtitle {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Groups */
+        .parameter-group {
+            background: var(--algorithm-bg);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--poisson-color);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Slider Styling */
+        .slider-container {
+            margin-top: 0.8rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #E1BEE7, var(--poisson-color));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-value-display {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--poisson-color);
+        }
+
+        /* Algorithm Selection */
+        .algorithm-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .algorithm-types {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .algorithm-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .algorithm-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .algorithm-btn.active {
+            border-color: var(--poisson-color);
+            background: var(--algorithm-bg);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .algorithm-btn.knuth.active {
+            border-color: var(--knuth-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .algorithm-btn.inverse.active {
+            border-color: var(--inverse-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .algorithm-btn.rejection.active {
+            border-color: var(--rejection-color);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .algorithm-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .algorithm-btn.knuth .algorithm-icon { color: var(--knuth-color); }
+        .algorithm-btn.inverse .algorithm-icon { color: var(--inverse-color); }
+        .algorithm-btn.rejection .algorithm-icon { color: var(--rejection-color); }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .generate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Generated Variables */
+        .variables-container {
+            background: var(--simulation-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .variables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .variable-item {
+            background: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+            font-family: monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .variable-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Statistics Panel */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .statistics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.2rem;
+            background: var(--distribution-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Distribution Visualization */
+        .distribution-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .distribution-container {
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--distribution-bg);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        #distributionCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Algorithm Details */
+        .details-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .algorithm-details {
+            display: none;
+        }
+
+        .algorithm-details.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .algorithm-step {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            border-left: 4px solid var(--poisson-color);
+        }
+
+        .algorithm-step.knuth {
+            border-left-color: var(--knuth-color);
+        }
+
+        .algorithm-step.inverse {
+            border-left-color: var(--inverse-color);
+        }
+
+        .algorithm-step.rejection {
+            border-left-color: var(--rejection-color);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background: var(--poisson-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            margin-right: 0.5rem;
+            font-weight: 600;
+        }
+
+        .algorithm-step.knuth .step-number {
+            background: var(--knuth-color);
+        }
+
+        .algorithm-step.inverse .step-number {
+            background: var(--inverse-color);
+        }
+
+        .algorithm-step.rejection .step-number {
+            background: var(--rejection-color);
+        }
+
+        /* Performance Comparison */
+        .performance-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .performance-container {
+            height: 200px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--simulation-bg);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        #performanceCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--poisson-color);
+        }
+
+        /* Animation Classes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { background: white; }
+            50% { background: #FFF9C4; }
+            100% { background: white; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        .highlight {
+            animation: highlight 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .distribution-container,
+            .performance-container {
+                height: 250px;
+            }
+            
+            .statistics-grid {
+                gap: 0.5rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .distribution-container,
+            .performance-container {
+                height: 200px;
+            }
+            
+            .algorithm-types {
+                gap: 0.5rem;
+            }
+            
+            .algorithm-btn {
+                padding: 0.8rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--poisson-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7B1FA2;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(156, 39, 176, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--poisson-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson Random Variable Generator" data-bn="পয়সন র্যান্ডম ভ্যারিয়েবল জেনারেটর">পয়সন র্যান্ডম ভ্যারিয়েবল জেনারেটর</h1>
+            <p class="subtitle" data-en="Generate Poisson random variables using Knuth's algorithm, inverse transform method, and acceptance-rejection method" data-bn="নুথের অ্যালগরিদম, ইনভার্স ট্রান্সফর্ম পদ্ধতি এবং অ্যাকসেপ্টেন্স-রিজেকশন পদ্ধতি ব্যবহার করে পয়সন র্যান্ডম ভ্যারিয়েবল তৈরি করুন">
+                নুথের অ্যালগরিদম, ইনভার্স ট্রান্সফর্ম পদ্ধতি এবং অ্যাকসেপ্টেন্স-রিজেকশন পদ্ধতি ব্যবহার করে পয়সন র্যান্ডম ভ্যারিয়েবল তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Generation Parameters" data-bn="জেনারেশন প্যারামিটার">জেনারেশন প্যারামিটার</span>
+                </h2>
+
+                <!-- Lambda Parameter -->
+                <div class="parameter-group">
+                    <div class="parameter-label">
+                        <i class="fas fa-greek-letter-lambda"></i>
+                        <span data-en="Rate Parameter (λ)" data-bn="রেট প্যারামিটার (λ)">রেট প্যারামিটার (λ)</span>
+                    </div>
+                    <input type="number" id="lambdaValue" class="value-input" min="0.1" max="50" step="0.1" value="5.0">
+                    <div class="slider-container">
+                        <input type="range" id="lambdaSlider" class="slider" min="0.1" max="50" step="0.1" value="5.0">
+                        <div class="slider-value-display" id="lambdaDisplay">λ = 5.0</div>
+                    </div>
+                    <div class="help-text" data-en="Mean of Poisson distribution" data-bn="পয়সন ডিস্ট্রিবিউশনের গড়">পয়সন ডিস্ট্রিবিউশনের গড়</div>
+                </div>
+
+                <!-- Algorithm Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Generation Algorithm" data-bn="জেনারেশন অ্যালগরিদম">জেনারেশন অ্যালগরিদম</span>
+                </h2>
+
+                <div class="algorithm-types">
+                    <button class="algorithm-btn knuth active" data-algorithm="knuth">
+                        <div class="algorithm-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <span data-en="Knuth's Algorithm" data-bন="নুথের অ্যালগরিদম">নুথের অ্যালগরিদম</span>
+                        <small data-en="Simple & efficient" data-bন="সহজ ও দক্ষ">সহজ ও দক্ষ</small>
+                    </button>
+
+                    <button class="algorithm-btn inverse" data-algorithm="inverse">
+                        <div class="algorithm-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <span data-en="Inverse Transform" data-bন="ইনভার্স ট্রান্সফর্ম">ইনভার্স ট্রান্সফর্ম</span>
+                        <small data-en="Exact distribution" data-bন="সঠিক ডিস্ট্রিবিউশন">সঠিক ডিস্ট্রিবিউশন</small>
+                    </button>
+
+                    <button class="algorithm-btn rejection" data-algorithm="rejection">
+                        <div class="algorithm-icon">
+                            <i class="fas fa-random"></i>
+                        </div>
+                        <span data-en="Acceptance-Rejection" data-bন="অ্যাকসেপ্টেন্স-রিজেকশন">অ্যাকসেপ্টেন্স-রিজেকশন</span>
+                        <small data-en="Flexible method" data-bন="ফ্লেক্সিবল পদ্ধতি">ফ্লেক্সিবল পদ্ধতি</small>
+                    </button>
+                </div>
+
+                <!-- Generation Parameters -->
+                <div class="parameter-group">
+                    <div class="parameter-label">
+                        <i class="fas fa-list-ol"></i>
+                        <span data-en="Generation Parameters" data-bন="জেনারেশন প্যারামিটার">জেনারেশন প্যারামিটার</span>
+                    </div>
+                    <div class="input-group">
+                        <div>
+                            <input type="number" id="sampleSize" class="value-input" min="1" max="10000" value="100">
+                            <div class="help-text" data-en="Sample size" data-bন="নমুনা আকার">নমুনা আকার</div>
+                        </div>
+                        <div>
+                            <input type="number" id="maxValue" class="value-input" min="1" max="100" value="20">
+                            <div class="help-text" data-en="Max display value" data-bন="সর্বোচ্চ ডিসপ্লে মান">সর্বোচ্চ ডিসপ্লে মান</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-play-circle"></i>
+                        <span data-en="Generate Variables" data-bন="ভ্যারিয়েবল তৈরি করুন">ভ্যারিয়েবল তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-list"></i>
+                    <span data-en="Generated Variables" data-bন="তৈরি ভ্যারিয়েবল">তৈরি ভ্যারিয়েবল</span>
+                </h2>
+                
+                <div class="variables-container">
+                    <div id="variablesGrid" class="variables-grid">
+                        <!-- Variables will be displayed here -->
+                        <div class="variable-item" style="grid-column: 1 / -1; text-align: center; color: var(--gray);">
+                            <span data-en="No variables generated yet" data-bn="এখনো কোনো ভ্যারিয়েবল তৈরি হয়নি">এখনো কোনো ভ্যারিয়েবল তৈরি হয়নি</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="help-text" data-en="Click on any variable to see details" data-bn="বিস্তারিত জানতে যেকোনো ভ্যারিয়েবলে ক্লিক করুন">
+                    বিস্তারিত জানতে যেকোনো ভ্যারিয়েবলে ক্লিক করুন
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="statistics-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Distribution Statistics" data-bন="ডিস্ট্রিবিউশন পরিসংখ্যান">ডিস্ট্রিবিউশন পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="statistics-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Sample Mean" data-bন="নমুনা গড়">নমুনা গড়</div>
+                    <div class="stat-value" id="sampleMean">0.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Sample Variance" data-bন="নমুনা ভ্যারিয়েন্স">নমুনা ভ্যারিয়েন্স</div>
+                    <div class="stat-value" id="sampleVariance">0.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Theoretical Mean (λ)" data-bন="তাত্ত্বিক গড় (λ)">তাত্ত্বিক গড় (λ)</div>
+                    <div class="stat-value" id="theoreticalMean">5.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label" data-en="Mean Absolute Error" data-bন="গড় পরম ত্রুটি">গড় পরম ত্রুটি</div>
+                    <div class="stat-value" id="meanError">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Visualization -->
+        <div class="distribution-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Distribution Comparison" data-bন="ডিস্ট্রিবিউশন তুলনা">ডিস্ট্রিবিউশন তুলনা</span>
+            </h2>
+            
+            <div class="distribution-container">
+                <canvas id="distributionCanvas"></canvas>
+                <div class="canvas-label" id="distributionLabel" data-en="Poisson Distribution (λ=5.0)" data-bn="পয়সন ডিস্ট্রিবিউশন (λ=৫.০)">
+                    পয়সন ডিস্ট্রিবিউশন (λ=৫.০)
+                </div>
+            </div>
+            
+            <div class="help-text" data-en="Blue bars: Generated sample distribution, Red line: Theoretical Poisson distribution" data-bn="নীল বার: জেনারেটেড নমুনা ডিস্ট্রিবিউশন, লাল রেখা: তাত্ত্বিক পয়সন ডিস্ট্রিবিউশন">
+                নীল বার: জেনারেটেড নমুনা ডিস্ট্রিবিউশন, লাল রেখা: তাত্ত্বিক পয়সন ডিস্ট্রিবিউশন
+            </div>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="details-panel">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <span data-en="Algorithm Details" data-bন="অ্যালগরিদম বিবরণ">অ্যালগরিদম বিবরণ</span>
+            </h2>
+            
+            <!-- Knuth's Algorithm Details -->
+            <div class="algorithm-details active" id="knuthDetails">
+                <h3 style="color: var(--knuth-color); margin-bottom: 1rem;">
+                    <i class="fas fa-code"></i> 
+                    <span data-en="Knuth's Algorithm" data-bন="নুথের অ্যালগরিদম">নুথের অ্যালগরিদম</span>
+                </h3>
+                
+                <div class="algorithm-step knuth">
+                    <span class="step-number">1</span>
+                    <strong data-en="Initialize:" data-bন="ইনিশিয়ালাইজ করুন:">ইনিশিয়ালাইজ করুন:</strong>
+                    <span data-en="Set L = e^{-λ}, k = 0, p = 1" data-bন="L = e^{-λ}, k = 0, p = 1 সেট করুন">L = e^{-λ}, k = 0, p = 1 সেট করুন</span>
+                </div>
+                
+                <div class="algorithm-step knuth">
+                    <span class="step-number">2</span>
+                    <strong data-en="Generate random number:" data-bন="র্যান্ডম সংখ্যা তৈরি করুন:">র্যান্ডম সংখ্যা তৈরি করুন:</strong>
+                    <span data-en="Generate U ~ Uniform(0,1)" data-bন="U ~ ইউনিফর্ম(0,1) তৈরি করুন">U ~ ইউনিফর্ম(0,1) তৈরি করুন</span>
+                </div>
+                
+                <div class="algorithm-step knuth">
+                    <span class="step-number">3</span>
+                    <strong data-en="Update probability:" data-bন="প্রোবাবিলিটি আপডেট করুন:">প্রোবাবিলিটি আপডেট করুন:</strong>
+                    <span data-en="p = p × U" data-bন="p = p × U">p = p × U</span>
+                </div>
+                
+                <div class="algorithm-step knuth">
+                    <span class="step-number">4</span>
+                    <strong data-en="Check condition:" data-bন="শর্ত চেক করুন:">শর্ত চেক করুন:</strong>
+                    <span data-en="If p > L, k = k + 1 and go to step 2" data-bন="যদি p > L, k = k + 1 এবং ধাপ 2-এ যান">যদি p > L, k = k + 1 এবং ধাপ 2-এ যান</span>
+                </div>
+                
+                <div class="algorithm-step knuth">
+                    <span class="step-number">5</span>
+                    <strong data-en="Return result:" data-bন="ফলাফল রিটার্ন করুন:">ফলাফল রিটার্ন করুন:</strong>
+                    <span data-en="Return k - 1" data-bন="k - 1 রিটার্ন করুন">k - 1 রিটার্ন করুন</span>
+                </div>
+                
+                <div class="help-text" style="margin-top: 1rem;">
+                    <strong data-en="Complexity:" data-bন="কমপ্লেক্সিটি:">কমপ্লেক্সিটি:</strong>
+                    <span data-en="O(λ) time complexity, efficient for small λ" data-bন="O(λ) টাইম কমপ্লেক্সিটি, ছোট λ-এর জন্য দক্ষ">O(λ) টাইম কমপ্লেক্সিটি, ছোট λ-এর জন্য দক্ষ</span>
+                </div>
+            </div>
+            
+            <!-- Inverse Transform Method Details -->
+            <div class="algorithm-details" id="inverseDetails">
+                <h3 style="color: var(--inverse-color); margin-bottom: 1rem;">
+                    <i class="fas fa-exchange-alt"></i> 
+                    <span data-en="Inverse Transform Method" data-bন="ইনভার্স ট্রান্সফর্ম পদ্ধতি">ইনভার্স ট্রান্সফর্ম পদ্ধতি</span>
+                </h3>
+                
+                <div class="algorithm-step inverse">
+                    <span class="step-number">1</span>
+                    <strong data-en="Generate uniform random:" data-bন="ইউনিফর্ম র্যান্ডম তৈরি করুন:">ইউনিফর্ম র্যান্ডম তৈরি করুন:</strong>
+                    <span data-en="Generate U ~ Uniform(0,1)" data-bন="U ~ ইউনিফর্ম(0,1) তৈরি করুন">U ~ ইউনিফর্ম(0,1) তৈরি করুন</span>
+                </div>
+                
+                <div class="algorithm-step inverse">
+                    <span class="step-number">2</span>
+                    <strong data-en="Initialize:" data-bন="ইনিশিয়ালাইজ করুন:">ইনিশিয়ালাইজ করুন:</strong>
+                    <span data-en="Set x = 0, p = e^{-λ}, F = p" data-bন="x = 0, p = e^{-λ}, F = p সেট করুন">x = 0, p = e^{-λ}, F = p সেট করুন</span>
+                </div>
+                
+                <div class="algorithm-step inverse">
+                    <span class="step-number">3</span>
+                    <strong data-en="Check condition:" data-bন="শর্ত চেক করুন:">শর্ত চেক করুন:</strong>
+                    <span data-en="While U > F" data-bন="যখন U > F">যখন U > F</span>
+                </div>
+                
+                <div class="algorithm-step inverse">
+                    <span class="step-number">4</span>
+                    <strong data-en="Update:" data-bন="আপডেট করুন:">আপডেট করুন:</strong>
+                    <span data-en="x = x + 1, p = p × λ / x, F = F + p" data-bন="x = x + 1, p = p × λ / x, F = F + p">x = x + 1, p = p × λ / x, F = F + p</span>
+                </div>
+                
+                <div class="algorithm-step inverse">
+                    <span class="step-number">5</span>
+                    <strong data-en="Return result:" data-bন="ফলাফল রিটার্ন করুন:">ফলাফল রিটার্ন করুন:</strong>
+                    <span data-en="Return x" data-bন="x রিটার্ন করুন">x রিটার্ন করুন</span>
+                </div>
+                
+                <div class="help-text" style="margin-top: 1rem;">
+                    <strong data-en="Advantage:" data-bন="সুবিধা:">সুবিধা:</strong>
+                    <span data-en="Produces exact Poisson distribution, good for all λ" data-bন="সঠিক পয়সন ডিস্ট্রিবিউশন তৈরি করে, সব λ-এর জন্য ভাল">সঠিক পয়সন ডিস্ট্রিবিউশন তৈরি করে, সব λ-এর জন্য ভাল</span>
+                </div>
+            </div>
+            
+            <!-- Acceptance-Rejection Method Details -->
+            <div class="algorithm-details" id="rejectionDetails">
+                <h3 style="color: var(--rejection-color); margin-bottom: 1rem;">
+                    <i class="fas fa-random"></i> 
+                    <span data-en="Acceptance-Rejection Method" data-bন="অ্যাকসেপ্টেন্স-রিজেকশন পদ্ধতি">অ্যাকসেপ্টেন্স-রিজেকশন পদ্ধতি</span>
+                </h3>
+                
+                <div class="algorithm-step rejection">
+                    <span class="step-number">1</span>
+                    <strong data-en="Choose proposal distribution:" data-bন="প্রপোজাল ডিস্ট্রিবিউশন বেছে নিন:">প্রপোজাল ডিস্ট্রিবিউশন বেছে নিন:</strong>
+                    <span data-en="Use geometric distribution as proposal" data-bন="জ্যামিতিক ডিস্ট্রিবিউশন প্রপোজাল হিসাবে ব্যবহার করুন">জ্যামিতিক ডিস্ট্রিবিউশন প্রপোজাল হিসাবে ব্যবহার করুন</span>
+                </div>
+                
+                <div class="algorithm-step rejection">
+                    <span class="step-number">2</span>
+                    <strong data-en="Generate proposal:" data-bন="প্রপোজাল তৈরি করুন:">প্রপোজাল তৈরি করুন:</strong>
+                    <span data-en="Generate Y from geometric distribution" data-bন="জ্যামিতিক ডিস্ট্রিবিউশন থেকে Y তৈরি করুন">জ্যামিতিক ডিস্ট্রিবিউশন থেকে Y তৈরি করুন</span>
+                </div>
+                
+                <div class="algorithm-step rejection">
+                    <span class="step-number">3</span>
+                    <strong data-en="Generate uniform random:" data-bন="ইউনিফর্ম র্যান্ডম তৈরি করুন:">ইউনিফর্ম র্যান্ডম তৈরি করুন:</strong>
+                    <span data-en="Generate U ~ Uniform(0,1)" data-bন="U ~ ইউনিফর্ম(0,1) তৈরি করুন">U ~ ইউনিফর্ম(0,1) তৈরি করুন</span>
+                </div>
+                
+                <div class="algorithm-step rejection">
+                    <span class="step-number">4</span>
+                    <strong data-en="Calculate acceptance ratio:" data-bন="অ্যাকসেপ্টেন্স রেশিও গণনা করুন:">অ্যাকসেপ্টেন্স রেশিও গণনা করুন:</strong>
+                    <span data-en="Calculate α = f(Y) / (M × g(Y))" data-bন="α = f(Y) / (M × g(Y)) গণনা করুন">α = f(Y) / (M × g(Y)) গণনা করুন</span>
+                </div>
+                
+                <div class="algorithm-step rejection">
+                    <span class="step-number">5</span>
+                    <strong data-en="Accept or reject:" data-bন="অ্যাকসেপ্ট বা রিজেক্ট করুন:">অ্যাকসেপ্ট বা রিজেক্ট করুন:</strong>
+                    <span data-en="If U ≤ α, accept Y; otherwise go to step 2" data-bন="যদি U ≤ α, Y অ্যাকসেপ্ট করুন; অন্যথায় ধাপ 2-এ যান">যদি U ≤ α, Y অ্যাকসেপ্ট করুন; অন্যথায় ধাপ 2-এ যান</span>
+                </div>
+                
+                <div class="help-text" style="margin-top: 1rem;">
+                    <strong data-en="Application:" data-bন="অ্যাপ্লিকেশন:">অ্যাপ্লিকেশন:</strong>
+                    <span data-en="Useful when direct generation is difficult, flexible approach" data-bন="যখন সরাসরি জেনারেশন কঠিন, ফ্লেক্সিবল অ্যাপ্রোচ">যখন সরাসরি জেনারেশন কঠিন, ফ্লেক্সিবল অ্যাপ্রোচ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Comparison -->
+        <div class="performance-panel">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Algorithm Performance" data-bন="অ্যালগরিদম পারফরমেন্স">অ্যালগরিদম পারফরমেন্স</span>
+            </h2>
+            
+            <div class="performance-container">
+                <canvas id="performanceCanvas"></canvas>
+            </div>
+            
+            <div class="help-text" data-en="Comparison of generation time for different algorithms" data-bন="বিভিন্ন অ্যালগরিদমের জন্য জেনারেশন সময়ের তুলনা">
+                বিভিন্ন অ্যালগরিদমের জন্য জেনারেশন সময়ের তুলনা
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Poisson Random Variable Generator Loaded");
+            
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Generator State
+            let generatorState = {
+                algorithm: 'knuth',
+                lambda: 5.0,
+                sampleSize: 100,
+                maxValue: 20,
+                generatedVariables: [],
+                algorithmTimes: {
+                    knuth: 0,
+                    inverse: 0,
+                    rejection: 0
+                },
+                statistics: {
+                    sampleMean: 0,
+                    sampleVariance: 0,
+                    theoreticalMean: 5.0,
+                    meanError: 0
+                }
+            };
+
+            // DOM Elements
+            const lambdaInput = document.getElementById('lambdaValue');
+            const lambdaSlider = document.getElementById('lambdaSlider');
+            const lambdaDisplay = document.getElementById('lambdaDisplay');
+            const algorithmBtns = document.querySelectorAll('.algorithm-btn');
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const maxValueInput = document.getElementById('maxValue');
+            const generateBtn = document.getElementById('generateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            // Results Elements
+            const variablesGrid = document.getElementById('variablesGrid');
+            const sampleMeanEl = document.getElementById('sampleMean');
+            const sampleVarianceEl = document.getElementById('sampleVariance');
+            const theoreticalMeanEl = document.getElementById('theoreticalMean');
+            const meanErrorEl = document.getElementById('meanError');
+            const distributionLabel = document.getElementById('distributionLabel');
+            
+            // Canvas Contexts
+            const distributionCanvas = document.getElementById('distributionCanvas');
+            const performanceCanvas = document.getElementById('performanceCanvas');
+            let distributionCtx, performanceCtx;
+            
+            // Algorithm Details
+            const knuthDetails = document.getElementById('knuthDetails');
+            const inverseDetails = document.getElementById('inverseDetails');
+            const rejectionDetails = document.getElementById('rejectionDetails');
+            
+            // Initialize
+            initGenerator();
+            
+            function initGenerator() {
+                console.log("Initializing Generator...");
+                
+                // Initialize Canvas Contexts
+                distributionCtx = distributionCanvas.getContext('2d');
+                performanceCtx = performanceCanvas.getContext('2d');
+                
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        console.log("Changing language to:", lang);
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Lambda Controls
+                lambdaInput.addEventListener('input', updateLambda);
+                lambdaSlider.addEventListener('input', updateLambda);
+                
+                // Algorithm Selection
+                algorithmBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const algorithm = this.dataset.algorithm;
+                        console.log("Changing algorithm to:", algorithm);
+                        setAlgorithm(algorithm);
+                    });
+                });
+                
+                // Parameter Inputs
+                sampleSizeInput.addEventListener('input', updateSampleSize);
+                maxValueInput.addEventListener('input', updateMaxValue);
+                
+                // Control Buttons
+                generateBtn.addEventListener('click', generateVariables);
+                resetBtn.addEventListener('click', resetGenerator);
+                
+                // Initialize canvases
+                resizeCanvases();
+                window.addEventListener('resize', resizeCanvases);
+                
+                // Generate initial variables
+                setTimeout(() => {
+                    console.log("Generating initial variables...");
+                    generateVariables();
+                }, 500);
+            }
+            
+            function resizeCanvases() {
+                console.log("Resizing canvases...");
+                
+                const distributionContainer = document.querySelector('.distribution-container');
+                const performanceContainer = document.querySelector('.performance-container');
+                
+                if (!distributionContainer || !performanceContainer) {
+                    console.error("Containers not found!");
+                    return;
+                }
+                
+                // Set distribution canvas
+                distributionCanvas.width = distributionContainer.clientWidth;
+                distributionCanvas.height = distributionContainer.clientHeight;
+                
+                // Set performance canvas
+                performanceCanvas.width = performanceContainer.clientWidth;
+                performanceCanvas.height = performanceContainer.clientHeight;
+                
+                console.log("Canvases resized");
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+                
+                // Update distribution label
+                updateDistributionLabel();
+                
+                console.log("Language changed to:", lang);
+            }
+            
+            function updateLambda() {
+                let value = parseFloat(lambdaInput.value);
+                
+                // Validate input
+                if (isNaN(value) || value < 0.1) value = 0.1;
+                if (value > 50) value = 50;
+                
+                generatorState.lambda = value;
+                generatorState.statistics.theoreticalMean = value;
+                
+                // Sync slider with input
+                lambdaSlider.value = value;
+                lambdaInput.value = value.toFixed(1);
+                lambdaDisplay.textContent = `λ = ${value.toFixed(1)}`;
+                theoreticalMeanEl.textContent = value.toFixed(2);
+                
+                console.log("Lambda updated to:", value);
+            }
+            
+            function setAlgorithm(algorithm) {
+                generatorState.algorithm = algorithm;
+                
+                // Update active button
+                algorithmBtns.forEach(btn => {
+                    if (btn.dataset.algorithm === algorithm) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Show corresponding algorithm details
+                knuthDetails.classList.remove('active');
+                inverseDetails.classList.remove('active');
+                rejectionDetails.classList.remove('active');
+                
+                if (algorithm === 'knuth') {
+                    knuthDetails.classList.add('active');
+                } else if (algorithm === 'inverse') {
+                    inverseDetails.classList.add('active');
+                } else if (algorithm === 'rejection') {
+                    rejectionDetails.classList.add('active');
+                }
+                
+                console.log("Algorithm changed to:", algorithm);
+            }
+            
+            function updateSampleSize() {
+                let value = parseInt(sampleSizeInput.value);
+                if (isNaN(value) || value < 1) value = 1;
+                if (value > 10000) value = 10000;
+                generatorState.sampleSize = value;
+                sampleSizeInput.value = value;
+                console.log("Sample size updated to:", value);
+            }
+            
+            function updateMaxValue() {
+                let value = parseInt(maxValueInput.value);
+                if (isNaN(value) || value < 1) value = 1;
+                if (value > 100) value = 100;
+                generatorState.maxValue = value;
+                maxValueInput.value = value;
+                console.log("Max value updated to:", value);
+            }
+            
+            function updateDistributionLabel() {
+                const text = currentLanguage === 'bn' 
+                    ? `পয়সন ডিস্ট্রিবিউশন (λ=${generatorState.lambda.toFixed(1)})`
+                    : `Poisson Distribution (λ=${generatorState.lambda.toFixed(1)})`;
+                distributionLabel.textContent = text;
+            }
+            
+            // Knuth's Algorithm
+            function knuthAlgorithm(lambda) {
+                const L = Math.exp(-lambda);
+                let k = 0;
+                let p = 1;
+                
+                do {
+                    k++;
+                    p *= Math.random();
+                } while (p > L);
+                
+                return k - 1;
+            }
+            
+            // Inverse Transform Method
+            function inverseTransformAlgorithm(lambda) {
+                const u = Math.random();
+                let x = 0;
+                let p = Math.exp(-lambda);
+                let F = p;
+                
+                while (u > F) {
+                    x++;
+                    p = p * lambda / x;
+                    F += p;
+                }
+                
+                return x;
+            }
+            
+            // Acceptance-Rejection Method
+            function acceptanceRejectionAlgorithm(lambda) {
+                // Using geometric distribution as proposal
+                const p_geom = 1 / (1 + lambda);
+                const M = Math.exp(1) / Math.sqrt(2 * Math.PI * lambda);
+                
+                while (true) {
+                    // Generate from geometric distribution
+                    const u1 = Math.random();
+                    const y = Math.floor(Math.log(u1) / Math.log(1 - p_geom));
+                    
+                    // Generate uniform for acceptance
+                    const u2 = Math.random();
+                    
+                    // Calculate acceptance probability
+                    const target = Math.exp(-lambda) * Math.pow(lambda, y) / factorial(y);
+                    const proposal = Math.pow(1 - p_geom, y) * p_geom;
+                    const acceptanceProb = target / (M * proposal);
+                    
+                    if (u2 <= acceptanceProb) {
+                        return y;
+                    }
+                }
+            }
+            
+            function factorial(n) {
+                if (n === 0 || n === 1) return 1;
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            }
+            
+            function generateVariables() {
+                console.log("Starting variable generation...");
+                
+                // Show loading state
+                generateBtn.innerHTML = `<span class="loading"></span> ${currentLanguage === 'bn' ? 'তৈরি হচ্ছে...' : 'Generating...'}`;
+                generateBtn.disabled = true;
+                
+                setTimeout(() => {
+                    try {
+                        const startTime = performance.now();
+                        const { algorithm, lambda, sampleSize } = generatorState;
+                        
+                        // Clear previous variables
+                        generatorState.generatedVariables = [];
+                        
+                        // Generate variables based on selected algorithm
+                        for (let i = 0; i < sampleSize; i++) {
+                            let variable;
+                            
+                            switch(algorithm) {
+                                case 'knuth':
+                                    variable = knuthAlgorithm(lambda);
+                                    break;
+                                case 'inverse':
+                                    variable = inverseTransformAlgorithm(lambda);
+                                    break;
+                                case 'rejection':
+                                    variable = acceptanceRejectionAlgorithm(lambda);
+                                    break;
+                            }
+                            
+                            generatorState.generatedVariables.push(variable);
+                        }
+                        
+                        const endTime = performance.now();
+                        generatorState.algorithmTimes[algorithm] = endTime - startTime;
+                        
+                        // Calculate statistics
+                        calculateStatistics();
+                        
+                        // Update displays
+                        updateVariablesDisplay();
+                        updateStatisticsDisplay();
+                        visualizeDistribution();
+                        visualizePerformance();
+                        
+                        console.log(`Generated ${sampleSize} variables in ${(endTime - startTime).toFixed(2)}ms`);
+                        
+                    } catch (error) {
+                        console.error('Generation error:', error);
+                        alert(currentLanguage === 'bn' 
+                            ? 'ত্রুটি হয়েছে। আবার চেষ্টা করুন।' 
+                            : 'An error occurred. Please try again.');
+                    } finally {
+                        // Restore button state
+                        generateBtn.innerHTML = `<i class="fas fa-play-circle"></i> ${currentLanguage === 'bn' ? 'ভ্যারিয়েবল তৈরি করুন' : 'Generate Variables'}`;
+                        generateBtn.disabled = false;
+                    }
+                }, 100);
+            }
+            
+            function calculateStatistics() {
+                const { generatedVariables, lambda } = generatorState;
+                
+                if (generatedVariables.length === 0) {
+                    generatorState.statistics = {
+                        sampleMean: 0,
+                        sampleVariance: 0,
+                        theoreticalMean: lambda,
+                        meanError: 0
+                    };
+                    return;
+                }
+                
+                // Calculate sample mean
+                const sum = generatedVariables.reduce((a, b) => a + b, 0);
+                const sampleMean = sum / generatedVariables.length;
+                
+                // Calculate sample variance
+                const sumSquaredDiff = generatedVariables.reduce((a, b) => a + Math.pow(b - sampleMean, 2), 0);
+                const sampleVariance = sumSquaredDiff / generatedVariables.length;
+                
+                // Calculate mean absolute error
+                const meanError = Math.abs(sampleMean - lambda);
+                
+                generatorState.statistics = {
+                    sampleMean: sampleMean,
+                    sampleVariance: sampleVariance,
+                    theoreticalMean: lambda,
+                    meanError: meanError
+                };
+                
+                console.log("Statistics calculated:", generatorState.statistics);
+            }
+            
+            function updateVariablesDisplay() {
+                console.log("Updating variables display...");
+                variablesGrid.innerHTML = '';
+                
+                const { generatedVariables, maxValue } = generatorState;
+                
+                if (generatedVariables.length === 0) {
+                    const emptyItem = document.createElement('div');
+                    emptyItem.className = 'variable-item';
+                    emptyItem.style.gridColumn = '1 / -1';
+                    emptyItem.style.textAlign = 'center';
+                    emptyItem.style.color = '#718096';
+                    emptyItem.textContent = currentLanguage === 'bn' 
+                        ? 'কোন ভ্যারিয়েবল তৈরি হয়নি' 
+                        : 'No variables generated';
+                    variablesGrid.appendChild(emptyItem);
+                    return;
+                }
+                
+                // Display variables (limited for performance)
+                const displayCount = Math.min(200, generatedVariables.length);
+                const displayedVariables = generatedVariables.slice(0, displayCount);
+                
+                displayedVariables.forEach((variable, index) => {
+                    const variableItem = document.createElement('div');
+                    variableItem.className = 'variable-item fade-in';
+                    variableItem.textContent = variable;
+                    variableItem.title = currentLanguage === 'bn' 
+                        ? `ভ্যারিয়েবল ${index + 1}: ${variable}` 
+                        : `Variable ${index + 1}: ${variable}`;
+                    
+                    // Color based on value
+                    const normalizedValue = Math.min(1, variable / maxValue);
+                    const hue = 240 * (1 - normalizedValue); // Blue to red
+                    variableItem.style.backgroundColor = `hsl(${hue}, 70%, 95%)`;
+                    variableItem.style.borderColor = `hsl(${hue}, 50%, 70%)`;
+                    
+                    // Add click event
+                    variableItem.addEventListener('click', function() {
+                        showVariableDetails(index, variable);
+                    });
+                    
+                    variablesGrid.appendChild(variableItem);
+                });
+                
+                if (generatedVariables.length > displayCount) {
+                    const moreItem = document.createElement('div');
+                    moreItem.className = 'variable-item';
+                    moreItem.style.gridColumn = '1 / -1';
+                    moreItem.style.textAlign = 'center';
+                    moreItem.style.color = '#718096';
+                    moreItem.textContent = currentLanguage === 'bn'
+                        ? `... আরও ${generatedVariables.length - displayCount} ভ্যারিয়েবল`
+                        : `... ${generatedVariables.length - displayCount} more variables`;
+                    variablesGrid.appendChild(moreItem);
+                }
+            }
+            
+            function showVariableDetails(index, value) {
+                const message = currentLanguage === 'bn'
+                    ? `ভ্যারিয়েবল ${index + 1}: ${value}`
+                    : `Variable ${index + 1}: ${value}`;
+                
+                // Highlight the variable
+                const variableItems = document.querySelectorAll('.variable-item');
+                if (variableItems[index]) {
+                    variableItems[index].classList.add('highlight');
+                    setTimeout(() => {
+                        variableItems[index].classList.remove('highlight');
+                    }, 1000);
+                }
+                
+                console.log(message);
+            }
+            
+            function updateStatisticsDisplay() {
+                console.log("Updating statistics display...");
+                const stats = generatorState.statistics;
+                
+                sampleMeanEl.textContent = stats.sampleMean.toFixed(2);
+                sampleVarianceEl.textContent = stats.sampleVariance.toFixed(2);
+                theoreticalMeanEl.textContent = stats.theoreticalMean.toFixed(2);
+                meanErrorEl.textContent = stats.meanError.toFixed(4);
+                
+                // Update distribution label
+                updateDistributionLabel();
+            }
+            
+            function visualizeDistribution() {
+                console.log("Visualizing distribution...");
+                const ctx = distributionCtx;
+                ctx.clearRect(0, 0, distributionCanvas.width, distributionCanvas.height);
+                
+                const { generatedVariables, lambda, maxValue } = generatorState;
+                
+                if (generatedVariables.length === 0) {
+                    console.log("No data to visualize");
+                    return;
+                }
+                
+                const margin = 40;
+                const plotWidth = distributionCanvas.width - 2 * margin;
+                const plotHeight = distributionCanvas.height - 2 * margin;
+                
+                // Create histogram of generated variables
+                const histogram = new Array(maxValue + 1).fill(0);
+                generatedVariables.forEach(value => {
+                    if (value <= maxValue) {
+                        histogram[value]++;
+                    }
+                });
+                
+                const maxCount = Math.max(...histogram);
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, margin + plotHeight);
+                ctx.lineTo(margin + plotWidth, margin + plotHeight);
+                ctx.strokeStyle = '#2D3748';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw histogram bars (generated sample)
+                const barWidth = plotWidth / (maxValue + 1);
+                histogram.forEach((count, x) => {
+                    const barHeight = (count / maxCount) * plotHeight * 0.8;
+                    const barX = margin + x * barWidth;
+                    const barY = margin + plotHeight - barHeight;
+                    
+                    // Draw bar
+                    ctx.fillStyle = 'rgba(33, 150, 243, 0.7)';
+                    ctx.fillRect(barX, barY, barWidth * 0.8, barHeight);
+                    
+                    // Draw bar border
+                    ctx.strokeStyle = '#1976D2';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(barX, barY, barWidth * 0.8, barHeight);
+                    
+                    // Draw value label (for significant bars)
+                    if (count > 0 && count / maxCount > 0.1) {
+                        ctx.fillStyle = '#2D3748';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(count.toString(), barX + barWidth * 0.4, barY - 5);
+                    }
+                    
+                    // Draw x-axis label
+                    ctx.fillStyle = '#2D3748';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(x.toString(), barX + barWidth * 0.4, margin + plotHeight + 15);
+                });
+                
+                // Draw theoretical Poisson distribution curve
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(244, 67, 54, 0.8)';
+                ctx.lineWidth = 2;
+                
+                // Calculate theoretical probabilities
+                const theoreticalProbs = [];
+                let sumProb = 0;
+                for (let x = 0; x <= maxValue; x++) {
+                    const prob = Math.exp(-lambda) * Math.pow(lambda, x) / factorial(x);
+                    theoreticalProbs.push(prob);
+                    sumProb += prob;
+                }
+                
+                // Normalize to match histogram scale
+                const scaleFactor = maxCount / Math.max(...theoreticalProbs);
+                
+                for (let x = 0; x <= maxValue; x++) {
+                    const probHeight = theoreticalProbs[x] * scaleFactor * plotHeight * 0.8;
+                    const pointX = margin + x * barWidth + barWidth * 0.4;
+                    const pointY = margin + plotHeight - probHeight;
+                    
+                    if (x === 0) {
+                        ctx.moveTo(pointX, pointY);
+                    } else {
+                        ctx.lineTo(pointX, pointY);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw x-axis label
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'মান (k)' : 'Value (k)',
+                    distributionCanvas.width / 2,
+                    distributionCanvas.height - 5
+                );
+                
+                // Draw y-axis label
+                ctx.save();
+                ctx.translate(10, distributionCanvas.height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'ঘনত্ব' : 'Frequency',
+                    0,
+                    0
+                );
+                ctx.restore();
+                
+                // Draw legend
+                const legendX = margin + plotWidth - 150;
+                const legendY = margin + 10;
+                
+                // Sample legend
+                ctx.fillStyle = 'rgba(33, 150, 243, 0.7)';
+                ctx.fillRect(legendX, legendY, 20, 10);
+                ctx.strokeStyle = '#1976D2';
+                ctx.strokeRect(legendX, legendY, 20, 10);
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(currentLanguage === 'bn' ? 'নমুনা' : 'Sample', legendX + 25, legendY + 8);
+                
+                // Theoretical legend
+                ctx.beginPath();
+                ctx.moveTo(legendX, legendY + 25);
+                ctx.lineTo(legendX + 20, legendY + 25);
+                ctx.strokeStyle = 'rgba(244, 67, 54, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#2D3748';
+                ctx.fillText(currentLanguage === 'bn' ? 'তাত্ত্বিক' : 'Theoretical', legendX + 25, legendY + 28);
+                
+                console.log("Distribution visualization complete");
+            }
+            
+            function visualizePerformance() {
+                console.log("Visualizing performance...");
+                const ctx = performanceCtx;
+                ctx.clearRect(0, 0, performanceCanvas.width, performanceCanvas.height);
+                
+                const { algorithmTimes } = generatorState;
+                const algorithms = ['knuth', 'inverse', 'rejection'];
+                const colors = ['#2196F3', '#4CAF50', '#FF9800'];
+                const names = {
+                    knuth: currentLanguage === 'bn' ? 'নুথ' : 'Knuth',
+                    inverse: currentLanguage === 'bn' ? 'ইনভার্স' : 'Inverse',
+                    rejection: currentLanguage === 'bn' ? 'রিজেকশন' : 'Rejection'
+                };
+                
+                const margin = 40;
+                const plotWidth = performanceCanvas.width - 2 * margin;
+                const plotHeight = performanceCanvas.height - 2 * margin;
+                
+                // Find max time for scaling
+                const maxTime = Math.max(...Object.values(algorithmTimes));
+                const scaledMaxTime = maxTime === 0 ? 1 : maxTime;
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, margin + plotHeight);
+                ctx.lineTo(margin + plotWidth, margin + plotHeight);
+                ctx.strokeStyle = '#2D3748';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw bars for each algorithm
+                const barWidth = plotWidth / (algorithms.length + 1);
+                const barSpacing = barWidth / (algorithms.length + 1);
+                
+                algorithms.forEach((algorithm, index) => {
+                    const time = algorithmTimes[algorithm];
+                    const barHeight = (time / scaledMaxTime) * plotHeight * 0.8;
+                    const barX = margin + (index + 1) * barWidth;
+                    const barY = margin + plotHeight - barHeight;
+                    
+                    // Draw bar
+                    ctx.fillStyle = colors[index];
+                    ctx.fillRect(barX - barWidth / 2, barY, barWidth - barSpacing, barHeight);
+                    
+                    // Draw time label
+                    ctx.fillStyle = '#2D3748';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${time.toFixed(2)}ms`, barX, barY - 5);
+                    
+                    // Draw algorithm name
+                    ctx.fillText(names[algorithm], barX, margin + plotHeight + 15);
+                    
+                    // Highlight current algorithm
+                    if (algorithm === generatorState.algorithm) {
+                        ctx.strokeStyle = '#9C27B0';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(barX - barWidth / 2 - 2, barY - 2, barWidth - barSpacing + 4, barHeight + 4);
+                    }
+                });
+                
+                // Draw y-axis label
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'সময় (মিলিসেকেন্ড)' : 'Time (milliseconds)',
+                    30,
+                    performanceCanvas.height / 2
+                );
+                
+                // Draw title
+                ctx.fillStyle = '#2D3748';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    currentLanguage === 'bn' ? 'অ্যালগরিদম পারফরমেন্স' : 'Algorithm Performance',
+                    performanceCanvas.width / 2,
+                    25
+                );
+                
+                console.log("Performance visualization complete");
+            }
+            
+            function resetGenerator() {
+                console.log("Resetting generator...");
+                
+                // Reset generator state
+                generatorState.lambda = 5.0;
+                generatorState.sampleSize = 100;
+                generatorState.maxValue = 20;
+                generatorState.generatedVariables = [];
+                generatorState.algorithmTimes = {
+                    knuth: 0,
+                    inverse: 0,
+                    rejection: 0
+                };
+                generatorState.statistics = {
+                    sampleMean: 0,
+                    sampleVariance: 0,
+                    theoreticalMean: 5.0,
+                    meanError: 0
+                };
+                
+                // Reset inputs
+                lambdaInput.value = 5.0;
+                lambdaSlider.value = 5.0;
+                lambdaDisplay.textContent = 'λ = 5.0';
+                sampleSizeInput.value = 100;
+                maxValueInput.value = 20;
+                theoreticalMeanEl.textContent = '5.00';
+                
+                // Reset active buttons
+                algorithmBtns.forEach(btn => {
+                    if (btn.dataset.algorithm === 'knuth') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Show knuth details by default
+                setAlgorithm('knuth');
+                
+                // Clear displays
+                updateVariablesDisplay();
+                updateStatisticsDisplay();
+                
+                // Clear canvases
+                distributionCtx.clearRect(0, 0, distributionCanvas.width, distributionCanvas.height);
+                performanceCtx.clearRect(0, 0, performanceCanvas.width, performanceCanvas.height);
+                
+                console.log("Reset complete");
+            }
+            
+            console.log("Initialization complete!");
+        });
+    </script>
+</body>
+</html>

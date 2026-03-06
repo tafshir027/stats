@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Option Pricing | Financial Derivatives</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #2196F3;
+            --secondary: #1976D2;
+            --accent: #FF5722;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --info: #9C27B0;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --european-color: #2196F3;
+            --american-color: #FF5722;
+            --mc-price: #4CAF50;
+            --bs-price: #9C27B0;
+            --delta-color: #2196F3;
+            --gamma-color: #FF9800;
+            --vega-color: #4CAF50;
+            --theta-color: #FF5722;
+            --rho-color: #9C27B0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent), var(--info));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Option Type Selection */
+        .option-type-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .option-type-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-type-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--light-gray);
+            text-align: center;
+        }
+
+        .option-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-type-card.active {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+        }
+
+        .option-type-card.european.active {
+            border-color: var(--european-color);
+        }
+
+        .option-type-card.american.active {
+            border-color: var(--american-color);
+        }
+
+        .option-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .european .option-icon {
+            color: var(--european-color);
+        }
+
+        .american .option-icon {
+            color: var(--american-color);
+        }
+
+        .option-type-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Option Parameters */
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--primary);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        /* Monte Carlo Settings */
+        .mc-settings {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .price-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .price-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Price Comparison */
+        .price-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .price-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .price-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .price-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .price-card.mc {
+            border-color: var(--mc-price);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+        }
+
+        .price-card.bs {
+            border-color: var(--bs-price);
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1) 0%, rgba(156, 39, 176, 0.05) 100%);
+        }
+
+        .price-label {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .price-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .mc-price {
+            color: var(--mc-price);
+        }
+
+        .bs-price {
+            color: var(--bs-price);
+        }
+
+        .price-difference {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        /* Greeks Display */
+        .greeks-section {
+            margin-top: 2rem;
+        }
+
+        .greeks-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .greeks-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .greeks-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .greeks-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .greek-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .greek-card.delta { border-color: var(--delta-color); }
+        .greek-card.gamma { border-color: var(--gamma-color); }
+        .greek-card.vega { border-color: var(--vega-color); }
+        .greek-card.theta { border-color: var(--theta-color); }
+        .greek-card.rho { border-color: var(--rho-color); }
+
+        .greek-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .greek-card.delta .greek-icon { color: var(--delta-color); }
+        .greek-card.gamma .greek-icon { color: var(--gamma-color); }
+        .greek-card.vega .greek-icon { color: var(--vega-color); }
+        .greek-card.theta .greek-icon { color: var(--theta-color); }
+        .greek-card.rho .greek-icon { color: var(--rho-color); }
+
+        .greek-name {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .greek-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .visualization-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .visualization-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Payoff Diagram */
+        .payoff-diagram {
+            height: 300px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #payoffCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Simulation Info */
+        .simulation-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .info-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .info-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        /* Path Simulation */
+        .path-simulation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .path-container {
+            height: 300px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #pathCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Convergence Analysis */
+        .convergence-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .convergence-container {
+            height: 250px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+            padding: 1rem;
+        }
+
+        /* Theory Section */
+        .theory-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .theory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .theory-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .theory-card h3 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theory-content {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .price-value {
+                font-size: 2rem;
+            }
+        }
+
+        /* Progress Bar */
+        .simulation-progress {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s ease;
+        }
+
+        /* Option Type Badge */
+        .option-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .european-badge {
+            background: var(--european-color);
+        }
+
+        .american-badge {
+            background: var(--american-color);
+        }
+
+        /* Greeks Legend */
+        .greeks-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .delta-color { background: var(--delta-color); }
+        .gamma-color { background: var(--gamma-color); }
+        .vega-color { background: var(--vega-color); }
+        .theta-color { background: var(--theta-color); }
+        .rho-color { background: var(--rho-color); }
+
+        /* Range Slider */
+        .range-container {
+            margin-bottom: 1rem;
+        }
+
+        .range-value {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Strike Price Indicator */
+        .strike-indicator {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--dark);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .strike-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Option Pricing" data-bn="মন্টে কার্লো অপশন প্রাইসিং">মন্টে কার্লো অপশন প্রাইসিং</h1>
+            <p class="subtitle" data-en="Price financial options using Monte Carlo methods with Black-Scholes comparison, European/American options, and Greeks calculation" data-bn="মন্টে কার্লো পদ্ধতি ব্যবহার করে আর্থিক অপশন প্রাইসিং করুন ব্ল্যাক-স্কোলস তুলনা, ইউরোপিয়ান/আমেরিকান অপশন এবং গ্রিকস গণনার মাধ্যমে">
+                মন্টে কার্লো পদ্ধতি ব্যবহার করে আর্থিক অপশন প্রাইসিং করুন ব্ল্যাক-স্কোলস তুলনা, ইউরোপিয়ান/আমেরিকান অপশন এবং গ্রিকস গণনার মাধ্যমে
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Option Parameters" data-bn="অপশন প্যারামিটার">অপশন প্যারামিটার</span>
+                </h2>
+
+                <!-- Option Type Selection -->
+                <div class="option-type-grid">
+                    <div class="option-type-card european active" data-type="european">
+                        <div class="option-icon">
+                            <i class="fas fa-euro-sign"></i>
+                        </div>
+                        <div class="option-type-name" data-en="European Option" data-bn="ইউরোপিয়ান অপশন">ইউরোপিয়ান অপশন</div>
+                        <div class="help-text" data-en="Exercise only at expiration" data-bn="শুধুমাত্র এক্সপায়ারেশনে এক্সারসাইজ">
+                            শুধুমাত্র এক্সপায়ারেশনে এক্সারসাইজ
+                        </div>
+                    </div>
+
+                    <div class="option-type-card american" data-type="american">
+                        <div class="option-icon">
+                            <i class="fas fa-flag-usa"></i>
+                        </div>
+                        <div class="option-type-name" data-en="American Option" data-bn="আমেরিকান অপশন">আমেরিকান অপশন</div>
+                        <div class="help-text" data-en="Exercise any time until expiration" data-bন="যেকোনো সময় এক্সারসাইজ করতে পারেন">
+                            যেকোনো সময় এক্সারসাইজ করতে পারেন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option Parameters -->
+                <div class="parameters-grid">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="Stock Price (S₀)" data-bন="স্টক প্রাইস (S₀)">স্টক প্রাইস (S₀)</span>
+                        </div>
+                        <input type="number" id="stockPrice" class="value-input" min="1" max="1000" step="1" value="100">
+                        <div class="help-text" data-en="Current price of underlying asset" data-bন="আন্ডারলাইং অ্যাসেটের বর্তমান মূল্য">
+                            আন্ডারলাইং অ্যাসেটের বর্তমান মূল্য
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-bullseye"></i>
+                            <span data-en="Strike Price (K)" data-bন="স্ট্রাইক প্রাইস (K)">স্ট্রাইক প্রাইস (K)</span>
+                        </div>
+                        <input type="number" id="strikePrice" class="value-input" min="1" max="1000" step="1" value="100">
+                        <div class="help-text" data-en="Exercise price of the option" data-bন="অপশনের এক্সারসাইজ প্রাইস">
+                            অপশনের এক্সারসাইজ প্রাইস
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span data-en="Time to Maturity (T)" data-bন="ম্যাচিউরিটি সময় (T)">ম্যাচিউরিটি সময় (T)</span>
+                        </div>
+                        <input type="number" id="timeToMaturity" class="value-input" min="0.1" max="5" step="0.1" value="1.0">
+                        <div class="help-text" data-en="Years until expiration" data-bন="এক্সপায়ারেশন পর্যন্ত বছর">
+                            এক্সপায়ারেশন পর্যন্ত বছর
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-percentage"></i>
+                            <span data-en="Risk-Free Rate (r)" data-bন="রিস্ক-ফ্রি রেট (r)">রিস্ক-ফ্রি রেট (r)</span>
+                        </div>
+                        <input type="number" id="riskFreeRate" class="value-input" min="0" max="0.2" step="0.01" value="0.05">
+                        <div class="help-text" data-en="Annual risk-free interest rate" data-bন="বার্ষিক রিস্ক-ফ্রি সুদের হার">
+                            বার্ষিক রিস্ক-ফ্রি সুদের হার
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-chart-area"></i>
+                            <span data-en="Volatility (σ)" data-bন="ভোলাটিলিটি (σ)">ভোলাটিলিটি (σ)</span>
+                        </div>
+                        <input type="number" id="volatility" class="value-input" min="0.1" max="1.0" step="0.05" value="0.2">
+                        <div class="help-text" data-en="Annual volatility of returns" data-bন="রিটার্নের বার্ষিক ভোলাটিলিটি">
+                            রিটার্নের বার্ষিক ভোলাটিলিটি
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-divide"></i>
+                            <span data-en="Dividend Yield (q)" data-bন="ডিভিডেন্ড ইয়েল্ড (q)">ডিভিডেন্ড ইয়েল্ড (q)</span>
+                        </div>
+                        <input type="number" id="dividendYield" class="value-input" min="0" max="0.1" step="0.01" value="0.0">
+                        <div class="help-text" data-en="Continuous dividend yield" data-bন="ক্রমাগত ডিভিডেন্ড ইয়েল্ড">
+                            ক্রমাগত ডিভিডেন্ড ইয়েল্ড
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monte Carlo Settings -->
+                <h2 class="section-title">
+                    <i class="fas fa-random"></i>
+                    <span data-en="Monte Carlo Settings" data-bন="মন্টে কার্লো সেটিংস">মন্টে কার্লো সেটিংস</span>
+                </h2>
+
+                <div class="mc-settings">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="Simulations" data-bন="সিমুলেশন">সিমুলেশন</span>
+                        </div>
+                        <input type="number" id="numSimulations" class="value-input" min="1000" max="1000000" step="1000" value="10000">
+                        <div class="help-text" data-en="Number of Monte Carlo paths" data-bন="মন্টে কার্লো পাথের সংখ্যা">
+                            মন্টে কার্লো পাথের সংখ্যা
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-steps"></i>
+                            <span data-en="Time Steps" data-bন="টাইম স্টেপ">টাইম স্টেপ</span>
+                        </div>
+                        <input type="number" id="numSteps" class="value-input" min="10" max="1000" step="10" value="252">
+                        <div class="help-text" data-en="Steps per simulation (trading days)" data-bন="প্রতি সিমুলেশনের স্টেপ (ট্রেডিং ডে)">
+                            প্রতি সিমুলেশনের স্টেপ (ট্রেডিং ডে)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option Style -->
+                <div class="mc-settings">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span data-en="Option Style" data-bন="অপশন স্টাইল">অপশন স্টাইল</span>
+                        </div>
+                        <select id="optionStyle" class="value-input">
+                            <option value="call" data-en="Call Option" data-bন="কল অপশন">কল অপশন</option>
+                            <option value="put" data-en="Put Option" data-bন="পুট অপশন">পুট অপশন</option>
+                        </select>
+                        <div class="help-text" data-en="Right to buy (call) or sell (put)" data-bন="কিনার অধিকার (কল) বা বিক্রির অধিকার (পুট)">
+                            কিনার অধিকার (কল) বা বিক্রির অধিকার (পুট)
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-calculator"></i>
+                            <span data-en="Variance Reduction" data-bন="ভ্যারিয়েন্স রিডাকশন">ভ্যারিয়েন্স রিডাকশন</span>
+                        </div>
+                        <select id="varianceReduction" class="value-input">
+                            <option value="none" data-en="None" data-bন="কিছুই না">কিছুই না</option>
+                            <option value="antithetic" data-en="Antithetic Variates" data-bন="অ্যান্টিথেটিক ভেরিয়েট">অ্যান্টিথেটিক ভেরিয়েট</option>
+                            <option value="control" data-en="Control Variates" data-bন="কন্ট্রোল ভেরিয়েট">কন্ট্রোল ভেরিয়েট</option>
+                        </select>
+                        <div class="help-text" data-en="Technique to reduce Monte Carlo variance" data-bন="মন্টে কার্লো ভ্যারিয়েন্স কমাতে টেকনিক">
+                            মন্টে কার্লো ভ্যারিয়েন্স কমাতে টেকনিক
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn price-btn" id="priceBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Price Option" data-bন="অপশন প্রাইস করুন">অপশন প্রাইস করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset Parameters" data-bন="প্যারামিটার রিসেট">প্যারামিটার রিসেট</span>
+                    </button>
+                </div>
+
+                <!-- Simulation Progress -->
+                <div class="simulation-progress">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Price Comparison & Greeks" data-bন="প্রাইস তুলনা ও গ্রিকস">প্রাইস তুলনা ও গ্রিকস</span>
+                </h2>
+
+                <!-- Price Comparison -->
+                <div class="price-comparison">
+                    <div class="price-card mc">
+                        <div class="price-label">
+                            <i class="fas fa-random"></i>
+                            <span data-en="Monte Carlo Price" data-bন="মন্টে কার্লো প্রাইস">মন্টে কার্লো প্রাইস</span>
+                        </div>
+                        <div class="price-value mc-price" id="mcPrice">-</div>
+                        <div class="help-text">
+                            <span data-en="95% Confidence Interval:" data-bন="৯৫% কনফিডেন্স ইন্টারভ্যাল:">৯৫% কনফিডেন্স ইন্টারভ্যাল:</span>
+                            <span id="mcConfidence">[ - , - ]</span>
+                        </div>
+                        <div class="price-difference" id="mcDifference">
+                            <span data-en="Standard Error:" data-bন="স্ট্যান্ডার্ড এরর:">স্ট্যান্ডার্ড এরর:</span>
+                            <span id="mcStdError">-</span>
+                        </div>
+                    </div>
+
+                    <div class="price-card bs">
+                        <div class="price-label">
+                            <i class="fas fa-square-root-alt"></i>
+                            <span data-en="Black-Scholes Price" data-bন="ব্ল্যাক-স্কোলস প্রাইস">ব্ল্যাক-স্কোলস প্রাইস</span>
+                        </div>
+                        <div class="price-value bs-price" id="bsPrice">-</div>
+                        <div class="help-text" data-en="Analytical solution for European options" data-bন="ইউরোপিয়ান অপশনের জন্য এনালিটিকাল সমাধান">
+                            ইউরোপিয়ান অপশনের জন্য এনালিটিকাল সমাধান
+                        </div>
+                        <div class="price-difference">
+                            <span data-en="Difference:" data-bন="পার্থক্য:">পার্থক্য:</span>
+                            <span id="priceDifference">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Greeks Display -->
+                <div class="greeks-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-greek-capital"></i>
+                        <span data-en="Option Greeks" data-bন="অপশন গ্রিকস">অপশন গ্রিকস</span>
+                    </h2>
+                    
+                    <div class="greeks-grid">
+                        <div class="greek-card delta">
+                            <div class="greek-icon">
+                                <i class="fas fa-arrow-trend-up"></i>
+                            </div>
+                            <div class="greek-name" data-en="Delta (Δ)" data-bন="ডেল্টা (Δ)">ডেল্টা (Δ)</div>
+                            <div class="greek-value" id="deltaValue">-</div>
+                            <div class="help-text" data-en="Price sensitivity to underlying" data-bন="আন্ডারলাইং এ সেনসিটিভিটি">
+                                আন্ডারলাইং এ সেনসিটিভিটি
+                            </div>
+                        </div>
+                        
+                        <div class="greek-card gamma">
+                            <div class="greek-icon">
+                                <i class="fas fa-chart-curve"></i>
+                            </div>
+                            <div class="greek-name" data-en="Gamma (Γ)" data-bন="গামা (Γ)">গামা (Γ)</div>
+                            <div class="greek-value" id="gammaValue">-</div>
+                            <div class="help-text" data-en="Delta sensitivity to underlying" data-bন="আন্ডারলাইং এ ডেল্টার সেনসিটিভিটি">
+                                আন্ডারলাইং এ ডেল্টার সেনসিটিভিটি
+                            </div>
+                        </div>
+                        
+                        <div class="greek-card vega">
+                            <div class="greek-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="greek-name" data-en="Vega (ν)" data-bন="ভেগা (ν)">ভেগা (ν)</div>
+                            <div class="greek-value" id="vegaValue">-</div>
+                            <div class="help-text" data-en="Price sensitivity to volatility" data-bন="ভোলাটিলিটি এ সেনসিটিভিটি">
+                                ভোলাটিলিটি এ সেনসিটিভিটি
+                            </div>
+                        </div>
+                        
+                        <div class="greek-card theta">
+                            <div class="greek-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="greek-name" data-en="Theta (Θ)" data-bন="থিটা (Θ)">থিটা (Θ)</div>
+                            <div class="greek-value" id="thetaValue">-</div>
+                            <div class="help-text" data-en="Time decay (per day)" data-bন="সময় ক্ষয় (প্রতিদিন)">
+                                সময় ক্ষয় (প্রতিদিন)
+                            </div>
+                        </div>
+                        
+                        <div class="greek-card rho">
+                            <div class="greek-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="greek-name" data-en="Rho (ρ)" data-bন="রো (ρ)">রো (ρ)</div>
+                            <div class="greek-value" id="rhoValue">-</div>
+                            <div class="help-text" data-en="Price sensitivity to interest rates" data-bন="সুদের হার এ সেনসিটিভিটি">
+                                সুদের হার এ সেনসিটিভিটি
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Greeks Legend -->
+                    <div class="greeks-legend">
+                        <div class="legend-item">
+                            <div class="legend-color delta-color"></div>
+                            <span data-en="Delta: Price vs Underlying" data-bন="ডেল্টা: প্রাইস vs আন্ডারলাইং">ডেল্টা: প্রাইস vs আন্ডারলাইং</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color gamma-color"></div>
+                            <span data-en="Gamma: Delta vs Underlying" data-bন="গামা: ডেল্টা vs আন্ডারলাইং">গামা: ডেল্টা vs আন্ডারলাইং</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color vega-color"></div>
+                            <span data-en="Vega: Price vs Volatility" data-bন="ভেগা: প্রাইস vs ভোলাটিলিটি">ভেগা: প্রাইস vs ভোলাটিলিটি</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Panel -->
+        <div class="visualization-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Payoff Diagram & Simulation Info" data-bন="পেয়অফ ডায়াগ্রাম ও সিমুলেশন তথ্য">পেয়অফ ডায়াগ্রাম ও সিমুলেশন তথ্য</span>
+            </h2>
+            
+            <div class="visualization-container">
+                <div class="payoff-diagram">
+                    <canvas id="payoffCanvas"></canvas>
+                    <div class="strike-indicator">
+                        <div class="strike-label" id="strikeLabel">K = 100</div>
+                    </div>
+                </div>
+                
+                <div class="simulation-info">
+                    <div class="info-card">
+                        <div class="parameter-label">
+                            <i class="fas fa-microchip"></i>
+                            <span data-en="Simulation Time" data-bন="সিমুলেশন সময়">সিমুলেশন সময়</span>
+                        </div>
+                        <div class="info-value" id="simulationTime">- ms</div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="parameter-label">
+                            <i class="fas fa-chart-pie"></i>
+                            <span data-en="In-the-Money %" data-bন="ইন-দ্য-মানি %">ইন-দ্য-মানি %</span>
+                        </div>
+                        <div class="info-value" id="itmPercentage">- %</div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="parameter-label">
+                            <i class="fas fa-bolt"></i>
+                            <span data-en="Convergence Speed" data-bন="কনভারজেন্স গতি">কনভারজেন্স গতি</span>
+                        </div>
+                        <div class="info-value" id="convergenceSpeed">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Path Simulation -->
+        <div class="path-simulation">
+            <h2 class="section-title">
+                <i class="fas fa-project-diagram"></i>
+                <span data-en="Monte Carlo Path Simulation" data-bন="মন্টে কার্লো পাথ সিমুলেশন">মন্টে কার্লো পাথ সিমুলেশন</span>
+            </h2>
+            
+            <div class="path-container">
+                <canvas id="pathCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Convergence Analysis -->
+        <div class="convergence-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="range-container">
+                <div class="range-value" id="simulationsValue" data-en="Simulations: 10,000" data-bন="সিমুলেশন: ১০,০০০">সিমুলেশন: ১০,০০০</div>
+                <input type="range" id="simulationsSlider" class="range-slider" min="1000" max="50000" step="1000" value="10000">
+            </div>
+            
+            <div class="convergence-container">
+                <canvas id="convergenceCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Theory Section -->
+        <div class="theory-section">
+            <h2 class="section-title">
+                <i class="fas fa-book-open"></i>
+                <span data-en="Option Pricing Theory" data-bন="অপশন প্রাইসিং তত্ত্ব">অপশন প্রাইসিং তত্ত্ব</span>
+            </h2>
+            
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-random"></i>
+                        <span data-en="Monte Carlo Method" data-bন="মন্টে কার্লো পদ্ধতি">মন্টে কার্লো পদ্ধতি</span>
+                    </h3>
+                    <div class="theory-content" data-en="Simulate geometric Brownian motion paths for the underlying asset. Discount expected payoff using risk-neutral valuation. Works for both European and American options (with early exercise optimization)." data-bন="আন্ডারলাইং অ্যাসেটের জন্য জিওমেট্রিক ব্রাউনিয়ান মোশন পাথ সিমুলেট করুন। রিস্ক-নিউট্রাল ভ্যালুয়েশন ব্যবহার করে প্রত্যাশিত পেয়অফ ডিস্কাউন্ট করুন। ইউরোপিয়ান এবং আমেরিকান উভয় অপশনের জন্য কাজ করে (আর্লি এক্সারসাইজ অপটিমাইজেশন সহ)।">
+                        আন্ডারলাইং অ্যাসেটের জন্য জিওমেট্রিক ব্রাউনিয়ান মোশন পাথ সিমুলেট করুন। রিস্ক-নিউট্রাল ভ্যালুয়েশন ব্যবহার করে প্রত্যাশিত পেয়অফ ডিস্কাউন্ট করুন। ইউরোপিয়ান এবং আমেরিকান উভয় অপশনের জন্য কাজ করে (আর্লি এক্সারসাইজ অপটিমাইজেশন সহ)।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-square-root-alt"></i>
+                        <span data-en="Black-Scholes Model" data-bন="ব্ল্যাক-স্কোলস মডেল">ব্ল্যাক-স্কোলস মডেল</span>
+                    </h3>
+                    <div class="theory-content" data-en="Closed-form solution for European options. Assumes constant volatility, risk-free rate, no dividends, and log-normal asset returns. C = S₀N(d₁) - Ke⁻ʳᵀN(d₂) where d₁ = [ln(S₀/K) + (r + σ²/2)T] / (σ√T), d₂ = d₁ - σ√T." data-bন="ইউরোপিয়ান অপশনের জন্য ক্লোজড-ফর্ম সমাধান। ধ্রুবক ভোলাটিলিটি, রিস্ক-ফ্রি রেট, কোনো ডিভিডেন্ড নেই এবং লগ-নরমাল অ্যাসেট রিটার্ন ধরে নেয়। C = S₀N(d₁) - Ke⁻ʳᵀN(d₂) যেখানে d₁ = [ln(S₀/K) + (r + σ²/2)T] / (σ√T), d₂ = d₁ - σ√T।">
+                        ইউরোপিয়ান অপশনের জন্য ক্লোজড-ফর্ম সমাধান। ধ্রুবক ভোলাটিলিটি, রিস্ক-ফ্রি রেট, কোনো ডিভিডেন্ড নেই এবং লগ-নরমাল অ্যাসেট রিটার্ন ধরে নেয়। C = S₀N(d₁) - Ke⁻ʳᵀN(d₂) যেখানে d₁ = [ln(S₀/K) + (r + σ²/2)T] / (σ√T), d₂ = d₁ - σ√T।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-greek-capital"></i>
+                        <span data-en="Option Greeks" data-bন="অপশন গ্রিকস">অপশন গ্রিকস</span>
+                    </h3>
+                    <div class="theory-content" data-en="Delta (Δ): ∂C/∂S, Gamma (Γ): ∂²C/∂S², Vega (ν): ∂C/∂σ, Theta (Θ): -∂C/∂T, Rho (ρ): ∂C/∂r. Greeks measure sensitivity to various parameters and are crucial for risk management and hedging strategies." data-bন="ডেল্টা (Δ): ∂C/∂S, গামা (Γ): ∂²C/∂S², ভেগা (ν): ∂C/∂σ, থিটা (Θ): -∂C/∂T, রো (ρ): ∂C/∂r। গ্রিকস বিভিন্ন প্যারামিটারে সেনসিটিভিটি পরিমাপ করে এবং রিস্ক ম্যানেজমেন্ট ও হেজিং স্ট্র্যাটেজির জন্য গুরুত্বপূর্ণ।">
+                        ডেল্টা (Δ): ∂C/∂S, গামা (Γ): ∂²C/∂S², ভেগা (ν): ∂C/∂σ, থিটা (Θ): -∂C/∂T, রো (ρ): ∂C/∂r। গ্রিকস বিভিন্ন প্যারামিটারে সেনসিটিভিটি পরিমাপ করে এবং রিস্ক ম্যানেজমেন্ট ও হেজিং স্ট্র্যাটেজির জন্য গুরুত্বপূর্ণ।
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="American Options" data-bন="আমেরিকান অপশন">আমেরিকান অপশন</span>
+                    </h3>
+                    <div class="theory-content" data-en="Early exercise feature creates additional value. Monte Carlo with Longstaff-Schwartz algorithm approximates optimal exercise boundary. No closed-form solution exists. Typically priced using tree methods or Monte Carlo simulation." data-bন="আর্লি এক্সারসাইজ ফিচার অতিরিক্ত ভ্যালু তৈরি করে। লংস্টাফ-সোয়ার্টজ অ্যালগরিদম সহ মন্টে কার্লো সর্বোত্তম এক্সারসাইজ বাউন্ডারি আনুমানিক করে। কোনো ক্লোজড-ফর্ম সমাধান নেই। সাধারণত ট্রি মেথড বা মন্টে কার্লো সিমুলেশন ব্যবহার করে প্রাইস করা হয়।">
+                        আর্লি এক্সারসাইজ ফিচার অতিরিক্ত ভ্যালু তৈরি করে। লংস্টাফ-সোয়ার্টজ অ্যালগরিদম সহ মন্টে কার্লো সর্বোত্তম এক্সারসাইজ বাউন্ডারি আনুমানিক করে। কোনো ক্লোজড-ফর্ম সমাধান নেই। সাধারণত ট্রি মেথড বা মন্টে কার্লো সিমুলেশন ব্যবহার করে প্রাইস করা হয়।
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart.js global configuration
+            Chart.defaults.font.family = "'Poppins', 'Hind Siliguri', sans-serif";
+            Chart.defaults.color = '#718096';
+
+            // Option Pricing State
+            let pricingState = {
+                optionType: 'european',
+                stockPrice: 100,
+                strikePrice: 100,
+                timeToMaturity: 1.0,
+                riskFreeRate: 0.05,
+                volatility: 0.2,
+                dividendYield: 0.0,
+                optionStyle: 'call',
+                numSimulations: 10000,
+                numSteps: 252,
+                varianceReduction: 'none',
+                mcPrice: 0,
+                bsPrice: 0,
+                confidenceInterval: [0, 0],
+                standardError: 0,
+                isPricing: false,
+                simulationStartTime: null,
+                greeks: {
+                    delta: 0,
+                    gamma: 0,
+                    vega: 0,
+                    theta: 0,
+                    rho: 0
+                },
+                convergenceData: [],
+                pathData: []
+            };
+
+            // DOM Elements
+            const optionTypeCards = document.querySelectorAll('.option-type-card');
+            const stockPriceInput = document.getElementById('stockPrice');
+            const strikePriceInput = document.getElementById('strikePrice');
+            const timeToMaturityInput = document.getElementById('timeToMaturity');
+            const riskFreeRateInput = document.getElementById('riskFreeRate');
+            const volatilityInput = document.getElementById('volatility');
+            const dividendYieldInput = document.getElementById('dividendYield');
+            const optionStyleSelect = document.getElementById('optionStyle');
+            const numSimulationsInput = document.getElementById('numSimulations');
+            const numStepsInput = document.getElementById('numSteps');
+            const varianceReductionSelect = document.getElementById('varianceReduction');
+            const priceBtn = document.getElementById('priceBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const progressFill = document.getElementById('progressFill');
+            const simulationsSlider = document.getElementById('simulationsSlider');
+            const simulationsValue = document.getElementById('simulationsValue');
+
+            // Results Elements
+            const mcPriceEl = document.getElementById('mcPrice');
+            const bsPriceEl = document.getElementById('bsPrice');
+            const mcConfidenceEl = document.getElementById('mcConfidence');
+            const mcStdErrorEl = document.getElementById('mcStdError');
+            const priceDifferenceEl = document.getElementById('priceDifference');
+            const deltaValueEl = document.getElementById('deltaValue');
+            const gammaValueEl = document.getElementById('gammaValue');
+            const vegaValueEl = document.getElementById('vegaValue');
+            const thetaValueEl = document.getElementById('thetaValue');
+            const rhoValueEl = document.getElementById('rhoValue');
+            const strikeLabel = document.getElementById('strikeLabel');
+            const simulationTimeEl = document.getElementById('simulationTime');
+            const itmPercentageEl = document.getElementById('itmPercentage');
+            const convergenceSpeedEl = document.getElementById('convergenceSpeed');
+
+            // Canvases
+            const payoffCanvas = document.getElementById('payoffCanvas');
+            const payoffCtx = payoffCanvas.getContext('2d');
+            const pathCanvas = document.getElementById('pathCanvas');
+            const pathCtx = pathCanvas.getContext('2d');
+            
+            // Chart instances
+            let convergenceChart = null;
+
+            // Initialize
+            initPricing();
+            setupCanvases();
+            initCharts();
+
+            function initPricing() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Option Type Selection
+                optionTypeCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const type = this.dataset.type;
+                        setOptionType(type);
+                    });
+                });
+
+                // Parameter Inputs
+                stockPriceInput.addEventListener('change', updateParameters);
+                strikePriceInput.addEventListener('change', updateParameters);
+                timeToMaturityInput.addEventListener('change', updateParameters);
+                riskFreeRateInput.addEventListener('change', updateParameters);
+                volatilityInput.addEventListener('change', updateParameters);
+                dividendYieldInput.addEventListener('change', updateParameters);
+                optionStyleSelect.addEventListener('change', updateParameters);
+                numSimulationsInput.addEventListener('change', updateParameters);
+                numStepsInput.addEventListener('change', updateParameters);
+                varianceReductionSelect.addEventListener('change', updateParameters);
+
+                // Control Buttons
+                priceBtn.addEventListener('click', priceOption);
+                resetBtn.addEventListener('click', resetParameters);
+
+                // Convergence Slider
+                simulationsSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    pricingState.numSimulations = value;
+                    numSimulationsInput.value = value;
+                    updateSimulationsValue(value);
+                });
+
+                // Window Resize
+                window.addEventListener('resize', setupCanvases);
+
+                // Initialize parameters
+                updateParameters();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update option style options
+                updateOptionStyleOptions();
+                
+                // Update strike label
+                updateStrikeLabel();
+            }
+
+            function setOptionType(type) {
+                pricingState.optionType = type;
+                
+                // Update active card
+                optionTypeCards.forEach(card => {
+                    if (card.dataset.type === type) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+                
+                // Update Black-Scholes availability message
+                if (type === 'american') {
+                    bsPriceEl.parentElement.querySelector('.help-text').textContent = 
+                        currentLanguage === 'bn' 
+                            ? 'আমেরিকান অপশনের জন্য এনালিটিকাল সমাধান নেই'
+                            : 'No analytical solution for American options';
+                } else {
+                    const bsHelpText = bsPriceEl.parentElement.querySelector('.help-text');
+                    bsHelpText.textContent = currentLanguage === 'bn' 
+                        ? 'ইউরোপিয়ান অপশনের জন্য এনালিটিকাল সমাধান'
+                        : 'Analytical solution for European options';
+                }
+            }
+
+            function updateParameters() {
+                pricingState.stockPrice = parseFloat(stockPriceInput.value);
+                pricingState.strikePrice = parseFloat(strikePriceInput.value);
+                pricingState.timeToMaturity = parseFloat(timeToMaturityInput.value);
+                pricingState.riskFreeRate = parseFloat(riskFreeRateInput.value);
+                pricingState.volatility = parseFloat(volatilityInput.value);
+                pricingState.dividendYield = parseFloat(dividendYieldInput.value);
+                pricingState.optionStyle = optionStyleSelect.value;
+                pricingState.numSimulations = parseInt(numSimulationsInput.value);
+                pricingState.numSteps = parseInt(numStepsInput.value);
+                pricingState.varianceReduction = varianceReductionSelect.value;
+                
+                // Update slider value
+                simulationsSlider.value = pricingState.numSimulations;
+                updateSimulationsValue(pricingState.numSimulations);
+                
+                // Update strike label
+                updateStrikeLabel();
+            }
+
+            function updateSimulationsValue(value) {
+                simulationsValue.textContent = currentLanguage === 'bn' 
+                    ? `সিমুলেশন: ${value.toLocaleString()}`
+                    : `Simulations: ${value.toLocaleString()}`;
+            }
+
+            function updateStrikeLabel() {
+                strikeLabel.textContent = currentLanguage === 'bn' 
+                    ? `K = ${pricingState.strikePrice}`
+                    : `K = ${pricingState.strikePrice}`;
+            }
+
+            function updateOptionStyleOptions() {
+                const options = optionStyleSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.hasAttribute(`data-${currentLanguage}`)) {
+                        option.textContent = option.getAttribute(`data-${currentLanguage}`);
+                    }
+                });
+            }
+
+            function setupCanvases() {
+                // Payoff Canvas
+                const payoffContainer = payoffCanvas.parentElement;
+                payoffCanvas.width = payoffContainer.clientWidth;
+                payoffCanvas.height = payoffContainer.clientHeight;
+                
+                // Path Canvas
+                const pathContainer = pathCanvas.parentElement;
+                pathCanvas.width = pathContainer.clientWidth;
+                pathCanvas.height = pathContainer.clientHeight;
+                
+                // Draw initial state
+                drawPayoffDiagram();
+            }
+
+            function initCharts() {
+                // Convergence Chart
+                const convergenceCtx = document.getElementById('convergenceCanvas').getContext('2d');
+                convergenceChart = new Chart(convergenceCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'মন্টে কার্লো প্রাইস' : 'Monte Carlo Price',
+                                data: [],
+                                borderColor: 'rgba(76, 175, 80, 1)',
+                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ব্ল্যাক-স্কোলস প্রাইস' : 'Black-Scholes Price',
+                                data: [],
+                                borderColor: 'rgba(156, 39, 176, 1)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'অপশন প্রাইস' : 'Option Price'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সিমুলেশন সংখ্যা' : 'Number of Simulations'
+                                },
+                                type: 'logarithmic'
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+            }
+
+            function drawPayoffDiagram() {
+                const width = payoffCanvas.width;
+                const height = payoffCanvas.height;
+                const padding = 40;
+                const plotWidth = width - 2 * padding;
+                const plotHeight = height - 2 * padding;
+                
+                // Clear canvas
+                payoffCtx.clearRect(0, 0, width, height);
+                
+                // Draw grid
+                payoffCtx.strokeStyle = '#e0e0e0';
+                payoffCtx.lineWidth = 1;
+                
+                // Draw axes
+                payoffCtx.strokeStyle = '#333';
+                payoffCtx.lineWidth = 2;
+                
+                // X-axis (Stock Price)
+                payoffCtx.beginPath();
+                payoffCtx.moveTo(padding, height - padding);
+                payoffCtx.lineTo(width - padding, height - padding);
+                payoffCtx.stroke();
+                
+                // Y-axis (Payoff)
+                payoffCtx.beginPath();
+                payoffCtx.moveTo(padding, padding);
+                payoffCtx.lineTo(padding, height - padding);
+                payoffCtx.stroke();
+                
+                // Calculate payoff function
+                const isCall = pricingState.optionStyle === 'call';
+                const K = pricingState.strikePrice;
+                
+                // Draw payoff curve
+                payoffCtx.strokeStyle = '#2196F3';
+                payoffCtx.lineWidth = 3;
+                payoffCtx.beginPath();
+                
+                const minPrice = Math.max(1, K * 0.5);
+                const maxPrice = K * 1.5;
+                
+                for (let i = 0; i <= plotWidth; i++) {
+                    const stockPrice = minPrice + (i / plotWidth) * (maxPrice - minPrice);
+                    let payoff;
+                    
+                    if (isCall) {
+                        payoff = Math.max(0, stockPrice - K);
+                    } else {
+                        payoff = Math.max(0, K - stockPrice);
+                    }
+                    
+                    // Convert to canvas coordinates
+                    const canvasX = padding + i;
+                    const maxPayoff = Math.max(K * 0.5, 50); // Scale for visualization
+                    const canvasY = height - padding - (payoff / maxPayoff) * plotHeight;
+                    
+                    if (i === 0) {
+                        payoffCtx.moveTo(canvasX, canvasY);
+                    } else {
+                        payoffCtx.lineTo(canvasX, canvasY);
+                    }
+                }
+                
+                payoffCtx.stroke();
+                
+                // Draw current stock price marker
+                const currentStockPrice = pricingState.stockPrice;
+                const stockPriceX = padding + ((currentStockPrice - minPrice) / (maxPrice - minPrice)) * plotWidth;
+                
+                payoffCtx.beginPath();
+                payoffCtx.arc(stockPriceX, height - padding - 10, 6, 0, Math.PI * 2);
+                payoffCtx.fillStyle = '#4CAF50';
+                payoffCtx.fill();
+                payoffCtx.strokeStyle = 'white';
+                payoffCtx.lineWidth = 2;
+                payoffCtx.stroke();
+                
+                // Draw strike price line
+                const strikeX = padding + ((K - minPrice) / (maxPrice - minPrice)) * plotWidth;
+                
+                payoffCtx.strokeStyle = '#FF5722';
+                payoffCtx.lineWidth = 2;
+                payoffCtx.setLineDash([5, 5]);
+                payoffCtx.beginPath();
+                payoffCtx.moveTo(strikeX, padding);
+                payoffCtx.lineTo(strikeX, height - padding);
+                payoffCtx.stroke();
+                payoffCtx.setLineDash([]);
+                
+                // Add labels
+                payoffCtx.fillStyle = '#333';
+                payoffCtx.font = '12px Arial';
+                payoffCtx.textAlign = 'center';
+                
+                // X-axis label
+                payoffCtx.fillText(
+                    currentLanguage === 'bn' ? 'স্টক প্রাইস (S)' : 'Stock Price (S)',
+                    width / 2,
+                    height - 10
+                );
+                
+                // Y-axis label
+                payoffCtx.save();
+                payoffCtx.translate(10, height / 2);
+                payoffCtx.rotate(-Math.PI / 2);
+                payoffCtx.fillText(
+                    currentLanguage === 'bn' ? 'পেয়অফ' : 'Payoff',
+                    0,
+                    0
+                );
+                payoffCtx.restore();
+                
+                // Current price label
+                payoffCtx.fillStyle = '#4CAF50';
+                payoffCtx.font = 'bold 12px Arial';
+                payoffCtx.fillText(
+                    currentLanguage === 'bn' ? `S₀ = ${currentStockPrice}` : `S₀ = ${currentStockPrice}`,
+                    stockPriceX,
+                    height - padding - 25
+                );
+            }
+
+            function drawPathSimulation(paths = []) {
+                const width = pathCanvas.width;
+                const height = pathCanvas.height;
+                const padding = 40;
+                const plotWidth = width - 2 * padding;
+                const plotHeight = height - 2 * padding;
+                
+                // Clear canvas
+                pathCtx.clearRect(0, 0, width, height);
+                
+                // Draw grid
+                pathCtx.strokeStyle = '#e0e0e0';
+                pathCtx.lineWidth = 1;
+                
+                // Draw axes
+                pathCtx.strokeStyle = '#333';
+                pathCtx.lineWidth = 2;
+                
+                // X-axis (Time)
+                pathCtx.beginPath();
+                pathCtx.moveTo(padding, height - padding);
+                pathCtx.lineTo(width - padding, height - padding);
+                pathCtx.stroke();
+                
+                // Y-axis (Stock Price)
+                pathCtx.beginPath();
+                pathCtx.moveTo(padding, padding);
+                pathCtx.lineTo(padding, height - padding);
+                pathCtx.stroke();
+                
+                // Draw paths
+                if (paths.length > 0) {
+                    const maxPathsToDraw = Math.min(50, paths.length); // Limit for performance
+                    const step = Math.max(1, Math.floor(paths.length / maxPathsToDraw));
+                    
+                    for (let i = 0; i < paths.length; i += step) {
+                        const path = paths[i];
+                        if (path && path.length > 0) {
+                            // Find min and max for scaling
+                            const prices = path.map(p => p.price);
+                            const minPrice = Math.min(...prices);
+                            const maxPrice = Math.max(...prices);
+                            const priceRange = Math.max(maxPrice - minPrice, 1);
+                            
+                            // Draw path
+                            pathCtx.strokeStyle = `rgba(33, 150, 243, ${0.3 / Math.sqrt(maxPathsToDraw)})`;
+                            pathCtx.lineWidth = 1;
+                            pathCtx.beginPath();
+                            
+                            path.forEach((point, index) => {
+                                const x = padding + (index / (path.length - 1)) * plotWidth;
+                                const y = height - padding - ((point.price - minPrice) / priceRange) * plotHeight * 0.8;
+                                
+                                if (index === 0) {
+                                    pathCtx.moveTo(x, y);
+                                } else {
+                                    pathCtx.lineTo(x, y);
+                                }
+                            });
+                            
+                            pathCtx.stroke();
+                        }
+                    }
+                }
+                
+                // Draw strike price line
+                const strikeY = height - padding - 100; // Fixed position for demo
+                pathCtx.strokeStyle = '#FF5722';
+                pathCtx.lineWidth = 2;
+                pathCtx.setLineDash([5, 5]);
+                pathCtx.beginPath();
+                pathCtx.moveTo(padding, strikeY);
+                pathCtx.lineTo(width - padding, strikeY);
+                pathCtx.stroke();
+                pathCtx.setLineDash([]);
+                
+                // Draw strike price label
+                pathCtx.fillStyle = '#FF5722';
+                pathCtx.font = 'bold 12px Arial';
+                pathCtx.fillText(
+                    currentLanguage === 'bn' ? `স্ট্রাইক প্রাইস (K = ${pricingState.strikePrice})` : `Strike Price (K = ${pricingState.strikePrice})`,
+                    width - padding - 100,
+                    strikeY - 10
+                );
+                
+                // Add labels
+                pathCtx.fillStyle = '#333';
+                pathCtx.font = '12px Arial';
+                pathCtx.textAlign = 'center';
+                
+                // X-axis label
+                pathCtx.fillText(
+                    currentLanguage === 'bn' ? 'সময়' : 'Time',
+                    width / 2,
+                    height - 10
+                );
+                
+                // Y-axis label
+                pathCtx.save();
+                pathCtx.translate(10, height / 2);
+                pathCtx.rotate(-Math.PI / 2);
+                pathCtx.fillText(
+                    currentLanguage === 'bn' ? 'স্টক প্রাইস' : 'Stock Price',
+                    0,
+                    0
+                );
+                pathCtx.restore();
+            }
+
+            async function priceOption() {
+                if (pricingState.isPricing) return;
+                
+                pricingState.isPricing = true;
+                priceBtn.disabled = true;
+                priceBtn.innerHTML = currentLanguage === 'bn' 
+                    ? '<i class="fas fa-spinner fa-spin"></i><span>প্রাইসিং হচ্ছে...</span>'
+                    : '<i class="fas fa-spinner fa-spin"></i><span>Pricing...</span>';
+                
+                // Reset progress
+                progressFill.style.width = '0%';
+                
+                // Start timing
+                pricingState.simulationStartTime = Date.now();
+                
+                // Update visualizations
+                drawPayoffDiagram();
+                
+                // Run Monte Carlo simulation
+                const result = await runMonteCarloSimulation();
+                
+                // Calculate Black-Scholes price (for European options only)
+                if (pricingState.optionType === 'european') {
+                    pricingState.bsPrice = calculateBlackScholesPrice();
+                } else {
+                    pricingState.bsPrice = 0; // No analytical solution for American
+                }
+                
+                // Calculate Greeks
+                calculateGreeks();
+                
+                // Update display
+                updateResultsDisplay();
+                
+                // Update charts
+                updateConvergenceChart();
+                
+                // Reset button state
+                pricingState.isPricing = false;
+                priceBtn.disabled = false;
+                priceBtn.innerHTML = currentLanguage === 'bn' 
+                    ? '<i class="fas fa-calculator"></i><span>অপশন প্রাইস করুন</span>'
+                    : '<i class="fas fa-calculator"></i><span>Price Option</span>';
+                
+                // Draw path simulation
+                drawPathSimulation(pricingState.pathData);
+            }
+
+            async function runMonteCarloSimulation() {
+                const {
+                    stockPrice,
+                    strikePrice,
+                    timeToMaturity,
+                    riskFreeRate,
+                    volatility,
+                    dividendYield,
+                    optionStyle,
+                    optionType,
+                    numSimulations,
+                    numSteps,
+                    varianceReduction
+                } = pricingState;
+                
+                const dt = timeToMaturity / numSteps;
+                const isCall = optionStyle === 'call';
+                const isAmerican = optionType === 'american';
+                
+                let totalPayoff = 0;
+                let squaredPayoff = 0;
+                let inTheMoneyCount = 0;
+                pricingState.pathData = [];
+                pricingState.convergenceData = [];
+                
+                // Generate paths in batches for progress updates
+                const batchSize = 1000;
+                const numBatches = Math.ceil(numSimulations / batchSize);
+                
+                for (let batch = 0; batch < numBatches; batch++) {
+                    const batchStart = batch * batchSize;
+                    const batchEnd = Math.min((batch + 1) * batchSize, numSimulations);
+                    const batchSizeActual = batchEnd - batchStart;
+                    
+                    for (let sim = 0; sim < batchSizeActual; sim++) {
+                        // Generate price path
+                        const path = generatePricePath(stockPrice, dt, numSteps, riskFreeRate, volatility, dividendYield);
+                        
+                        if (sim < 10) {
+                            // Store first few paths for visualization
+                            pricingState.pathData.push(path.map(price => ({ price, time: 0 })));
+                        }
+                        
+                        // Calculate payoff
+                        let payoff;
+                        if (isAmerican) {
+                            // American option - Longstaff-Schwartz algorithm (simplified)
+                            payoff = priceAmericanOption(path, strikePrice, isCall, dt, riskFreeRate);
+                        } else {
+                            // European option - payoff at maturity
+                            const finalPrice = path[path.length - 1];
+                            payoff = isCall ? Math.max(0, finalPrice - strikePrice) : Math.max(0, strikePrice - finalPrice);
+                        }
+                        
+                        // Discount payoff
+                        const discountedPayoff = payoff * Math.exp(-riskFreeRate * timeToMaturity);
+                        
+                        totalPayoff += discountedPayoff;
+                        squaredPayoff += discountedPayoff * discountedPayoff;
+                        
+                        if (payoff > 0) {
+                            inTheMoneyCount++;
+                        }
+                        
+                        // Store convergence data every 100 simulations
+                        if ((batchStart + sim) % 100 === 0) {
+                            const currentPrice = totalPayoff / (batchStart + sim + 1);
+                            pricingState.convergenceData.push({
+                                simulations: batchStart + sim + 1,
+                                price: currentPrice
+                            });
+                        }
+                    }
+                    
+                    // Update progress
+                    const progress = ((batch + 1) / numBatches) * 100;
+                    progressFill.style.width = `${progress}%`;
+                    
+                    // Allow UI updates
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+                
+                // Calculate final results
+                const meanPayoff = totalPayoff / numSimulations;
+                const meanSquaredPayoff = squaredPayoff / numSimulations;
+                const variance = meanSquaredPayoff - meanPayoff * meanPayoff;
+                const standardError = Math.sqrt(variance / numSimulations);
+                const confidenceInterval = [
+                    meanPayoff - 1.96 * standardError,
+                    meanPayoff + 1.96 * standardError
+                ];
+                
+                const itmPercentage = (inTheMoneyCount / numSimulations) * 100;
+                const simulationTime = Date.now() - pricingState.simulationStartTime;
+                
+                // Update state
+                pricingState.mcPrice = meanPayoff;
+                pricingState.confidenceInterval = confidenceInterval;
+                pricingState.standardError = standardError;
+                pricingState.itmPercentage = itmPercentage;
+                pricingState.simulationTime = simulationTime;
+                
+                return {
+                    price: meanPayoff,
+                    confidenceInterval,
+                    standardError,
+                    itmPercentage,
+                    simulationTime
+                };
+            }
+
+            function generatePricePath(S0, dt, numSteps, r, sigma, q) {
+                const path = [S0];
+                let currentPrice = S0;
+                
+                for (let i = 0; i < numSteps; i++) {
+                    // Generate random normal variable
+                    const z = randomNormal();
+                    
+                    // Geometric Brownian motion: dS = (r - q)S dt + σ S dW
+                    const drift = (r - q - 0.5 * sigma * sigma) * dt;
+                    const diffusion = sigma * Math.sqrt(dt) * z;
+                    
+                    currentPrice = currentPrice * Math.exp(drift + diffusion);
+                    path.push(currentPrice);
+                }
+                
+                return path;
+            }
+
+            function priceAmericanOption(path, strikePrice, isCall, dt, r) {
+                // Simplified Longstaff-Schwartz algorithm for demonstration
+                // In practice, this would use regression on continuation values
+                
+                const numSteps = path.length;
+                const cashflows = new Array(numSteps).fill(0);
+                
+                // Calculate intrinsic value at each time step
+                for (let i = 0; i < numSteps; i++) {
+                    const price = path[i];
+                    cashflows[i] = isCall ? Math.max(0, price - strikePrice) : Math.max(0, strikePrice - price);
+                }
+                
+                // Backward induction (simplified)
+                let continuationValue = cashflows[numSteps - 1];
+                
+                for (let i = numSteps - 2; i >= 0; i--) {
+                    const intrinsicValue = cashflows[i];
+                    const discountedContinuation = continuationValue * Math.exp(-r * dt);
+                    
+                    // Exercise if intrinsic value > discounted continuation value
+                    if (intrinsicValue > discountedContinuation) {
+                        continuationValue = intrinsicValue;
+                    }
+                }
+                
+                return continuationValue;
+            }
+
+            function calculateBlackScholesPrice() {
+                const { stockPrice, strikePrice, timeToMaturity, riskFreeRate, volatility, dividendYield, optionStyle } = pricingState;
+                
+                const isCall = optionStyle === 'call';
+                
+                if (timeToMaturity <= 0) {
+                    // At maturity
+                    const intrinsicValue = isCall 
+                        ? Math.max(0, stockPrice - strikePrice)
+                        : Math.max(0, strikePrice - stockPrice);
+                    return intrinsicValue;
+                }
+                
+                const d1 = (Math.log(stockPrice / strikePrice) + (riskFreeRate - dividendYield + 0.5 * volatility * volatility) * timeToMaturity) 
+                         / (volatility * Math.sqrt(timeToMaturity));
+                
+                const d2 = d1 - volatility * Math.sqrt(timeToMaturity);
+                
+                // Standard normal CDF approximation
+                const N = (x) => {
+                    const a1 = 0.319381530;
+                    const a2 = -0.356563782;
+                    const a3 = 1.781477937;
+                    const a4 = -1.821255978;
+                    const a5 = 1.330274429;
+                    const L = Math.abs(x);
+                    const K = 1 / (1 + 0.2316419 * L);
+                    let N = 1 - 1 / Math.sqrt(2 * Math.PI) * Math.exp(-L * L / 2) * 
+                          (a1 * K + a2 * K * K + a3 * Math.pow(K, 3) + a4 * Math.pow(K, 4) + a5 * Math.pow(K, 5));
+                    
+                    if (x < 0) {
+                        N = 1 - N;
+                    }
+                    
+                    return N;
+                };
+                
+                if (isCall) {
+                    const callPrice = stockPrice * Math.exp(-dividendYield * timeToMaturity) * N(d1) 
+                                    - strikePrice * Math.exp(-riskFreeRate * timeToMaturity) * N(d2);
+                    return callPrice;
+                } else {
+                    const putPrice = strikePrice * Math.exp(-riskFreeRate * timeToMaturity) * N(-d2) 
+                                   - stockPrice * Math.exp(-dividendYield * timeToMaturity) * N(-d1);
+                    return putPrice;
+                }
+            }
+
+            function calculateGreeks() {
+                const { stockPrice, strikePrice, timeToMaturity, riskFreeRate, volatility, dividendYield, optionStyle } = pricingState;
+                
+                // Finite difference approximation for Greeks
+                const epsilon = 0.01;
+                
+                // Delta: ∂C/∂S
+                const priceCurrent = calculateBlackScholesPrice();
+                
+                // Save current parameters
+                const originalStockPrice = pricingState.stockPrice;
+                
+                // Calculate delta
+                pricingState.stockPrice = originalStockPrice * (1 + epsilon);
+                const priceUp = calculateBlackScholesPrice();
+                pricingState.stockPrice = originalStockPrice;
+                pricingState.greeks.delta = (priceUp - priceCurrent) / (originalStockPrice * epsilon);
+                
+                // Calculate gamma: ∂²C/∂S²
+                pricingState.stockPrice = originalStockPrice * (1 - epsilon);
+                const priceDown = calculateBlackScholesPrice();
+                pricingState.stockPrice = originalStockPrice;
+                pricingState.greeks.gamma = (priceUp - 2 * priceCurrent + priceDown) / Math.pow(originalStockPrice * epsilon, 2);
+                
+                // Calculate vega: ∂C/∂σ
+                const originalVolatility = pricingState.volatility;
+                pricingState.volatility = originalVolatility * (1 + epsilon);
+                const priceVolUp = calculateBlackScholesPrice();
+                pricingState.volatility = originalVolatility;
+                pricingState.greeks.vega = (priceVolUp - priceCurrent) / (originalVolatility * epsilon * 100); // Per 1% change
+                
+                // Calculate theta: -∂C/∂T (per day)
+                const originalTime = pricingState.timeToMaturity;
+                pricingState.timeToMaturity = Math.max(0.001, originalTime - 1/365); // One day less
+                const priceTimeDown = calculateBlackScholesPrice();
+                pricingState.timeToMaturity = originalTime;
+                pricingState.greeks.theta = -(priceTimeDown - priceCurrent) / (1/365) * 100; // Per day, scaled
+                
+                // Calculate rho: ∂C/∂r
+                const originalRate = pricingState.riskFreeRate;
+                pricingState.riskFreeRate = originalRate * (1 + epsilon);
+                const priceRateUp = calculateBlackScholesPrice();
+                pricingState.riskFreeRate = originalRate;
+                pricingState.greeks.rho = (priceRateUp - priceCurrent) / (originalRate * epsilon * 100); // Per 1% change
+            }
+
+            function updateResultsDisplay() {
+                // Update prices
+                mcPriceEl.textContent = pricingState.mcPrice.toFixed(4);
+                if (pricingState.optionType === 'european') {
+                    bsPriceEl.textContent = pricingState.bsPrice.toFixed(4);
+                    const difference = Math.abs(pricingState.mcPrice - pricingState.bsPrice);
+                    priceDifferenceEl.textContent = difference.toFixed(4);
+                } else {
+                    bsPriceEl.textContent = '-';
+                    priceDifferenceEl.textContent = '-';
+                }
+                
+                // Update confidence interval
+                const [lower, upper] = pricingState.confidenceInterval;
+                mcConfidenceEl.textContent = `[ ${lower.toFixed(4)} , ${upper.toFixed(4)} ]`;
+                
+                // Update standard error
+                mcStdErrorEl.textContent = pricingState.standardError.toFixed(6);
+                
+                // Update Greeks
+                deltaValueEl.textContent = pricingState.greeks.delta.toFixed(4);
+                gammaValueEl.textContent = pricingState.greeks.gamma.toFixed(4);
+                vegaValueEl.textContent = pricingState.greeks.vega.toFixed(4);
+                thetaValueEl.textContent = pricingState.greeks.theta.toFixed(4);
+                rhoValueEl.textContent = pricingState.greeks.rho.toFixed(4);
+                
+                // Update simulation info
+                simulationTimeEl.textContent = `${pricingState.simulationTime} ms`;
+                itmPercentageEl.textContent = `${pricingState.itmPercentage.toFixed(2)}%`;
+                
+                // Update convergence speed
+                const convergenceSpeed = pricingState.standardError / Math.sqrt(pricingState.numSimulations);
+                convergenceSpeedEl.textContent = convergenceSpeed < 0.001 ? 'Very Fast' : 
+                                               convergenceSpeed < 0.01 ? 'Fast' : 
+                                               convergenceSpeed < 0.1 ? 'Medium' : 'Slow';
+                
+                // Add animation
+                mcPriceEl.classList.add('pulse');
+                setTimeout(() => mcPriceEl.classList.remove('pulse'), 1000);
+            }
+
+            function updateConvergenceChart() {
+                if (convergenceChart && pricingState.convergenceData.length > 0) {
+                    const mcData = pricingState.convergenceData.map(d => ({
+                        x: d.simulations,
+                        y: d.price
+                    }));
+                    
+                    const bsData = pricingState.convergenceData.map(d => ({
+                        x: d.simulations,
+                        y: pricingState.bsPrice
+                    }));
+                    
+                    convergenceChart.data.datasets[0].data = mcData;
+                    convergenceChart.data.datasets[1].data = bsData;
+                    convergenceChart.update();
+                }
+            }
+
+            function resetParameters() {
+                // Reset inputs to default values
+                stockPriceInput.value = 100;
+                strikePriceInput.value = 100;
+                timeToMaturityInput.value = 1.0;
+                riskFreeRateInput.value = 0.05;
+                volatilityInput.value = 0.2;
+                dividendYieldInput.value = 0.0;
+                optionStyleSelect.value = 'call';
+                numSimulationsInput.value = 10000;
+                numStepsInput.value = 252;
+                varianceReductionSelect.value = 'none';
+                
+                // Reset state
+                updateParameters();
+                setOptionType('european');
+                
+                // Reset results
+                mcPriceEl.textContent = '-';
+                bsPriceEl.textContent = '-';
+                mcConfidenceEl.textContent = '[ - , - ]';
+                mcStdErrorEl.textContent = '-';
+                priceDifferenceEl.textContent = '-';
+                
+                deltaValueEl.textContent = '-';
+                gammaValueEl.textContent = '-';
+                vegaValueEl.textContent = '-';
+                thetaValueEl.textContent = '-';
+                rhoValueEl.textContent = '-';
+                
+                simulationTimeEl.textContent = '- ms';
+                itmPercentageEl.textContent = '- %';
+                convergenceSpeedEl.textContent = '-';
+                
+                // Reset progress
+                progressFill.style.width = '0%';
+                
+                // Reset charts
+                if (convergenceChart) {
+                    convergenceChart.data.datasets[0].data = [];
+                    convergenceChart.data.datasets[1].data = [];
+                    convergenceChart.update();
+                }
+                
+                // Reset visualizations
+                drawPayoffDiagram();
+                drawPathSimulation([]);
+            }
+
+            // Helper functions
+            function randomNormal() {
+                // Box-Muller transform
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random();
+                while(v === 0) v = Math.random();
+                return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            }
+
+            // Initialize with default pricing
+            setTimeout(() => {
+                priceOption();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLT Convergence Visualizer | Central Limit Theorem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --convergence-color: #2196F3;
+            --error-color: #FF5722;
+            --berry-color: #9C27B0;
+            --theoretical-color: #4CAF50;
+            --population-color: #FF9800;
+            --distribution-1: #E91E63;
+            --distribution-2: #3F51B5;
+            --distribution-3: #009688;
+            --distribution-4: #FFC107;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f4fd 0%, #f5e8fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--convergence-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--convergence-color), var(--berry-color), var(--theoretical-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--convergence-color);
+        }
+
+        /* Distribution Selection */
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .distribution-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .distribution-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .distribution-btn.active {
+            border-color: var(--population-color);
+            background: rgba(255, 152, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+        }
+
+        .distribution-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--convergence-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--convergence-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .range-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        /* Sample Size Progression */
+        .sample-progression {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .progression-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .progression-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Visualization Controls */
+        .visualization-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .visualization-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .visualize-btn {
+            background: var(--convergence-color);
+            color: white;
+        }
+
+        .visualize-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .animate-btn {
+            background: var(--berry-color);
+            color: white;
+        }
+
+        .animate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        /* Convergence Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .metric-subtitle {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Berry-Esseen Theorem Section */
+        .berry-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            grid-column: 1 / -1;
+        }
+
+        .berry-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .berry-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .theorem-card {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .theorem-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .theorem-explanation {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--gray);
+        }
+
+        /* Error Bound Analysis */
+        .error-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .error-chart-container {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Convergence Rate Analysis */
+        .rate-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .rate-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .rate-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation Controls */
+        .animation-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .anim-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .anim-btn:hover {
+            background: var(--convergence-color);
+            color: white;
+            border-color: var(--convergence-color);
+            transform: translateY(-2px);
+        }
+
+        .anim-btn.active {
+            background: var(--berry-color);
+            color: white;
+            border-color: var(--berry-color);
+        }
+
+        /* Distribution Comparison */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            grid-column: 1 / -1;
+        }
+
+        .comparison-charts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .comparison-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .highlight {
+            animation: highlight 1.5s ease;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: var(--light-gray);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--convergence-color), var(--berry-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 1rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .theorem-formula {
+                font-size: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        /* Math Display */
+        .math-display {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="CLT Convergence Visualizer" data-bn="CLT কনভারজেন্স ভিজ্যুয়ালাইজার">CLT কনভারজেন্স ভিজ্যুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Visualize convergence to normal distribution with Berry-Esseen theorem and error bound analysis" data-bn="বেরি-এসিন থিওরেম এবং এরর বাউন্ড বিশ্লেষণের সাথে নরমাল ডিস্ট্রিবিউশনে কনভারজেন্স ভিজ্যুয়ালাইজ করুন">
+                বেরি-এসিন থিওরেম এবং এরর বাউন্ড বিশ্লেষণের সাথে নরমাল ডিস্ট্রিবিউশনে কনভারজেন্স ভিজ্যুয়ালাইজ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Distribution Settings" data-bn="ডিস্ট্রিবিউশন সেটিংস">ডিস্ট্রিবিউশন সেটিংস</span>
+                </h2>
+
+                <!-- Distribution Selection -->
+                <div class="distribution-grid">
+                    <button class="distribution-btn active" data-distribution="bernoulli">
+                        <div class="distribution-icon">
+                            <i class="fas fa-coin"></i>
+                        </div>
+                        <span data-en="Bernoulli" data-bn="বার্নুলি">বার্নুলি</span>
+                        <small data-en="p = 0.3" data-bn="p = ০.৩">p = ০.৩</small>
+                    </button>
+
+                    <button class="distribution-btn" data-distribution="uniform">
+                        <div class="distribution-icon">
+                            <i class="fas fa-square"></i>
+                        </div>
+                        <span data-en="Uniform" data-bn="ইউনিফর্ম">ইউনিফর্ম</span>
+                        <small data-en="a = 0, b = 1" data-bn="a = ০, b = ১">a = ০, b = ১</small>
+                    </button>
+
+                    <button class="distribution-btn" data-distribution="exponential">
+                        <div class="distribution-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span data-en="Exponential" data-bn="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</span>
+                        <small data-en="λ = 1" data-bন="λ = ১">λ = ১</small>
+                    </button>
+
+                    <button class="distribution-btn" data-distribution="beta">
+                        <div class="distribution-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <span data-en="Beta" data-bন="বেটা">বেটা</span>
+                        <small data-en="α=2, β=5" data-bন="α=২, β=৫">α=২, β=৫</small>
+                    </button>
+                </div>
+
+                <!-- Distribution Parameters -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-mu"></i>
+                            <span data-en="Population Mean (μ)" data-bন="জনসংখ্যা গড় (μ)">জনসংখ্যা গড় (μ)</span>
+                        </div>
+                        <input type="number" id="populationMean" class="value-input" value="0.3" step="0.01">
+                        <div class="help-text" data-en="Mean of the population distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশনের গড়">জনসংখ্যা ডিস্ট্রিবিউশনের গড়</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-sigma"></i>
+                            <span data-en="Population Variance (σ²)" data-bন="জনসংখ্যা ভ্যারিয়েন্স (σ²)">জনসংখ্যা ভ্যারিয়েন্স (σ²)</span>
+                        </div>
+                        <input type="number" id="populationVariance" class="value-input" value="0.21" step="0.01">
+                        <div class="help-text" data-en="Variance of the population distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশনের ভ্যারিয়েন্স">জনসংখ্যা ডিস্ট্রিবিউশনের ভ্যারিয়েন্স</div>
+                    </div>
+                </div>
+
+                <!-- Sample Size Progression -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Sample Size Progression" data-bন="নমুনা আকার অগ্রগতি">নমুনা আকার অগ্রগতি</span>
+                </h2>
+
+                <div class="sample-progression">
+                    <div class="parameter-label">
+                        <i class="fas fa-hashtag"></i>
+                        <span data-en="Current Sample Size (n)" data-bন="বর্তমান নমুনা আকার (n)">বর্তমান নমুনা আকার (n)</span>
+                    </div>
+                    <input type="range" id="sampleSizeSlider" class="progression-slider" min="1" max="200" value="30" step="1">
+                    <div class="progression-label">
+                        <span>n = 1</span>
+                        <span id="currentSampleSize">n = 30</span>
+                        <span>n = 200</span>
+                    </div>
+                    <div class="help-text" data-en="Slide to see convergence at different sample sizes" data-bন="বিভিন্ন নমুনা আকারে কনভারজেন্স দেখতে স্লাইড করুন">বিভিন্ন নমুনা আকারে কনভারজেন্স দেখতে স্লাইড করুন</div>
+                </div>
+
+                <!-- Animation Controls -->
+                <div class="animation-controls">
+                    <button class="anim-btn" id="playAnimation">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Play Animation" data-bন="অ্যানিমেশন চালান">অ্যানিমেশন চালান</span>
+                    </button>
+                    <button class="anim-btn" id="pauseAnimation">
+                        <i class="fas fa-pause"></i>
+                        <span data-en="Pause" data-bন="বিরতি দিন">বিরতি দিন</span>
+                    </button>
+                    <button class="anim-btn" id="stepForward">
+                        <i class="fas fa-step-forward"></i>
+                        <span data-en="Step Forward" data-bন="এক ধাপ এগিয়ে">এক ধাপ এগিয়ে</span>
+                    </button>
+                </div>
+
+                <!-- Visualization Controls -->
+                <div class="visualization-controls">
+                    <button class="control-btn visualize-btn" id="visualizeBtn">
+                        <i class="fas fa-eye"></i>
+                        <span data-en="Visualize Convergence" data-bন="কনভারজেন্স ভিজ্যুয়ালাইজ করুন">কনভারজেন্স ভিজ্যুয়ালাইজ করুন</span>
+                    </button>
+                    <button class="control-btn animate-btn" id="animateBtn">
+                        <i class="fas fa-film"></i>
+                        <span data-en="Animate CLT" data-bন="CLT অ্যানিমেট করুন">CLT অ্যানিমেট করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট করুন">রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Convergence Visualization" data-bন="কনভারজেন্স ভিজ্যুয়ালাইজেশন">কনভারজেন্স ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="convergenceChart"></canvas>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="progress-container">
+                    <div class="progress-bar" id="convergenceProgress" style="width: 15%"></div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; color: var(--gray);" id="progressText">
+                    <span data-en="Convergence Progress: 15%" data-bন="কনভারজেন্স অগ্রগতি: ১৫%">কনভারজেন্স অগ্রগতি: ১৫%</span>
+                </div>
+
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--distribution-1);"></div>
+                        <span data-en="Sample Mean Distribution" data-bন="নমুনা গড় ডিস্ট্রিবিউশন">নমুনা গড় ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--theoretical-color);"></div>
+                        <span data-en="Theoretical Normal" data-bন="তাত্ত্বিক নরমাল">তাত্ত্বিক নরমাল</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--population-color);"></div>
+                        <span data-en="Population Distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশন">জনসংখ্যা ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--berry-color);"></div>
+                        <span data-en="Berry-Esseen Bound" data-bন="বেরি-এসিন বাউন্ড">বেরি-এসিন বাউন্ড</span>
+                    </div>
+                </div>
+
+                <!-- Convergence Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Kolmogorov-Smirnov Distance" data-bন="কলমোগোরভ-স্মিরনভ দূরত্ব">কলমোগোরভ-স্মিরনভ দূরত্ব</div>
+                        <div class="metric-value" id="ksDistance">0.152</div>
+                        <div class="metric-subtitle" data-en="Supremum distance" data-bন="সুপ্রিমাম দূরত্ব">সুপ্রিমাম দূরত্ব</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Berry-Esseen Constant" data-bন="বেরি-এসিন ধ্রুবক">বেরি-এসিন ধ্রুবক</div>
+                        <div class="metric-value" id="berryConstant">0.4748</div>
+                        <div class="metric-subtitle" data-en="C = 0.4748" data-bন="C = ০.৪৭৪৮">C = ০.৪৭৪৮</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Convergence Rate" data-bন="কনভারজেন্স হার">কনভারজেন্স হার</div>
+                        <div class="metric-value" id="convergenceRate">O(1/√n)</div>
+                        <div class="metric-subtitle" data-en="Order of convergence" data-bন="কনভারজেন্সের ক্রম">কনভারজেন্সের ক্রম</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Berry-Esseen Theorem Section -->
+        <div class="berry-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Berry-Esseen Theorem Analysis" data-bন="বেরি-এসিন থিওরেম বিশ্লেষণ">বেরি-এসিন থিওরেম বিশ্লেষণ</span>
+            </h2>
+
+            <div class="berry-content">
+                <div class="theorem-card">
+                    <h3 data-en="Berry-Esseen Theorem" data-bন="বেরি-এসিন থিওরেম">বেরি-এসিন থিওরেম</h3>
+                    <div class="theorem-formula">
+                        sup<sub>x∈ℝ</sub> |F<sub>n</sub>(x) - Φ(x)| ≤ C · (ρ / (σ³√n))
+                    </div>
+                    <div class="theorem-explanation">
+                        <p data-en="The Berry-Esseen theorem provides a quantitative bound on the rate of convergence in the Central Limit Theorem." data-bন="বেরি-এসিন থিওরেম সেন্ট্রাল লিমিট থিওরেমে কনভারজেন্স হারের একটি পরিমাণগত সীমা প্রদান করে।">
+                            বেরি-এসিন থিওরেম সেন্ট্রাল লিমিট থিওরেমে কনভারজেন্স হারের একটি পরিমাণগত সীমা প্রদান করে।
+                        </p>
+                        <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                            <li data-en="C ≤ 0.4748 (Best known constant)" data-bন="C ≤ ০.৪৭৪৮ (সর্বোত্তম পরিচিত ধ্রুবক)">C ≤ ০.৪৭৪৮ (সর্বোত্তম পরিচিত ধ্রুবক)</li>
+                            <li data-en="ρ = E[|X - μ|³] (Absolute third moment)" data-bন="ρ = E[|X - μ|³] (পরম তৃতীয় মুহূর্ত)">ρ = E[|X - μ|³] (পরম তৃতীয় মুহূর্ত)</li>
+                            <li data-en="σ = Standard deviation" data-bন="σ = স্ট্যান্ডার্ড ডেভিয়েশন">σ = স্ট্যান্ডার্ড ডেভিয়েশন</li>
+                            <li data-en="n = Sample size" data-bন="n = নমুনা আকার">n = নমুনা আকার</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="theorem-card">
+                    <h3 data-en="Error Bound Calculation" data-bন="এরর বাউন্ড গণনা">এরর বাউন্ড গণনা</h3>
+                    <div class="math-display" id="errorBoundFormula">
+                        Error ≤ 0.4748 × (ρ / (σ³√n))
+                    </div>
+                    <div class="theorem-explanation">
+                        <p data-en="Calculate the actual error bound for the current distribution and sample size:" data-bন="বর্তমান ডিস্ট্রিবিউশন এবং নমুনা আকারের জন্য প্রকৃত এরর বাউন্ড গণনা করুন:">
+                            বর্তমান ডিস্ট্রিবিউশন এবং নমুনা আকারের জন্য প্রকৃত এরর বাউন্ড গণনা করুন:
+                        </p>
+                        <div class="metrics-grid" style="grid-template-columns: 1fr 1fr; margin-top: 1rem;">
+                            <div class="metric-card" style="padding: 1rem;">
+                                <div class="metric-label" data-en="Absolute Error" data-bন="পরম এরর">পরম এরর</div>
+                                <div class="metric-value" style="font-size: 1.5rem;" id="absoluteError">0.085</div>
+                            </div>
+                            <div class="metric-card" style="padding: 1rem;">
+                                <div class="metric-label" data-en="Relative Error" data-bন="আপেক্ষিক এরর">আপেক্ষিক এরর</div>
+                                <div class="metric-value" style="font-size: 1.5rem;" id="relativeError">8.5%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Rate Analysis -->
+        <div class="rate-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Convergence Rate Analysis" data-bন="কনভারজেন্স হার বিশ্লেষণ">কনভারজেন্স হার বিশ্লেষণ</span>
+            </h2>
+
+            <div class="rate-grid">
+                <div>
+                    <h3 data-en="Rate of Convergence by Sample Size" data-bন="নমুনা আকার অনুযায়ী কনভারজেন্স হার">নমুনা আকার অনুযায়ী কনভারজেন্স হার</h3>
+                    <div class="chart-container">
+                        <canvas id="rateChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 data-en="Convergence Speed Comparison" data-bন="কনভারজেন্স গতি তুলনা">কনভারজেন্স গতি তুলনা</h3>
+                    <div class="metrics-grid" style="grid-template-columns: 1fr; margin-top: 1rem;">
+                        <div class="metric-card">
+                            <div class="metric-label" data-en="Time to 1% Error" data-bন="১% এররের সময়">১% এররের সময়</div>
+                            <div class="metric-value" id="timeTo1Percent">n ≈ 4500</div>
+                            <div class="metric-subtitle" data-en="Sample size needed" data-bন="প্রয়োজনীয় নমুনা আকার">প্রয়োজনীয় নমুনা আকার</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label" data-en="Convergence Factor" data-bন="কনভারজেন্স ফ্যাক্টর">কনভারজেন্স ফ্যাক্টর</div>
+                            <div class="metric-value" id="convergenceFactor">0.87</div>
+                            <div class="metric-subtitle" data-en="Improvement per doubling of n" data-bন="n দ্বিগুণ করার প্রতি উন্নতি">n দ্বিগুণ করার প্রতি উন্নতি</div>
+                        </div>
+                    </div>
+                    <div class="help-text" style="margin-top: 1rem;" data-en="Convergence rate is O(1/√n) - error decreases with square root of sample size" data-bন="কনভারজেন্স হার O(1/√n) - এরর নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়">
+                        কনভারজেন্স হার O(1/√n) - এরর নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Bound Analysis -->
+        <div class="error-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-en="Error Bound Analysis" data-bন="এরর বাউন্ড বিশ্লেষণ">এরর বাউন্ড বিশ্লেষণ</span>
+            </h2>
+
+            <div class="error-chart-container">
+                <canvas id="errorChart"></canvas>
+            </div>
+
+            <div class="legend" style="justify-content: flex-start; margin-top: 1rem;">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--error-color);"></div>
+                    <span data-en="Actual Error" data-bন="প্রকৃত এরর">প্রকৃত এরর</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--berry-color);"></div>
+                    <span data-en="Berry-Esseen Bound" data-bন="বেরি-এসিন বাউন্ড">বেরি-এসিন বাউন্ড</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--convergence-color);"></div>
+                    <span data-en="Empirical Error" data-bন="অনুভূমিক এরর">অনুভূমিক এরর</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Comparison -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Distribution Convergence Comparison" data-bন="ডিস্ট্রিবিউশন কনভারজেন্স তুলনা">ডিস্ট্রিবিউশন কনভারজেন্স তুলনা</span>
+            </h2>
+
+            <div class="comparison-charts">
+                <div>
+                    <h3 data-en="Convergence Speed by Distribution Type" data-bন="ডিস্ট্রিবিউশন প্রকার অনুযায়ী কনভারজেন্স গতি">ডিস্ট্রিবিউশন প্রকার অনুযায়ী কনভারজেন্স গতি</h3>
+                    <div class="chart-container">
+                        <canvas id="comparisonChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 data-en="Third Moment Impact" data-bন="তৃতীয় মুহূর্তের প্রভাব">তৃতীয় মুহূর্তের প্রভাব</h3>
+                    <div class="metrics-grid" style="grid-template-columns: 1fr; margin-top: 1rem;">
+                        <div class="metric-card">
+                            <div class="metric-label" data-en="Skewness Effect" data-bন="স্কিউনেস প্রভাব">স্কিউনেস প্রভাব</div>
+                            <div class="metric-value" id="skewnessEffect">High</div>
+                            <div class="metric-subtitle" data-en="Higher skewness → slower convergence" data-bন="উচ্চতর স্কিউনেস → ধীর কনভারজেন্স">উচ্চতর স্কিউনেস → ধীর কনভারজেন্স</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label" data-en="Optimal Distribution" data-bন="সর্বোত্তম ডিস্ট্রিবিউশন">সর্বোত্তম ডিস্ট্রিবিউশন</div>
+                            <div class="metric-value" id="optimalDistribution">Symmetric</div>
+                            <div class="metric-subtitle" data-en="Symmetric distributions converge faster" data-bন="সিমেট্রিক ডিস্ট্রিবিউশন দ্রুত কনভার্জ করে">সিমেট্রিক ডিস্ট্রিবিউশন দ্রুত কনভার্জ করে</div>
+                        </div>
+                    </div>
+                    <div class="help-text" style="margin-top: 1rem;" data-en="The Berry-Esseen bound depends on ρ/σ³ (normalized third moment)" data-bন="বেরি-এসিন বাউন্ড ρ/σ³ (স্বাভাবিককৃত তৃতীয় মুহূর্ত) এর উপর নির্ভর করে">
+                        বেরি-এসিন বাউন্ড ρ/σ³ (স্বাভাবিককৃত তৃতীয় মুহূর্ত) এর উপর নির্ভর করে
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart Instances
+            let convergenceChart = null;
+            let rateChart = null;
+            let errorChart = null;
+            let comparisonChart = null;
+
+            // Animation State
+            let animationInterval = null;
+            let currentAnimationStep = 1;
+            let isAnimating = false;
+
+            // Simulation State
+            let simulationState = {
+                distribution: 'bernoulli',
+                populationMean: 0.3,
+                populationVariance: 0.21,
+                populationStdDev: Math.sqrt(0.21),
+                thirdMoment: 0.084, // E[|X-μ|³] for Bernoulli(0.3)
+                sampleSize: 30,
+                numSamples: 10000,
+                berryConstant: 0.4748,
+                showPopulation: true,
+                showTheoretical: true,
+                showErrorBounds: true
+            };
+
+            // Distribution Properties
+            const distributions = {
+                bernoulli: {
+                    name: 'Bernoulli',
+                    mean: 0.3,
+                    variance: 0.21,
+                    thirdMoment: 0.084, // p(1-p)(1-2p+2p²)
+                    skewness: (1 - 2 * 0.3) / Math.sqrt(0.21),
+                    color: 'var(--distribution-1)',
+                    pdf: function(x) {
+                        if (x < 0 || x > 1) return 0;
+                        return 0.3 * (x === 1 ? 1 : 0) + 0.7 * (x === 0 ? 1 : 0);
+                    }
+                },
+                uniform: {
+                    name: 'Uniform',
+                    mean: 0.5,
+                    variance: 1/12,
+                    thirdMoment: 0, // Symmetric distribution
+                    skewness: 0,
+                    color: 'var(--distribution-2)',
+                    pdf: function(x) {
+                        return (x >= 0 && x <= 1) ? 1 : 0;
+                    }
+                },
+                exponential: {
+                    name: 'Exponential',
+                    mean: 1,
+                    variance: 1,
+                    thirdMoment: 2, // For λ=1, E[|X-1|³] = 2
+                    skewness: 2,
+                    color: 'var(--distribution-3)',
+                    pdf: function(x) {
+                        return x >= 0 ? Math.exp(-x) : 0;
+                    }
+                },
+                beta: {
+                    name: 'Beta',
+                    mean: 2/7, // α/(α+β) = 2/7 ≈ 0.2857
+                    variance: (2*5)/(49*8), // αβ/((α+β)²(α+β+1))
+                    thirdMoment: 0.012, // Approximate
+                    skewness: 0.894, // 2(β-α)√(α+β+1)/((α+β+2)√(αβ))
+                    color: 'var(--distribution-4)',
+                    pdf: function(x) {
+                        // Beta(2,5) PDF approximation
+                        if (x < 0 || x > 1) return 0;
+                        return 30 * Math.pow(x, 1) * Math.pow(1-x, 4);
+                    }
+                }
+            };
+
+            // DOM Elements
+            const distributionBtns = document.querySelectorAll('.distribution-btn');
+            const populationMeanInput = document.getElementById('populationMean');
+            const populationVarianceInput = document.getElementById('populationVariance');
+            const sampleSizeSlider = document.getElementById('sampleSizeSlider');
+            const currentSampleSizeEl = document.getElementById('currentSampleSize');
+            const visualizeBtn = document.getElementById('visualizeBtn');
+            const animateBtn = document.getElementById('animateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const playAnimationBtn = document.getElementById('playAnimation');
+            const pauseAnimationBtn = document.getElementById('pauseAnimation');
+            const stepForwardBtn = document.getElementById('stepForward');
+            const convergenceProgress = document.getElementById('convergenceProgress');
+            const progressText = document.getElementById('progressText');
+            
+            // Metrics Elements
+            const ksDistanceEl = document.getElementById('ksDistance');
+            const berryConstantEl = document.getElementById('berryConstant');
+            const convergenceRateEl = document.getElementById('convergenceRate');
+            const errorBoundFormulaEl = document.getElementById('errorBoundFormula');
+            const absoluteErrorEl = document.getElementById('absoluteError');
+            const relativeErrorEl = document.getElementById('relativeError');
+            const timeTo1PercentEl = document.getElementById('timeTo1Percent');
+            const convergenceFactorEl = document.getElementById('convergenceFactor');
+            const skewnessEffectEl = document.getElementById('skewnessEffect');
+            const optimalDistributionEl = document.getElementById('optimalDistribution');
+
+            // Initialize
+            initVisualizer();
+
+            function initVisualizer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Distribution Selection
+                distributionBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const distribution = this.dataset.distribution;
+                        setDistribution(distribution);
+                    });
+                });
+
+                // Input Bindings
+                bindInputs();
+                
+                // Animation Controls
+                playAnimationBtn.addEventListener('click', startAnimation);
+                pauseAnimationBtn.addEventListener('click', pauseAnimation);
+                stepForwardBtn.addEventListener('click', stepForward);
+                
+                // Visualization Controls
+                visualizeBtn.addEventListener('click', visualizeConvergence);
+                animateBtn.addEventListener('click', animateCLT);
+                resetBtn.addEventListener('click', resetVisualizer);
+
+                // Sample Size Slider
+                sampleSizeSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.sampleSize = value;
+                    currentSampleSizeEl.textContent = `n = ${value}`;
+                    updateConvergence();
+                });
+
+                // Initialize Charts
+                initializeCharts();
+
+                // Run initial visualization
+                setTimeout(() => {
+                    visualizeConvergence();
+                    updateComparisonChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDistribution(distribution) {
+                simulationState.distribution = distribution;
+                const dist = distributions[distribution];
+                
+                // Update state with distribution properties
+                simulationState.populationMean = dist.mean;
+                simulationState.populationVariance = dist.variance;
+                simulationState.populationStdDev = Math.sqrt(dist.variance);
+                simulationState.thirdMoment = dist.thirdMoment;
+                
+                // Update inputs
+                populationMeanInput.value = dist.mean.toFixed(2);
+                populationVarianceInput.value = dist.variance.toFixed(3);
+                
+                // Update active button
+                distributionBtns.forEach(btn => {
+                    if (btn.dataset.distribution === distribution) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update metrics
+                updateDistributionMetrics();
+                visualizeConvergence();
+            }
+
+            function bindInputs() {
+                // Population Mean
+                populationMeanInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationMean = value;
+                    updateDistributionMetrics();
+                });
+                
+                // Population Variance
+                populationVarianceInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationVariance = value;
+                    simulationState.populationStdDev = Math.sqrt(value);
+                    updateDistributionMetrics();
+                });
+            }
+
+            function updateDistributionMetrics() {
+                const dist = distributions[simulationState.distribution];
+                
+                // Update skewness effect
+                const skewness = Math.abs(dist.skewness);
+                let effect = 'Low';
+                if (skewness > 1.5) effect = 'Very High';
+                else if (skewness > 1) effect = 'High';
+                else if (skewness > 0.5) effect = 'Medium';
+                
+                skewnessEffectEl.textContent = effect;
+                optimalDistributionEl.textContent = dist.skewness === 0 ? 'Symmetric' : 'Skewed';
+                
+                // Update convergence factor based on skewness
+                const convergenceFactor = 1 - (0.1 / (1 + Math.abs(dist.skewness)));
+                convergenceFactorEl.textContent = convergenceFactor.toFixed(2);
+            }
+
+            function initializeCharts() {
+                // Convergence Chart
+                const convergenceCtx = document.getElementById('convergenceChart').getContext('2d');
+                convergenceChart = new Chart(convergenceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'নমুনা গড় ডিস্ট্রিবিউশন' : 'Sample Mean Distribution',
+                                data: [],
+                                borderColor: 'var(--distribution-1)',
+                                backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন' : 'Theoretical Normal Distribution',
+                                data: [],
+                                borderColor: 'var(--theoretical-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                tension: 0
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'জনসংখ্যা ডিস্ট্রিবিউশন' : 'Population Distribution',
+                                data: [],
+                                borderColor: 'var(--population-color)',
+                                backgroundColor: 'rgba(255, 152, 0, 0.05)',
+                                borderWidth: 1,
+                                borderDash: [3, 3],
+                                hidden: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(4)}`;
+                                    }
+                                }
+                            },
+                            annotation: {
+                                annotations: {
+                                    berryBound: {
+                                        type: 'box',
+                                xMin: -3,
+                                        xMax: 3,
+                                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                                        borderColor: 'var(--berry-color)',
+                                        borderWidth: 1,
+                                        borderDash: [2, 2],
+                                        label: {
+                                            display: true,
+                                            content: currentLanguage === 'bn' ? 'বেরি-এসিন বাউন্ড' : 'Berry-Esseen Bound',
+                                            position: 'center',
+                                            color: 'var(--berry-color)',
+                                            font: {
+                                                size: 12,
+                                                weight: 'bold'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ডাইজড মান' : 'Standardized Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Rate Chart
+                const rateCtx = document.getElementById('rateChart').getContext('2d');
+                rateChart = new Chart(rateCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'এরর বাউন্ড' : 'Error Bound',
+                            data: [],
+                            borderColor: 'var(--error-color)',
+                            backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা আকার (লগ স্কেল)' : 'Sample Size (log scale)',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কোলমোগোরভ দূরত্ব' : 'Kolmogorov Distance',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Error Chart
+                const errorCtx = document.getElementById('errorChart').getContext('2d');
+                errorChart = new Chart(errorCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'প্রকৃত এরর' : 'Actual Error',
+                                data: [],
+                                borderColor: 'var(--error-color)',
+                                backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                                borderWidth: 3,
+                                fill: false,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'বেরি-এসিন বাউন্ড' : 'Berry-Esseen Bound',
+                                data: [],
+                                borderColor: 'var(--berry-color)',
+                                backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'অনুভূমিক এরর' : 'Empirical Error',
+                                data: [],
+                                borderColor: 'var(--convergence-color)',
+                                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা আকার (n)' : 'Sample Size (n)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সুপ্রিমাম এরর' : 'Supremum Error',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Comparison Chart
+                const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+                comparisonChart = new Chart(comparisonCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.values(distributions).map(d => d.name),
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'কনভারজেন্স সময়' : 'Convergence Time',
+                            data: [],
+                            backgroundColor: [
+                                'var(--distribution-1)',
+                                'var(--distribution-2)',
+                                'var(--distribution-3)',
+                                'var(--distribution-4)'
+                            ],
+                            borderColor: [
+                                'var(--distribution-1)',
+                                'var(--distribution-2)',
+                                'var(--distribution-3)',
+                                'var(--distribution-4)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'n ১% এররের জন্য প্রয়োজনীয়' : 'n required for 1% error',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            function generateSampleMeans(n, numSamples = 10000) {
+                const dist = distributions[simulationState.distribution];
+                const means = [];
+                const populationMean = simulationState.populationMean;
+                const populationStdDev = simulationState.populationStdDev;
+                
+                for (let i = 0; i < numSamples; i++) {
+                    let sum = 0;
+                    
+                    // Generate n samples from the distribution
+                    for (let j = 0; j < n; j++) {
+                        let sample;
+                        switch(simulationState.distribution) {
+                            case 'bernoulli':
+                                sample = Math.random() < populationMean ? 1 : 0;
+                                break;
+                            case 'uniform':
+                                sample = Math.random();
+                                break;
+                            case 'exponential':
+                                sample = -Math.log(1 - Math.random());
+                                break;
+                            case 'beta':
+                                // Approximate Beta(2,5) using rejection sampling
+                                sample = Math.random();
+                                // Simple approximation for demo
+                                sample = Math.pow(sample, 1/2);
+                                break;
+                        }
+                        sum += sample;
+                    }
+                    
+                    // Standardize the sample mean
+                    const sampleMean = sum / n;
+                    const standardizedMean = (sampleMean - populationMean) / (populationStdDev / Math.sqrt(n));
+                    means.push(standardizedMean);
+                }
+                
+                return means;
+            }
+
+            function normalPDF(x, mean = 0, stdDev = 1) {
+                return Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2)) / (stdDev * Math.sqrt(2 * Math.PI));
+            }
+
+            function createHistogramData(data, bins = 50, range = [-4, 4]) {
+                const [min, max] = range;
+                const binWidth = (max - min) / bins;
+                const histogram = Array(bins).fill(0);
+                const labels = [];
+                
+                for (let i = 0; i < bins; i++) {
+                    const binStart = min + i * binWidth;
+                    const binEnd = binStart + binWidth;
+                    labels.push((binStart + binWidth / 2).toFixed(2));
+                    
+                    histogram[i] = data.filter(x => x >= binStart && x < binEnd).length;
+                }
+                
+                // Normalize to density
+                const total = data.length;
+                const density = histogram.map(count => count / (total * binWidth));
+                
+                return { labels, density };
+            }
+
+            function calculateKSDistance(empiricalData, theoreticalData) {
+                // Calculate Kolmogorov-Smirnov distance
+                let maxDistance = 0;
+                const n = empiricalData.length;
+                
+                // Sort empirical data
+                const sortedEmpirical = [...empiricalData].sort((a, b) => a - b);
+                
+                // Calculate empirical CDF at each point
+                for (let i = 0; i < sortedEmpirical.length; i++) {
+                    const empiricalCDF = (i + 1) / n;
+                    const theoreticalCDF = 0.5 * (1 + erf(sortedEmpirical[i] / Math.sqrt(2)));
+                    const distance = Math.abs(empiricalCDF - theoreticalCDF);
+                    maxDistance = Math.max(maxDistance, distance);
+                }
+                
+                return maxDistance;
+            }
+
+            function erf(x) {
+                // Error function approximation
+                const a1 =  0.254829592;
+                const a2 = -0.284496736;
+                const a3 =  1.421413741;
+                const a4 = -1.453152027;
+                const a5 =  1.061405429;
+                const p  =  0.3275911;
+
+                const sign = x < 0 ? -1 : 1;
+                x = Math.abs(x);
+
+                const t = 1.0 / (1.0 + p * x);
+                const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+                return sign * y;
+            }
+
+            function calculateBerryEsseenBound() {
+                const { thirdMoment, populationStdDev, sampleSize, berryConstant } = simulationState;
+                const sigma = populationStdDev;
+                const rho = thirdMoment;
+                
+                if (sigma === 0) return 0;
+                
+                const bound = berryConstant * (rho / (Math.pow(sigma, 3) * Math.sqrt(sampleSize)));
+                return Math.min(bound, 1); // Bound cannot exceed 1
+            }
+
+            function updateConvergence() {
+                const sampleMeans = generateSampleMeans(simulationState.sampleSize, 5000);
+                const histData = createHistogramData(sampleMeans, 50, [-4, 4]);
+                
+                // Update convergence chart
+                convergenceChart.data.labels = histData.labels;
+                convergenceChart.data.datasets[0].data = histData.density;
+                
+                // Update theoretical normal distribution
+                const theoreticalData = histData.labels.map(x => 
+                    normalPDF(parseFloat(x))
+                );
+                convergenceChart.data.datasets[1].data = theoreticalData;
+                
+                // Update population distribution if visible
+                if (simulationState.showPopulation) {
+                    const dist = distributions[simulationState.distribution];
+                    const popData = histData.labels.map(x => {
+                        // Transform back to original scale for population PDF
+                        const originalX = parseFloat(x) * (simulationState.populationStdDev / Math.sqrt(simulationState.sampleSize)) + 
+                                        simulationState.populationMean;
+                        return dist.pdf(originalX) * (simulationState.populationStdDev / Math.sqrt(simulationState.sampleSize));
+                    });
+                    convergenceChart.data.datasets[2].data = popData;
+                }
+                
+                // Calculate convergence metrics
+                const ksDistance = calculateKSDistance(sampleMeans, theoreticalData);
+                const berryBound = calculateBerryEsseenBound();
+                
+                // Update metrics display
+                ksDistanceEl.textContent = ksDistance.toFixed(3);
+                berryConstantEl.textContent = simulationState.berryConstant.toFixed(4);
+                
+                // Update error bound formula
+                const errorBound = calculateBerryEsseenBound();
+                absoluteErrorEl.textContent = errorBound.toFixed(3);
+                relativeErrorEl.textContent = `${(errorBound * 100).toFixed(1)}%`;
+                
+                // Update convergence progress
+                const progress = Math.min(100, Math.max(0, 100 * (1 - ksDistance / 0.5)));
+                convergenceProgress.style.width = `${progress}%`;
+                progressText.innerHTML = currentLanguage === 'bn' 
+                    ? `কনভারজেন্স অগ্রগতি: <strong>${progress.toFixed(0)}%</strong>`
+                    : `Convergence Progress: <strong>${progress.toFixed(0)}%</strong>`;
+                
+                // Update error bound formula display
+                errorBoundFormulaEl.innerHTML = `
+                    Error ≤ ${simulationState.berryConstant.toFixed(4)} × 
+                    (${simulationState.thirdMoment.toFixed(3)} / 
+                    (${simulationState.populationStdDev.toFixed(3)}³√${simulationState.sampleSize}))
+                `;
+                
+                convergenceChart.update();
+                
+                // Update rate chart
+                updateRateChart();
+                
+                // Update error chart
+                updateErrorChart();
+            }
+
+            function updateRateChart() {
+                const sampleSizes = [1, 2, 5, 10, 20, 50, 100, 200];
+                const errors = sampleSizes.map(n => {
+                    const bound = simulationState.berryConstant * 
+                                (simulationState.thirdMoment / 
+                                (Math.pow(simulationState.populationStdDev, 3) * Math.sqrt(n)));
+                    return Math.min(bound, 1);
+                });
+                
+                rateChart.data.labels = sampleSizes.map(n => n.toString());
+                rateChart.data.datasets[0].data = errors;
+                rateChart.update();
+                
+                // Calculate time to 1% error
+                const nFor1Percent = Math.pow(simulationState.berryConstant * 
+                                            simulationState.thirdMoment / 
+                                            (Math.pow(simulationState.populationStdDev, 3) * 0.01), 2);
+                timeTo1PercentEl.textContent = `n ≈ ${Math.ceil(nFor1Percent)}`;
+            }
+
+            function updateErrorChart() {
+                const sampleSizes = Array.from({length: 20}, (_, i) => (i + 1) * 10);
+                const actualErrors = [];
+                const berryBounds = [];
+                const empiricalErrors = [];
+                
+                for (const n of sampleSizes) {
+                    // Calculate Berry-Esseen bound
+                    const bound = simulationState.berryConstant * 
+                                (simulationState.thirdMoment / 
+                                (Math.pow(simulationState.populationStdDev, 3) * Math.sqrt(n)));
+                    berryBounds.push(Math.min(bound, 1));
+                    
+                    // Simulate actual error for a few sample sizes
+                    if (n % 50 === 0 || n <= 50) {
+                        const sampleMeans = generateSampleMeans(n, 2000);
+                        const ksDistance = calculateKSDistance(sampleMeans, []);
+                        actualErrors.push({x: n, y: ksDistance});
+                        empiricalErrors.push(ksDistance);
+                    } else {
+                        empiricalErrors.push(null);
+                    }
+                }
+                
+                errorChart.data.labels = sampleSizes.map(n => n.toString());
+                errorChart.data.datasets[0].data = actualErrors.map(d => d ? d.y : null);
+                errorChart.data.datasets[1].data = berryBounds;
+                errorChart.data.datasets[2].data = empiricalErrors;
+                errorChart.update();
+            }
+
+            function updateComparisonChart() {
+                const distNames = Object.keys(distributions);
+                const convergenceTimes = distNames.map(dist => {
+                    const props = distributions[dist];
+                    const n = Math.pow(simulationState.berryConstant * 
+                                     props.thirdMoment / 
+                                     (Math.pow(Math.sqrt(props.variance), 3) * 0.01), 2);
+                    return Math.ceil(n);
+                });
+                
+                comparisonChart.data.datasets[0].data = convergenceTimes;
+                comparisonChart.update();
+            }
+
+            function startAnimation() {
+                if (isAnimating) return;
+                
+                isAnimating = true;
+                currentAnimationStep = 1;
+                
+                playAnimationBtn.classList.add('active');
+                pauseAnimationBtn.classList.remove('active');
+                
+                animationInterval = setInterval(() => {
+                    if (currentAnimationStep > 200) {
+                        pauseAnimation();
+                        return;
+                    }
+                    
+                    simulationState.sampleSize = currentAnimationStep;
+                    sampleSizeSlider.value = currentAnimationStep;
+                    currentSampleSizeEl.textContent = `n = ${currentAnimationStep}`;
+                    
+                    updateConvergence();
+                    
+                    currentAnimationStep++;
+                }, 50);
+            }
+
+            function pauseAnimation() {
+                if (!isAnimating) return;
+                
+                isAnimating = false;
+                clearInterval(animationInterval);
+                
+                playAnimationBtn.classList.remove('active');
+                pauseAnimationBtn.classList.add('active');
+            }
+
+            function stepForward() {
+                if (isAnimating) return;
+                
+                simulationState.sampleSize = Math.min(200, simulationState.sampleSize + 10);
+                sampleSizeSlider.value = simulationState.sampleSize;
+                currentSampleSizeEl.textContent = `n = ${simulationState.sampleSize}`;
+                
+                updateConvergence();
+            }
+
+            function visualizeConvergence() {
+                visualizeBtn.classList.add('pulse');
+                setTimeout(() => {
+                    updateConvergence();
+                    visualizeBtn.classList.remove('pulse');
+                }, 100);
+            }
+
+            function animateCLT() {
+                animateBtn.classList.add('highlight');
+                startAnimation();
+                setTimeout(() => animateBtn.classList.remove('highlight'), 1500);
+            }
+
+            function resetVisualizer() {
+                pauseAnimation();
+                
+                // Reset to defaults
+                simulationState = {
+                    distribution: 'bernoulli',
+                    populationMean: 0.3,
+                    populationVariance: 0.21,
+                    populationStdDev: Math.sqrt(0.21),
+                    thirdMoment: 0.084,
+                    sampleSize: 30,
+                    numSamples: 10000,
+                    berryConstant: 0.4748,
+                    showPopulation: true,
+                    showTheoretical: true,
+                    showErrorBounds: true
+                };
+                
+                // Update UI
+                sampleSizeSlider.value = 30;
+                currentSampleSizeEl.textContent = 'n = 30';
+                populationMeanInput.value = '0.3';
+                populationVarianceInput.value = '0.21';
+                
+                // Reset distribution buttons
+                distributionBtns.forEach(btn => {
+                    if (btn.dataset.distribution === 'bernoulli') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Reset animation buttons
+                playAnimationBtn.classList.remove('active');
+                pauseAnimationBtn.classList.remove('active');
+                
+                // Update visualization
+                visualizeConvergence();
+                updateComparisonChart();
+            }
+        });
+    </script>
+</body>
+</html>

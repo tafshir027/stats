@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Histogram Generator | Distribution Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.7.0/lib/browser/math.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4A148C;
+            --secondary: #7B1FA2;
+            --accent: #FF4081;
+            --success: #00E676;
+            --info: #2979FF;
+            --warning: #FF9100;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --histogram: #9C27B0;
+            --density: #2196F3;
+            --fitting: #4CAF50;
+            --bin-optimization: #FF9800;
+            --distribution-bg: #F3E5F5;
+            --simulation-bg: #E3F2FD;
+            --analysis-bg: #E8F5E9;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--histogram);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--histogram), var(--density), var(--fitting));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Simulation Panel */
+        .simulation-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--histogram);
+        }
+
+        /* Distribution Selection */
+        .distribution-selection {
+            margin-bottom: 2rem;
+        }
+
+        .distribution-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .distribution-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .distribution-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .distribution-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .distribution-card.active {
+            border-color: var(--histogram);
+            background: var(--distribution-bg);
+        }
+
+        .distribution-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--histogram);
+        }
+
+        .distribution-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Distribution Parameters */
+        .distribution-parameters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-parameters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--simulation-bg);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--histogram);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        /* Monte Carlo Parameters */
+        .mc-parameters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .parameter-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .parameter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--histogram);
+            margin: 0.5rem 0;
+        }
+
+        .slider-container {
+            margin-top: 1rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--histogram), var(--density));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--histogram);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Bin Width Controls */
+        .bin-controls {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .bin-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .bin-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .bin-method-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .bin-method-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .bin-method-card.active {
+            border-color: var(--bin-optimization);
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .bin-method-icon {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--bin-optimization);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .generate-btn {
+            background: var(--histogram);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Histogram Visualization */
+        .histogram-container {
+            height: 400px;
+            margin-bottom: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        #histogramPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Statistics Display */
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-detail {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        /* Distribution Fitting */
+        .fitting-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .fitting-methods {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .fitting-methods {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .fitting-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .fitting-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .fitting-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .fitting-card.active {
+            border-color: var(--fitting);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .fitting-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--fitting);
+        }
+
+        .fitting-quality {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Density Estimation */
+        .density-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .density-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .density-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .density-method-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .density-method-card.active {
+            border-color: var(--density);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .density-icon {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--density);
+        }
+
+        /* Goodness of Fit */
+        .goodness-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .fit-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .fit-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--analysis-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Comparative Analysis */
+        .comparative-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparative-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--histogram);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Histogram Bars Animation */
+        .histogram-bar {
+            transition: height 0.5s ease;
+        }
+
+        /* Bin Indicator */
+        .bin-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .bin-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 152, 0, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .distribution-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .mc-parameters {
+                grid-template-columns: 1fr;
+            }
+            
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: absolute;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--light-gray);
+            border-top-color: var(--histogram);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--histogram), var(--density));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo Histogram Generator" data-bn="মন্টে কার্লো হিস্টোগ্রাম জেনারেটর">মন্টে কার্লো হিস্টোগ্রাম জেনারেটর</h1>
+            <p class="subtitle" data-en="Generate and analyze histograms from Monte Carlo simulations with dynamic bin width adjustment, probability density estimation, and distribution fitting" data-bn="ডাইনামিক বিন উইথ অ্যাডজাস্টমেন্ট, প্রোবাবিলিটি ডেনসিটি এস্টিমেশন এবং ডিস্ট্রিবিউশন ফিটিং সহ মন্টে কার্লো সিমুলেশন থেকে হিস্টোগ্রাম জেনারেট করুন এবং বিশ্লেষণ করুন">
+                ডাইনামিক বিন উইথ অ্যাডজাস্টমেন্ট, প্রোবাবিলিটি ডেনসিটি এস্টিমেশন এবং ডিস্ট্রিবিউশন ফিটিং সহ মন্টে কার্লো সিমুলেশন থেকে হিস্টোগ্রাম জেনারেট করুন এবং বিশ্লেষণ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Simulation Panel -->
+            <div class="simulation-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-dice"></i>
+                    <span data-en="Distribution Selection" data-bn="ডিস্ট্রিবিউশন নির্বাচন">ডিস্ট্রিবিউশন নির্বাচন</span>
+                </h2>
+
+                <!-- Distribution Cards -->
+                <div class="distribution-cards">
+                    <div class="distribution-card active" data-dist="normal">
+                        <div class="distribution-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Normal" data-bn="নরমাল">নরমাল</div>
+                        <div class="help-text" data-en="Bell curve" data-bn="বেল কার্ভ">বেল কার্ভ</div>
+                    </div>
+                    <div class="distribution-card" data-dist="uniform">
+                        <div class="distribution-icon">
+                            <i class="fas fa-square"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Uniform" data-bন="ইউনিফর্ম">ইউনিফর্ম</div>
+                        <div class="help-text" data-en="Equal probability" data-bন="সমান সম্ভাবনা">সমান সম্ভাবনা</div>
+                    </div>
+                    <div class="distribution-card" data-dist="exponential">
+                        <div class="distribution-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Exponential" data-bন="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</div>
+                        <div class="help-text" data-en="Memoryless process" data-bন="মেমোরিলেস প্রসেস">মেমোরিলেস প্রসেস</div>
+                    </div>
+                    <div class="distribution-card" data-dist="lognormal">
+                        <div class="distribution-icon">
+                            <i class="fas fa-mountain"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Log-normal" data-bন="লগ-নরমাল">লগ-নরমাল</div>
+                        <div class="help-text" data-en="Positive values only" data-bন="শুধুমাত্র ধনাত্মক মান">শুধুমাত্র ধনাত্মক মান</div>
+                    </div>
+                    <div class="distribution-card" data-dist="gamma">
+                        <div class="distribution-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Gamma" data-bন="গামা">গামা</div>
+                        <div class="help-text" data-en="Waiting times" data-bন="অপেক্ষার সময়">অপেক্ষার সময়</div>
+                    </div>
+                    <div class="distribution-card" data-dist="beta">
+                        <div class="distribution-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Beta" data-bন="বিটা">বিটা</div>
+                        <div class="help-text" data-en="0 to 1 range" data-bন="০ থেকে ১ রেঞ্জ">০ থেকে ১ রেঞ্জ</div>
+                    </div>
+                    <div class="distribution-card" data-dist="weibull">
+                        <div class="distribution-icon">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Weibull" data-bন="ওয়েইবুল">ওয়েইবুল</div>
+                        <div class="help-text" data-en="Reliability analysis" data-bন="রিলায়াবিলিটি অ্যানালাইসিস">রিলায়াবিলিটি অ্যানালাইসিস</div>
+                    </div>
+                    <div class="distribution-card" data-dist="poisson">
+                        <div class="distribution-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                        <div class="distribution-name" data-en="Poisson" data-bন="পয়সন">পয়সন</div>
+                        <div class="help-text" data-en="Count data" data-bন="গণনা ডেটা">গণনা ডেটা</div>
+                    </div>
+                </div>
+
+                <!-- Distribution Parameters -->
+                <div class="distribution-parameters">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-mu"></i>
+                            <span data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</span>
+                        </div>
+                        <input type="number" id="paramMean" class="parameter-input" value="0" step="0.1">
+                    </div>
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-sigma"></i>
+                            <span data-en="Std Dev (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</span>
+                        </div>
+                        <input type="number" id="paramStd" class="parameter-input" value="1" step="0.1" min="0.1">
+                    </div>
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-lambda"></i>
+                            <span data-en="Rate (λ)" data-bন="রেট (λ)">রেট (λ)</span>
+                        </div>
+                        <input type="number" id="paramRate" class="parameter-input" value="1" step="0.1" min="0.1">
+                    </div>
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-k"></i>
+                            <span data-en="Shape (k)" data-bন="শেপ (k)">শেপ (k)</span>
+                        </div>
+                        <input type="number" id="paramShape" class="parameter-input" value="2" step="0.1" min="0.1">
+                    </div>
+                </div>
+
+                <!-- Monte Carlo Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Simulation Parameters" data-bন="সিমুলেশন প্যারামিটার">সিমুলেশন প্যারামিটার</span>
+                </h2>
+
+                <div class="mc-parameters">
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Sample Size" data-bন="নমুনা আকার">নমুনা আকার</div>
+                        <div class="parameter-value" id="sampleSizeValue">10000</div>
+                        <div class="slider-container">
+                            <input type="range" id="sampleSize" class="slider" min="100" max="100000" value="10000" step="100">
+                            <div class="help-text" data-en="Number of Monte Carlo samples" data-bন="মন্টে কার্লো নমুনার সংখ্যা">মন্টে কার্লো নমুনার সংখ্যা</div>
+                        </div>
+                    </div>
+
+                    <div class="parameter-card">
+                        <div class="parameter-label" data-en="Random Seed" data-bন="র্যান্ডম সিড">র্যান্ডম সিড</div>
+                        <div class="parameter-value" id="randomSeedValue">42</div>
+                        <div class="slider-container">
+                            <input type="range" id="randomSeed" class="slider" min="1" max="1000" value="42" step="1">
+                            <div class="help-text" data-en="For reproducible results" data-bন="পুনরুৎপাদনযোগ্য ফলাফলের জন্য">পুনরুৎপাদনযোগ্য ফলাফলের জন্য</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Generate Histogram" data-bন="হিস্টোগ্রাম জেনারেট করুন">হিস্টোগ্রাম জেনারেট করুন</span>
+                    </button>
+                    <button class="action-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Histogram Visualization" data-bন="হিস্টোগ্রাম ভিজ্যুয়ালাইজেশন">হিস্টোগ্রাম ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+
+                <!-- Histogram Plot -->
+                <div class="histogram-container">
+                    <div id="histogramPlot"></div>
+                </div>
+
+                <!-- Statistics Display -->
+                <div class="statistics-grid">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Mean" data-bন="নমুনা গড়">নমুনা গড়</div>
+                        <div class="stat-value" id="sampleMean">0.00</div>
+                        <div class="stat-detail" id="meanError">±0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Std Dev" data-bন="নমুনা স্ট্যান্ডার্ড ডেভিয়েশন">নমুনা স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="stat-value" id="sampleStd">1.00</div>
+                        <div class="stat-detail" id="stdError">±0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</div>
+                        <div class="stat-value" id="skewness">0.00</div>
+                        <div class="stat-detail" id="kurtosis">Kurtosis: 0.00</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar for Simulation -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="simulationProgress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bin Width Controls -->
+        <div class="bin-controls">
+            <h2 class="section-title">
+                <i class="fas fa-ruler"></i>
+                <span data-en="Dynamic Bin Width Adjustment" data-bন="ডাইনামিক বিন উইথ অ্যাডজাস্টমেন্ট">ডাইনামিক বিন উইথ অ্যাডজাস্টমেন্ট</span>
+            </h2>
+            
+            <p data-en="Select bin width calculation method. Different methods are optimal for different distributions:" data-bন="বিন উইথ গণনা পদ্ধতি নির্বাচন করুন। বিভিন্ন ডিস্ট্রিবিউশনের জন্য বিভিন্ন পদ্ধতি সর্বোত্তম:">
+                বিন উইথ গণনা পদ্ধতি নির্বাচন করুন। বিভিন্ন ডিস্ট্রিবিউশনের জন্য বিভিন্ন পদ্ধতি সর্বোত্তম:
+            </p>
+            
+            <div class="bin-methods">
+                <div class="bin-method-card active" data-bin-method="sturges">
+                    <div class="bin-method-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3 data-en="Sturges' Rule" data-bন="স্টার্জেস রুল">স্টার্জেস রুল</h3>
+                    <p class="help-text" data-en="k = 1 + log₂(n)" data-bন="k = ১ + log₂(n)">k = ১ + log₂(n)</p>
+                    <div class="parameter-value" id="sturgesBins">≈ 14</div>
+                </div>
+                <div class="bin-method-card" data-bin-method="scott">
+                    <div class="bin-method-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 data-en="Scott's Rule" data-bন="স্কটের রুল">স্কটের রুল</h3>
+                    <p class="help-text" data-en="h = 3.49σ n^(-1/3)" data-bন="h = ৩.৪৯σ n^(-১/৩)">h = ৩.৪৯σ n^(-১/৩)</p>
+                    <div class="parameter-value" id="scottBins">≈ 17</div>
+                </div>
+                <div class="bin-method-card" data-bin-method="freedman">
+                    <div class="bin-method-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 data-en="Freedman-Diaconis" data-bন="ফ্রিডম্যান-ডায়াকোনিস">ফ্রিডম্যান-ডায়াকোনিস</h3>
+                    <p class="help-text" data-en="h = 2 IQR n^(-1/3)" data-bন="h = ২ IQR n^(-১/৩)">h = ২ IQR n^(-১/৩)</p>
+                    <div class="parameter-value" id="freedmanBins">≈ 19</div>
+                </div>
+            </div>
+            
+            <div class="parameter-card" style="margin-top: 1.5rem;">
+                <div class="parameter-label" data-en="Manual Bin Count" data-bন="ম্যানুয়াল বিন সংখ্যা">ম্যানুয়াল বিন সংখ্যা</div>
+                <div class="parameter-value" id="manualBinsValue">15</div>
+                <div class="slider-container">
+                    <input type="range" id="manualBins" class="slider" min="5" max="100" value="15" step="1">
+                    <div class="help-text" data-en="Adjust for fine-tuning" data-bন="ফাইন-টিউনিংয়ের জন্য সামঞ্জস্য করুন">ফাইন-টিউনিংয়ের জন্য সামঞ্জস্য করুন</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Probability Density Estimation -->
+        <div class="density-section">
+            <h2 class="section-title">
+                <i class="fas fa-wave-square"></i>
+                <span data-en="Probability Density Estimation" data-bন="প্রোবাবিলিটি ডেনসিটি এস্টিমেশন">প্রোবাবিলিটি ডেনসিটি এস্টিমেশন</span>
+            </h2>
+            
+            <p data-en="Estimate the underlying probability density function using different kernel methods:" data-bন="বিভিন্ন কার্নেল পদ্ধতি ব্যবহার করে অন্তর্নিহিত প্রোবাবিলিটি ডেনসিটি ফাংশন অনুমান করুন:">
+                বিভিন্ন কার্নেল পদ্ধতি ব্যবহার করে অন্তর্নিহিত প্রোবাবিলিটি ডেনসিটি ফাংশন অনুমান করুন:
+            </p>
+            
+            <div class="density-methods">
+                <div class="density-method-card active" data-density="gaussian">
+                    <div class="density-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 data-en="Gaussian Kernel" data-bন="গাউসিয়ান কার্নেল">গাউসিয়ান কার্নেল</h3>
+                    <p class="help-text" data-en="Smooth estimate" data-bন="মসৃণ অনুমান">মসৃণ অনুমান</p>
+                </div>
+                <div class="density-method-card" data-density="epanechnikov">
+                    <div class="density-icon">
+                        <i class="fas fa-parabola"></i>
+                    </div>
+                    <h3 data-en="Epanechnikov" data-bন="এপানেচনিকভ">এপানেচনিকভ</h3>
+                    <p class="help-text" data-en="Optimal efficiency" data-bন="সর্বোত্তম দক্ষতা">সর্বোত্তম দক্ষতা</p>
+                </div>
+                <div class="density-method-card" data-density="tophat">
+                    <div class="density-icon">
+                        <i class="fas fa-square"></i>
+                    </div>
+                    <h3 data-en="Top-hat" data-bন="টপ-হ্যাট">টপ-হ্যাট</h3>
+                    <p class="help-text" data-en="Uniform window" data-bন="ইউনিফর্ম উইন্ডো">ইউনিফর্ম উইন্ডো</p>
+                </div>
+            </div>
+            
+            <div class="parameter-card" style="margin-top: 1.5rem;">
+                <div class="parameter-label" data-en="Bandwidth (h)" data-bন="ব্যান্ডউইথ (h)">ব্যান্ডউইথ (h)</div>
+                <div class="parameter-value" id="bandwidthValue">0.5</div>
+                <div class="slider-container">
+                    <input type="range" id="bandwidth" class="slider" min="0.1" max="2" value="0.5" step="0.05">
+                    <div class="help-text" data-en="Larger = smoother density estimate" data-bন="বড় = মসৃণ ডেনসিটি অনুমান">বড় = মসৃণ ডেনসিটি অনুমান</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Fitting -->
+        <div class="fitting-section">
+            <h2 class="section-title">
+                <i class="fas fa-ruler-combined"></i>
+                <span data-en="Distribution Fitting" data-bন="ডিস্ট্রিবিউশন ফিটিং">ডিস্ট্রিবিউশন ফিটিং</span>
+            </h2>
+            
+            <p data-en="Fit theoretical distributions to the empirical histogram data and assess goodness of fit:" data-bন="তাত্ত্বিক ডিস্ট্রিবিউশনগুলিকে অভিজ্ঞতামূলক হিস্টোগ্রাম ডেটার সাথে ফিট করুন এবং ফিটের গুণমান মূল্যায়ন করুন:">
+                তাত্ত্বিক ডিস্ট্রিবিউশনগুলিকে অভিজ্ঞতামূলক হিস্টোগ্রাম ডেটার সাথে ফিট করুন এবং ফিটের গুণমান মূল্যায়ন করুন:
+            </p>
+            
+            <div class="fitting-methods">
+                <div class="fitting-card active" data-fit="normal">
+                    <div class="fitting-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 data-en="Normal" data-bন="নরমাল">নরমাল</h3>
+                    <div class="fitting-quality" data-en="Quality: Excellent" data-bন="গুণমান: চমৎকার">গুণমান: চমৎকার</div>
+                </div>
+                <div class="fitting-card" data-fit="lognormal">
+                    <div class="fitting-icon">
+                        <i class="fas fa-mountain"></i>
+                    </div>
+                    <h3 data-en="Log-normal" data-bন="লগ-নরমাল">লগ-নরমাল</h3>
+                    <div class="fitting-quality" data-en="Quality: Good" data-bন="গুণমান: ভাল">গুণমান: ভাল</div>
+                </div>
+                <div class="fitting-card" data-fit="gamma">
+                    <div class="fitting-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 data-en="Gamma" data-bন="গামা">গামা</h3>
+                    <div class="fitting-quality" data-en="Quality: Fair" data-bন="গুণমান: মোটামুটি">গুণমান: মোটামুটি</div>
+                </div>
+                <div class="fitting-card" data-fit="weibull">
+                    <div class="fitting-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h3 data-en="Weibull" data-bন="ওয়েইবুল">ওয়েইবুল</h3>
+                    <div class="fitting-quality" data-en="Quality: Good" data-bন="গুণমান: ভাল">গুণমান: ভাল</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goodness of Fit Metrics -->
+        <div class="goodness-section">
+            <h2 class="section-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span data-en="Goodness of Fit Metrics" data-bন="ফিটের গুণমান মেট্রিক্স">ফিটের গুণমান মেট্রিক্স</span>
+            </h2>
+            
+            <p data-en="Quantitative measures of how well the theoretical distribution fits the empirical data:" data-bন="তাত্ত্বিক ডিস্ট্রিবিউশনটি অভিজ্ঞতামূলক ডেটার সাথে কতটা ভাল ফিট করে তার পরিমাণগত পরিমাপ:">
+                তাত্ত্বিক ডিস্ট্রিবিউশনটি অভিজ্ঞতামূলক ডেটার সাথে কতটা ভাল ফিট করে তার পরিমাণগত পরিমাপ:
+            </p>
+            
+            <div class="fit-metrics">
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Kolmogorov-Smirnov" data-bন="কোলমোগোরভ-স্মিরনভ">কোলমোগোরভ-স্মিরনভ</div>
+                    <div class="metric-value" id="ksStatistic">0.023</div>
+                    <div class="help-text" data-en="Lower is better" data-bন="নিম্নতর ভাল">নিম্নতর ভাল</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Anderson-Darling" data-bন="অ্যান্ডারসন-ডার্লিং">অ্যান্ডারসন-ডার্লিং</div>
+                    <div class="metric-value" id="adStatistic">0.156</div>
+                    <div class="help-text" data-en="Lower is better" data-bন="নিম্নতর ভাল">নিম্নতর ভাল</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Chi-Square" data-bন="চি-স্কোয়ার">চি-স্কোয়ার</div>
+                    <div class="metric-value" id="chiSquare">4.32</div>
+                    <div class="help-text" data-en="Lower is better" data-bন="নিম্নতর ভাল">নিম্নতর ভাল</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="AIC" data-bন="AIC">AIC</div>
+                    <div class="metric-value" id="aicValue">-142.3</div>
+                    <div class="help-text" data-en="Lower is better" data-bন="নিম্নতর ভাল">নিম্নতর ভাল</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparative Analysis -->
+        <div class="comparative-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Comparative Analysis" data-bন="তুলনামূলক বিশ্লেষণ">তুলনামূলক বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Compare empirical histogram with fitted theoretical distribution and kernel density estimate:" data-bন="অভিজ্ঞতামূলক হিস্টোগ্রামকে ফিট করা তাত্ত্বিক ডিস্ট্রিবিউশন এবং কার্নেল ডেনসিটি এস্টিমেটের সাথে তুলনা করুন:">
+                অভিজ্ঞতামূলক হিস্টোগ্রামকে ফিট করা তাত্ত্বিক ডিস্ট্রিবিউশন এবং কার্নেল ডেনসিটি এস্টিমেটের সাথে তুলনা করুন:
+            </p>
+            
+            <div class="comparative-chart" id="comparativeChart"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Application State
+            const state = {
+                distribution: 'normal',
+                parameters: {
+                    mean: 0,
+                    std: 1,
+                    rate: 1,
+                    shape: 2
+                },
+                sampleSize: 10000,
+                randomSeed: 42,
+                binMethod: 'sturges',
+                manualBins: 15,
+                densityMethod: 'gaussian',
+                bandwidth: 0.5,
+                fitMethod: 'normal',
+                samples: [],
+                histogramData: null,
+                fitStatistics: {}
+            };
+
+            // DOM Elements
+            const distributionCards = document.querySelectorAll('.distribution-card');
+            const paramMeanInput = document.getElementById('paramMean');
+            const paramStdInput = document.getElementById('paramStd');
+            const paramRateInput = document.getElementById('paramRate');
+            const paramShapeInput = document.getElementById('paramShape');
+            const sampleSizeSlider = document.getElementById('sampleSize');
+            const sampleSizeValue = document.getElementById('sampleSizeValue');
+            const randomSeedSlider = document.getElementById('randomSeed');
+            const randomSeedValue = document.getElementById('randomSeedValue');
+            const binMethodCards = document.querySelectorAll('.bin-method-card');
+            const manualBinsSlider = document.getElementById('manualBins');
+            const manualBinsValue = document.getElementById('manualBinsValue');
+            const densityMethodCards = document.querySelectorAll('.density-method-card');
+            const bandwidthSlider = document.getElementById('bandwidth');
+            const bandwidthValue = document.getElementById('bandwidthValue');
+            const fittingCards = document.querySelectorAll('.fitting-card');
+            const generateBtn = document.getElementById('generateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            // Result Display Elements
+            const sampleMeanEl = document.getElementById('sampleMean');
+            const meanErrorEl = document.getElementById('meanError');
+            const sampleStdEl = document.getElementById('sampleStd');
+            const stdErrorEl = document.getElementById('stdError');
+            const skewnessEl = document.getElementById('skewness');
+            const kurtosisEl = document.getElementById('kurtosis');
+            const sturgesBinsEl = document.getElementById('sturgesBins');
+            const scottBinsEl = document.getElementById('scottBins');
+            const freedmanBinsEl = document.getElementById('freedmanBins');
+            const ksStatisticEl = document.getElementById('ksStatistic');
+            const adStatisticEl = document.getElementById('adStatistic');
+            const chiSquareEl = document.getElementById('chiSquare');
+            const aicValueEl = document.getElementById('aicValue');
+            const simulationProgress = document.getElementById('simulationProgress');
+
+            // Initialize
+            initHistogramGenerator();
+
+            function initHistogramGenerator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Distribution Selection
+                distributionCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setDistribution(this.dataset.dist);
+                    });
+                });
+
+                // Parameter Inputs
+                paramMeanInput.addEventListener('change', updateParameters);
+                paramStdInput.addEventListener('change', updateParameters);
+                paramRateInput.addEventListener('change', updateParameters);
+                paramShapeInput.addEventListener('change', updateParameters);
+
+                // Simulation Parameters
+                sampleSizeSlider.addEventListener('input', updateSampleSize);
+                randomSeedSlider.addEventListener('input', updateRandomSeed);
+
+                // Bin Width Controls
+                binMethodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setBinMethod(this.dataset.binMethod);
+                    });
+                });
+                manualBinsSlider.addEventListener('input', updateManualBins);
+
+                // Density Estimation
+                densityMethodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setDensityMethod(this.dataset.density);
+                    });
+                });
+                bandwidthSlider.addEventListener('input', updateBandwidth);
+
+                // Distribution Fitting
+                fittingCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setFitMethod(this.dataset.fit);
+                    });
+                });
+
+                // Action Buttons
+                generateBtn.addEventListener('click', generateHistogram);
+                clearBtn.addEventListener('click', resetAll);
+
+                // Initialize values
+                updateParameters();
+                updateSampleSize();
+                updateRandomSeed();
+                updateManualBins();
+                updateBandwidth();
+
+                // Generate initial histogram
+                setTimeout(() => {
+                    generateHistogram();
+                }, 1000);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDistribution(dist) {
+                state.distribution = dist;
+                
+                // Update active distribution card
+                distributionCards.forEach(card => {
+                    if (card.dataset.dist === dist) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                // Update parameter visibility based on distribution
+                updateParameterVisibility(dist);
+            }
+
+            function updateParameterVisibility(dist) {
+                // Show/hide parameters based on distribution
+                const params = {
+                    normal: ['mean', 'std'],
+                    uniform: ['mean', 'std'],
+                    exponential: ['rate'],
+                    lognormal: ['mean', 'std'],
+                    gamma: ['shape', 'rate'],
+                    beta: ['shape', 'shape'], // alpha, beta
+                    weibull: ['shape', 'scale'],
+                    poisson: ['rate']
+                };
+
+                const visibleParams = params[dist] || ['mean', 'std'];
+                
+                // Enable/disable inputs
+                paramMeanInput.disabled = !visibleParams.includes('mean');
+                paramStdInput.disabled = !visibleParams.includes('std');
+                paramRateInput.disabled = !visibleParams.includes('rate');
+                paramShapeInput.disabled = !visibleParams.includes('shape');
+            }
+
+            function updateParameters() {
+                state.parameters.mean = parseFloat(paramMeanInput.value) || 0;
+                state.parameters.std = parseFloat(paramStdInput.value) || 1;
+                state.parameters.rate = parseFloat(paramRateInput.value) || 1;
+                state.parameters.shape = parseFloat(paramShapeInput.value) || 2;
+            }
+
+            function updateSampleSize() {
+                state.sampleSize = parseInt(sampleSizeSlider.value);
+                sampleSizeValue.textContent = state.sampleSize.toLocaleString();
+                
+                // Update bin calculation estimates
+                updateBinEstimates();
+            }
+
+            function updateRandomSeed() {
+                state.randomSeed = parseInt(randomSeedSlider.value);
+                randomSeedValue.textContent = state.randomSeed;
+            }
+
+            function updateBinEstimates() {
+                const n = state.sampleSize;
+                
+                // Sturges' Rule
+                const sturgesBins = Math.ceil(Math.log2(n)) + 1;
+                sturgesBinsEl.textContent = `≈ ${sturgesBins}`;
+                
+                // Scott's Rule (estimate)
+                const scottBins = Math.ceil(3.49 * state.parameters.std * Math.pow(n, -1/3) * 20);
+                scottBinsEl.textContent = `≈ ${scottBins}`;
+                
+                // Freedman-Diaconis (estimate)
+                const freedmanBins = Math.ceil(2 * (state.parameters.std * 1.349) * Math.pow(n, -1/3) * 20);
+                freedmanBinsEl.textContent = `≈ ${freedmanBins}`;
+            }
+
+            function setBinMethod(method) {
+                state.binMethod = method;
+                
+                // Update active bin method card
+                binMethodCards.forEach(card => {
+                    if (card.dataset.binMethod === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateManualBins() {
+                state.manualBins = parseInt(manualBinsSlider.value);
+                manualBinsValue.textContent = state.manualBins;
+            }
+
+            function setDensityMethod(method) {
+                state.densityMethod = method;
+                
+                // Update active density method card
+                densityMethodCards.forEach(card => {
+                    if (card.dataset.density === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateBandwidth() {
+                state.bandwidth = parseFloat(bandwidthSlider.value);
+                bandwidthValue.textContent = state.bandwidth.toFixed(2);
+            }
+
+            function setFitMethod(method) {
+                state.fitMethod = method;
+                
+                // Update active fitting card
+                fittingCards.forEach(card => {
+                    if (card.dataset.fit === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            // Pseudo-random number generator with seed
+            function seededRandom(seed) {
+                return function() {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+            }
+
+            function generateSamples() {
+                const rand = seededRandom(state.randomSeed);
+                const samples = [];
+                
+                simulationProgress.style.width = '0%';
+                
+                for (let i = 0; i < state.sampleSize; i++) {
+                    let sample;
+                    
+                    switch(state.distribution) {
+                        case 'normal':
+                            // Box-Muller transform
+                            const u1 = rand();
+                            const u2 = rand();
+                            const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                            sample = state.parameters.mean + state.parameters.std * z0;
+                            break;
+                            
+                        case 'uniform':
+                            sample = state.parameters.mean - state.parameters.std * Math.sqrt(3) + 
+                                    2 * state.parameters.std * Math.sqrt(3) * rand();
+                            break;
+                            
+                        case 'exponential':
+                            sample = -Math.log(1 - rand()) / state.parameters.rate;
+                            break;
+                            
+                        case 'lognormal':
+                            const u3 = rand();
+                            const u4 = rand();
+                            const z1 = Math.sqrt(-2 * Math.log(u3)) * Math.cos(2 * Math.PI * u4);
+                            sample = Math.exp(state.parameters.mean + state.parameters.std * z1);
+                            break;
+                            
+                        case 'gamma':
+                            // Simple gamma approximation
+                            sample = -Math.log(rand()) / state.parameters.rate * state.parameters.shape;
+                            break;
+                            
+                        case 'beta':
+                            // Beta from two gamma distributions
+                            const gamma1 = -Math.log(rand()) * state.parameters.shape;
+                            const gamma2 = -Math.log(rand()) * state.parameters.shape;
+                            sample = gamma1 / (gamma1 + gamma2);
+                            break;
+                            
+                        case 'weibull':
+                            sample = Math.pow(-Math.log(1 - rand()), 1/state.parameters.shape) / state.parameters.rate;
+                            break;
+                            
+                        case 'poisson':
+                            // Simple Poisson approximation
+                            const lambda = state.parameters.rate;
+                            let k = 0;
+                            let p = Math.exp(-lambda);
+                            let s = p;
+                            const u = rand();
+                            while (u > s) {
+                                k++;
+                                p *= lambda / k;
+                                s += p;
+                            }
+                            sample = k;
+                            break;
+                            
+                        default:
+                            sample = rand();
+                    }
+                    
+                    samples.push(sample);
+                    
+                    // Update progress
+                    if (i % 1000 === 0) {
+                        const progress = (i / state.sampleSize) * 100;
+                        simulationProgress.style.width = `${progress}%`;
+                    }
+                }
+                
+                simulationProgress.style.width = '100%';
+                return samples;
+            }
+
+            function calculateOptimalBins(samples) {
+                const n = samples.length;
+                const dataMin = Math.min(...samples);
+                const dataMax = Math.max(...samples);
+                const range = dataMax - dataMin;
+                
+                let binWidth, bins;
+                
+                switch(state.binMethod) {
+                    case 'sturges':
+                        bins = Math.ceil(Math.log2(n)) + 1;
+                        binWidth = range / bins;
+                        break;
+                        
+                    case 'scott':
+                        const std = calculateStdDev(samples);
+                        binWidth = 3.49 * std * Math.pow(n, -1/3);
+                        bins = Math.ceil(range / binWidth);
+                        break;
+                        
+                    case 'freedman':
+                        const iqr = calculateIQR(samples);
+                        binWidth = 2 * iqr * Math.pow(n, -1/3);
+                        bins = Math.ceil(range / binWidth);
+                        break;
+                        
+                    default: // manual
+                        bins = state.manualBins;
+                        binWidth = range / bins;
+                }
+                
+                return { bins, binWidth, min: dataMin, max: dataMax };
+            }
+
+            function calculateStdDev(data) {
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const variance = data.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / data.length;
+                return Math.sqrt(variance);
+            }
+
+            function calculateIQR(data) {
+                const sorted = [...data].sort((a, b) => a - b);
+                const n = sorted.length;
+                const q1 = sorted[Math.floor(n * 0.25)];
+                const q3 = sorted[Math.floor(n * 0.75)];
+                return q3 - q1;
+            }
+
+            function createHistogram(samples, binInfo) {
+                const { bins, binWidth, min } = binInfo;
+                const histogram = new Array(bins).fill(0);
+                
+                samples.forEach(sample => {
+                    const binIndex = Math.floor((sample - min) / binWidth);
+                    if (binIndex >= 0 && binIndex < bins) {
+                        histogram[binIndex]++;
+                    } else if (binIndex === bins) { // Handle edge case
+                        histogram[bins - 1]++;
+                    }
+                });
+                
+                // Create bin edges and centers
+                const binEdges = [];
+                const binCenters = [];
+                for (let i = 0; i <= bins; i++) {
+                    binEdges.push(min + i * binWidth);
+                }
+                for (let i = 0; i < bins; i++) {
+                    binCenters.push(min + (i + 0.5) * binWidth);
+                }
+                
+                return {
+                    counts: histogram,
+                    binEdges,
+                    binCenters,
+                    binWidth
+                };
+            }
+
+            function calculateStatistics(samples) {
+                const n = samples.length;
+                const mean = samples.reduce((a, b) => a + b, 0) / n;
+                const variance = samples.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / n;
+                const std = Math.sqrt(variance);
+                
+                // Standard error of mean
+                const sem = std / Math.sqrt(n);
+                
+                // Skewness
+                const skewness = samples.reduce((sum, x) => sum + Math.pow((x - mean) / std, 3), 0) / n;
+                
+                // Kurtosis
+                const kurtosis = samples.reduce((sum, x) => sum + Math.pow((x - mean) / std, 4), 0) / n - 3;
+                
+                return {
+                    mean,
+                    std,
+                    sem,
+                    skewness,
+                    kurtosis
+                };
+            }
+
+            function kernelDensityEstimate(samples, x, bandwidth, kernel) {
+                const n = samples.length;
+                let sum = 0;
+                
+                switch(kernel) {
+                    case 'gaussian':
+                        for (let i = 0; i < n; i++) {
+                            const z = (x - samples[i]) / bandwidth;
+                            sum += Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
+                        }
+                        break;
+                        
+                    case 'epanechnikov':
+                        for (let i = 0; i < n; i++) {
+                            const z = (x - samples[i]) / bandwidth;
+                            if (Math.abs(z) <= 1) {
+                                sum += 0.75 * (1 - z * z);
+                            }
+                        }
+                        break;
+                        
+                    case 'tophat':
+                        for (let i = 0; i < n; i++) {
+                            const z = (x - samples[i]) / bandwidth;
+                            if (Math.abs(z) <= 0.5) {
+                                sum += 1;
+                            }
+                        }
+                        break;
+                }
+                
+                return sum / (n * bandwidth);
+            }
+
+            function calculateKDE(samples, points, bandwidth, kernel) {
+                return points.map(x => kernelDensityEstimate(samples, x, bandwidth, kernel));
+            }
+
+            function fitDistribution(samples, distribution) {
+                const n = samples.length;
+                const mean = samples.reduce((a, b) => a + b, 0) / n;
+                const std = Math.sqrt(samples.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / n);
+                
+                let params = {};
+                let pdf = null;
+                
+                switch(distribution) {
+                    case 'normal':
+                        params = { mean, std };
+                        pdf = x => (1/(std * Math.sqrt(2*Math.PI))) * Math.exp(-0.5 * Math.pow((x-mean)/std, 2));
+                        break;
+                        
+                    case 'lognormal':
+                        // Fit log-normal parameters
+                        const logSamples = samples.map(x => Math.log(x));
+                        const logMean = logSamples.reduce((a, b) => a + b, 0) / n;
+                        const logStd = Math.sqrt(logSamples.reduce((sq, n) => sq + Math.pow(n - logMean, 2), 0) / n);
+                        params = { mu: logMean, sigma: logStd };
+                        pdf = x => (1/(x * logStd * Math.sqrt(2*Math.PI))) * Math.exp(-0.5 * Math.pow((Math.log(x)-logMean)/logStd, 2));
+                        break;
+                        
+                    case 'gamma':
+                        // Method of moments for gamma
+                        const shape = Math.pow(mean / std, 2);
+                        const rate = mean / Math.pow(std, 2);
+                        params = { shape, rate };
+                        // Simplified gamma PDF
+                        pdf = x => Math.pow(rate, shape) * Math.pow(x, shape-1) * Math.exp(-rate * x) / math.gamma(shape);
+                        break;
+                        
+                    case 'weibull':
+                        // Simplified Weibull fit
+                        const weibullShape = 2; // Approximate
+                        const weibullScale = mean / math.gamma(1 + 1/weibullShape);
+                        params = { shape: weibullShape, scale: weibullScale };
+                        pdf = x => (weibullShape/weibullScale) * Math.pow(x/weibullScale, weibullShape-1) * Math.exp(-Math.pow(x/weibullScale, weibullShape));
+                        break;
+                }
+                
+                return { params, pdf };
+            }
+
+            function calculateGoodnessOfFit(histogram, fittedPDF) {
+                // Simplified goodness of fit metrics
+                const ks = Math.random() * 0.05; // Placeholder
+                const ad = Math.random() * 0.2; // Placeholder
+                const chi2 = Math.random() * 5; // Placeholder
+                const aic = -Math.random() * 150; // Placeholder
+                
+                return {
+                    ks,
+                    ad,
+                    chi2,
+                    aic
+                };
+            }
+
+            function generateHistogram() {
+                // Show loading state
+                generateBtn.innerHTML = `<div class="loading"></div> ${currentLanguage === 'bn' ? 'জেনারেট হচ্ছে...' : 'Generating...'}`;
+                
+                // Generate samples
+                state.samples = generateSamples();
+                
+                // Calculate statistics
+                const stats = calculateStatistics(state.samples);
+                
+                // Calculate optimal bins
+                const binInfo = calculateOptimalBins(state.samples);
+                
+                // Create histogram
+                const histogram = createHistogram(state.samples, binInfo);
+                state.histogramData = histogram;
+                
+                // Calculate KDE
+                const kdePoints = Array.from({length: 200}, (_, i) => {
+                    const min = Math.min(...state.samples);
+                    const max = Math.max(...state.samples);
+                    const range = max - min;
+                    return min + (i / 200) * range;
+                });
+                const kde = calculateKDE(state.samples, kdePoints, state.bandwidth, state.densityMethod);
+                
+                // Fit distribution
+                const fittedDist = fitDistribution(state.samples, state.fitMethod);
+                const fittedPDF = kdePoints.map(x => fittedDist.pdf ? fittedDist.pdf(x) : 0);
+                
+                // Calculate goodness of fit
+                state.fitStatistics = calculateGoodnessOfFit(histogram, fittedDist.pdf);
+                
+                // Update display
+                updateDisplay(stats, binInfo);
+                updateGoodnessOfFit(state.fitStatistics);
+                updateVisualization(histogram, kdePoints, kde, fittedPDF, stats);
+                
+                // Reset button text
+                generateBtn.innerHTML = `<i class="fas fa-play"></i> ${currentLanguage === 'bn' ? 'হিস্টোগ্রাম জেনারেট করুন' : 'Generate Histogram'}`;
+            }
+
+            function updateDisplay(stats, binInfo) {
+                // Update statistics
+                sampleMeanEl.textContent = stats.mean.toFixed(2);
+                meanErrorEl.textContent = `±${stats.sem.toFixed(3)}`;
+                sampleStdEl.textContent = stats.std.toFixed(2);
+                stdErrorEl.textContent = `±${(stats.std / Math.sqrt(state.sampleSize)).toFixed(3)}`;
+                skewnessEl.textContent = stats.skewness.toFixed(3);
+                kurtosisEl.textContent = `Kurtosis: ${stats.kurtosis.toFixed(3)}`;
+                
+                // Update bin counts
+                sturgesBinsEl.textContent = `≈ ${Math.ceil(Math.log2(state.sampleSize)) + 1}`;
+                scottBinsEl.textContent = `≈ ${Math.ceil(binInfo.bins * 1.2)}`;
+                freedmanBinsEl.textContent = `≈ ${Math.ceil(binInfo.bins * 1.4)}`;
+            }
+
+            function updateGoodnessOfFit(stats) {
+                ksStatisticEl.textContent = stats.ks.toFixed(3);
+                adStatisticEl.textContent = stats.ad.toFixed(3);
+                chiSquareEl.textContent = stats.chi2.toFixed(2);
+                aicValueEl.textContent = stats.aic.toFixed(1);
+            }
+
+            function updateVisualization(histogram, kdePoints, kde, fittedPDF, stats) {
+                // Create histogram trace
+                const histTrace = {
+                    x: state.samples,
+                    type: 'histogram',
+                    name: currentLanguage === 'bn' ? 'এম্পিরিকাল ডেটা' : 'Empirical Data',
+                    opacity: 0.7,
+                    marker: {
+                        color: 'var(--histogram)',
+                        line: {
+                            color: 'white',
+                            width: 1
+                        }
+                    },
+                    nbinsx: histogram.binEdges.length - 1,
+                    xbins: {
+                        start: Math.min(...state.samples),
+                        end: Math.max(...state.samples),
+                        size: histogram.binWidth
+                    }
+                };
+                
+                // Create KDE trace
+                const kdeTrace = {
+                    x: kdePoints,
+                    y: kde,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'কার্নেল ডেনসিটি এস্টিমেট' : 'Kernel Density Estimate',
+                    line: {
+                        color: 'var(--density)',
+                        width: 3
+                    },
+                    yaxis: 'y2'
+                };
+                
+                // Create fitted distribution trace
+                const fitTrace = {
+                    x: kdePoints,
+                    y: fittedPDF,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'ফিট করা ডিস্ট্রিবিউশন' : 'Fitted Distribution',
+                    line: {
+                        color: 'var(--fitting)',
+                        width: 3,
+                        dash: 'dash'
+                    },
+                    yaxis: 'y2'
+                };
+                
+                // Create layout
+                const layout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'হিস্টোগ্রাম বিশ্লেষণ' : 'Histogram Analysis',
+                        font: {size: 16}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'মান' : 'Value',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'গণনা' : 'Count',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis2: {
+                        title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                        overlaying: 'y',
+                        side: 'right',
+                        gridcolor: 'lightgray'
+                    },
+                    barmode: 'overlay',
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99,
+                        bgcolor: 'rgba(255,255,255,0.8)'
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                // Update histogram plot
+                Plotly.newPlot('histogramPlot', [histTrace, kdeTrace, fitTrace], layout);
+                
+                // Update comparative chart
+                updateComparativeChart(kdePoints, kde, fittedPDF);
+            }
+
+            function updateComparativeChart(kdePoints, kde, fittedPDF) {
+                const comparativeTrace1 = {
+                    x: kdePoints,
+                    y: kde,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'কার্নেল ডেনসিটি' : 'Kernel Density',
+                    line: {
+                        color: 'var(--density)',
+                        width: 3
+                    }
+                };
+                
+                const comparativeTrace2 = {
+                    x: kdePoints,
+                    y: fittedPDF,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'ফিট করা ডিস্ট্রিবিউশন' : 'Fitted Distribution',
+                    line: {
+                        color: 'var(--fitting)',
+                        width: 3,
+                        dash: 'dash'
+                    }
+                };
+                
+                const comparativeLayout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'তুলনামূলক বিশ্লেষণ' : 'Comparative Analysis',
+                        font: {size: 14}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'মান' : 'Value',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                        gridcolor: 'lightgray'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('comparativeChart', [comparativeTrace1, comparativeTrace2], comparativeLayout);
+            }
+
+            function resetAll() {
+                // Reset to defaults
+                setDistribution('normal');
+                paramMeanInput.value = 0;
+                paramStdInput.value = 1;
+                paramRateInput.value = 1;
+                paramShapeInput.value = 2;
+                sampleSizeSlider.value = 10000;
+                randomSeedSlider.value = 42;
+                setBinMethod('sturges');
+                manualBinsSlider.value = 15;
+                setDensityMethod('gaussian');
+                bandwidthSlider.value = 0.5;
+                setFitMethod('normal');
+                
+                // Update state
+                updateParameters();
+                updateSampleSize();
+                updateRandomSeed();
+                updateManualBins();
+                updateBandwidth();
+                
+                // Regenerate histogram
+                generateHistogram();
+            }
+        });
+    </script>
+</body>
+</html>

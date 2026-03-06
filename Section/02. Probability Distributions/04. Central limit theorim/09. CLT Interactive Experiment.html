@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLT Interactive Experiment | Central Limit Theorem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --dice-color: #2196F3;
+            --coin-color: #4CAF50;
+            --experiment-color: #9C27B0;
+            --distribution-color: #FF9800;
+            --result-color: #E91E63;
+            --animation-color: #00BCD4;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--dice-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--dice-color), var(--coin-color), var(--experiment-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Experiment Selection */
+        .experiment-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .experiment-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .experiment-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 3px solid transparent;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .experiment-card.active {
+            border-color: var(--experiment-color);
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+        }
+
+        .experiment-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
+
+        .dice-icon {
+            background: linear-gradient(135deg, var(--dice-color), #1976D2);
+        }
+
+        .coin-icon {
+            background: linear-gradient(135deg, var(--coin-color), #388E3C);
+        }
+
+        .experiment-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .experiment-description {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .experiment-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--dice-color);
+        }
+
+        /* Experiment Controls */
+        .experiment-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .experiment-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .experiment-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control-label i {
+            color: var(--dice-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--dice-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .range-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        /* Action Controls */
+        .action-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .action-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .action-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .roll-btn {
+            background: var(--dice-color);
+            color: white;
+        }
+
+        .roll-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .flip-btn {
+            background: var(--coin-color);
+            color: white;
+        }
+
+        .flip-btn:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .auto-btn {
+            background: var(--experiment-color);
+            color: white;
+        }
+
+        .auto-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .visualization-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .visualization-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dice Visualization */
+        .dice-visualization {
+            text-align: center;
+        }
+
+        .dice-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .dice-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--dice-color);
+            transition: all 0.3s ease;
+        }
+
+        .dice.rolling {
+            animation: rollDice 0.5s ease-in-out infinite;
+        }
+
+        @keyframes rollDice {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Coin Visualization */
+        .coin-visualization {
+            text-align: center;
+        }
+
+        .coin-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 2rem auto;
+            perspective: 1000px;
+        }
+
+        .coin {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-in-out;
+        }
+
+        .coin.flipping {
+            animation: flipCoin 0.6s ease-in-out infinite;
+        }
+
+        @keyframes flipCoin {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .heads {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+        }
+
+        .tails {
+            background: linear-gradient(135deg, #C0C0C0, #808080);
+            transform: rotateY(180deg);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .results-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        /* Real-time Analysis */
+        .analysis-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .analysis-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            padding-right: 1rem;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .history-item:nth-child(odd) {
+            background: var(--light-gray);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        .highlight {
+            animation: highlight 1.5s ease;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: var(--light-gray);
+            border-radius: 5px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--dice-color), var(--coin-color));
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        /* Live Updates */
+        .live-updates {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .live-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 1s infinite;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--dice-color);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .experiment-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem;
+            }
+            
+            .experiment-title {
+                font-size: 1.5rem;
+            }
+            
+            .result-value {
+                font-size: 1.5rem;
+            }
+            
+            .dice {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .coin-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .coin-face {
+                font-size: 3rem;
+            }
+        }
+
+        /* Interactive Elements */
+        .interactive-element {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .interactive-element:hover {
+            transform: scale(1.05);
+        }
+
+        /* Statistics Display */
+        .stats-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .stat-change.negative {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="CLT Interactive Experiment" data-bn="CLT ইন্টারেক্টিভ এক্সপেরিমেন্ট">CLT ইন্টারেক্টিভ এক্সপেরিমেন্ট</h1>
+            <p class="subtitle" data-en="Conduct hands-on CLT experiments with dice rolling and coin flipping simulations" data-bn="ডাইস রোলিং এবং কয়েন ফ্লিপিং সিমুলেশনের মাধ্যমে হাতেকলমে CLT এক্সপেরিমেন্ট পরিচালনা করুন">
+                ডাইস রোলিং এবং কয়েন ফ্লিপিং সিমুলেশনের মাধ্যমে হাতেকলমে CLT এক্সপেরিমেন্ট পরিচালনা করুন
+            </p>
+        </div>
+
+        <!-- Experiment Selection -->
+        <div class="experiment-selection">
+            <div class="experiment-card active" id="diceExperiment">
+                <div class="experiment-icon dice-icon">
+                    <i class="fas fa-dice"></i>
+                </div>
+                <h2 class="experiment-title" data-en="Dice Rolling Experiment" data-bn="ডাইস রোলিং এক্সপেরিমেন্ট">ডাইস রোলিং এক্সপেরিমেন্ট</h2>
+                <p class="experiment-description" data-en="Roll multiple dice and observe how the sum approaches normal distribution" data-bন="একাধিক ডাইস রোল করুন এবং দেখুন কিভাবে যোগফল নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়">
+                    একাধিক ডাইস রোল করুন এবং দেখুন কিভাবে যোগফল নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়
+                </p>
+                <div class="experiment-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="diceTrials">0</div>
+                        <div class="stat-label" data-en="Trials" data-bন="ট্রায়াল">ট্রায়াল</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="diceAverage">0.00</div>
+                        <div class="stat-label" data-en="Average" data-bন="গড়">গড়</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="diceDeviation">0.00</div>
+                        <div class="stat-label" data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="experiment-card" id="coinExperiment">
+                <div class="experiment-icon coin-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h2 class="experiment-title" data-en="Coin Flipping Experiment" data-bন="কয়েন ফ্লিপিং এক্সপেরিমেন্ট">কয়েন ফ্লিপিং এক্সপেরিমেন্ট</h2>
+                <p class="experiment-description" data-en="Flip multiple coins and observe the proportion of heads approach normal distribution" data-bন="একাধিক কয়েন ফ্লিপ করুন এবং দেখুন কিভাবে হেডের অনুপাত নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়">
+                    একাধিক কয়েন ফ্লিপ করুন এবং দেখুন কিভাবে হেডের অনুপাত নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়
+                </p>
+                <div class="experiment-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="coinTrials">0</div>
+                        <div class="stat-label" data-en="Trials" data-bন="ট্রায়াল">ট্রায়াল</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="coinHeads">0.00%</div>
+                        <div class="stat-label" data-en="Heads %" data-bন="হেড %">হেড %</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="coinDeviation">0.00</div>
+                        <div class="stat-label" data-en="Std Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                <span data-en="Experiment Controls" data-bন="এক্সপেরিমেন্ট কন্ট্রোল">এক্সপেরিমেন্ট কন্ট্রোল</span>
+            </h2>
+
+            <!-- Experiment Controls -->
+            <div class="experiment-controls">
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-hashtag"></i>
+                        <span data-en="Number of Dice/Coins" data-bন="ডাইস/কয়েন সংখ্যা">ডাইস/কয়েন সংখ্যা</span>
+                    </div>
+                    <input type="number" id="numItems" class="value-input" value="5" min="1" max="20">
+                    <input type="range" id="numItemsRange" class="range-slider" min="1" max="20" value="5" step="1">
+                    <div class="help-text" data-en="How many dice to roll or coins to flip per trial" data-bন="প্রতি ট্রায়ালে কয়টি ডাইস রোল বা কয়েন ফ্লিপ করতে হবে">
+                        প্রতি ট্রায়ালে কয়টি ডাইস রোল বা কয়েন ফ্লিপ করতে হবে
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-layer-group"></i>
+                        <span data-en="Number of Trials" data-bন="ট্রায়াল সংখ্যা">ট্রায়াল সংখ্যা</span>
+                    </div>
+                    <input type="number" id="numTrials" class="value-input" value="100" min="10" max="10000">
+                    <input type="range" id="numTrialsRange" class="range-slider" min="10" max="5000" value="100" step="10">
+                    <div class="help-text" data-en="Total number of experiments to run" data-bন="চালানোর জন্য মোট এক্সপেরিমেন্ট সংখ্যা">
+                        চালানোর জন্য মোট এক্সপেরিমেন্ট সংখ্যা
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span data-en="Simulation Speed" data-bন="সিমুলেশন গতি">সিমুলেশন গতি</span>
+                    </div>
+                    <input type="range" id="speedSlider" class="range-slider" min="1" max="10" value="5" step="1">
+                    <div class="help-text" data-en="Speed of automatic simulation (1=Slow, 10=Fast)" data-bন="স্বয়ংক্রিয় সিমুলেশনের গতি (১=ধীর, ১০=দ্রুত)">
+                        স্বয়ংক্রিয় সিমুলেশনের গতি (১=ধীর, ১০=দ্রুত)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="action-controls">
+                <button class="action-btn roll-btn" id="rollSingle">
+                    <i class="fas fa-dice"></i>
+                    <span data-en="Roll Once" data-bন="একবার রোল করুন">একবার রোল করুন</span>
+                </button>
+                <button class="action-btn flip-btn" id="flipSingle">
+                    <i class="fas fa-coins"></i>
+                    <span data-en="Flip Once" data-bন="একবার ফ্লিপ করুন">একবার ফ্লিপ করুন</span>
+                </button>
+                <button class="action-btn auto-btn" id="runAuto">
+                    <i class="fas fa-play-circle"></i>
+                    <span data-en="Auto Run" data-bন="স্বয়ংক্রিয় চালান">স্বয়ংক্রিয় চালান</span>
+                </button>
+                <button class="action-btn reset-btn" id="resetAll">
+                    <i class="fas fa-redo"></i>
+                    <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="visualization-area">
+            <!-- Dice Visualization -->
+            <div class="visualization-card dice-visualization">
+                <h2 class="section-title">
+                    <i class="fas fa-dice"></i>
+                    <span data-en="Dice Rolling Simulation" data-bন="ডাইস রোলিং সিমুলেশন">ডাইস রোলিং সিমুলেশন</span>
+                </h2>
+                
+                <!-- Live Updates -->
+                <div class="live-updates">
+                    <div class="live-indicator"></div>
+                    <span data-en="Live Results:" data-bন="লাইভ ফলাফল:">লাইভ ফলাফল:</span>
+                    <span id="diceLiveResult" data-en="Roll dice to see results" data-bন="ফলাফল দেখতে ডাইস রোল করুন">ফলাফল দেখতে ডাইস রোল করুন</span>
+                </div>
+
+                <!-- Dice Container -->
+                <div class="dice-container" id="diceContainer">
+                    <!-- Dice will be added here dynamically -->
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar" id="diceProgress" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; color: var(--gray);">
+                    <span data-en="Experiment Progress:" data-bন="এক্সপেরিমেন্ট অগ্রগতি:">এক্সপেরিমেন্ট অগ্রগতি:</span>
+                    <span id="diceProgressText">0%</span>
+                </div>
+
+                <!-- Statistics Display -->
+                <div class="stats-display">
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Current Sum" data-bন="বর্তমান যোগফল">বর্তমান যোগফল</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;" id="currentSum">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Theoretical Mean" data-bন="তাত্ত্বিক গড়">তাত্ত্বিক গড়</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;" id="theoreticalMean">17.5</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Difference" data-bন="পার্থক্য">পার্থক্য</div>
+                        <div class="stat-change" id="sumDifference">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coin Visualization -->
+            <div class="visualization-card coin-visualization">
+                <h2 class="section-title">
+                    <i class="fas fa-coins"></i>
+                    <span data-en="Coin Flipping Simulation" data-bন="কয়েন ফ্লিপিং সিমুলেশন">কয়েন ফ্লিপিং সিমুলেশন</span>
+                </h2>
+                
+                <!-- Live Updates -->
+                <div class="live-updates">
+                    <div class="live-indicator"></div>
+                    <span data-en="Live Results:" data-bন="লাইভ ফলাফল:">লাইভ ফলাফল:</span>
+                    <span id="coinLiveResult" data-en="Flip coins to see results" data-bন="ফলাফল দেখতে কয়েন ফ্লিপ করুন">ফলাফল দেখতে কয়েন ফ্লিপ করুন</span>
+                </div>
+
+                <!-- Coin Container -->
+                <div class="coin-container">
+                    <div class="coin" id="coin">
+                        <div class="coin-face heads">H</div>
+                        <div class="coin-face tails">T</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar" id="coinProgress" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; color: var(--gray);">
+                    <span data-en="Experiment Progress:" data-bন="এক্সপেরিমেন্ট অগ্রগতি:">এক্সপেরিমেন্ট অগ্রগতি:</span>
+                    <span id="coinProgressText">0%</span>
+                </div>
+
+                <!-- Statistics Display -->
+                <div class="stats-display">
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Current Heads" data-bন="বর্তমান হেড">বর্তমান হেড</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;" id="currentHeads">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Expected %" data-bন="প্রত্যাশিত %">প্রত্যাশিত %</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;">50%</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--gray);" data-en="Difference" data-bন="পার্থক্য">পার্থক্য</div>
+                        <div class="stat-change" id="headsDifference">0.00%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Real-time Results Analysis" data-bন="রিয়েল-টাইম ফলাফল বিশ্লেষণ">রিয়েল-টাইম ফলাফল বিশ্লেষণ</span>
+            </h2>
+
+            <!-- Results Statistics -->
+            <div class="results-stats">
+                <div class="result-card">
+                    <div class="result-label" data-en="Total Experiments" data-bন="মোট এক্সপেরিমেন্ট">মোট এক্সপেরিমেন্ট</div>
+                    <div class="result-value" id="totalExperiments">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label" data-en="Sample Mean (X̄)" data-bন="নমুনা গড় (X̄)">নমুনা গড় (X̄)</div>
+                    <div class="result-value" id="sampleMean">0.00</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label" data-en="Sample Std Dev" data-bন="নমুনা স্ট্যান্ডার্ড ডেভিয়েশন">নমুনা স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    <div class="result-value" id="sampleStdDev">0.00</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label" data-en="CLT Convergence" data-bন="CLT কনভারজেন্স">CLT কনভারজেন্স</div>
+                    <div class="result-value" id="convergenceScore">0.00</div>
+                </div>
+            </div>
+
+            <!-- Distribution Chart -->
+            <div class="chart-container">
+                <canvas id="distributionChart"></canvas>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--dice-color);"></div>
+                    <span data-en="Dice Sum Distribution" data-bন="ডাইস যোগফল ডিস্ট্রিবিউশন">ডাইস যোগফল ডিস্ট্রিবিউশন</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--coin-color);"></div>
+                    <span data-en="Coin Proportion Distribution" data-bন="কয়েন অনুপাত ডিস্ট্রিবিউশন">কয়েন অনুপাত ডিস্ট্রিবিউশন</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--distribution-color);"></div>
+                    <span data-en="Theoretical Normal Distribution" data-bন="তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন">তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Panel -->
+        <div class="analysis-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <h3 data-en="Law of Large Numbers" data-bন="ল অব লার্জ নাম্বারস">ল অব লার্জ নাম্বারস</h3>
+                    <div class="chart-container">
+                        <canvas id="llnChart" height="200"></canvas>
+                    </div>
+                    <div class="help-text" data-en="As sample size increases, sample mean approaches population mean" data-bন="নমুনা আকার বাড়ার সাথে সাথে নমুনা গড় জনসংখ্যা গড়ের দিকে অগ্রসর হয়">
+                        নমুনা আকার বাড়ার সাথে সাথে নমুনা গড় জনসংখ্যা গড়ের দিকে অগ্রসর হয়
+                    </div>
+                </div>
+
+                <div class="analysis-card">
+                    <h3 data-en="Central Limit Theorem" data-bন="সেন্ট্রাল লিমিট থিওরেম">সেন্ট্রাল লিমিট থিওরেম</h3>
+                    <div class="chart-container">
+                        <canvas id="cltChart" height="200"></canvas>
+                    </div>
+                    <div class="help-text" data-en="Distribution of sample means approaches normal distribution as n increases" data-bন="n বৃদ্ধির সাথে সাথে নমুনা গড়ের ডিস্ট্রিবিউশন নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়">
+                        n বৃদ্ধির সাথে সাথে নমুনা গড়ের ডিস্ট্রিবিউশন নরমাল ডিস্ট্রিবিউশনের দিকে অগ্রসর হয়
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="history-panel">
+            <h2 class="section-title">
+                <i class="fas fa-history"></i>
+                <span data-en="Experiment History" data-bন="এক্সপেরিমেন্ট ইতিহাস">এক্সপেরিমেন্ট ইতিহাস</span>
+            </h2>
+
+            <div class="history-list" id="historyList">
+                <!-- History items will be added here -->
+                <div class="history-item">
+                    <span data-en="No experiments yet. Start rolling dice or flipping coins!" data-bন="এখনও কোনো এক্সপেরিমেন্ট নেই। ডাইস রোলিং বা কয়েন ফ্লিপিং শুরু করুন!">
+                        এখনও কোনো এক্সপেরিমেন্ট নেই। ডাইস রোলিং বা কয়েন ফ্লিপিং শুরু করুন!
+                    </span>
+                </div>
+            </div>
+
+            <div class="help-text" style="margin-top: 1rem;" data-en="History shows your last 50 experiments. Click on any item to see details." data-bন="ইতিহাস আপনার শেষ ৫০টি এক্সপেরিমেন্ট দেখায়। বিস্তারিত দেখতে যেকোনো আইটেম ক্লিক করুন।">
+                ইতিহাস আপনার শেষ ৫০টি এক্সপেরিমেন্ট দেখায়। বিস্তারিত দেখতে যেকোনো আইটেম ক্লিক করুন।
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart Instances
+            let distributionChart = null;
+            let llnChart = null;
+            let cltChart = null;
+
+            // Experiment State
+            let experimentState = {
+                activeExperiment: 'dice',
+                numItems: 5,
+                numTrials: 100,
+                speed: 5,
+                diceResults: [],
+                coinResults: [],
+                diceHistory: [],
+                coinHistory: [],
+                totalTrials: 0,
+                isAutoRunning: false,
+                autoInterval: null,
+                currentTrial: 0
+            };
+
+            // DOM Elements
+            const experimentCards = document.querySelectorAll('.experiment-card');
+            const numItemsInput = document.getElementById('numItems');
+            const numItemsRange = document.getElementById('numItemsRange');
+            const numTrialsInput = document.getElementById('numTrials');
+            const numTrialsRange = document.getElementById('numTrialsRange');
+            const speedSlider = document.getElementById('speedSlider');
+            const rollSingleBtn = document.getElementById('rollSingle');
+            const flipSingleBtn = document.getElementById('flipSingle');
+            const runAutoBtn = document.getElementById('runAuto');
+            const resetAllBtn = document.getElementById('resetAll');
+            const diceContainer = document.getElementById('diceContainer');
+            const coinElement = document.getElementById('coin');
+            
+            // Stats Elements
+            const diceTrialsEl = document.getElementById('diceTrials');
+            const diceAverageEl = document.getElementById('diceAverage');
+            const diceDeviationEl = document.getElementById('diceDeviation');
+            const coinTrialsEl = document.getElementById('coinTrials');
+            const coinHeadsEl = document.getElementById('coinHeads');
+            const coinDeviationEl = document.getElementById('coinDeviation');
+            const diceLiveResultEl = document.getElementById('diceLiveResult');
+            const coinLiveResultEl = document.getElementById('coinLiveResult');
+            const diceProgressEl = document.getElementById('diceProgress');
+            const diceProgressTextEl = document.getElementById('diceProgressText');
+            const coinProgressEl = document.getElementById('coinProgress');
+            const coinProgressTextEl = document.getElementById('coinProgressText');
+            const currentSumEl = document.getElementById('currentSum');
+            const theoreticalMeanEl = document.getElementById('theoreticalMean');
+            const sumDifferenceEl = document.getElementById('sumDifference');
+            const currentHeadsEl = document.getElementById('currentHeads');
+            const headsDifferenceEl = document.getElementById('headsDifference');
+            const totalExperimentsEl = document.getElementById('totalExperiments');
+            const sampleMeanEl = document.getElementById('sampleMean');
+            const sampleStdDevEl = document.getElementById('sampleStdDev');
+            const convergenceScoreEl = document.getElementById('convergenceScore');
+            const historyListEl = document.getElementById('historyList');
+
+            // Initialize
+            initExperiment();
+
+            function initExperiment() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Experiment Selection
+                experimentCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const experiment = this.id === 'diceExperiment' ? 'dice' : 'coin';
+                        setActiveExperiment(experiment);
+                    });
+                });
+
+                // Input Bindings
+                bindInputs();
+
+                // Action Controls
+                rollSingleBtn.addEventListener('click', rollDice);
+                flipSingleBtn.addEventListener('click', flipCoin);
+                runAutoBtn.addEventListener('click', toggleAutoRun);
+                resetAllBtn.addEventListener('click', resetExperiment);
+
+                // Initialize Charts
+                initializeCharts();
+
+                // Initialize dice display
+                updateDiceDisplay();
+
+                // Update theoretical mean
+                updateTheoreticalMean();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setActiveExperiment(experiment) {
+                experimentState.activeExperiment = experiment;
+                
+                // Update active card
+                experimentCards.forEach(card => {
+                    if (card.id === `${experiment}Experiment`) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+
+                // Update button visibility
+                if (experiment === 'dice') {
+                    rollSingleBtn.style.display = 'flex';
+                    flipSingleBtn.style.display = 'none';
+                } else {
+                    rollSingleBtn.style.display = 'none';
+                    flipSingleBtn.style.display = 'flex';
+                }
+
+                // Update live result display
+                updateLiveResult();
+            }
+
+            function bindInputs() {
+                // Number of Items
+                numItemsInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    experimentState.numItems = Math.min(20, Math.max(1, value));
+                    numItemsRange.value = experimentState.numItems;
+                    updateDiceDisplay();
+                    updateTheoreticalMean();
+                });
+                
+                numItemsRange.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    experimentState.numItems = value;
+                    numItemsInput.value = value;
+                    updateDiceDisplay();
+                    updateTheoreticalMean();
+                });
+
+                // Number of Trials
+                numTrialsInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    experimentState.numTrials = Math.min(10000, Math.max(10, value));
+                    numTrialsRange.value = experimentState.numTrials;
+                });
+                
+                numTrialsRange.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    experimentState.numTrials = value;
+                    numTrialsInput.value = value;
+                });
+
+                // Speed
+                speedSlider.addEventListener('input', function() {
+                    experimentState.speed = parseInt(this.value);
+                    if (experimentState.isAutoRunning) {
+                        startAutoRun();
+                    }
+                });
+            }
+
+            function updateDiceDisplay() {
+                diceContainer.innerHTML = '';
+                for (let i = 0; i < experimentState.numItems; i++) {
+                    const dice = document.createElement('div');
+                    dice.className = 'dice';
+                    dice.textContent = '?';
+                    dice.dataset.index = i;
+                    diceContainer.appendChild(dice);
+                }
+            }
+
+            function updateTheoreticalMean() {
+                if (experimentState.activeExperiment === 'dice') {
+                    // For dice: mean = 3.5 * numDice
+                    const theoreticalMean = 3.5 * experimentState.numItems;
+                    theoreticalMeanEl.textContent = theoreticalMean.toFixed(1);
+                } else {
+                    // For coins: theoretical proportion is always 0.5 (50%)
+                    theoreticalMeanEl.textContent = '50%';
+                }
+            }
+
+            function rollDice() {
+                if (experimentState.isAutoRunning) return;
+                
+                const diceElements = document.querySelectorAll('.dice');
+                let sum = 0;
+                
+                // Animate dice rolling
+                diceElements.forEach(dice => {
+                    dice.classList.add('rolling');
+                });
+                
+                // Generate results after animation
+                setTimeout(() => {
+                    diceElements.forEach(dice => {
+                        const value = Math.floor(Math.random() * 6) + 1;
+                        dice.textContent = value;
+                        dice.classList.remove('rolling');
+                        sum += value;
+                    });
+                    
+                    // Store result
+                    experimentState.diceResults.push(sum);
+                    experimentState.totalTrials++;
+                    
+                    // Update display
+                    updateDiceStats();
+                    updateLiveResult();
+                    updateProgress();
+                    updateHistory('dice', sum);
+                    updateCharts();
+                    
+                    // Highlight current sum
+                    currentSumEl.textContent = sum;
+                    const theoreticalMean = 3.5 * experimentState.numItems;
+                    const difference = sum - theoreticalMean;
+                    sumDifferenceEl.textContent = difference.toFixed(1);
+                    sumDifferenceEl.className = `stat-change ${difference >= 0 ? 'positive' : 'negative'}`;
+                    
+                    // Pulse animation
+                    currentSumEl.classList.add('pulse');
+                    setTimeout(() => currentSumEl.classList.remove('pulse'), 500);
+                }, 500);
+            }
+
+            function flipCoin() {
+                if (experimentState.isAutoRunning) return;
+                
+                // Animate coin flipping
+                coinElement.classList.add('flipping');
+                
+                // Generate results after animation
+                setTimeout(() => {
+                    let headsCount = 0;
+                    
+                    // Flip multiple coins
+                    for (let i = 0; i < experimentState.numItems; i++) {
+                        if (Math.random() < 0.5) headsCount++;
+                    }
+                    
+                    coinElement.classList.remove('flipping');
+                    
+                    // Show heads or tails based on majority
+                    if (headsCount > experimentState.numItems / 2) {
+                        coinElement.style.transform = 'rotateY(0deg)';
+                    } else {
+                        coinElement.style.transform = 'rotateY(180deg)';
+                    }
+                    
+                    // Store result
+                    const proportion = headsCount / experimentState.numItems;
+                    experimentState.coinResults.push(proportion);
+                    experimentState.totalTrials++;
+                    
+                    // Update display
+                    updateCoinStats();
+                    updateLiveResult();
+                    updateProgress();
+                    updateHistory('coin', headsCount);
+                    updateCharts();
+                    
+                    // Highlight current heads
+                    currentHeadsEl.textContent = headsCount;
+                    const difference = (proportion - 0.5) * 100;
+                    headsDifferenceEl.textContent = `${difference.toFixed(1)}%`;
+                    headsDifferenceEl.className = `stat-change ${difference >= 0 ? 'positive' : 'negative'}`;
+                    
+                    // Pulse animation
+                    currentHeadsEl.classList.add('pulse');
+                    setTimeout(() => currentHeadsEl.classList.remove('pulse'), 500);
+                }, 600);
+            }
+
+            function updateDiceStats() {
+                const results = experimentState.diceResults;
+                if (results.length === 0) return;
+                
+                // Calculate statistics
+                const sum = results.reduce((a, b) => a + b, 0);
+                const mean = sum / results.length;
+                const variance = results.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / results.length;
+                const stdDev = Math.sqrt(variance);
+                
+                // Update display
+                diceTrialsEl.textContent = results.length;
+                diceAverageEl.textContent = mean.toFixed(2);
+                diceDeviationEl.textContent = stdDev.toFixed(2);
+                
+                // Update main stats
+                updateMainStats(results);
+            }
+
+            function updateCoinStats() {
+                const results = experimentState.coinResults;
+                if (results.length === 0) return;
+                
+                // Calculate statistics
+                const sum = results.reduce((a, b) => a + b, 0);
+                const mean = sum / results.length;
+                const variance = results.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / results.length;
+                const stdDev = Math.sqrt(variance);
+                const stdError = stdDev / Math.sqrt(results.length);
+                
+                // Update display
+                coinTrialsEl.textContent = results.length;
+                coinHeadsEl.textContent = `${(mean * 100).toFixed(2)}%`;
+                coinDeviationEl.textContent = stdError.toFixed(4);
+                
+                // Update main stats
+                updateMainStats(results.map(x => x * 100));
+            }
+
+            function updateMainStats(results) {
+                if (results.length === 0) return;
+                
+                // Calculate statistics
+                const sum = results.reduce((a, b) => a + b, 0);
+                const mean = sum / results.length;
+                const variance = results.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / results.length;
+                const stdDev = Math.sqrt(variance);
+                
+                // Calculate convergence score (0 to 1)
+                const expectedStdDev = experimentState.activeExperiment === 'dice' ? 
+                    Math.sqrt(experimentState.numItems * 35/12) : // For dice sum
+                    0.5 / Math.sqrt(experimentState.numItems); // For coin proportion
+                
+                const convergenceScore = Math.max(0, 1 - Math.abs(stdDev - expectedStdDev) / expectedStdDev);
+                
+                // Update display
+                totalExperimentsEl.textContent = experimentState.totalTrials;
+                sampleMeanEl.textContent = mean.toFixed(2);
+                sampleStdDevEl.textContent = stdDev.toFixed(2);
+                convergenceScoreEl.textContent = convergenceScore.toFixed(2);
+            }
+
+            function updateLiveResult() {
+                if (experimentState.activeExperiment === 'dice') {
+                    const lastResult = experimentState.diceResults[experimentState.diceResults.length - 1];
+                    if (lastResult) {
+                        diceLiveResultEl.textContent = `${lastResult} (${experimentState.numItems} dice)`;
+                    }
+                } else {
+                    const lastResult = experimentState.coinResults[experimentState.coinResults.length - 1];
+                    if (lastResult) {
+                        const heads = Math.round(lastResult * experimentState.numItems);
+                        coinLiveResultEl.textContent = `${heads} heads out of ${experimentState.numItems} coins (${(lastResult * 100).toFixed(1)}%)`;
+                    }
+                }
+            }
+
+            function updateProgress() {
+                // Calculate progress based on current trial vs target trials
+                const progress = (experimentState.currentTrial / experimentState.numTrials) * 100;
+                
+                if (experimentState.activeExperiment === 'dice') {
+                    diceProgressEl.style.width = `${progress}%`;
+                    diceProgressTextEl.textContent = `${progress.toFixed(0)}%`;
+                } else {
+                    coinProgressEl.style.width = `${progress}%`;
+                    coinProgressTextEl.textContent = `${progress.toFixed(0)}%`;
+                }
+            }
+
+            function updateHistory(type, result) {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item fade-in';
+                
+                const now = new Date();
+                const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                
+                if (type === 'dice') {
+                    historyItem.innerHTML = `
+                        <span><strong>${time}</strong> - ${experimentState.numItems} dice rolled</span>
+                        <span><strong>Sum:</strong> ${result}</span>
+                    `;
+                    experimentState.diceHistory.unshift({time, result});
+                    if (experimentState.diceHistory.length > 50) experimentState.diceHistory.pop();
+                } else {
+                    historyItem.innerHTML = `
+                        <span><strong>${time}</strong> - ${experimentState.numItems} coins flipped</span>
+                        <span><strong>Heads:</strong> ${result}/${experimentState.numItems}</span>
+                    `;
+                    experimentState.coinHistory.unshift({time, result});
+                    if (experimentState.coinHistory.length > 50) experimentState.coinHistory.pop();
+                }
+                
+                // Add to history list
+                if (historyListEl.children[0].textContent.includes('No experiments')) {
+                    historyListEl.innerHTML = '';
+                }
+                historyListEl.insertBefore(historyItem, historyListEl.firstChild);
+                
+                // Limit to 50 items
+                if (historyListEl.children.length > 50) {
+                    historyListEl.removeChild(historyListEl.lastChild);
+                }
+            }
+
+            function initializeCharts() {
+                // Distribution Chart
+                const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+                distributionChart = new Chart(distributionCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'ডাইস যোগফল ডিস্ট্রিবিউশন' : 'Dice Sum Distribution',
+                                data: [],
+                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                                borderColor: 'var(--dice-color)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'কয়েন অনুপাত ডিস্ট্রিবিউশন' : 'Coin Proportion Distribution',
+                                data: [],
+                                backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                                borderColor: 'var(--coin-color)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন' : 'Theoretical Normal Distribution',
+                                data: [],
+                                type: 'line',
+                                borderColor: 'var(--distribution-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সংখ্যা' : 'Frequency',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // LLN Chart
+                const llnCtx = document.getElementById('llnChart').getContext('2d');
+                llnChart = new Chart(llnCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'নমুনা গড়' : 'Sample Mean',
+                                data: [],
+                                borderColor: 'var(--dice-color)',
+                                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'জনসংখ্যা গড়' : 'Population Mean',
+                                data: [],
+                                borderColor: 'var(--distribution-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ট্রায়াল সংখ্যা' : 'Trial Number',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'গড়' : 'Mean',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // CLT Chart
+                const cltCtx = document.getElementById('cltChart').getContext('2d');
+                cltChart = new Chart(cltCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'বিস্তার' : 'Spread',
+                                data: [],
+                                borderColor: 'var(--coin-color)',
+                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'তাত্ত্বিক সীমা' : 'Theoretical Limit',
+                                data: [],
+                                borderColor: 'var(--distribution-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা আকার' : 'Sample Size',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error',
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateCharts() {
+                // Update Distribution Chart based on active experiment
+                if (experimentState.activeExperiment === 'dice' && experimentState.diceResults.length > 0) {
+                    updateDiceDistributionChart();
+                } else if (experimentState.activeExperiment === 'coin' && experimentState.coinResults.length > 0) {
+                    updateCoinDistributionChart();
+                }
+                
+                // Update LLN Chart
+                updateLLNChart();
+                
+                // Update CLT Chart
+                updateCLTChart();
+            }
+
+            function updateDiceDistributionChart() {
+                const results = experimentState.diceResults;
+                const min = Math.min(...results);
+                const max = Math.max(...results);
+                const range = max - min;
+                const numBins = Math.min(20, range);
+                
+                // Create histogram
+                const histogram = {};
+                for (const result of results) {
+                    const bin = Math.floor(result);
+                    histogram[bin] = (histogram[bin] || 0) + 1;
+                }
+                
+                // Prepare data
+                const labels = Object.keys(histogram).sort((a, b) => a - b);
+                const data = labels.map(label => histogram[label]);
+                
+                // Update chart
+                distributionChart.data.labels = labels;
+                distributionChart.data.datasets[0].data = data;
+                distributionChart.data.datasets[1].data = [];
+                
+                // Add theoretical normal curve
+                const mean = results.reduce((a, b) => a + b, 0) / results.length;
+                const variance = results.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / results.length;
+                const stdDev = Math.sqrt(variance);
+                
+                const theoreticalData = labels.map(x => {
+                    const xNum = parseFloat(x);
+                    return results.length * Math.exp(-Math.pow(xNum - mean, 2) / (2 * variance)) / (stdDev * Math.sqrt(2 * Math.PI));
+                });
+                distributionChart.data.datasets[2].data = theoreticalData;
+                
+                distributionChart.update();
+            }
+
+            function updateCoinDistributionChart() {
+                const results = experimentState.coinResults.map(x => x * 100); // Convert to percentage
+                const min = 0;
+                const max = 100;
+                const numBins = 20;
+                const binSize = (max - min) / numBins;
+                
+                // Create histogram
+                const histogram = Array(numBins).fill(0);
+                const labels = [];
+                
+                for (let i = 0; i < numBins; i++) {
+                    const binStart = min + i * binSize;
+                    const binEnd = binStart + binSize;
+                    labels.push(`${(binStart + binSize/2).toFixed(0)}%`);
+                    
+                    histogram[i] = results.filter(x => x >= binStart && x < binEnd).length;
+                }
+                
+                // Update chart
+                distributionChart.data.labels = labels;
+                distributionChart.data.datasets[0].data = [];
+                distributionChart.data.datasets[1].data = histogram;
+                
+                // Add theoretical normal curve
+                const mean = results.reduce((a, b) => a + b, 0) / results.length;
+                const variance = results.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / results.length;
+                const stdDev = Math.sqrt(variance);
+                
+                const theoreticalData = labels.map((_, i) => {
+                    const x = min + (i + 0.5) * binSize;
+                    return results.length * Math.exp(-Math.pow(x - mean, 2) / (2 * variance)) / (stdDev * Math.sqrt(2 * Math.PI));
+                });
+                distributionChart.data.datasets[2].data = theoreticalData;
+                
+                distributionChart.update();
+            }
+
+            function updateLLNChart() {
+                const results = experimentState.activeExperiment === 'dice' ? 
+                    experimentState.diceResults : 
+                    experimentState.coinResults.map(x => x * 100);
+                
+                if (results.length === 0) return;
+                
+                // Calculate cumulative means
+                const cumulativeMeans = [];
+                let runningSum = 0;
+                
+                for (let i = 0; i < results.length; i++) {
+                    runningSum += results[i];
+                    cumulativeMeans.push(runningSum / (i + 1));
+                }
+                
+                // Update chart
+                const labels = Array.from({length: results.length}, (_, i) => (i + 1).toString());
+                llnChart.data.labels = labels;
+                llnChart.data.datasets[0].data = cumulativeMeans;
+                
+                // Add theoretical mean line
+                const theoreticalMean = experimentState.activeExperiment === 'dice' ? 
+                    3.5 * experimentState.numItems : // For dice
+                    50; // For coins (percentage)
+                const theoreticalLine = Array(results.length).fill(theoreticalMean);
+                llnChart.data.datasets[1].data = theoreticalLine;
+                
+                llnChart.update();
+            }
+
+            function updateCLTChart() {
+                const results = experimentState.activeExperiment === 'dice' ? 
+                    experimentState.diceResults : 
+                    experimentState.coinResults;
+                
+                if (results.length < 2) return;
+                
+                // Calculate rolling standard errors
+                const standardErrors = [];
+                for (let i = 1; i < results.length; i++) {
+                    const sample = results.slice(0, i + 1);
+                    const mean = sample.reduce((a, b) => a + b, 0) / sample.length;
+                    const variance = sample.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / sample.length;
+                    const stdError = Math.sqrt(variance / sample.length);
+                    standardErrors.push(stdError);
+                }
+                
+                // Update chart
+                const labels = Array.from({length: standardErrors.length}, (_, i) => (i + 2).toString());
+                cltChart.data.labels = labels;
+                cltChart.data.datasets[0].data = standardErrors;
+                
+                // Add theoretical limit
+                const theoreticalLimit = experimentState.activeExperiment === 'dice' ?
+                    Math.sqrt(experimentState.numItems * 35/12) / Math.sqrt(results.length) : // For dice
+                    0.5 / Math.sqrt(experimentState.numItems * results.length); // For coins
+                const theoreticalLine = Array(standardErrors.length).fill(theoreticalLimit);
+                cltChart.data.datasets[1].data = theoreticalLine;
+                
+                cltChart.update();
+            }
+
+            function startAutoRun() {
+                if (experimentState.autoInterval) {
+                    clearInterval(experimentState.autoInterval);
+                }
+                
+                experimentState.isAutoRunning = true;
+                experimentState.currentTrial = 0;
+                runAutoBtn.innerHTML = '<i class="fas fa-stop-circle"></i> <span data-en="Stop" data-bn="বন্ধ করুন">বন্ধ করুন</span>';
+                runAutoBtn.classList.add('highlight');
+                
+                // Calculate interval based on speed (1000ms for speed 1, 100ms for speed 10)
+                const interval = 1100 - (experimentState.speed * 100);
+                
+                experimentState.autoInterval = setInterval(() => {
+                    if (experimentState.currentTrial >= experimentState.numTrials) {
+                        stopAutoRun();
+                        return;
+                    }
+                    
+                    if (experimentState.activeExperiment === 'dice') {
+                        rollDice();
+                    } else {
+                        flipCoin();
+                    }
+                    
+                    experimentState.currentTrial++;
+                    updateProgress();
+                    
+                }, interval);
+            }
+
+            function stopAutoRun() {
+                if (experimentState.autoInterval) {
+                    clearInterval(experimentState.autoInterval);
+                    experimentState.autoInterval = null;
+                }
+                
+                experimentState.isAutoRunning = false;
+                experimentState.currentTrial = 0;
+                runAutoBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span data-en="Auto Run" data-bn="স্বয়ংক্রিয় চালান">স্বয়ংক্রিয় চালান</span>';
+                runAutoBtn.classList.remove('highlight');
+            }
+
+            function toggleAutoRun() {
+                if (experimentState.isAutoRunning) {
+                    stopAutoRun();
+                } else {
+                    startAutoRun();
+                }
+            }
+
+            function resetExperiment() {
+                // Stop auto run if active
+                if (experimentState.isAutoRunning) {
+                    stopAutoRun();
+                }
+                
+                // Reset state
+                experimentState.diceResults = [];
+                experimentState.coinResults = [];
+                experimentState.diceHistory = [];
+                experimentState.coinHistory = [];
+                experimentState.totalTrials = 0;
+                experimentState.currentTrial = 0;
+                
+                // Reset display
+                diceTrialsEl.textContent = '0';
+                diceAverageEl.textContent = '0.00';
+                diceDeviationEl.textContent = '0.00';
+                coinTrialsEl.textContent = '0';
+                coinHeadsEl.textContent = '0.00%';
+                coinDeviationEl.textContent = '0.00';
+                
+                diceLiveResultEl.textContent = currentLanguage === 'bn' ? 'ফলাফল দেখতে ডাইস রোল করুন' : 'Roll dice to see results';
+                coinLiveResultEl.textContent = currentLanguage === 'bn' ? 'ফলাফল দেখতে কয়েন ফ্লিপ করুন' : 'Flip coins to see results';
+                
+                diceProgressEl.style.width = '0%';
+                diceProgressTextEl.textContent = '0%';
+                coinProgressEl.style.width = '0%';
+                coinProgressTextEl.textContent = '0%';
+                
+                currentSumEl.textContent = '0';
+                sumDifferenceEl.textContent = '0.00';
+                currentHeadsEl.textContent = '0';
+                headsDifferenceEl.textContent = '0.00%';
+                
+                totalExperimentsEl.textContent = '0';
+                sampleMeanEl.textContent = '0.00';
+                sampleStdDevEl.textContent = '0.00';
+                convergenceScoreEl.textContent = '0.00';
+                
+                // Reset dice display
+                const diceElements = document.querySelectorAll('.dice');
+                diceElements.forEach(dice => {
+                    dice.textContent = '?';
+                    dice.classList.remove('rolling');
+                });
+                
+                // Reset coin display
+                coinElement.classList.remove('flipping');
+                coinElement.style.transform = 'rotateY(0deg)';
+                
+                // Reset history
+                historyListEl.innerHTML = `
+                    <div class="history-item">
+                        <span data-en="No experiments yet. Start rolling dice or flipping coins!" data-bn="এখনও কোনো এক্সপেরিমেন্ট নেই। ডাইস রোলিং বা কয়েন ফ্লিপিং শুরু করুন!">
+                            এখনও কোনো এক্সপেরিমেন্ট নেই। ডাইস রোলিং বা কয়েন ফ্লিপিং শুরু করুন!
+                        </span>
+                    </div>
+                `;
+                
+                // Reset charts
+                if (distributionChart) {
+                    distributionChart.data.labels = [];
+                    distributionChart.data.datasets.forEach(dataset => dataset.data = []);
+                    distributionChart.update();
+                }
+                
+                if (llnChart) {
+                    llnChart.data.labels = [];
+                    llnChart.data.datasets.forEach(dataset => dataset.data = []);
+                    llnChart.update();
+                }
+                
+                if (cltChart) {
+                    cltChart.data.labels = [];
+                    cltChart.data.datasets.forEach(dataset => dataset.data = []);
+                    cltChart.update();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

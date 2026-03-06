@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Dimensional Monte Carlo | High-Dimensional Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.7.0/lib/browser/math.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #1565C0;
+            --secondary: #0D47A1;
+            --accent: #FF6B6B;
+            --success: #4CAF50;
+            --info: #29B6F6;
+            --warning: #FFA726;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --high-dim: #5E35B1;
+            --quasi-mc: #00897B;
+            --dim-reduction: #F57C00;
+            --curse: #D32F2F;
+            --visualization: #7E57C2;
+            --simulation-bg: #E3F2FD;
+            --analysis-bg: #E8F5E9;
+            --method-bg: #F3E5F5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--high-dim);
+            color: white;
+            box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--high-dim), var(--quasi-mc), var(--dim-reduction), var(--curse));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Configuration Panel */
+        .config-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--high-dim);
+        }
+
+        /* Dimension Configuration */
+        .dimension-config {
+            margin-bottom: 2rem;
+        }
+
+        .dimension-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .dimension-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dimension-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dimension-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .dimension-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .dimension-card.active {
+            border-color: var(--high-dim);
+            background: var(--simulation-bg);
+        }
+
+        .dimension-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--high-dim);
+        }
+
+        .dimension-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--high-dim);
+            margin: 0.5rem 0;
+        }
+
+        /* Function Configuration */
+        .function-config {
+            margin: 2rem 0;
+        }
+
+        .function-editor {
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .function-input-group {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .function-label {
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+        }
+
+        .function-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .function-input:focus {
+            outline: none;
+            border-color: var(--high-dim);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.1);
+        }
+
+        .function-examples {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .function-examples {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--high-dim);
+            color: white;
+            border-color: var(--high-dim);
+        }
+
+        /* Method Selection */
+        .method-selection {
+            margin: 2rem 0;
+        }
+
+        .method-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .method-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .method-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .method-card.active {
+            border-color: var(--quasi-mc);
+            background: var(--method-bg);
+        }
+
+        .method-card.curse.active {
+            border-color: var(--curse);
+            background: rgba(211, 47, 47, 0.1);
+        }
+
+        .method-card.dimreduction.active {
+            border-color: var(--dim-reduction);
+            background: rgba(245, 124, 0, 0.1);
+        }
+
+        .method-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-card .method-icon { color: var(--quasi-mc); }
+        .method-card.curse .method-icon { color: var(--curse); }
+        .method-card.dimreduction .method-icon { color: var(--dim-reduction); }
+
+        /* Simulation Parameters */
+        .simulation-params {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-params {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .param-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .param-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--high-dim);
+            margin: 0.5rem 0;
+        }
+
+        .slider-container {
+            margin-top: 1rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, var(--high-dim), var(--quasi-mc));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--high-dim);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .simulate-btn {
+            background: var(--high-dim);
+            color: white;
+        }
+
+        .simulate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Visualization Container */
+        .visualization-container {
+            height: 400px;
+            margin-bottom: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        #visualizationPlot {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Performance Metrics */
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .performance-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .performance-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .metric-detail {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+
+        /* Curse of Dimensionality Section */
+        .curse-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .curse-visualization {
+            height: 300px;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+
+        .curse-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 200px;
+            padding: 1rem;
+            background: var(--simulation-bg);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .curse-bar {
+            flex: 1;
+            background: var(--curse);
+            border-radius: 5px 5px 0 0;
+            transition: height 1s ease;
+            position: relative;
+        }
+
+        .curse-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Quasi-Monte Carlo Methods */
+        .quasi-mc-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .quasi-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .quasi-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quasi-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .quasi-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .quasi-card.active {
+            border-color: var(--quasi-mc);
+            background: rgba(0, 137, 123, 0.1);
+        }
+
+        .quasi-icon {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--quasi-mc);
+        }
+
+        /* Dimension Reduction Techniques */
+        .dimreduction-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .reduction-methods {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .reduction-methods {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .reduction-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .reduction-card {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .reduction-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .reduction-card.active {
+            border-color: var(--dim-reduction);
+            background: rgba(245, 124, 0, 0.1);
+        }
+
+        .reduction-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dim-reduction);
+        }
+
+        /* Convergence Analysis */
+        .convergence-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .convergence-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--high-dim);
+        }
+
+        /* High-Dimensional Visualization */
+        .hd-visualization {
+            position: relative;
+            height: 200px;
+            margin-top: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        .dimension-point {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--high-dim);
+            transition: all 0.5s ease;
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--light-gray);
+            border-top-color: var(--high-dim);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--high-dim), var(--quasi-mc));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .dimension-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .performance-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            max-width: 300px;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Multi-Dimensional Monte Carlo" data-bn="মাল্টি-ডাইমেনশনাল মন্টে কার্লো">মাল্টি-ডাইমেনশনাল মন্টে কার্লো</h1>
+            <p class="subtitle" data-en="Work with high-dimensional Monte Carlo simulations, analyze the curse of dimensionality, implement Quasi-Monte Carlo methods, and apply dimension reduction techniques" data-bn="হাই-ডাইমেনশনাল মন্টে কার্লো সিমুলেশনে কাজ করুন, মাত্রার অভিশাপ বিশ্লেষণ করুন, কোয়াজি-মন্টে কার্লো পদ্ধতি বাস্তবায়ন করুন এবং ডাইমেনশন রিডাকশন টেকনিক প্রয়োগ করুন">
+                হাই-ডাইমেনশনাল মন্টে কার্লো সিমুলেশনে কাজ করুন, মাত্রার অভিশাপ বিশ্লেষণ করুন, কোয়াজি-মন্টে কার্লো পদ্ধতি বাস্তবায়ন করুন এবং ডাইমেনশন রিডাকশন টেকনিক প্রয়োগ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Configuration Panel -->
+            <div class="config-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    <span data-en="Simulation Configuration" data-bn="সিমুলেশন কনফিগারেশন">সিমুলেশন কনফিগারেশন</span>
+                </h2>
+
+                <!-- Dimension Selection -->
+                <div class="dimension-config">
+                    <div class="section-title">
+                        <i class="fas fa-cube"></i>
+                        <span data-en="Dimension Selection" data-bn="মাত্রা নির্বাচন">মাত্রা নির্বাচন</span>
+                    </div>
+                    
+                    <p data-en="Select the number of dimensions for your Monte Carlo simulation:" data-bn="আপনার মন্টে কার্লো সিমুলেশনের জন্য মাত্রার সংখ্যা নির্বাচন করুন:">
+                        আপনার মন্টে কার্লো সিমুলেশনের জন্য মাত্রার সংখ্যা নির্বাচন করুন:
+                    </p>
+                    
+                    <div class="dimension-controls">
+                        <div class="dimension-card active" data-dim="2">
+                            <div class="dimension-icon">
+                                <i class="fas fa-square"></i>
+                            </div>
+                            <div class="dimension-value">2D</div>
+                            <p class="help-text" data-en="2 dimensions" data-bn="২ মাত্রা">২ মাত্রা</p>
+                        </div>
+                        <div class="dimension-card" data-dim="3">
+                            <div class="dimension-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div class="dimension-value">3D</div>
+                            <p class="help-text" data-en="3 dimensions" data-bন="৩ মাত্রা">৩ মাত্রা</p>
+                        </div>
+                        <div class="dimension-card" data-dim="5">
+                            <div class="dimension-icon">
+                                <i class="fas fa-cubes"></i>
+                            </div>
+                            <div class="dimension-value">5D</div>
+                            <p class="help-text" data-en="5 dimensions" data-bন="৫ মাত্রা">৫ মাত্রা</p>
+                        </div>
+                        <div class="dimension-card" data-dim="10">
+                            <div class="dimension-icon">
+                                <i class="fas fa-infinity"></i>
+                            </div>
+                            <div class="dimension-value">10D</div>
+                            <p class="help-text" data-en="10 dimensions" data-bন="১০ মাত্রা">১০ মাত্রা</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Function Definition -->
+                <div class="function-config">
+                    <h2 class="section-title">
+                        <i class="fas fa-function"></i>
+                        <span data-en="Multi-Dimensional Function" data-bন="মাল্টি-ডাইমেনশনাল ফাংশন">মাল্টি-ডাইমেনশনাল ফাংশন</span>
+                    </h2>
+                    
+                    <div class="function-editor">
+                        <div class="function-input-group">
+                            <div class="function-label" data-en="f(x₁,x₂,...,xₙ) =" data-bন="f(x₁,x₂,...,xₙ) =">f(x₁,x₂,...,xₙ) =</div>
+                            <input type="text" id="multiFunction" class="function-input" value="exp(-sum(x^2)/2)" placeholder="e.g., exp(-sum(x^2)/2)">
+                        </div>
+                        <div class="help-text" data-en="Use x[0], x[1], ..., x[n-1] for dimensions. Math functions: sum, prod, sin, cos, exp, sqrt" data-bন="মাত্রার জন্য x[0], x[1], ..., x[n-1] ব্যবহার করুন। ম্যাথ ফাংশন: sum, prod, sin, cos, exp, sqrt">
+                            মাত্রার জন্য x[0], x[1], ..., x[n-1] ব্যবহার করুন। ম্যাথ ফাংশন: sum, prod, sin, cos, exp, sqrt
+                        </div>
+                    </div>
+                    
+                    <div class="function-examples">
+                        <button class="example-btn" data-example="gaussian">exp(-sum(x^2)/2)</button>
+                        <button class="example-btn" data-example="product">prod(sin(x))</button>
+                        <button class="example-btn" data-example="linear">sum(x)/length(x)</button>
+                        <button class="example-btn" data-example="quadratic">sum(x^2)</button>
+                        <button class="example-btn" data-example="exponential">exp(-norm(x))</button>
+                        <button class="example-btn" data-example="trigonometric">sin(sum(x))</button>
+                    </div>
+                </div>
+
+                <!-- Method Selection -->
+                <div class="method-selection">
+                    <h2 class="section-title">
+                        <i class="fas fa-method"></i>
+                        <span data-en="Sampling Method" data-bন="স্যাম্পলিং পদ্ধতি">স্যাম্পলিং পদ্ধতি</span>
+                    </h2>
+                    
+                    <div class="method-cards">
+                        <div class="method-card active" data-method="standard">
+                            <div class="method-icon">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                            <h3 data-en="Standard MC" data-bন="স্ট্যান্ডার্ড MC">স্ট্যান্ডার্ড MC</h3>
+                            <p class="help-text" data-en="Pure random sampling" data-bন="খাঁটি র্যান্ডম স্যাম্পলিং">খাঁটি র্যান্ডম স্যাম্পলিং</p>
+                        </div>
+                        <div class="method-card curse" data-method="curse">
+                            <div class="method-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 data-en="Curse Analysis" data-bন="অভিশাপ বিশ্লেষণ">অভিশাপ বিশ্লেষণ</h3>
+                            <p class="help-text" data-en="Dimensionality curse study" data-bন="মাত্রার অভিশাপ অধ্যয়ন">মাত্রার অভিশাপ অধ্যয়ন</p>
+                        </div>
+                        <div class="method-card dimreduction" data-method="dimreduction">
+                            <div class="method-icon">
+                                <i class="fas fa-compress"></i>
+                            </div>
+                            <h3 data-en="Dim Reduction" data-bন="মাত্রা হ্রাস">মাত্রা হ্রাস</h3>
+                            <p class="help-text" data-en="Reduce dimensionality" data-bন="মাত্রা হ্রাস করুন">মাত্রা হ্রাস করুন</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Simulation Parameters" data-bন="সিমুলেশন প্যারামিটার">সিমুলেশন প্যারামিটার</span>
+                </h2>
+                
+                <div class="simulation-params">
+                    <div class="param-card">
+                        <div class="parameter-label" data-en="Sample Points" data-bন="নমুনা পয়েন্ট">নমুনা পয়েন্ট</div>
+                        <div class="param-value" id="samplePointsValue">10000</div>
+                        <div class="slider-container">
+                            <input type="range" id="samplePoints" class="slider" min="1000" max="100000" value="10000" step="1000">
+                            <div class="help-text" data-en="Total points in high-dim space" data-bন="উচ্চ-মাত্রার স্থানে মোট পয়েন্ট">উচ্চ-মাত্রার স্থানে মোট পয়েন্ট</div>
+                        </div>
+                    </div>
+                    
+                    <div class="param-card">
+                        <div class="parameter-label" data-en="Random Seed" data-bন="র্যান্ডম সিড">র্যান্ডম সিড</div>
+                        <div class="param-value" id="randomSeedValue">42</div>
+                        <div class="slider-container">
+                            <input type="range" id="randomSeed" class="slider" min="1" max="1000" value="42" step="1">
+                            <div class="help-text" data-en="For reproducible results" data-bন="পুনরুৎপাদনযোগ্য ফলাফলের জন্য">পুনরুৎপাদনযোগ্য ফলাফলের জন্য</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn simulate-btn" id="simulateBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Run Simulation" data-bন="সিমুলেশন চালান">সিমুলেশন চালান</span>
+                    </button>
+                    <button class="action-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Simulation Results" data-bন="সিমুলেশন ফলাফল">সিমুলেশন ফলাফল</span>
+                </h2>
+
+                <!-- Visualization -->
+                <div class="visualization-container">
+                    <div id="visualizationPlot"></div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="performance-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Estimated Value" data-bন="অনুমানকৃত মান">অনুমানকৃত মান</div>
+                        <div class="metric-value" id="estimatedValue">2.5066</div>
+                        <div class="metric-detail" id="estimationError">±0.0123</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="True Value" data-bন="সত্য মান">সত্য মান</div>
+                        <div class="metric-value" id="trueValue">(2π)^{d/2}</div>
+                        <div class="metric-detail" id="relativeError">Error: 0.12%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Computation Time" data-bন="গণনার সময়">গণনার সময়</div>
+                        <div class="metric-value" id="computationTime">0.245s</div>
+                        <div class="metric-detail" id="timePerPoint">0.025ms/pt</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label" data-en="Effective Dimension" data-bন="কার্যকরী মাত্রা">কার্যকরী মাত্রা</div>
+                        <div class="metric-value" id="effectiveDim">2.0</div>
+                        <div class="metric-detail" id="dimReduction">-60% reduction</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="simulationProgress" style="width: 0%"></div>
+                </div>
+
+                <!-- High-Dimensional Visualization -->
+                <div class="hd-visualization" id="hdVisualization">
+                    <!-- Points will be generated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Curse of Dimensionality Section -->
+        <div class="curse-section">
+            <h2 class="section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span data-en="Curse of Dimensionality Analysis" data-bন="মাত্রার অভিশাপ বিশ্লেষণ">মাত্রার অভিশাপ বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Observe how Monte Carlo efficiency degrades exponentially with increasing dimensions:" data-bন="দেখুন কিভাবে মন্টে কার্লো দক্ষতা মাত্রা বৃদ্ধির সাথে সূচকীয়ভাবে হ্রাস পায়:">
+                দেখুন কিভাবে মন্টে কার্লো দক্ষতা মাত্রা বৃদ্ধির সাথে সূচকীয়ভাবে হ্রাস পায়:
+            </p>
+            
+            <div class="curse-visualization">
+                <div class="curse-chart" id="curseChart">
+                    <!-- Curse bars will be generated dynamically -->
+                </div>
+            </div>
+            
+            <div class="help-text" data-en="In high dimensions, most points lie near the surface of the hypercube. Volume near origin decreases exponentially." data-bন="উচ্চ মাত্রায়, বেশিরভাগ পয়েন্ট হাইপারকিউবের পৃষ্ঠের কাছাকাছি অবস্থিত। উত্সের নিকটবর্তী আয়তন সূচকীয়ভাবে হ্রাস পায়।">
+                উচ্চ মাত্রায়, বেশিরভাগ পয়েন্ট হাইপারকিউবের পৃষ্ঠের কাছাকাছি অবস্থিত। উত্সের নিকটবর্তী আয়তন সূচকীয়ভাবে হ্রাস পায়।
+            </div>
+        </div>
+
+        <!-- Quasi-Monte Carlo Methods -->
+        <div class="quasi-mc-section">
+            <h2 class="section-title">
+                <i class="fas fa-project-diagram"></i>
+                <span data-en="Quasi-Monte Carlo Methods" data-bন="কোয়াজি-মন্টে কার্লো পদ্ধতি">কোয়াজি-মন্টে কার্লো পদ্ধতি</span>
+            </h2>
+            
+            <p data-en="Use low-discrepancy sequences for better high-dimensional integration:" data-bন="ভাল উচ্চ-মাত্রার ইন্টিগ্রেশনের জন্য নিম্ন-বিসংগতি ক্রম ব্যবহার করুন:">
+                ভাল উচ্চ-মাত্রার ইন্টিগ্রেশনের জন্য নিম্ন-বিসংগতি ক্রম ব্যবহার করুন:
+            </p>
+            
+            <div class="quasi-methods">
+                <div class="quasi-card active" data-quasi="halton">
+                    <div class="quasi-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3 data-en="Halton Sequence" data-bন="হ্যালটন ক্রম">হ্যালটন ক্রম</h3>
+                    <p class="help-text" data-en="Based on prime numbers" data-bন="মৌলিক সংখ্যার উপর ভিত্তি করে">মৌলিক সংখ্যার উপর ভিত্তি করে</p>
+                </div>
+                <div class="quasi-card" data-quasi="sobol">
+                    <div class="quasi-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3 data-en="Sobol' Sequence" data-bন="সোবোল ক্রম">সোবোল ক্রম</h3>
+                    <p class="help-text" data-en="Best for high dimensions" data-bন="উচ্চ মাত্রার জন্য সেরা">উচ্চ মাত্রার জন্য সেরা</p>
+                </div>
+                <div class="quasi-card" data-quasi="latin">
+                    <div class="quasi-icon">
+                        <i class="fas fa-th"></i>
+                    </div>
+                    <h3 data-en="Latin Hypercube" data-bন="ল্যাটিন হাইপারকিউব">ল্যাটিন হাইপারকিউব</h3>
+                    <p class="help-text" data-en="Stratified sampling" data-bন="স্তরীকৃত স্যাম্পলিং">স্তরীকৃত স্যাম্পলিং</p>
+                </div>
+            </div>
+            
+            <div class="performance-metrics" style="margin-top: 1.5rem;">
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Discrepancy" data-bন="বিসংগতি">বিসংগতি</div>
+                    <div class="metric-value" id="discrepancyValue">0.023</div>
+                    <div class="metric-detail" data-en="Lower is better" data-bন="নিম্নতর ভাল">নিম্নতর ভাল</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Convergence Rate" data-bন="কনভারজেন্স হার">কনভারজেন্স হার</div>
+                    <div class="metric-value" id="convergenceRate">1/N</div>
+                    <div class="metric-detail" data-en="vs 1/√N for MC" data-bন="MC-এর জন্য 1/√N-এর তুলনায়">MC-এর জন্য 1/√N-এর তুলনায়</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Efficiency Gain" data-bন="দক্ষতা লাভ">দক্ষতা লাভ</div>
+                    <div class="metric-value" id="efficiencyGain">5.2x</div>
+                    <div class="metric-detail" data-en="vs standard MC" data-bন="স্ট্যান্ডার্ড MC-এর তুলনায়">স্ট্যান্ডার্ড MC-এর তুলনায়</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label" data-en="Dimension Limit" data-bন="মাত্রা সীমা">মাত্রা সীমা</div>
+                    <div class="metric-value" id="dimensionLimit">1000+</div>
+                    <div class="metric-detail" data-en="Practical dimensions" data-bন="ব্যবহারিক মাত্রা">ব্যবহারিক মাত্রা</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dimension Reduction Techniques -->
+        <div class="dimreduction-section">
+            <h2 class="section-title">
+                <i class="fas fa-compress"></i>
+                <span data-en="Dimension Reduction Techniques" data-bন="ডাইমেনশন রিডাকশন টেকনিক">ডাইমেনশন রিডাকশন টেকনিক</span>
+            </h2>
+            
+            <p data-en="Reduce effective dimensionality while preserving important features:" data-bন="গুরুত্বপূর্ণ বৈশিষ্ট্য সংরক্ষণ করার সময় কার্যকরী মাত্রা হ্রাস করুন:">
+                গুরুত্বপূর্ণ বৈশিষ্ট্য সংরক্ষণ করার সময় কার্যকরী মাত্রা হ্রাস করুন:
+            </p>
+            
+            <div class="reduction-methods">
+                <div class="reduction-card active" data-reduction="pca">
+                    <div class="reduction-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 data-en="PCA" data-bন="PCA">PCA</h3>
+                    <p class="help-text" data-en="Principal components" data-bন="প্রধান উপাদান">প্রধান উপাদান</p>
+                </div>
+                <div class="reduction-card" data-reduction="random">
+                    <div class="reduction-icon">
+                        <i class="fas fa-random"></i>
+                    </div>
+                    <h3 data-en="Random Projection" data-bন="র্যান্ডম প্রজেকশন">র্যান্ডম প্রজেকশন</h3>
+                    <p class="help-text" data-en="Johnson-Lindenstrauss" data-bন="জনসন-লিন্ডেনস্ট্রস">জনসন-লিন্ডেনস্ট্রস</p>
+                </div>
+                <div class="reduction-card" data-reduction="active">
+                    <div class="reduction-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 data-en="Active Subspaces" data-bন="অ্যাকটিভ সাবস্পেস">অ্যাকটিভ সাবস্পেস</h3>
+                    <p class="help-text" data-en="Gradient-based" data-bন="গ্রেডিয়েন্ট-ভিত্তিক">গ্রেডিয়েন্ট-ভিত্তিক</p>
+                </div>
+                <div class="reduction-card" data-reduction="autoencoder">
+                    <div class="reduction-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 data-en="Autoencoder" data-bন="অটোএনকোডার">অটোএনকোডার</h3>
+                    <p class="help-text" data-en="Neural network" data-bন="নিউরাল নেটওয়ার্ক">নিউরাল নেটওয়ার্ক</p>
+                </div>
+            </div>
+            
+            <div class="param-card" style="margin-top: 1.5rem;">
+                <div class="parameter-label" data-en="Target Dimensions" data-bন="লক্ষ্য মাত্রা">লক্ষ্য মাত্রা</div>
+                <div class="param-value" id="targetDimensions">2</div>
+                <div class="slider-container">
+                    <input type="range" id="targetDimSlider" class="slider" min="1" max="10" value="2" step="1">
+                    <div class="help-text" data-en="Reduce to k dimensions" data-bন="k মাত্রায় হ্রাস করুন">k মাত্রায় হ্রাস করুন</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convergence Analysis -->
+        <div class="convergence-section">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভারজেন্স বিশ্লেষণ">কনভারজেন্স বিশ্লেষণ</span>
+            </h2>
+            
+            <p data-en="Compare convergence rates of different methods across dimensions:" data-bন="বিভিন্ন মাত্রায় বিভিন্ন পদ্ধতির কনভারজেন্স হার তুলনা করুন:">
+                বিভিন্ন মাত্রায় বিভিন্ন পদ্ধতির কনভারজেন্স হার তুলনা করুন:
+            </p>
+            
+            <div class="convergence-chart" id="convergenceChart"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Application State
+            const state = {
+                dimension: 2,
+                functionStr: 'exp(-sum(x^2)/2)',
+                method: 'standard',
+                samplePoints: 10000,
+                randomSeed: 42,
+                quasiMethod: 'halton',
+                reductionMethod: 'pca',
+                targetDimensions: 2,
+                results: null
+            };
+
+            // DOM Elements
+            const dimensionCards = document.querySelectorAll('.dimension-card');
+            const multiFunctionInput = document.getElementById('multiFunction');
+            const methodCards = document.querySelectorAll('.method-card');
+            const samplePointsSlider = document.getElementById('samplePoints');
+            const samplePointsValue = document.getElementById('samplePointsValue');
+            const randomSeedSlider = document.getElementById('randomSeed');
+            const randomSeedValue = document.getElementById('randomSeedValue');
+            const quasiCards = document.querySelectorAll('.quasi-card');
+            const reductionCards = document.querySelectorAll('.reduction-card');
+            const targetDimSlider = document.getElementById('targetDimSlider');
+            const targetDimensionsValue = document.getElementById('targetDimensions');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            const simulateBtn = document.getElementById('simulateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // Result Display Elements
+            const estimatedValueEl = document.getElementById('estimatedValue');
+            const estimationErrorEl = document.getElementById('estimationError');
+            const trueValueEl = document.getElementById('trueValue');
+            const relativeErrorEl = document.getElementById('relativeError');
+            const computationTimeEl = document.getElementById('computationTime');
+            const timePerPointEl = document.getElementById('timePerPoint');
+            const effectiveDimEl = document.getElementById('effectiveDim');
+            const dimReductionEl = document.getElementById('dimReduction');
+            const discrepancyValueEl = document.getElementById('discrepancyValue');
+            const convergenceRateEl = document.getElementById('convergenceRate');
+            const efficiencyGainEl = document.getElementById('efficiencyGain');
+            const dimensionLimitEl = document.getElementById('dimensionLimit');
+            const simulationProgress = document.getElementById('simulationProgress');
+            const hdVisualization = document.getElementById('hdVisualization');
+            const curseChart = document.getElementById('curseChart');
+
+            // Initialize
+            initMultiDimMC();
+
+            function initMultiDimMC() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Dimension Selection
+                dimensionCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        const dim = parseInt(this.dataset.dim);
+                        setDimension(dim);
+                    });
+                });
+
+                // Function Input
+                multiFunctionInput.addEventListener('change', updateFunction);
+
+                // Method Selection
+                methodCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setMethod(this.dataset.method);
+                    });
+                });
+
+                // Simulation Parameters
+                samplePointsSlider.addEventListener('input', updateSamplePoints);
+                randomSeedSlider.addEventListener('input', updateRandomSeed);
+
+                // Quasi-Monte Carlo Methods
+                quasiCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setQuasiMethod(this.dataset.quasi);
+                    });
+                });
+
+                // Dimension Reduction Methods
+                reductionCards.forEach(card => {
+                    card.addEventListener('click', function() {
+                        setReductionMethod(this.dataset.reduction);
+                    });
+                });
+
+                targetDimSlider.addEventListener('input', updateTargetDimensions);
+
+                // Example Functions
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExample(this.dataset.example);
+                    });
+                });
+
+                // Action Buttons
+                simulateBtn.addEventListener('click', runSimulation);
+                resetBtn.addEventListener('click', resetAll);
+
+                // Initialize values
+                updateSamplePoints();
+                updateRandomSeed();
+                updateTargetDimensions();
+
+                // Run initial simulation
+                setTimeout(() => {
+                    runSimulation();
+                }, 1000);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDimension(dim) {
+                state.dimension = dim;
+                
+                dimensionCards.forEach(card => {
+                    if (parseInt(card.dataset.dim) === dim) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateFunction() {
+                state.functionStr = multiFunctionInput.value;
+            }
+
+            function setMethod(method) {
+                state.method = method;
+                
+                methodCards.forEach(card => {
+                    if (card.dataset.method === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateSamplePoints() {
+                state.samplePoints = parseInt(samplePointsSlider.value);
+                samplePointsValue.textContent = state.samplePoints.toLocaleString();
+            }
+
+            function updateRandomSeed() {
+                state.randomSeed = parseInt(randomSeedSlider.value);
+                randomSeedValue.textContent = state.randomSeed;
+            }
+
+            function setQuasiMethod(method) {
+                state.quasiMethod = method;
+                
+                quasiCards.forEach(card => {
+                    if (card.dataset.quasi === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function setReductionMethod(method) {
+                state.reductionMethod = method;
+                
+                reductionCards.forEach(card => {
+                    if (card.dataset.reduction === method) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            function updateTargetDimensions() {
+                state.targetDimensions = parseInt(targetDimSlider.value);
+                targetDimensionsValue.textContent = state.targetDimensions;
+            }
+
+            function loadExample(example) {
+                const examples = {
+                    gaussian: 'exp(-sum(x^2)/2)',
+                    product: 'prod(sin(x))',
+                    linear: 'sum(x)/length(x)',
+                    quadratic: 'sum(x^2)',
+                    exponential: 'exp(-norm(x))',
+                    trigonometric: 'sin(sum(x))'
+                };
+                
+                multiFunctionInput.value = examples[example];
+                updateFunction();
+            }
+
+            // Pseudo-random number generator
+            function seededRandom(seed) {
+                return function() {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+            }
+
+            // Low-discrepancy sequence generators
+            function haltonSequence(index, base) {
+                let result = 0;
+                let f = 1 / base;
+                let i = index;
+                while (i > 0) {
+                    result += f * (i % base);
+                    i = Math.floor(i / base);
+                    f /= base;
+                }
+                return result;
+            }
+
+            function sobolSequence(index, dimension) {
+                // Simplified Sobol' sequence
+                const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+                const base = primes[dimension % primes.length];
+                let result = 0;
+                let i = index;
+                let f = 1;
+                while (i > 0) {
+                    f *= base;
+                    const digit = i % base;
+                    result += digit / f;
+                    i = Math.floor(i / base);
+                }
+                return result;
+            }
+
+            function latinHypercubeSample(n, d, rand) {
+                const samples = [];
+                for (let i = 0; i < n; i++) {
+                    const point = [];
+                    for (let j = 0; j < d; j++) {
+                        point.push((i + rand()) / n);
+                    }
+                    samples.push(point);
+                }
+                return samples;
+            }
+
+            function generateSamples(n, d, method, seed) {
+                const rand = seededRandom(seed);
+                const samples = [];
+                
+                if (method === 'halton' || method === 'sobol') {
+                    for (let i = 0; i < n; i++) {
+                        const point = [];
+                        for (let j = 0; j < d; j++) {
+                            let value;
+                            if (method === 'halton') {
+                                const base = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29][j % 10];
+                                value = haltonSequence(i + 1, base);
+                            } else {
+                                value = sobolSequence(i + 1, j);
+                            }
+                            point.push(value);
+                        }
+                        samples.push(point);
+                    }
+                } else if (method === 'latin') {
+                    samples.push(...latinHypercubeSample(n, d, rand));
+                } else {
+                    // Standard random sampling
+                    for (let i = 0; i < n; i++) {
+                        const point = [];
+                        for (let j = 0; j < d; j++) {
+                            point.push(rand());
+                        }
+                        samples.push(point);
+                    }
+                }
+                
+                return samples;
+            }
+
+            function evaluateFunction(point) {
+                try {
+                    // Create a safe evaluation context
+                    const x = point;
+                    const n = point.length;
+                    
+                    // Helper functions
+                    const sum = arr => arr.reduce((a, b) => a + b, 0);
+                    const prod = arr => arr.reduce((a, b) => a * b, 1);
+                    const norm = arr => Math.sqrt(sum(arr.map(v => v * v)));
+                    const length = arr => arr.length;
+                    
+                    // Parse the function string
+                    const funcStr = state.functionStr
+                        .replace(/sum\(x\^2\)/g, `sum(x.map(v => v*v))`)
+                        .replace(/sum\(x\)/g, `sum(x)`)
+                        .replace(/prod\(x\)/g, `prod(x)`)
+                        .replace(/norm\(x\)/g, `norm(x)`)
+                        .replace(/length\(x\)/g, `length(x)`);
+                    
+                    const func = new Function('x', `return ${funcStr}`);
+                    return func(x);
+                } catch (error) {
+                    console.error('Function evaluation error:', error);
+                    return 0;
+                }
+            }
+
+            function curseOfDimensionalityAnalysis() {
+                const dimensions = [1, 2, 3, 5, 10, 20];
+                const n = 10000;
+                const results = [];
+                
+                curseChart.innerHTML = '';
+                
+                dimensions.forEach((d, idx) => {
+                    // Calculate fraction of points near origin
+                    let nearOrigin = 0;
+                    const rand = seededRandom(state.randomSeed + idx);
+                    
+                    for (let i = 0; i < n; i++) {
+                        const point = Array(d).fill(0).map(() => rand());
+                        const distance = Math.sqrt(point.reduce((sum, val) => sum + val * val, 0));
+                        if (distance < 0.5) {
+                            nearOrigin++;
+                        }
+                    }
+                    
+                    const fraction = nearOrigin / n;
+                    const theoretical = Math.pow(0.5, d); // Volume of d-dimensional sphere
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'curse-bar';
+                    bar.style.height = `${Math.pow(fraction, 0.3) * 150}px`;
+                    bar.style.background = `rgba(211, 47, 47, ${0.3 + 0.7 * (d / 20)})`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'curse-bar-label';
+                    label.textContent = `${d}D`;
+                    label.title = `Fraction near origin: ${(fraction*100).toFixed(2)}%\nTheoretical: ${(theoretical*100).toFixed(2)}%`;
+                    
+                    bar.appendChild(label);
+                    curseChart.appendChild(bar);
+                    
+                    results.push({ dimension: d, fraction, theoretical });
+                });
+                
+                return results;
+            }
+
+            function applyDimensionReduction(samples) {
+                const n = samples.length;
+                const d = samples[0].length;
+                const k = state.targetDimensions;
+                
+                switch(state.reductionMethod) {
+                    case 'pca':
+                        // Simplified PCA
+                        const mean = Array(d).fill(0);
+                        samples.forEach(point => {
+                            point.forEach((val, i) => mean[i] += val);
+                        });
+                        mean.forEach((val, i) => mean[i] = val / n);
+                        
+                        // Center the data
+                        const centered = samples.map(point => 
+                            point.map((val, i) => val - mean[i])
+                        );
+                        
+                        // Simplified covariance (using first two dimensions)
+                        const reduced = samples.map(point => [
+                            point[0] * 0.7 + point[1] * 0.3,
+                            point[0] * -0.3 + point[1] * 0.7
+                        ]);
+                        
+                        return { reduced, varianceExplained: 0.85 };
+                        
+                    case 'random':
+                        // Random projection
+                        const projection = Array(k).fill().map(() => 
+                            Array(d).fill().map(() => (Math.random() * 2 - 1) / Math.sqrt(d))
+                        );
+                        
+                        const randomReduced = samples.map(point => 
+                            projection.map(row => 
+                                row.reduce((sum, w, i) => sum + w * point[i], 0)
+                            )
+                        );
+                        
+                        return { reduced: randomReduced, varianceExplained: 0.75 };
+                        
+                    case 'active':
+                        // Active subspaces (simplified)
+                        const activeReduced = samples.map(point => [
+                            point.reduce((sum, val) => sum + val, 0) / Math.sqrt(d),
+                            point.reduce((sum, val, i) => sum + (i % 2 === 0 ? val : -val), 0) / Math.sqrt(d)
+                        ]);
+                        
+                        return { reduced: activeReduced, varianceExplained: 0.9 };
+                        
+                    case 'autoencoder':
+                        // Simplified autoencoder (linear projection)
+                        const encoded = samples.map(point => [
+                            0.6 * point[0] + 0.4 * point[1],
+                            0.4 * point[0] - 0.6 * point[1]
+                        ]);
+                        
+                        return { reduced: encoded, varianceExplained: 0.8 };
+                        
+                    default:
+                        return { reduced: samples.map(p => p.slice(0, k)), varianceExplained: 1.0 };
+                }
+            }
+
+            function runSimulation() {
+                simulateBtn.innerHTML = `<div class="loading"></div> ${currentLanguage === 'bn' ? 'সিমুলেশন চলছে...' : 'Simulating...'}`;
+                simulationProgress.style.width = '0%';
+                
+                const startTime = performance.now();
+                
+                // Generate samples
+                const samples = generateSamples(
+                    state.samplePoints,
+                    state.dimension,
+                    state.quasiMethod,
+                    state.randomSeed
+                );
+                
+                // Evaluate function
+                let sum = 0;
+                let sumSquares = 0;
+                const values = [];
+                
+                samples.forEach((point, i) => {
+                    const value = evaluateFunction(point);
+                    values.push(value);
+                    sum += value;
+                    sumSquares += value * value;
+                    
+                    // Update progress
+                    if (i % 1000 === 0) {
+                        const progress = (i / state.samplePoints) * 100;
+                        simulationProgress.style.width = `${progress}%`;
+                    }
+                });
+                
+                const mean = sum / state.samplePoints;
+                const variance = (sumSquares / state.samplePoints) - (mean * mean);
+                const stdError = Math.sqrt(variance / state.samplePoints);
+                
+                const endTime = performance.now();
+                const computationTime = (endTime - startTime) / 1000;
+                
+                simulationProgress.style.width = '100%';
+                
+                // Calculate theoretical value for Gaussian integral
+                const theoretical = Math.pow(2 * Math.PI, state.dimension / 2);
+                const relativeError = Math.abs((mean - theoretical) / theoretical * 100);
+                
+                // Apply dimension reduction
+                const reductionResult = applyDimensionReduction(samples);
+                const effectiveDim = state.dimension * reductionResult.varianceExplained;
+                
+                // Calculate discrepancy
+                const discrepancy = calculateDiscrepancy(samples);
+                
+                // Update results
+                updateResults(mean, stdError, theoretical, relativeError, computationTime, 
+                              effectiveDim, discrepancy, reductionResult.varianceExplained);
+                
+                // Update visualizations
+                updateVisualization(samples, values);
+                updateCurseAnalysis();
+                updateConvergenceAnalysis();
+                
+                simulateBtn.innerHTML = `<i class="fas fa-play"></i> ${currentLanguage === 'bn' ? 'সিমুলেশন চালান' : 'Run Simulation'}`;
+            }
+
+            function calculateDiscrepancy(samples) {
+                // Simplified star discrepancy calculation
+                const n = samples.length;
+                const d = samples[0].length;
+                
+                let maxDiscrepancy = 0;
+                const testPoints = 100;
+                
+                for (let i = 0; i < testPoints; i++) {
+                    const point = Array(d).fill().map(() => Math.random());
+                    let count = 0;
+                    
+                    samples.forEach(sample => {
+                        if (sample.every((val, j) => val <= point[j])) {
+                            count++;
+                        }
+                    });
+                    
+                    const empirical = count / n;
+                    const theoretical = point.reduce((prod, val) => prod * val, 1);
+                    const discrepancy = Math.abs(empirical - theoretical);
+                    
+                    if (discrepancy > maxDiscrepancy) {
+                        maxDiscrepancy = discrepancy;
+                    }
+                }
+                
+                return maxDiscrepancy;
+            }
+
+            function updateResults(mean, error, theoretical, relError, time, effectiveDim, discrepancy, varianceExplained) {
+                estimatedValueEl.textContent = mean.toFixed(4);
+                estimationErrorEl.textContent = `±${error.toFixed(4)}`;
+                trueValueEl.textContent = `(2π)^{${state.dimension}/2} ≈ ${theoretical.toFixed(4)}`;
+                relativeErrorEl.textContent = `Error: ${relError.toFixed(2)}%`;
+                computationTimeEl.textContent = `${time.toFixed(3)}s`;
+                timePerPointEl.textContent = `${(time * 1000 / state.samplePoints).toFixed(3)}ms/pt`;
+                effectiveDimEl.textContent = effectiveDim.toFixed(1);
+                dimReductionEl.textContent = `-${((1 - varianceExplained) * 100).toFixed(0)}% reduction`;
+                
+                discrepancyValueEl.textContent = discrepancy.toFixed(4);
+                convergenceRateEl.textContent = state.quasiMethod === 'standard' ? '1/√N' : '1/N';
+                efficiencyGainEl.textContent = `${(1 / (discrepancy * Math.sqrt(state.samplePoints))).toFixed(1)}x`;
+                dimensionLimitEl.textContent = state.quasiMethod === 'sobol' ? '1000+' : '100+';
+            }
+
+            function updateVisualization(samples, values) {
+                // Clear previous visualization
+                hdVisualization.innerHTML = '';
+                
+                // For high dimensions, show 2D projection
+                if (state.dimension <= 3) {
+                    // Create 3D scatter plot
+                    const trace = {
+                        x: samples.map(p => p[0]),
+                        y: samples.map(p => p[1]),
+                        z: state.dimension >= 3 ? samples.map(p => p[2]) : Array(samples.length).fill(0),
+                        mode: 'markers',
+                        type: 'scatter3d',
+                        marker: {
+                            size: 4,
+                            color: values,
+                            colorscale: 'Viridis',
+                            opacity: 0.7
+                        },
+                        name: 'Samples'
+                    };
+                    
+                    const layout = {
+                        title: {
+                            text: currentLanguage === 'bn' ? `${state.dimension}D নমুনা বন্টন` : `${state.dimension}D Sample Distribution`,
+                            font: {size: 14}
+                        },
+                        scene: {
+                            xaxis: {title: 'x₁'},
+                            yaxis: {title: 'x₂'},
+                            zaxis: state.dimension >= 3 ? {title: 'x₃'} : {title: ''}
+                        },
+                        margin: {l: 0, r: 0, b: 0, t: 40}
+                    };
+                    
+                    Plotly.newPlot('visualizationPlot', [trace], layout);
+                } else {
+                    // For higher dimensions, show parallel coordinates
+                    const dimensions = [];
+                    for (let i = 0; i < Math.min(state.dimension, 5); i++) {
+                        dimensions.push({
+                            range: [0, 1],
+                            label: `x${i+1}`,
+                            values: samples.map(p => p[i])
+                        });
+                    }
+                    
+                    dimensions.push({
+                        range: [Math.min(...values), Math.max(...values)],
+                        label: 'f(x)',
+                        values: values
+                    });
+                    
+                    const trace = {
+                        type: 'parcoords',
+                        line: {
+                            color: values,
+                            colorscale: 'Viridis',
+                            showscale: true,
+                            cmin: Math.min(...values),
+                            cmax: Math.max(...values)
+                        },
+                        dimensions: dimensions
+                    };
+                    
+                    const layout = {
+                        title: {
+                            text: currentLanguage === 'bn' ? `${state.dimension}D সমান্তরাল স্থানাঙ্ক` : `${state.dimension}D Parallel Coordinates`,
+                            font: {size: 14}
+                        },
+                        margin: {l: 50, r: 50, b: 50, t: 50}
+                    };
+                    
+                    Plotly.newPlot('visualizationPlot', [trace], layout);
+                }
+                
+                // Create high-dimensional point cloud visualization
+                createHDPointCloud(samples);
+            }
+
+            function createHDPointCloud(samples) {
+                // Simple 2D projection for visualization
+                const n = Math.min(100, samples.length);
+                
+                for (let i = 0; i < n; i++) {
+                    const point = document.createElement('div');
+                    point.className = 'dimension-point';
+                    
+                    // Project to 2D using first two dimensions
+                    const x = samples[i][0] * 100;
+                    const y = samples[i][1] * 100;
+                    
+                    point.style.left = `${x}%`;
+                    point.style.top = `${y}%`;
+                    point.style.transform = `scale(${0.5 + samples[i][2] * 0.5})`;
+                    point.style.opacity = 0.3 + samples[i][3] * 0.4;
+                    
+                    hdVisualization.appendChild(point);
+                }
+            }
+
+            function updateCurseAnalysis() {
+                curseOfDimensionalityAnalysis();
+            }
+
+            function updateConvergenceAnalysis() {
+                // Generate convergence data for different methods
+                const methods = ['standard', 'halton', 'sobol'];
+                const colors = ['#1565C0', '#00897B', '#5E35B1'];
+                const sampleSizes = [100, 500, 1000, 5000, 10000, 50000];
+                const traces = [];
+                
+                methods.forEach((method, idx) => {
+                    const errors = [];
+                    
+                    sampleSizes.forEach(size => {
+                        // Simplified error calculation
+                        const theoretical = Math.pow(2 * Math.PI, state.dimension / 2);
+                        const error = theoretical * (method === 'standard' ? 
+                            1 / Math.sqrt(size) : 1 / size);
+                        errors.push(error);
+                    });
+                    
+                    const trace = {
+                        x: sampleSizes,
+                        y: errors,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: method === 'standard' ? 'Standard MC' : 
+                              method === 'halton' ? 'Halton' : 'Sobol',
+                        line: {color: colors[idx], width: 3},
+                        marker: {size: 8}
+                    };
+                    
+                    traces.push(trace);
+                });
+                
+                const layout = {
+                    title: {
+                        text: currentLanguage === 'bn' ? 'কনভারজেন্স হার তুলনা' : 'Convergence Rate Comparison',
+                        font: {size: 14}
+                    },
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'নমুনা সংখ্যা' : 'Sample Size',
+                        type: 'log',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ত্রুটি' : 'Error',
+                        type: 'log',
+                        gridcolor: 'lightgray'
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.01,
+                        y: 0.99
+                    },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('convergenceChart', traces, layout);
+            }
+
+            function resetAll() {
+                // Reset to defaults
+                setDimension(2);
+                multiFunctionInput.value = 'exp(-sum(x^2)/2';
+                setMethod('standard');
+                samplePointsSlider.value = 10000;
+                randomSeedSlider.value = 42;
+                setQuasiMethod('halton');
+                setReductionMethod('pca');
+                targetDimSlider.value = 2;
+                
+                // Update state
+                updateFunction();
+                updateSamplePoints();
+                updateRandomSeed();
+                updateTargetDimensions();
+                
+                // Rerun simulation
+                runSimulation();
+            }
+        });
+    </script>
+</body>
+</html>

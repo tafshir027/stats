@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Regression Simulation | GLM Framework</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --regression-color: #2196F3;
+            --coefficient-color: #4CAF50;
+            --residual-color: #FF9800;
+            --prediction-color: #E91E63;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--poisson-color), var(--regression-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Groups */
+        .parameter-group {
+            background: #F3E5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-header i {
+            color: var(--poisson-color);
+        }
+
+        /* True Parameters */
+        .true-parameters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .true-parameters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .parameter-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        .parameter-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parameter-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .parameter-value-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        /* Range Sliders */
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Data Generation Controls */
+        .data-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .generate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .fit-btn {
+            background: var(--regression-color);
+            color: white;
+        }
+
+        .fit-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Example Datasets */
+        .example-datasets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--light-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .example-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            border-color: var(--poisson-color);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Plot Container */
+        .plot-container {
+            height: 400px;
+            width: 100%;
+            margin: 1rem 0;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Model Summary */
+        .model-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .model-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .model-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .summary-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .summary-card.log-likelihood {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-color: var(--regression-color);
+        }
+
+        .summary-card.aic {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-color: var(--coefficient-color);
+        }
+
+        .summary-card.deviance {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-color: var(--residual-color);
+        }
+
+        .summary-title {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .summary-card.log-likelihood .summary-value { color: var(--regression-color); }
+        .summary-card.aic .summary-value { color: var(--coefficient-color); }
+        .summary-card.deviance .summary-value { color: var(--residual-color); }
+
+        .summary-formula {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-family: 'Times New Roman', serif;
+            margin-top: 0.5rem;
+        }
+
+        /* Coefficient Table */
+        .coefficient-table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .coefficient-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .coefficient-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .coefficient-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .coefficient-table tr:hover {
+            background: #F3E5F5;
+        }
+
+        .coefficient-table .true-value {
+            color: var(--poisson-color);
+            font-weight: 600;
+        }
+
+        .coefficient-table .estimated-value {
+            color: var(--regression-color);
+            font-weight: 600;
+        }
+
+        .coefficient-table .difference {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Formula Explanation */
+        .formula-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .glm-icon { background: var(--poisson-color); }
+        .log-link-icon { background: var(--regression-color); }
+        .mle-icon { background: var(--coefficient-color); }
+
+        .formula-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            font-family: 'Times New Roman', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* MLE Iteration Visualization */
+        .mle-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .iteration-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .iteration-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .iteration-btn:hover {
+            background: var(--regression-color);
+            color: white;
+            border-color: var(--regression-color);
+            transform: translateY(-2px);
+        }
+
+        .iteration-progress {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .iteration-progress-bar {
+            height: 100%;
+            background: var(--regression-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Residual Analysis */
+        .residual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .residual-plots {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .residual-plots {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .residual-plot-container {
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .summary-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Data Preview */
+        .data-preview {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .data-row.header {
+            font-weight: 600;
+            background: white;
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson Regression Simulation" data-bn="পয়সন রিগ্রেশন সিমুলেশন">পয়সন রিগ্রেশন সিমুলেশন</h1>
+            <p class="subtitle" data-en="Simulate Poisson regression models for count data using GLM framework with log-link function and maximum likelihood estimation" data-bn="GLM ফ্রেমওয়ার্ক, লগ-লিংক ফাংশন এবং সর্বোচ্চ সম্ভাবনা অনুযায়ী অনুমান ব্যবহার করে কাউন্ট ডেটার জন্য পয়সন রিগ্রেশন মডেল সিমুলেট করুন">
+                GLM ফ্রেমওয়ার্ক, লগ-লিংক ফাংশন এবং সর্বোচ্চ সম্ভাবনা অনুযায়ী অনুমান ব্যবহার করে কাউন্ট ডেটার জন্য পয়সন রিগ্রেশন মডেল সিমুলেট করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    <span data-en="Model Parameters" data-bn="মডেল প্যারামিটার">মডেল প্যারামিটার</span>
+                </h2>
+
+                <!-- True Parameters -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="True Parameters" data-bn="সত্য প্যারামিটার">সত্য প্যারামিটার</span>
+                    </div>
+                    
+                    <div class="true-parameters">
+                        <div class="parameter-input-group">
+                            <div class="parameter-label" data-en="Intercept (β₀)" data-bn="ইন্টারসেপ্ট (β₀)">ইন্টারসেপ্ট (β₀)</div>
+                            <div class="parameter-controls">
+                                <input type="range" class="range-slider" id="beta0Slider" min="-2" max="2" step="0.1" value="0.5">
+                                <input type="number" class="parameter-input" id="beta0Input" min="-2" max="2" step="0.1" value="0.5">
+                                <span class="parameter-value-display" id="beta0Value">0.5</span>
+                            </div>
+                        </div>
+
+                        <div class="parameter-input-group">
+                            <div class="parameter-label" data-en="Slope (β₁)" data-bn="স্লোপ (β₁)">স্লোপ (β₁)</div>
+                            <div class="parameter-controls">
+                                <input type="range" class="range-slider" id="beta1Slider" min="-1" max="1" step="0.1" value="0.3">
+                                <input type="number" class="parameter-input" id="beta1Input" min="-1" max="1" step="0.1" value="0.3">
+                                <span class="parameter-value-display" id="beta1Value">0.3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Generation Parameters -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Data Generation" data-bn="ডেটা জেনারেশন">ডেটা জেনারেশন</span>
+                    </div>
+                    
+                    <div class="true-parameters">
+                        <div class="parameter-input-group">
+                            <div class="parameter-label" data-en="Sample Size (n)" data-bn="নমুনা আকার (n)">নমুনা আকার (n)</div>
+                            <div class="parameter-controls">
+                                <input type="range" class="range-slider" id="sampleSizeSlider" min="50" max="500" step="10" value="200">
+                                <input type="number" class="parameter-input" id="sampleSizeInput" min="50" max="500" step="10" value="200">
+                                <span class="parameter-value-display" id="sampleSizeValue">200</span>
+                            </div>
+                        </div>
+
+                        <div class="parameter-input-group">
+                            <div class="parameter-label" data-en="Noise Level (σ)" data-bন="নয়েজ লেভেল (σ)">নয়েজ লেভেল (σ)</div>
+                            <div class="parameter-controls">
+                                <input type="range" class="range-slider" id="noiseSlider" min="0.1" max="1" step="0.1" value="0.3">
+                                <input type="number" class="parameter-input" id="noiseInput" min="0.1" max="1" step="0.1" value="0.3">
+                                <span class="parameter-value-display" id="noiseValue">0.3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="data-controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-bolt"></i>
+                        <span data-en="Generate Data" data-bন="ডেটা জেনারেট করুন">ডেটা জেনারেট করুন</span>
+                    </button>
+                    <button class="control-btn fit-btn" id="fitBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Fit Model" data-bন="মডেল ফিট করুন">মডেল ফিট করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset All" data-bন="সব রিসেট করুন">সব রিসেট করুন</span>
+                    </button>
+                </div>
+
+                <!-- Example Datasets -->
+                <h2 class="section-title" style="margin-top: 2rem;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+                </h2>
+                
+                <div class="example-datasets">
+                    <button class="example-btn" data-example="weak">
+                        <span data-en="Weak Relationship" data-bন="দুর্বল সম্পর্ক">দুর্বল সম্পর্ক</span>
+                    </button>
+                    <button class="example-btn" data-example="strong">
+                        <span data-en="Strong Relationship" data-bন="শক্তিশালী সম্পর্ক">শক্তিশালী সম্পর্ক</span>
+                    </button>
+                    <button class="example-btn" data-example="negative">
+                        <span data-en="Negative Relationship" data-bন="নেগেটিভ সম্পর্ক">নেগেটিভ সম্পর্ক</span>
+                    </button>
+                    <button class="example-btn active" data-example="zero">
+                        <span data-en="Zero-Inflated" data-bন="জিরো-ইনফ্লেটেড">জিরো-ইনফ্লেটেড</span>
+                    </button>
+                </div>
+
+                <!-- Data Preview -->
+                <div class="data-preview" id="dataPreview">
+                    <div class="data-row header">
+                        <span>i</span>
+                        <span>X</span>
+                        <span>λ = exp(β₀ + β₁X)</span>
+                        <span>Y ~ Poisson(λ)</span>
+                    </div>
+                    <!-- Data rows will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Regression Visualization" data-bন="রিগ্রেশন ভিজ্যুয়ালাইজেশন">রিগ্রেশন ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="plot-container" id="regressionPlot"></div>
+                
+                <div class="plot-info">
+                    <p data-en="Observed data (dots) and fitted Poisson regression curve (line)" data-bন="পর্যবেক্ষিত ডেটা (ডট) এবং ফিটেড পয়সন রিগ্রেশন কার্ভ (লাইন)">
+                        পর্যবেক্ষিত ডেটা (ডট) এবং ফিটেড পয়সন রিগ্রেশন কার্ভ (লাইন)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Model Summary" data-bন="মডেল সারসংক্ষেপ">মডেল সারসংক্ষেপ</span>
+            </h2>
+
+            <!-- Model Summary Cards -->
+            <div class="model-summary">
+                <div class="summary-card log-likelihood fade-in">
+                    <div class="summary-title" data-en="Log-Likelihood" data-bন="লগ-লাইকলিহুড">লগ-লাইকলিহুড</div>
+                    <div class="summary-value" id="logLikelihoodValue">-321.45</div>
+                    <div class="summary-formula">
+                        ℓ(β) = ∑[yᵢ log(λᵢ) - λᵢ - log(yᵢ!)]
+                    </div>
+                </div>
+
+                <div class="summary-card aic fade-in">
+                    <div class="summary-title" data-en="AIC" data-bন="AIC">AIC</div>
+                    <div class="summary-value" id="aicValue">646.90</div>
+                    <div class="summary-formula">
+                        AIC = 2k - 2ℓ(β̂)
+                    </div>
+                </div>
+
+                <div class="summary-card deviance fade-in">
+                    <div class="summary-title" data-en="Deviance" data-bন="ডেভিয়েন্স">ডেভিয়েন্স</div>
+                    <div class="summary-value" id="devianceValue">38.72</div>
+                    <div class="summary-formula">
+                        D = 2∑[yᵢ log(yᵢ/λ̂ᵢ) - (yᵢ - λ̂ᵢ)]
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coefficient Table -->
+            <h3 class="section-title" style="margin-top: 2rem;">
+                <i class="fas fa-table"></i>
+                <span data-en="Coefficient Estimates" data-bন="কোয়েফিসিয়েন্ট এস্টিমেট">কোয়েফিসিয়েন্ট এস্টিমেট</span>
+            </h3>
+            
+            <div class="coefficient-table-container">
+                <table class="coefficient-table">
+                    <thead>
+                        <tr>
+                            <th data-en="Parameter" data-bন="প্যারামিটার">প্যারামিটার</th>
+                            <th data-en="True Value" data-bন="সত্য মান">সত্য মান</th>
+                            <th data-en="Estimated Value" data-bন="এস্টিমেটেড মান">এস্টিমেটেড মান</th>
+                            <th data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</th>
+                            <th data-en="z-value" data-bন="z-মান">z-মান</th>
+                            <th data-en="p-value" data-bন="p-মান">p-মান</th>
+                            <th data-en="95% CI" data-bন="৯৫% CI">৯৫% CI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coefficientTableBody">
+                        <!-- Rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Formula Explanation -->
+        <div class="formula-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Poisson Regression Framework" data-bন="পয়সন রিগ্রেশন ফ্রেমওয়ার্ক">পয়সন রিগ্রেশন ফ্রেমওয়ার্ক</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- GLM Framework -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon glm-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="GLM Framework" data-bন="GLM ফ্রেমওয়ার্ক">GLM ফ্রেমওয়ার্ক</h3>
+                    </div>
+                    <div class="formula-content">
+                        Yᵢ ~ Poisson(λᵢ)<br>
+                        E[Yᵢ|Xᵢ] = λᵢ<br>
+                        g(λᵢ) = Xᵢβ
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Response follows Poisson distribution" data-bন="রেসপন্স পয়সন ডিস্ট্রিবিউশন অনুসরণ করে">
+                            রেসপন্স পয়সন ডিস্ট্রিবিউশন অনুসরণ করে
+                        </li>
+                        <li data-en="Linear predictor linked to mean" data-bন="লিনিয়ার প্রেডিক্টর মিনের সাথে সংযুক্ত">
+                            লিনিয়ার প্রেডিক্টর মিনের সাথে সংযুক্ত
+                        </li>
+                        <li data-en="Canonical link function" data-bন="ক্যানোনিকাল লিংক ফাংশন">ক্যানোনিকাল লিংক ফাংশন</li>
+                    </ul>
+                </div>
+
+                <!-- Log-Link Function -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon log-link-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Log-Link Function" data-bন="লগ-লিংক ফাংশন">লগ-লিংক ফাংশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        g(λ) = log(λ)<br>
+                        λ = exp(Xβ)<br>
+                        log(λ) = β₀ + β₁X
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Ensures λ > 0" data-bন="নিশ্চিত করে λ > ০">নিশ্চিত করে λ > ০</li>
+                        <li data-en="Multiplicative effects" data-bন="গুণনীয়ক প্রভাব">গুণনীয়ক প্রভাব</li>
+                        <li data-en="Rate ratios interpretation" data-bন="রেট রেশিও ব্যাখ্যা">রেট রেশিও ব্যাখ্যা</li>
+                    </ul>
+                </div>
+
+                <!-- Maximum Likelihood -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon mle-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Maximum Likelihood" data-bন="সর্বোচ্চ সম্ভাবনা">সর্বোচ্চ সম্ভাবনা</h3>
+                    </div>
+                    <div class="formula-content">
+                        ℓ(β) = ∑[yᵢ log(λᵢ) - λᵢ]<br>
+                        ∂ℓ/∂β = X'(y - λ) = 0<br>
+                        Newton-Raphson iteration
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Maximize log-likelihood" data-bন="লগ-লাইকলিহুড সর্বাধিক করুন">লগ-লাইকলিহুড সর্বাধিক করুন</li>
+                        <li data-en="Score equations" data-bন="স্কোর সমীকরণ">স্কোর সমীকরণ</li>
+                        <li data-en="Iterative reweighted least squares" data-bন="ইটারেটিভ রিওয়েটেড লিস্ট স্কোয়ার">
+                            ইটারেটিভ রিওয়েটেড লিস্ট স্কোয়ার
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- MLE Iteration Visualization -->
+        <div class="mle-section">
+            <h2 class="section-title">
+                <i class="fas fa-sync-alt"></i>
+                <span data-en="MLE Iteration Process" data-bন="MLE ইটারেশন প্রসেস">MLE ইটারেশন প্রসেস</span>
+            </h2>
+            
+            <p data-en="Watch the maximum likelihood estimation converge through iterations:" data-bন="ইটারেশনের মাধ্যমে সর্বোচ্চ সম্ভাবনা অনুমানের কনভার্জেন্স দেখুন:">
+                ইটারেশনের মাধ্যমে সর্বোচ্চ সম্ভাবনা অনুমানের কনভার্জেন্স দেখুন:
+            </p>
+            
+            <div class="iteration-progress">
+                <div class="iteration-progress-bar" id="iterationProgressBar"></div>
+            </div>
+            
+            <div class="iteration-controls">
+                <button class="iteration-btn" id="startIterationBtn">
+                    <i class="fas fa-play"></i>
+                    <span data-en="Start Iteration" data-bন="ইটারেশন শুরু করুন">ইটারেশন শুরু করুন</span>
+                </button>
+                <button class="iteration-btn" id="stepIterationBtn">
+                    <i class="fas fa-step-forward"></i>
+                    <span data-en="Next Step" data-bন="পরবর্তী ধাপ">পরবর্তী ধাপ</span>
+                </button>
+                <button class="iteration-btn" id="resetIterationBtn">
+                    <i class="fas fa-stop"></i>
+                    <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                </button>
+            </div>
+            
+            <div class="plot-container" id="mlePlot" style="height: 300px; margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Residual Analysis -->
+        <div class="residual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Residual Analysis" data-bন="রেসিডুয়াল অ্যানালাইসিস">রেসিডুয়াল অ্যানালাইসিস</span>
+            </h2>
+            
+            <p data-en="Diagnostic plots for Poisson regression model:" data-bন="পয়সন রিগ্রেশন মডেলের ডায়াগনস্টিক প্লট:">
+                পয়সন রিগ্রেশন মডেলের ডায়াগনস্টিক প্লট:
+            </p>
+            
+            <div class="residual-plots">
+                <div class="residual-plot-container" id="residualPlot"></div>
+                <div class="residual-plot-container" id="qqPlot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                // True parameters
+                beta0: 0.5,
+                beta1: 0.3,
+                sampleSize: 200,
+                noiseLevel: 0.3,
+                
+                // Generated data
+                X: [],
+                lambda: [],
+                Y: [],
+                
+                // Model estimates
+                beta0_est: null,
+                beta1_est: null,
+                beta0_se: null,
+                beta1_se: null,
+                
+                // Model fit statistics
+                logLikelihood: null,
+                aic: null,
+                deviance: null,
+                
+                // MLE iteration state
+                currentIteration: 0,
+                maxIterations: 10,
+                iterationHistory: []
+            };
+
+            // Example datasets
+            const examples = {
+                weak: { beta0: 0.2, beta1: 0.1, noiseLevel: 0.5 },
+                strong: { beta0: 0.8, beta1: 0.5, noiseLevel: 0.2 },
+                negative: { beta0: 1.0, beta1: -0.4, noiseLevel: 0.3 },
+                zero: { beta0: -1.0, beta1: 0.3, noiseLevel: 0.4 }
+            };
+
+            // DOM Elements
+            const beta0Slider = document.getElementById('beta0Slider');
+            const beta0Input = document.getElementById('beta0Input');
+            const beta0Value = document.getElementById('beta0Value');
+            const beta1Slider = document.getElementById('beta1Slider');
+            const beta1Input = document.getElementById('beta1Input');
+            const beta1Value = document.getElementById('beta1Value');
+            const sampleSizeSlider = document.getElementById('sampleSizeSlider');
+            const sampleSizeInput = document.getElementById('sampleSizeInput');
+            const sampleSizeValue = document.getElementById('sampleSizeValue');
+            const noiseSlider = document.getElementById('noiseSlider');
+            const noiseInput = document.getElementById('noiseInput');
+            const noiseValue = document.getElementById('noiseValue');
+            
+            const generateBtn = document.getElementById('generateBtn');
+            const fitBtn = document.getElementById('fitBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            
+            const dataPreview = document.getElementById('dataPreview');
+            const regressionPlot = document.getElementById('regressionPlot');
+            const mlePlot = document.getElementById('mlePlot');
+            const residualPlot = document.getElementById('residualPlot');
+            const qqPlot = document.getElementById('qqPlot');
+            
+            const logLikelihoodValue = document.getElementById('logLikelihoodValue');
+            const aicValue = document.getElementById('aicValue');
+            const devianceValue = document.getElementById('devianceValue');
+            const coefficientTableBody = document.getElementById('coefficientTableBody');
+            
+            const startIterationBtn = document.getElementById('startIterationBtn');
+            const stepIterationBtn = document.getElementById('stepIterationBtn');
+            const resetIterationBtn = document.getElementById('resetIterationBtn');
+            const iterationProgressBar = document.getElementById('iterationProgressBar');
+
+            // Initialize
+            initSimulation();
+
+            function initSimulation() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Parameter synchronization
+                setupParameterSync(beta0Slider, beta0Input, beta0Value, 'beta0');
+                setupParameterSync(beta1Slider, beta1Input, beta1Value, 'beta1');
+                setupParameterSync(sampleSizeSlider, sampleSizeInput, sampleSizeValue, 'sampleSize');
+                setupParameterSync(noiseSlider, noiseInput, noiseValue, 'noiseLevel');
+
+                // Control Buttons
+                generateBtn.addEventListener('click', generateData);
+                fitBtn.addEventListener('click', fitModel);
+                resetBtn.addEventListener('click', resetSimulation);
+
+                // Example Datasets
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // MLE Iteration Controls
+                startIterationBtn.addEventListener('click', startMLEIteration);
+                stepIterationBtn.addEventListener('click', stepMLEIteration);
+                resetIterationBtn.addEventListener('click', resetMLEIteration);
+
+                // Generate initial data
+                setTimeout(() => {
+                    generateData();
+                    updatePlots();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setupParameterSync(slider, input, display, stateKey) {
+                slider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    input.value = value;
+                    display.textContent = value.toFixed(1);
+                    simulationState[stateKey] = value;
+                });
+
+                input.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    const min = parseFloat(this.min);
+                    const max = parseFloat(this.max);
+                    
+                    if (!isNaN(value) && value >= min && value <= max) {
+                        slider.value = value;
+                        display.textContent = value.toFixed(1);
+                        simulationState[stateKey] = value;
+                    }
+                });
+            }
+
+            function generatePoisson(lambda) {
+                // Simple Poisson generator using algorithm from Knuth
+                let L = Math.exp(-lambda);
+                let k = 0;
+                let p = 1;
+                
+                do {
+                    k++;
+                    p *= Math.random();
+                } while (p > L);
+                
+                return k - 1;
+            }
+
+            function generateData() {
+                const { beta0, beta1, sampleSize, noiseLevel } = simulationState;
+                
+                // Generate X values (predictor)
+                const X = [];
+                for (let i = 0; i < sampleSize; i++) {
+                    X.push(Math.random() * 4 - 2); // X ~ Uniform(-2, 2)
+                }
+                
+                // Calculate lambda = exp(beta0 + beta1*X + noise)
+                const lambda = [];
+                const Y = [];
+                
+                for (let i = 0; i < sampleSize; i++) {
+                    const linearPredictor = beta0 + beta1 * X[i];
+                    const noise = (Math.random() - 0.5) * 2 * noiseLevel;
+                    const logLambda = linearPredictor + noise;
+                    
+                    lambda.push(Math.exp(logLambda));
+                    Y.push(generatePoisson(lambda[i]));
+                }
+                
+                // Update state
+                simulationState.X = X;
+                simulationState.lambda = lambda;
+                simulationState.Y = Y;
+                
+                // Reset model estimates
+                resetModelEstimates();
+                
+                // Update displays
+                updateDataPreview();
+                updatePlots();
+            }
+
+            function resetModelEstimates() {
+                simulationState.beta0_est = null;
+                simulationState.beta1_est = null;
+                simulationState.beta0_se = null;
+                simulationState.beta1_se = null;
+                simulationState.logLikelihood = null;
+                simulationState.aic = null;
+                simulationState.deviance = null;
+                
+                updateModelSummary();
+                updateCoefficientTable();
+            }
+
+            function poissonLogLikelihood(beta0, beta1) {
+                const { X, Y } = simulationState;
+                let logLikelihood = 0;
+                
+                for (let i = 0; i < X.length; i++) {
+                    const lambda = Math.exp(beta0 + beta1 * X[i]);
+                    logLikelihood += Y[i] * Math.log(lambda) - lambda;
+                    // Note: log(y!) term omitted as it doesn't depend on parameters
+                }
+                
+                return logLikelihood;
+            }
+
+            function poissonScore(beta0, beta1) {
+                const { X, Y } = simulationState;
+                let score0 = 0;
+                let score1 = 0;
+                
+                for (let i = 0; i < X.length; i++) {
+                    const lambda = Math.exp(beta0 + beta1 * X[i]);
+                    const residual = Y[i] - lambda;
+                    score0 += residual;
+                    score1 += residual * X[i];
+                }
+                
+                return [score0, score1];
+            }
+
+            function poissonFisherInformation(beta0, beta1) {
+                const { X } = simulationState;
+                let info00 = 0;
+                let info01 = 0;
+                let info11 = 0;
+                
+                for (let i = 0; i < X.length; i++) {
+                    const lambda = Math.exp(beta0 + beta1 * X[i]);
+                    info00 += lambda;
+                    info01 += lambda * X[i];
+                    info11 += lambda * X[i] * X[i];
+                }
+                
+                return [
+                    [info00, info01],
+                    [info01, info11]
+                ];
+            }
+
+            function newtonRaphsonStep(beta0, beta1) {
+                const score = poissonScore(beta0, beta1);
+                const fisherInfo = poissonFisherInformation(beta0, beta1);
+                
+                // Invert 2x2 Fisher information matrix
+                const det = fisherInfo[0][0] * fisherInfo[1][1] - fisherInfo[0][1] * fisherInfo[0][1];
+                const inv00 = fisherInfo[1][1] / det;
+                const inv01 = -fisherInfo[0][1] / det;
+                const inv11 = fisherInfo[0][0] / det;
+                
+                // Update parameters: β_new = β_old + inv(Fisher) * score
+                const beta0_new = beta0 + (inv00 * score[0] + inv01 * score[1]);
+                const beta1_new = beta1 + (inv01 * score[0] + inv11 * score[1]);
+                
+                return [beta0_new, beta1_new];
+            }
+
+            function fitModel() {
+                const { X, Y } = simulationState;
+                
+                if (X.length === 0) {
+                    alert(currentLanguage === 'bn' ? 'প্রথমে ডেটা জেনারেট করুন' : 'Please generate data first');
+                    return;
+                }
+                
+                // Initial guesses (could use simple linear regression on log(y+1))
+                let beta0_est = 0;
+                let beta1_est = 0;
+                
+                // Simple estimation: use mean and correlation
+                const n = X.length;
+                const meanX = X.reduce((a, b) => a + b) / n;
+                const meanY = Y.reduce((a, b) => a + b) / n;
+                const meanLogY = Math.log(meanY + 0.1); // Add small constant for zeros
+                
+                // Simple linear regression estimate on log scale
+                let sumXX = 0, sumXY = 0;
+                for (let i = 0; i < n; i++) {
+                    const devX = X[i] - meanX;
+                    const devY = Math.log(Y[i] + 0.1) - meanLogY;
+                    sumXX += devX * devX;
+                    sumXY += devX * devY;
+                }
+                
+                beta1_est = sumXY / sumXX;
+                beta0_est = meanLogY - beta1_est * meanX;
+                
+                // Newton-Raphson iterations
+                const maxIterations = 10;
+                const tolerance = 1e-6;
+                let iterationHistory = [];
+                
+                for (let iter = 0; iter < maxIterations; iter++) {
+                    const [beta0_new, beta1_new] = newtonRaphsonStep(beta0_est, beta1_est);
+                    
+                    iterationHistory.push({
+                        iteration: iter + 1,
+                        beta0: beta0_est,
+                        beta1: beta1_est,
+                        logLikelihood: poissonLogLikelihood(beta0_est, beta1_est)
+                    });
+                    
+                    // Check convergence
+                    const diff0 = Math.abs(beta0_new - beta0_est);
+                    const diff1 = Math.abs(beta1_new - beta1_est);
+                    
+                    beta0_est = beta0_new;
+                    beta1_est = beta1_new;
+                    
+                    if (diff0 < tolerance && diff1 < tolerance) {
+                        break;
+                    }
+                }
+                
+                // Final iteration
+                iterationHistory.push({
+                    iteration: iterationHistory.length + 1,
+                    beta0: beta0_est,
+                    beta1: beta1_est,
+                    logLikelihood: poissonLogLikelihood(beta0_est, beta1_est)
+                });
+                
+                // Calculate standard errors
+                const fisherInfo = poissonFisherInformation(beta0_est, beta1_est);
+                const det = fisherInfo[0][0] * fisherInfo[1][1] - fisherInfo[0][1] * fisherInfo[0][1];
+                const se0 = Math.sqrt(fisherInfo[1][1] / det);
+                const se1 = Math.sqrt(fisherInfo[0][0] / det);
+                
+                // Calculate z-values and p-values
+                const z0 = beta0_est / se0;
+                const z1 = beta1_est / se1;
+                const p0 = 2 * (1 - Math.abs(normalCDF(z0)));
+                const p1 = 2 * (1 - Math.abs(normalCDF(z1)));
+                
+                // Calculate model fit statistics
+                const logLikelihood = poissonLogLikelihood(beta0_est, beta1_est);
+                const aic = -2 * logLikelihood + 4; // 2 parameters
+                const deviance = calculateDeviance(beta0_est, beta1_est);
+                
+                // Update state
+                simulationState.beta0_est = beta0_est;
+                simulationState.beta1_est = beta1_est;
+                simulationState.beta0_se = se0;
+                simulationState.beta1_se = se1;
+                simulationState.logLikelihood = logLikelihood;
+                simulationState.aic = aic;
+                simulationState.deviance = deviance;
+                simulationState.iterationHistory = iterationHistory;
+                
+                // Update displays
+                updateModelSummary();
+                updateCoefficientTable();
+                updatePlots();
+                updateMLEPlot();
+            }
+
+            function normalCDF(x) {
+                // Approximation of standard normal CDF
+                const t = 1 / (1 + 0.2316419 * Math.abs(x));
+                const d = 0.3989423 * Math.exp(-x * x / 2);
+                let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+                
+                if (x > 0) prob = 1 - prob;
+                return prob;
+            }
+
+            function calculateDeviance(beta0, beta1) {
+                const { X, Y } = simulationState;
+                let deviance = 0;
+                
+                for (let i = 0; i < X.length; i++) {
+                    const lambda = Math.exp(beta0 + beta1 * X[i]);
+                    if (Y[i] > 0) {
+                        deviance += 2 * (Y[i] * Math.log(Y[i] / lambda) - (Y[i] - lambda));
+                    } else {
+                        deviance += 2 * lambda; // When y = 0
+                    }
+                }
+                
+                return deviance;
+            }
+
+            function updateDataPreview() {
+                const { X, lambda, Y } = simulationState;
+                dataPreview.innerHTML = '';
+                
+                // Header row
+                const headerRow = document.createElement('div');
+                headerRow.className = 'data-row header';
+                headerRow.innerHTML = `
+                    <span>i</span>
+                    <span>X</span>
+                    <span>λ = exp(β₀ + β₁X)</span>
+                    <span>Y ~ Poisson(λ)</span>
+                `;
+                dataPreview.appendChild(headerRow);
+                
+                // Data rows (show first 10)
+                const numRows = Math.min(10, X.length);
+                for (let i = 0; i < numRows; i++) {
+                    const row = document.createElement('div');
+                    row.className = 'data-row';
+                    row.innerHTML = `
+                        <span>${i + 1}</span>
+                        <span>${X[i].toFixed(2)}</span>
+                        <span>${lambda[i].toFixed(2)}</span>
+                        <span>${Y[i]}</span>
+                    `;
+                    dataPreview.appendChild(row);
+                }
+                
+                if (X.length > 10) {
+                    const moreRow = document.createElement('div');
+                    moreRow.className = 'data-row';
+                    moreRow.style.textAlign = 'center';
+                    moreRow.style.fontStyle = 'italic';
+                    moreRow.textContent = currentLanguage === 'bn' 
+                        ? `... আরও ${X.length - 10} সারি` 
+                        : `... ${X.length - 10} more rows`;
+                    dataPreview.appendChild(moreRow);
+                }
+            }
+
+            function updatePlots() {
+                updateRegressionPlot();
+                updateResidualPlots();
+            }
+
+            function updateRegressionPlot() {
+                const { X, Y, beta0, beta1, beta0_est, beta1_est } = simulationState;
+                
+                // Create true curve points
+                const xRange = [-2, 2];
+                const xTrue = [];
+                const yTrue = [];
+                for (let x = xRange[0]; x <= xRange[1]; x += 0.1) {
+                    xTrue.push(x);
+                    yTrue.push(Math.exp(beta0 + beta1 * x));
+                }
+                
+                // Create estimated curve points
+                const xEst = [];
+                const yEst = [];
+                if (beta0_est !== null && beta1_est !== null) {
+                    for (let x = xRange[0]; x <= xRange[1]; x += 0.1) {
+                        xEst.push(x);
+                        yEst.push(Math.exp(beta0_est + beta1_est * x));
+                    }
+                }
+                
+                // Prepare data for plot
+                const traceData = [];
+                
+                // Add observed data points
+                traceData.push({
+                    x: X,
+                    y: Y,
+                    mode: 'markers',
+                    name: currentLanguage === 'bn' ? 'পর্যবেক্ষিত ডেটা' : 'Observed Data',
+                    marker: {
+                        color: 'rgba(156, 39, 176, 0.6)',
+                        size: 8,
+                        line: {
+                            color: 'rgba(156, 39, 176, 1)',
+                            width: 1
+                        }
+                    }
+                });
+                
+                // Add true regression curve
+                traceData.push({
+                    x: xTrue,
+                    y: yTrue,
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'সত্য কার্ভ' : 'True Curve',
+                    line: {
+                        color: 'rgba(255, 101, 132, 1)',
+                        width: 3,
+                        dash: 'dash'
+                    }
+                });
+                
+                // Add estimated regression curve
+                if (beta0_est !== null && beta1_est !== null) {
+                    traceData.push({
+                        x: xEst,
+                        y: yEst,
+                        mode: 'lines',
+                        name: currentLanguage === 'bn' ? 'এস্টিমেটেড কার্ভ' : 'Estimated Curve',
+                        line: {
+                            color: 'rgba(33, 150, 243, 1)',
+                            width: 3
+                        }
+                    });
+                }
+                
+                // Layout
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'পয়সন রিগ্রেশন' : 'Poisson Regression',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'X (প্রেডিক্টর)' : 'X (Predictor)',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'Y (কাউন্ট)' : 'Y (Count)',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.8)'
+                    }
+                };
+                
+                Plotly.newPlot(regressionPlot, traceData, layout, {responsive: true});
+            }
+
+            function updateResidualPlots() {
+                const { X, Y, beta0_est, beta1_est } = simulationState;
+                
+                if (beta0_est === null || beta1_est === null) {
+                    return;
+                }
+                
+                // Calculate fitted values and residuals
+                const fitted = [];
+                const residuals = [];
+                const pearsonResiduals = [];
+                
+                for (let i = 0; i < X.length; i++) {
+                    const lambda = Math.exp(beta0_est + beta1_est * X[i]);
+                    fitted.push(lambda);
+                    residuals.push(Y[i] - lambda);
+                    pearsonResiduals.push((Y[i] - lambda) / Math.sqrt(lambda));
+                }
+                
+                // Residuals vs Fitted plot
+                const residualTrace = {
+                    x: fitted,
+                    y: residuals,
+                    mode: 'markers',
+                    name: currentLanguage === 'bn' ? 'রেসিডুয়াল' : 'Residuals',
+                    marker: {
+                        color: 'rgba(255, 152, 0, 0.6)',
+                        size: 8
+                    }
+                };
+                
+                const residualLayout = {
+                    title: currentLanguage === 'bn' ? 'রেসিডুয়াল বনাম ফিটেড' : 'Residuals vs Fitted',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'ফিটেড মান' : 'Fitted Values',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'রেসিডুয়াল' : 'Residuals',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    shapes: [{
+                        type: 'line',
+                        x0: Math.min(...fitted),
+                        x1: Math.max(...fitted),
+                        y0: 0,
+                        y1: 0,
+                        line: {
+                            color: 'rgba(128,128,128,0.5)',
+                            width: 2,
+                            dash: 'dash'
+                        }
+                    }]
+                };
+                
+                Plotly.newPlot(residualPlot, [residualTrace], residualLayout, {responsive: true});
+                
+                // Q-Q plot for Pearson residuals
+                const sortedResiduals = [...pearsonResiduals].sort((a, b) => a - b);
+                const n = sortedResiduals.length;
+                const theoreticalQuantiles = [];
+                
+                for (let i = 0; i < n; i++) {
+                    const p = (i + 0.5) / n;
+                    theoreticalQuantiles.push(normalQuantile(p));
+                }
+                
+                const qqTrace = {
+                    x: theoreticalQuantiles,
+                    y: sortedResiduals,
+                    mode: 'markers',
+                    name: currentLanguage === 'bn' ? 'পর্যবেক্ষিত' : 'Observed',
+                    marker: {
+                        color: 'rgba(76, 175, 80, 0.6)',
+                        size: 8
+                    }
+                };
+                
+                // Add reference line y = x
+                const minVal = Math.min(...theoreticalQuantiles, ...sortedResiduals);
+                const maxVal = Math.max(...theoreticalQuantiles, ...sortedResiduals);
+                
+                const lineTrace = {
+                    x: [minVal, maxVal],
+                    y: [minVal, maxVal],
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'y = x লাইন' : 'y = x Line',
+                    line: {
+                        color: 'rgba(128,128,128,0.5)',
+                        width: 2,
+                        dash: 'dash'
+                    }
+                };
+                
+                const qqLayout = {
+                    title: currentLanguage === 'bn' ? 'Q-Q প্লট (পিয়ার্সন রেসিডুয়াল)' : 'Q-Q Plot (Pearson Residuals)',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'তাত্ত্বিক কোয়ান্টাইল' : 'Theoretical Quantiles',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'পর্যবেক্ষিত কোয়ান্টাইল' : 'Observed Quantiles',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: true
+                };
+                
+                Plotly.newPlot(qqPlot, [qqTrace, lineTrace], qqLayout, {responsive: true});
+            }
+
+            function normalQuantile(p) {
+                // Approximation of standard normal quantile function
+                if (p <= 0 || p >= 1) return 0;
+                
+                const a = [ -3.969683028665376e+01,  2.209460984245205e+02,
+                           -2.759285104469687e+02,  1.383577518672690e+02,
+                           -3.066479806614716e+01,  2.506628277459239e+00 ];
+                
+                const b = [ -5.447609879822406e+01,  1.615858368580409e+02,
+                           -1.556989798598866e+02,  6.680131188771972e+01,
+                           -1.328068155288572e+01 ];
+                
+                const c = [ -7.784894002430293e-03, -3.223964580411365e-01,
+                           -2.400758277161838e+00, -2.549732539343734e+00,
+                            4.374664141464968e+00,  2.938163982698783e+00 ];
+                
+                const d = [  7.784695709041462e-03,  3.224671290700398e-01,
+                            2.445134137142996e+00,  3.754408661907416e+00 ];
+                
+                let q;
+                
+                if (p < 0.02425) {
+                    q = Math.sqrt(-2 * Math.log(p));
+                    q = (((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
+                        ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1);
+                } else if (p <= 0.97575) {
+                    q = p - 0.5;
+                    const r = q * q;
+                    q = (((((a[0]*r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5])*q /
+                        (((((b[0]*r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1);
+                } else {
+                    q = Math.sqrt(-2 * Math.log(1 - p));
+                    q = -(((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5]) /
+                        ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1);
+                }
+                
+                return q;
+            }
+
+            function updateModelSummary() {
+                const { logLikelihood, aic, deviance } = simulationState;
+                
+                if (logLikelihood !== null) {
+                    logLikelihoodValue.textContent = logLikelihood.toFixed(2);
+                    aicValue.textContent = aic.toFixed(2);
+                    devianceValue.textContent = deviance.toFixed(2);
+                }
+            }
+
+            function updateCoefficientTable() {
+                const { beta0, beta1, beta0_est, beta1_est, beta0_se, beta1_se } = simulationState;
+                
+                coefficientTableBody.innerHTML = '';
+                
+                if (beta0_est === null || beta1_est === null) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 'মডেল ফিট করুন ফলাফল দেখতে' : 'Fit model to see results'}
+                        </td>
+                    `;
+                    coefficientTableBody.appendChild(row);
+                    return;
+                }
+                
+                // Calculate statistics for intercept
+                const z0 = beta0_est / beta0_se;
+                const p0 = 2 * (1 - Math.abs(normalCDF(z0)));
+                const ci0_lower = beta0_est - 1.96 * beta0_se;
+                const ci0_upper = beta0_est + 1.96 * beta0_se;
+                
+                // Calculate statistics for slope
+                const z1 = beta1_est / beta1_se;
+                const p1 = 2 * (1 - Math.abs(normalCDF(z1)));
+                const ci1_lower = beta1_est - 1.96 * beta1_se;
+                const ci1_upper = beta1_est + 1.96 * beta1_se;
+                
+                // Intercept row
+                const row0 = document.createElement('tr');
+                row0.innerHTML = `
+                    <td>β₀ (Intercept)</td>
+                    <td class="true-value">${beta0.toFixed(3)}</td>
+                    <td class="estimated-value">${beta0_est.toFixed(3)}</td>
+                    <td>${beta0_se.toFixed(3)}</td>
+                    <td>${z0.toFixed(3)}</td>
+                    <td>${p0.toFixed(4)}</td>
+                    <td>(${ci0_lower.toFixed(3)}, ${ci0_upper.toFixed(3)})</td>
+                `;
+                coefficientTableBody.appendChild(row0);
+                
+                // Slope row
+                const row1 = document.createElement('tr');
+                row1.innerHTML = `
+                    <td>β₁ (Slope)</td>
+                    <td class="true-value">${beta1.toFixed(3)}</td>
+                    <td class="estimated-value">${beta1_est.toFixed(3)}</td>
+                    <td>${beta1_se.toFixed(3)}</td>
+                    <td>${z1.toFixed(3)}</td>
+                    <td>${p1.toFixed(4)}</td>
+                    <td>(${ci1_lower.toFixed(3)}, ${ci1_upper.toFixed(3)})</td>
+                `;
+                coefficientTableBody.appendChild(row1);
+            }
+
+            function updateMLEPlot() {
+                const iterationHistory = simulationState.iterationHistory;
+                
+                if (!iterationHistory || iterationHistory.length === 0) {
+                    return;
+                }
+                
+                const iterations = iterationHistory.map(h => h.iteration);
+                const beta0History = iterationHistory.map(h => h.beta0);
+                const beta1History = iterationHistory.map(h => h.beta1);
+                const logLikelihoodHistory = iterationHistory.map(h => h.logLikelihood);
+                
+                const trace1 = {
+                    x: iterations,
+                    y: beta0History,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'β₀ (ইন্টারসেপ্ট)' : 'β₀ (Intercept)',
+                    line: { color: 'rgba(33, 150, 243, 1)', width: 2 },
+                    marker: { size: 8 }
+                };
+                
+                const trace2 = {
+                    x: iterations,
+                    y: beta1History,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'β₁ (স্লোপ)' : 'β₁ (Slope)',
+                    line: { color: 'rgba(76, 175, 80, 1)', width: 2 },
+                    marker: { size: 8 }
+                };
+                
+                const trace3 = {
+                    x: iterations,
+                    y: logLikelihoodHistory,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? 'লগ-লাইকলিহুড' : 'Log-Likelihood',
+                    yaxis: 'y2',
+                    line: { color: 'rgba(255, 152, 0, 1)', width: 2 },
+                    marker: { size: 8 }
+                };
+                
+                const layout = {
+                    title: currentLanguage === 'bn' ? 'MLE ইটারেশন কনভার্জেন্স' : 'MLE Iteration Convergence',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'ইটারেশন' : 'Iteration',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'প্যারামিটার মান' : 'Parameter Value',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis2: {
+                        title: currentLanguage === 'bn' ? 'লগ-লাইকলিহুড' : 'Log-Likelihood',
+                        overlaying: 'y',
+                        side: 'right',
+                        gridcolor: 'rgba(128,128,128,0.1)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98
+                    }
+                };
+                
+                Plotly.newPlot(mlePlot, [trace1, trace2, trace3], layout, {responsive: true});
+                
+                // Update progress bar
+                const progress = (iterationHistory.length / simulationState.maxIterations) * 100;
+                iterationProgressBar.style.width = `${Math.min(progress, 100)}%`;
+            }
+
+            function startMLEIteration() {
+                if (simulationState.X.length === 0) {
+                    alert(currentLanguage === 'bn' ? 'প্রথমে ডেটা জেনারেট করুন' : 'Please generate data first');
+                    return;
+                }
+                
+                simulationState.currentIteration = 0;
+                simulationState.iterationHistory = [];
+                
+                // Initial guess
+                const initialBeta0 = 0;
+                const initialBeta1 = 0;
+                
+                simulationState.iterationHistory.push({
+                    iteration: 1,
+                    beta0: initialBeta0,
+                    beta1: initialBeta1,
+                    logLikelihood: poissonLogLikelihood(initialBeta0, initialBeta1)
+                });
+                
+                updateMLEPlot();
+                
+                // Run iterations
+                const interval = setInterval(() => {
+                    if (simulationState.currentIteration >= simulationState.maxIterations) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    
+                    stepMLEIteration();
+                    
+                    if (simulationState.currentIteration >= simulationState.maxIterations) {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            function stepMLEIteration() {
+                const currentHistory = simulationState.iterationHistory;
+                if (currentHistory.length === 0) return;
+                
+                const last = currentHistory[currentHistory.length - 1];
+                const [beta0_new, beta1_new] = newtonRaphsonStep(last.beta0, last.beta1);
+                
+                simulationState.iterationHistory.push({
+                    iteration: currentHistory.length + 1,
+                    beta0: beta0_new,
+                    beta1: beta1_new,
+                    logLikelihood: poissonLogLikelihood(beta0_new, beta1_new)
+                });
+                
+                simulationState.currentIteration++;
+                updateMLEPlot();
+            }
+
+            function resetMLEIteration() {
+                simulationState.currentIteration = 0;
+                simulationState.iterationHistory = [];
+                iterationProgressBar.style.width = '0%';
+                
+                Plotly.purge(mlePlot);
+                
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.height = '100%';
+                emptyDiv.style.display = 'flex';
+                emptyDiv.style.alignItems = 'center';
+                emptyDiv.style.justifyContent = 'center';
+                emptyDiv.style.color = 'var(--gray)';
+                emptyDiv.textContent = currentLanguage === 'bn' 
+                    ? 'ইটারেশন শুরু করুন' 
+                    : 'Start iteration';
+                
+                mlePlot.innerHTML = '';
+                mlePlot.appendChild(emptyDiv);
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    // Update active example button
+                    exampleBtns.forEach(btn => {
+                        if (btn.dataset.example === example) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    
+                    // Update parameters
+                    simulationState.beta0 = data.beta0;
+                    simulationState.beta1 = data.beta1;
+                    simulationState.noiseLevel = data.noiseLevel;
+                    
+                    beta0Slider.value = data.beta0;
+                    beta0Input.value = data.beta0;
+                    beta0Value.textContent = data.beta0.toFixed(1);
+                    
+                    beta1Slider.value = data.beta1;
+                    beta1Input.value = data.beta1;
+                    beta1Value.textContent = data.beta1.toFixed(1);
+                    
+                    noiseSlider.value = data.noiseLevel;
+                    noiseInput.value = data.noiseLevel;
+                    noiseValue.textContent = data.noiseLevel.toFixed(1);
+                    
+                    // Generate new data
+                    generateData();
+                }
+            }
+
+            function resetSimulation() {
+                simulationState.beta0 = 0.5;
+                simulationState.beta1 = 0.3;
+                simulationState.sampleSize = 200;
+                simulationState.noiseLevel = 0.3;
+                
+                beta0Slider.value = 0.5;
+                beta0Input.value = 0.5;
+                beta0Value.textContent = '0.5';
+                
+                beta1Slider.value = 0.3;
+                beta1Input.value = 0.3;
+                beta1Value.textContent = '0.3';
+                
+                sampleSizeSlider.value = 200;
+                sampleSizeInput.value = 200;
+                sampleSizeValue.textContent = '200';
+                
+                noiseSlider.value = 0.3;
+                noiseInput.value = 0.3;
+                noiseValue.textContent = '0.3';
+                
+                // Reset example buttons
+                exampleBtns.forEach(btn => {
+                    if (btn.dataset.example === 'zero') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Generate new data
+                generateData();
+                resetMLEIteration();
+            }
+
+            // Export functions for debugging
+            window.generateData = generateData;
+            window.fitModel = fitModel;
+            window.poissonLogLikelihood = poissonLogLikelihood;
+        });
+    </script>
+</body>
+</html>

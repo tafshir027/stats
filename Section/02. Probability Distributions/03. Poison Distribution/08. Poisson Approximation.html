@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Approximation Tool | Binomial to Poisson</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --binomial-color: #2196F3;
+            --approximation-color: #4CAF50;
+            --error-color: #FF9800;
+            --rule-color: #E91E63;
+            --lambda-color: #3F51B5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--binomial-color), var(--poisson-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-group {
+            background: #F3E5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-header i {
+            color: var(--poisson-color);
+        }
+
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--lambda-color);
+        }
+
+        .parameter-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .parameter-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .parameter-value-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        /* Range Sliders */
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Approximation Rule Check */
+        .rule-check {
+            background: #FFF3E0;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--rule-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .rule-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .rule-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--rule-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .rule-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .rule-criteria {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .criterion {
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .criterion-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.3rem;
+        }
+
+        .criterion-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .criterion.met {
+            background: #E8F5E9;
+            border-color: var(--success);
+        }
+
+        .criterion.not-met {
+            background: #FFEBEE;
+            border-color: var(--accent);
+        }
+
+        .rule-summary {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .rule-summary.valid {
+            background: #E8F5E9;
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .rule-summary.invalid {
+            background: #FFEBEE;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Example Cases */
+        .examples-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--light-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .example-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            border-color: var(--poisson-color);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Distribution Comparison */
+        .distribution-comparison {
+            margin-bottom: 2rem;
+        }
+
+        .comparison-chart-container {
+            height: 400px;
+            margin-top: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Accuracy Metrics */
+        .accuracy-metrics {
+            background: #F5F5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            text-align: center;
+            background: white;
+        }
+
+        .metric-card.error {
+            border-color: var(--error-color);
+            background: #FFF3E0;
+        }
+
+        .metric-card.accuracy {
+            border-color: var(--approximation-color);
+            background: #E8F5E9;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .metric-card.error .metric-value { color: var(--error-color); }
+        .metric-card.accuracy .metric-value { color: var(--approximation-color); }
+
+        /* Probability Table */
+        .probability-table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .k-value-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .k-slider {
+            width: 200px;
+        }
+
+        .k-value-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .probability-table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .probability-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .probability-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .probability-table td {
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .probability-table tr:hover {
+            background: #F3E5F5;
+        }
+
+        .binomial-value {
+            color: var(--binomial-color);
+            font-weight: 600;
+        }
+
+        .poisson-value {
+            color: var(--poisson-color);
+            font-weight: 600;
+        }
+
+        .error-value {
+            color: var(--error-color);
+            font-weight: 600;
+        }
+
+        .relative-error {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .highlight-row {
+            background: #FFF3E0 !important;
+            font-weight: 700;
+        }
+
+        /* Convergence Visualization */
+        .convergence-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .convergence-chart-container {
+            height: 300px;
+            margin-top: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Mathematical Derivation */
+        .derivation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .derivation-steps {
+            background: #F5F5F5;
+            padding: 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--lambda-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .step-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-explanation {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson Approximation Tool" data-bn="পয়সন অ্যাপ্রক্সিমেশন টুল">পয়সন অ্যাপ্রক্সিমেশন টুল</h1>
+            <p class="subtitle" data-en="Apply Poisson approximation to binomial distribution using n large, p small rule with λ = np and compare accuracy" data-bn="n বড়, p ছোট নিয়ম ব্যবহার করে বাইনোমিয়াল ডিস্ট্রিবিউশনে পয়সন অ্যাপ্রক্সিমেশন প্রয়োগ করুন, λ = np ব্যবহার করুন এবং একুরেসি তুলনা করুন">
+                n বড়, p ছোট নিয়ম ব্যবহার করে বাইনোমিয়াল ডিস্ট্রিবিউশনে পয়সন অ্যাপ্রক্সিমেশন প্রয়োগ করুন, λ = np ব্যবহার করুন এবং একুরেসি তুলনা করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <!-- Binomial Parameters -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Binomial Distribution Parameters" data-bn="বাইনোমিয়াল ডিস্ট্রিবিউশন প্যারামিটার">বাইনোমিয়াল ডিস্ট্রিবিউশন প্যারামিটার</span>
+                    </div>
+
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <div class="parameter-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span data-en="n (Trials)" data-bন="n (ট্রায়াল)">n (ট্রায়াল)</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <input type="range" class="range-slider" id="nSlider" min="10" max="1000" step="1" value="100">
+                                <input type="number" class="parameter-input" id="nInput" min="10" max="1000" step="1" value="100">
+                                <span class="parameter-value-display" id="nValue">100</span>
+                            </div>
+                            <div class="help-text" style="font-size: 0.8rem; color: var(--gray);">
+                                <span data-en="Number of trials" data-bন="ট্রায়ালের সংখ্যা">ট্রায়ালের সংখ্যা</span>
+                            </div>
+                        </div>
+
+                        <div class="parameter-control">
+                            <div class="parameter-label">
+                                <i class="fas fa-percentage"></i>
+                                <span data-en="p (Probability)" data-bন="p (প্রোবাবিলিটি)">p (প্রোবাবিলিটি)</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <input type="range" class="range-slider" id="pSlider" min="0.001" max="0.1" step="0.001" value="0.02">
+                                <input type="number" class="parameter-input" id="pInput" min="0.001" max="0.1" step="0.001" value="0.02">
+                                <span class="parameter-value-display" id="pValue">0.020</span>
+                            </div>
+                            <div class="help-text" style="font-size: 0.8rem; color: var(--gray);">
+                                <span data-en="Success probability per trial" data-bন="প্রতি ট্রায়ালে সাফল্যের সম্ভাবনা">প্রতি ট্রায়ালে সাফল্যের সম্ভাবনা</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poisson Approximation -->
+                <div class="parameter-group">
+                    <div class="parameter-header">
+                        <i class="fas fa-bolt"></i>
+                        <span data-en="Poisson Approximation" data-bন="পয়সন অ্যাপ্রক্সিমেশন">পয়সন অ্যাপ্রক্সিমেশন</span>
+                    </div>
+
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <div class="parameter-label">
+                                <i class="fas fa-lambda"></i>
+                                <span data-en="λ = np" data-bন="λ = np">λ = np</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <span class="parameter-value-display" id="lambdaValue" style="flex: 1;">2.0</span>
+                            </div>
+                            <div class="help-text" style="font-size: 0.8rem; color: var(--gray);">
+                                <span data-en="Poisson rate parameter" data-bন="পয়সন রেট প্যারামিটার">পয়সন রেট প্যারামিটার</span>
+                            </div>
+                        </div>
+
+                        <div class="parameter-control">
+                            <div class="parameter-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span data-en="k (Events)" data-bন="k (ঘটনা)">k (ঘটনা)</span>
+                            </div>
+                            <div class="parameter-input-group">
+                                <input type="range" class="range-slider" id="kSlider" min="0" max="20" step="1" value="2">
+                                <input type="number" class="parameter-input" id="kInput" min="0" max="20" step="1" value="2">
+                                <span class="parameter-value-display" id="kValue">2</span>
+                            </div>
+                            <div class="help-text" style="font-size: 0.8rem; color: var(--gray);">
+                                <span data-en="Number of events to compare" data-bন="তুলনার জন্য ঘটনার সংখ্যা">তুলনার জন্য ঘটনার সংখ্যা</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approximation Rule Check -->
+                <div class="rule-check">
+                    <div class="rule-header">
+                        <div class="rule-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="rule-title" data-en="Poisson Approximation Rule" data-bন="পয়সন অ্যাপ্রক্সিমেশন নিয়ম">পয়সন অ্যাপ্রক্সিমেশন নিয়ম</h3>
+                    </div>
+                    
+                    <div class="rule-criteria">
+                        <div class="criterion" id="criterion1">
+                            <div class="criterion-label" data-en="n ≥ 20" data-bন="n ≥ ২০">n ≥ ২০</div>
+                            <div class="criterion-value" id="nCriterion">100 ✓</div>
+                        </div>
+                        
+                        <div class="criterion" id="criterion2">
+                            <div class="criterion-label" data-en="p ≤ 0.05" data-bন="p ≤ ০.০৫">p ≤ ০.০৫</div>
+                            <div class="criterion-value" id="pCriterion">0.02 ✓</div>
+                        </div>
+                        
+                        <div class="criterion" id="criterion3">
+                            <div class="criterion-label" data-en="np ≤ 10" data-bন="np ≤ ১০">np ≤ ১০</div>
+                            <div class="criterion-value" id="npCriterion">2.0 ✓</div>
+                        </div>
+                        
+                        <div class="criterion" id="criterion4">
+                            <div class="criterion-label" data-en="np(1-p) ≈ λ" data-bন="np(1-p) ≈ λ">np(1-p) ≈ λ</div>
+                            <div class="criterion-value" id="varianceCriterion">1.96</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rule-summary valid" id="ruleSummary">
+                        <span data-en="Poisson approximation is valid" data-bন="পয়সন অ্যাপ্রক্সিমেশন বৈধ">পয়সন অ্যাপ্রক্সিমেশন বৈধ</span>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Approximation" data-bন="অ্যাপ্রক্সিমেশন গণনা করুন">অ্যাপ্রক্সিমেশন গণনা করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset Parameters" data-bন="প্যারামিটার রিসেট করুন">প্যারামিটার রিসেট করুন</span>
+                    </button>
+                </div>
+
+                <!-- Example Cases -->
+                <div class="examples-section">
+                    <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Example Cases" data-bন="উদাহরণ কেস">উদাহরণ কেস</span>
+                    </h3>
+                    
+                    <div class="examples-grid">
+                        <button class="example-btn" data-example="rare">
+                            <span data-en="Rare Events (n=200, p=0.01)" data-bন="বিরল ঘটনা (n=২০০, p=০.০১)">বিরল ঘটনা (n=২০০, p=০.০১)</span>
+                        </button>
+                        <button class="example-btn" data-example="moderate">
+                            <span data-en="Moderate (n=50, p=0.1)" data-bন="মধ্যম (n=৫০, p=০.১)">মধ্যম (n=৫০, p=০.১)</span>
+                        </button>
+                        <button class="example-btn" data-example="good">
+                            <span data-en="Good Fit (n=100, p=0.02)" data-bন="ভাল ফিট (n=১০০, p=০.০২)">ভাল ফিট (n=১০০, p=০.০২)</span>
+                        </button>
+                        <button class="example-btn" data-example="poor">
+                            <span data-en="Poor Fit (n=20, p=0.3)" data-bন="খারাপ ফিট (n=২০, p=০.৩)">খারাপ ফিট (n=২০, p=০.৩)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <!-- Distribution Comparison -->
+                <div class="distribution-comparison">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Distribution Comparison" data-bন="ডিস্ট্রিবিউশন তুলনা">ডিস্ট্রিবিউশন তুলনা</span>
+                    </h2>
+                    
+                    <p data-en="Comparison of Binomial(n, p) and Poisson(λ) distributions:" data-bন="বাইনোমিয়াল(n, p) এবং পয়সন(λ) ডিস্ট্রিবিউশনের তুলনা:">
+                        বাইনোমিয়াল(n, p) এবং পয়সন(λ) ডিস্ট্রিবিউশনের তুলনা:
+                    </p>
+                    
+                    <div class="comparison-chart-container" id="comparisonChart">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Accuracy Metrics -->
+                <div class="accuracy-metrics">
+                    <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span data-en="Accuracy Metrics" data-bন="একুরেসি মেট্রিক্স">একুরেসি মেট্রিক্স</span>
+                    </h3>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-card error">
+                            <div class="metric-label" data-en="Maximum Error" data-bন="সর্বোচ্চ এরর">সর্বোচ্চ এরর</div>
+                            <div class="metric-value" id="maxError">0.0000</div>
+                            <div class="relative-error">
+                                <span data-en="Relative:" data-bন="রিলেটিভ:">রিলেটিভ:</span>
+                                <span id="maxErrorRelative">0.00%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card error">
+                            <div class="metric-label" data-en="Mean Absolute Error" data-bন="গড় পরম এরর">গড় পরম এরর</div>
+                            <div class="metric-value" id="meanError">0.0000</div>
+                            <div class="relative-error">
+                                <span data-en="Relative:" data-bন="রিলেটিভ:">রিলেটিভ:</span>
+                                <span id="meanErrorRelative">0.00%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card accuracy">
+                            <div class="metric-label" data-en="Accuracy Score" data-bন="একুরেসি স্কোর">একুরেসি স্কোর</div>
+                            <div class="metric-value" id="accuracyScore">100%</div>
+                            <div class="relative-error">
+                                <span data-en="Based on similarity" data-bন="সামঞ্জস্যের ভিত্তিতে">সামঞ্জস্যের ভিত্তিতে</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Probability Table -->
+        <div class="probability-table-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Probability Comparison Table" data-bন="প্রোবাবিলিটি তুলনা টেবিল">প্রোবাবিলিটি তুলনা টেবিল</span>
+            </h2>
+            
+            <div class="table-controls">
+                <div class="k-value-selector">
+                    <span data-en="Show probabilities for k up to:" data-bন="k পর্যন্ত প্রোবাবিলিটি দেখান:">k পর্যন্ত প্রোবাবিলিটি দেখান:</span>
+                    <input type="range" class="k-slider range-slider" id="tableKSlider" min="0" max="20" step="1" value="10">
+                    <span class="k-value-display" id="tableKValue">10</span>
+                </div>
+                
+                <div>
+                    <span data-en="Selected k =" data-bন="নির্বাচিত k =">নির্বাচিত k =</span>
+                    <span id="selectedKValue" style="font-weight: 700;">2</span>
+                </div>
+            </div>
+            
+            <div class="probability-table-container">
+                <table class="probability-table">
+                    <thead>
+                        <tr>
+                            <th data-en="k" data-bন="k">k</th>
+                            <th data-en="Binomial P(X=k)" data-bন="বাইনোমিয়াল P(X=k)">বাইনোমিয়াল P(X=k)</th>
+                            <th data-en="Poisson P(X=k)" data-bন="পয়সন P(X=k)">পয়সন P(X=k)</th>
+                            <th data-en="Absolute Error" data-bন="পরম এরর">পরম এরর</th>
+                            <th data-en="Relative Error" data-bন="আপেক্ষিক এরর">আপেক্ষিক এরর</th>
+                            <th data-en="Cumulative Error" data-bন="কুমুলেটিভ এরর">কুমুলেটিভ এরর</th>
+                        </tr>
+                    </thead>
+                    <tbody id="probabilityTableBody">
+                        <!-- Rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Convergence Visualization -->
+        <div class="convergence-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Convergence Analysis" data-bন="কনভার্জেন্স অ্যানালাইসিস">কনভার্জেন্স অ্যানালাইসিস</span>
+            </h2>
+            
+            <p data-en="How error changes with different n and p values:" data-bন="বিভিন্ন n এবং p মানের সাথে এরর কীভাবে পরিবর্তিত হয়:">
+                বিভিন্ন n এবং p মানের সাথে এরর কীভাবে পরিবর্তিত হয়:
+            </p>
+            
+            <div class="convergence-chart-container" id="convergenceChart">
+                <!-- Chart will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Mathematical Derivation -->
+        <div class="derivation-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Mathematical Derivation" data-bন="গাণিতিক ডেরিভেশন">গাণিতিক ডেরিভেশন</span>
+            </h2>
+            
+            <p data-en="Mathematical proof of Poisson approximation to Binomial distribution:" data-bন="বাইনোমিয়াল ডিস্ট্রিবিউশনে পয়সন অ্যাপ্রক্সিমেশনের গাণিতিক প্রমাণ:">
+                বাইনোমিয়াল ডিস্ট্রিবিউশনে পয়সন অ্যাপ্রক্সিমেশনের গাণিতিক প্রমাণ:
+            </p>
+            
+            <div class="derivation-steps">
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title" data-en="Binomial PMF" data-bন="বাইনোমিয়াল PMF">বাইনোমিয়াল PMF</h3>
+                    </div>
+                    <div class="step-formula">
+                        P(X=k) = C(n,k) p^k (1-p)^{n-k}
+                    </div>
+                    <div class="step-explanation" data-en="Probability mass function of Binomial distribution" data-bন="বাইনোমিয়াল ডিস্ট্রিবিউশনের প্রোবাবিলিটি ম্যাস ফাংশন">
+                        বাইনোমিয়াল ডিস্ট্রিবিউশনের প্রোবাবিলিটি ম্যাস ফাংশন
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title" data-en="Let λ = np" data-bন="ধরা যাক λ = np">ধরা যাক λ = np</h3>
+                    </div>
+                    <div class="step-formula">
+                        p = λ/n
+                    </div>
+                    <div class="step-explanation" data-en="Express p in terms of λ and n" data-bন="λ এবং n এর মাধ্যমে p প্রকাশ করুন">
+                        λ এবং n এর মাধ্যমে p প্রকাশ করুন
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title" data-en="Take limits" data-bন="লিমিট নিন">লিমিট নিন</h3>
+                    </div>
+                    <div class="step-formula">
+                        lim_{n→∞, p→0, np=λ} P(X=k)
+                    </div>
+                    <div class="step-explanation" data-en="Take limit as n→∞, p→0 while keeping λ constant" data-bন="λ ধ্রুবক রেখে n→∞, p→0 লিমিট নিন">
+                        λ ধ্রুবক রেখে n→∞, p→0 লিমিট নিন
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <h3 class="step-title" data-en="Apply approximations" data-bন="অ্যাপ্রক্সিমেশন প্রয়োগ করুন">অ্যাপ্রক্সিমেশন প্রয়োগ করুন</h3>
+                    </div>
+                    <div class="step-formula">
+                        (1 - λ/n)^n ≈ e^{-λ}<br>
+                        n!/(n-k)! ≈ n^k
+                    </div>
+                    <div class="step-explanation" data-en="Use exponential approximation for large n" data-bন="বড় n এর জন্য এক্সপোনেনশিয়াল অ্যাপ্রক্সিমেশন ব্যবহার করুন">
+                        বড় n এর জন্য এক্সপোনেনশিয়াল অ্যাপ্রক্সিমেশন ব্যবহার করুন
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <h3 class="step-title" data-en="Final Poisson PMF" data-bন="চূড়ান্ত পয়সন PMF">চূড়ান্ত পয়সন PMF</h3>
+                    </div>
+                    <div class="step-formula">
+                        P(X=k) = (λ^k e^{-λ}) / k!
+                    </div>
+                    <div class="step-explanation" data-en="This is the Poisson probability mass function" data-bন="এটি পয়সন প্রোবাবিলিটি ম্যাস ফাংশন">
+                        এটি পয়সন প্রোবাবিলিটি ম্যাস ফাংশন
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Simulation State
+            let simulationState = {
+                n: 100,
+                p: 0.02,
+                lambda: 2.0,
+                k: 2,
+                maxK: 10
+            };
+
+            // Example cases
+            const examples = {
+                rare: { n: 200, p: 0.01 },
+                moderate: { n: 50, p: 0.1 },
+                good: { n: 100, p: 0.02 },
+                poor: { n: 20, p: 0.3 }
+            };
+
+            // DOM Elements
+            // Parameter inputs
+            const nSlider = document.getElementById('nSlider');
+            const nInput = document.getElementById('nInput');
+            const nValue = document.getElementById('nValue');
+            const pSlider = document.getElementById('pSlider');
+            const pInput = document.getElementById('pInput');
+            const pValue = document.getElementById('pValue');
+            const lambdaValue = document.getElementById('lambdaValue');
+            const kSlider = document.getElementById('kSlider');
+            const kInput = document.getElementById('kInput');
+            const kValue = document.getElementById('kValue');
+            
+            // Rule check elements
+            const nCriterion = document.getElementById('nCriterion');
+            const pCriterion = document.getElementById('pCriterion');
+            const npCriterion = document.getElementById('npCriterion');
+            const varianceCriterion = document.getElementById('varianceCriterion');
+            const ruleSummary = document.getElementById('ruleSummary');
+            
+            // Control buttons
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+            
+            // Accuracy metrics
+            const maxError = document.getElementById('maxError');
+            const maxErrorRelative = document.getElementById('maxErrorRelative');
+            const meanError = document.getElementById('meanError');
+            const meanErrorRelative = document.getElementById('meanErrorRelative');
+            const accuracyScore = document.getElementById('accuracyScore');
+            
+            // Table controls
+            const tableKSlider = document.getElementById('tableKSlider');
+            const tableKValue = document.getElementById('tableKValue');
+            const selectedKValue = document.getElementById('selectedKValue');
+            const probabilityTableBody = document.getElementById('probabilityTableBody');
+            
+            // Charts
+            const comparisonChart = document.getElementById('comparisonChart');
+            const convergenceChart = document.getElementById('convergenceChart');
+
+            // Initialize
+            initTool();
+
+            function initTool() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Parameter synchronization
+                setupParameterSync(nSlider, nInput, nValue, 'n', 0);
+                setupParameterSync(pSlider, pInput, pValue, 'p', 3);
+                setupParameterSync(kSlider, kInput, kValue, 'k', 0);
+                setupParameterSync(tableKSlider, null, tableKValue, 'maxK', 0);
+
+                // Parameter change handlers
+                nSlider.addEventListener('input', updateLambda);
+                pSlider.addEventListener('input', updateLambda);
+                nInput.addEventListener('input', updateLambda);
+                pInput.addEventListener('input', updateLambda);
+                
+                kSlider.addEventListener('input', function() {
+                    selectedKValue.textContent = this.value;
+                });
+
+                tableKSlider.addEventListener('input', function() {
+                    updateProbabilityTable();
+                });
+
+                // Control buttons
+                calculateBtn.addEventListener('click', calculateApproximation);
+                resetBtn.addEventListener('click', resetTool);
+
+                // Example cases
+                exampleBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Initial calculation
+                setTimeout(() => {
+                    updateLambda();
+                    calculateApproximation();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setupParameterSync(slider, input, display, stateKey, decimals = 1) {
+                slider.addEventListener('input', function() {
+                    let value = parseFloat(this.value);
+                    if (stateKey === 'p') {
+                        display.textContent = value.toFixed(3);
+                    } else {
+                        display.textContent = value.toFixed(decimals);
+                    }
+                    
+                    if (input) {
+                        input.value = value;
+                    }
+                    
+                    simulationState[stateKey] = value;
+                });
+
+                if (input) {
+                    input.addEventListener('input', function() {
+                        let value = parseFloat(this.value);
+                        const min = parseFloat(this.min);
+                        const max = parseFloat(this.max);
+                        
+                        if (!isNaN(value) && value >= min && value <= max) {
+                            slider.value = value;
+                            if (stateKey === 'p') {
+                                display.textContent = value.toFixed(3);
+                            } else {
+                                display.textContent = value.toFixed(decimals);
+                            }
+                            simulationState[stateKey] = value;
+                        }
+                    });
+                }
+            }
+
+            function updateLambda() {
+                const n = simulationState.n;
+                const p = simulationState.p;
+                const lambda = n * p;
+                
+                simulationState.lambda = lambda;
+                lambdaValue.textContent = lambda.toFixed(3);
+                
+                // Update rule check
+                checkApproximationRules();
+            }
+
+            function checkApproximationRules() {
+                const { n, p, lambda } = simulationState;
+                const variance = n * p * (1 - p);
+                
+                // Criterion 1: n ≥ 20
+                const criterion1Met = n >= 20;
+                const criterion1Elem = document.getElementById('criterion1');
+                criterion1Elem.className = criterion1Met ? 'criterion met' : 'criterion not-met';
+                nCriterion.textContent = `${n} ${criterion1Met ? '✓' : '✗'}`;
+                
+                // Criterion 2: p ≤ 0.05
+                const criterion2Met = p <= 0.05;
+                const criterion2Elem = document.getElementById('criterion2');
+                criterion2Elem.className = criterion2Met ? 'criterion met' : 'criterion not-met';
+                pCriterion.textContent = `${p.toFixed(3)} ${criterion2Met ? '✓' : '✗'}`;
+                
+                // Criterion 3: np ≤ 10
+                const criterion3Met = lambda <= 10;
+                const criterion3Elem = document.getElementById('criterion3');
+                criterion3Elem.className = criterion3Met ? 'criterion met' : 'criterion not-met';
+                npCriterion.textContent = `${lambda.toFixed(1)} ${criterion3Met ? '✓' : '✗'}`;
+                
+                // Criterion 4: np(1-p) ≈ λ (variance comparison)
+                const varianceRatio = variance / lambda;
+                const criterion4Met = Math.abs(varianceRatio - 1) < 0.1;
+                const criterion4Elem = document.getElementById('criterion4');
+                criterion4Elem.className = criterion4Met ? 'criterion met' : 'criterion not-met';
+                varianceCriterion.textContent = variance.toFixed(2);
+                
+                // Overall rule summary
+                const allMet = criterion1Met && criterion2Met && criterion3Met && criterion4Met;
+                ruleSummary.className = allMet ? 'rule-summary valid' : 'rule-summary invalid';
+                
+                if (allMet) {
+                    ruleSummary.innerHTML = currentLanguage === 'bn'
+                        ? 'পয়সন অ্যাপ্রক্সিমেশন বৈধ'
+                        : 'Poisson approximation is valid';
+                } else {
+                    ruleSummary.innerHTML = currentLanguage === 'bn'
+                        ? 'পয়সন অ্যাপ্রক্সিমেশন সীমিতভাবে বৈধ'
+                        : 'Poisson approximation is conditionally valid';
+                }
+                
+                return allMet;
+            }
+
+            function factorial(n) {
+                if (n < 0) return 0;
+                if (n === 0 || n === 1) return 1;
+                
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            }
+
+            function combination(n, k) {
+                if (k < 0 || k > n) return 0;
+                if (k === 0 || k === n) return 1;
+                
+                // Use more efficient calculation for large n
+                let result = 1;
+                for (let i = 1; i <= k; i++) {
+                    result = result * (n - k + i) / i;
+                }
+                return Math.round(result);
+            }
+
+            function binomialPMF(n, p, k) {
+                if (k < 0 || k > n) return 0;
+                
+                // Use logarithms for numerical stability
+                const comb = combination(n, k);
+                const prob = comb * Math.pow(p, k) * Math.pow(1 - p, n - k);
+                
+                return prob;
+            }
+
+            function poissonPMF(lambda, k) {
+                if (k < 0) return 0;
+                
+                // Use logarithms for numerical stability
+                const logProb = k * Math.log(lambda) - lambda - Math.log(factorial(k));
+                return Math.exp(logProb);
+            }
+
+            function calculateApproximation() {
+                const { n, p, lambda, k, maxK } = simulationState;
+                
+                // Calculate probabilities for comparison chart
+                const kValues = [];
+                const binomialProbs = [];
+                const poissonProbs = [];
+                const errors = [];
+                
+                // Calculate up to reasonable k values
+                const maxDisplayK = Math.min(Math.floor(lambda * 3 + 5), 20);
+                
+                for (let i = 0; i <= maxDisplayK; i++) {
+                    kValues.push(i);
+                    
+                    const binomProb = binomialPMF(n, p, i);
+                    const poissonProb = poissonPMF(lambda, i);
+                    const error = Math.abs(binomProb - poissonProb);
+                    
+                    binomialProbs.push(binomProb);
+                    poissonProbs.push(poissonProb);
+                    errors.push(error);
+                }
+                
+                // Update comparison chart
+                updateComparisonChart(kValues, binomialProbs, poissonProbs, errors);
+                
+                // Calculate accuracy metrics
+                calculateAccuracyMetrics(binomialProbs, poissonProbs);
+                
+                // Update probability table
+                updateProbabilityTable();
+                
+                // Update convergence analysis
+                updateConvergenceAnalysis();
+            }
+
+            function updateComparisonChart(kValues, binomialProbs, poissonProbs, errors) {
+                const { n, p, lambda, k } = simulationState;
+                
+                // Create traces
+                const trace1 = {
+                    x: kValues,
+                    y: binomialProbs,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? `বাইনোমিয়াল(n=${n}, p=${p.toFixed(3)})` : `Binomial(n=${n}, p=${p.toFixed(3)})`,
+                    line: { color: 'rgba(33, 150, 243, 1)', width: 3 },
+                    marker: { size: 8 }
+                };
+                
+                const trace2 = {
+                    x: kValues,
+                    y: poissonProbs,
+                    mode: 'lines+markers',
+                    name: currentLanguage === 'bn' ? `পয়সন(λ=${lambda.toFixed(2)})` : `Poisson(λ=${lambda.toFixed(2)})`,
+                    line: { color: 'rgba(156, 39, 176, 1)', width: 3, dash: 'dash' },
+                    marker: { size: 8 }
+                };
+                
+                // Highlight the selected k value
+                const highlightTrace = {
+                    x: [k, k],
+                    y: [0, Math.max(binomialProbs[k] || 0, poissonProbs[k] || 0) * 1.1],
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? `নির্বাচিত k=${k}` : `Selected k=${k}`,
+                    line: { color: 'rgba(255, 152, 0, 1)', width: 2, dash: 'dot' },
+                    showlegend: true
+                };
+                
+                const layout = {
+                    title: currentLanguage === 'bn' 
+                        ? 'বাইনোমিয়াল এবং পয়সন ডিস্ট্রিবিউশন তুলনা' 
+                        : 'Binomial vs Poisson Distribution Comparison',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'k (সাফল্যের সংখ্যা)' : 'k (Number of Successes)',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'প্রোবাবিলিটি P(X=k)' : 'Probability P(X=k)',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.8)'
+                    },
+                    hovermode: 'closest'
+                };
+                
+                Plotly.newPlot(comparisonChart, [trace1, trace2, highlightTrace], layout, {responsive: true});
+            }
+
+            function calculateAccuracyMetrics(binomialProbs, poissonProbs) {
+                // Calculate maximum absolute error
+                let maxAbsError = 0;
+                let totalAbsError = 0;
+                let validPoints = 0;
+                
+                for (let i = 0; i < binomialProbs.length; i++) {
+                    if (binomialProbs[i] > 1e-10) { // Ignore very small probabilities
+                        const error = Math.abs(binomialProbs[i] - poissonProbs[i]);
+                        maxAbsError = Math.max(maxAbsError, error);
+                        totalAbsError += error;
+                        validPoints++;
+                    }
+                }
+                
+                const meanAbsError = validPoints > 0 ? totalAbsError / validPoints : 0;
+                
+                // Calculate relative errors
+                const selectedK = simulationState.k;
+                const binomAtK = binomialProbs[selectedK] || 0;
+                const poissonAtK = poissonProbs[selectedK] || 0;
+                
+                const maxErrorRelative = maxAbsError > 0 ? (maxAbsError / Math.max(...binomialProbs)) * 100 : 0;
+                const meanErrorRelative = meanAbsError > 0 ? (meanAbsError / (totalAbsError / validPoints)) * 100 : 0;
+                
+                // Calculate accuracy score (0-100%)
+                let accuracy = 100;
+                if (maxAbsError > 0.01) {
+                    accuracy = Math.max(0, 100 - maxAbsError * 1000);
+                }
+                
+                // Update displays
+                maxError.textContent = maxAbsError.toFixed(4);
+                maxErrorRelative.textContent = maxErrorRelative.toFixed(2) + '%';
+                
+                meanError.textContent = meanAbsError.toFixed(4);
+                meanErrorRelative.textContent = meanErrorRelative.toFixed(2) + '%';
+                
+                accuracyScore.textContent = accuracy.toFixed(0) + '%';
+                
+                // Highlight the selected k row in table
+                highlightSelectedK();
+            }
+
+            function updateProbabilityTable() {
+                const { n, p, lambda, maxK } = simulationState;
+                const tableBody = document.getElementById('probabilityTableBody');
+                
+                // Clear existing rows
+                tableBody.innerHTML = '';
+                
+                // Calculate cumulative errors
+                let cumulativeError = 0;
+                
+                for (let k = 0; k <= maxK; k++) {
+                    const binomProb = binomialPMF(n, p, k);
+                    const poissonProb = poissonPMF(lambda, k);
+                    const absError = Math.abs(binomProb - poissonProb);
+                    const relError = binomProb > 0 ? (absError / binomProb) * 100 : 0;
+                    
+                    cumulativeError += absError;
+                    
+                    const row = document.createElement('tr');
+                    row.id = `row-${k}`;
+                    
+                    if (k === simulationState.k) {
+                        row.classList.add('highlight-row');
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${k}</td>
+                        <td class="binomial-value">${binomProb.toFixed(6)}</td>
+                        <td class="poisson-value">${poissonProb.toFixed(6)}</td>
+                        <td class="error-value">${absError.toFixed(6)}</td>
+                        <td>
+                            <span class="error-value">${relError.toFixed(2)}%</span>
+                            <div class="relative-error">
+                                ${relError < 5 ? '✓' : relError < 10 ? '~' : '✗'}
+                            </div>
+                        </td>
+                        <td>${cumulativeError.toFixed(6)}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                }
+                
+                // Update table k value display
+                tableKValue.textContent = maxK;
+            }
+
+            function highlightSelectedK() {
+                // Remove highlight from all rows
+                document.querySelectorAll('.probability-table tr').forEach(row => {
+                    row.classList.remove('highlight-row');
+                });
+                
+                // Add highlight to selected k row
+                const selectedRow = document.getElementById(`row-${simulationState.k}`);
+                if (selectedRow) {
+                    selectedRow.classList.add('highlight-row');
+                }
+            }
+
+            function updateConvergenceAnalysis() {
+                const { n, p, lambda } = simulationState;
+                
+                // Create convergence data for different n and p values
+                const nValues = [10, 20, 50, 100, 200, 500];
+                const pValues = [0.01, 0.02, 0.05, 0.1];
+                
+                const traces = [];
+                
+                // For each p value, plot error vs n
+                pValues.forEach((pVal, pIndex) => {
+                    const errors = [];
+                    const validNValues = [];
+                    
+                    nValues.forEach(nVal => {
+                        const lambdaVal = nVal * pVal;
+                        
+                        // Only include if rule criteria are reasonably met
+                        if (nVal >= 20 && pVal <= 0.1 && lambdaVal <= 20) {
+                            // Calculate total variation distance (approximation error)
+                            let totalError = 0;
+                            const maxK = Math.min(Math.floor(lambdaVal * 3 + 5), 30);
+                            
+                            for (let k = 0; k <= maxK; k++) {
+                                const binomProb = binomialPMF(nVal, pVal, k);
+                                const poissonProb = poissonPMF(lambdaVal, k);
+                                totalError += Math.abs(binomProb - poissonProb);
+                            }
+                            
+                            errors.push(totalError);
+                            validNValues.push(nVal);
+                        }
+                    });
+                    
+                    if (errors.length > 0) {
+                        const trace = {
+                            x: validNValues,
+                            y: errors,
+                            mode: 'lines+markers',
+                            name: `p = ${pVal}`,
+                            line: { width: 2 },
+                            marker: { size: 6 }
+                        };
+                        
+                        traces.push(trace);
+                    }
+                });
+                
+                const layout = {
+                    title: currentLanguage === 'bn' 
+                        ? 'অ্যাপ্রক্সিমেশন এররের কনভার্জেন্স' 
+                        : 'Approximation Error Convergence',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'n (ট্রায়ালের সংখ্যা)' : 'n (Number of Trials)',
+                        type: 'log',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'মোট ভ্যারিয়েশন দূরত্ব' : 'Total Variation Distance',
+                        gridcolor: 'rgba(128,128,128,0.2)'
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.8)'
+                    }
+                };
+                
+                Plotly.newPlot(convergenceChart, traces, layout, {responsive: true});
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    // Update active example button
+                    exampleBtns.forEach(btn => {
+                        if (btn.dataset.example === example) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    
+                    // Update parameters
+                    simulationState.n = data.n;
+                    simulationState.p = data.p;
+                    
+                    nSlider.value = data.n;
+                    nInput.value = data.n;
+                    nValue.textContent = data.n;
+                    
+                    pSlider.value = data.p;
+                    pInput.value = data.p;
+                    pValue.textContent = data.p.toFixed(3);
+                    
+                    // Update lambda and recalculate
+                    updateLambda();
+                    calculateApproximation();
+                }
+            }
+
+            function resetTool() {
+                // Reset to default values
+                simulationState.n = 100;
+                simulationState.p = 0.02;
+                simulationState.k = 2;
+                simulationState.maxK = 10;
+                
+                nSlider.value = 100;
+                nInput.value = 100;
+                nValue.textContent = '100';
+                
+                pSlider.value = 0.02;
+                pInput.value = 0.02;
+                pValue.textContent = '0.020';
+                
+                kSlider.value = 2;
+                kInput.value = 2;
+                kValue.textContent = '2';
+                selectedKValue.textContent = '2';
+                
+                tableKSlider.value = 10;
+                tableKValue.textContent = '10';
+                
+                // Reset example buttons
+                exampleBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.example === 'good') {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Recalculate
+                updateLambda();
+                calculateApproximation();
+            }
+
+            // Export utility functions for debugging
+            window.binomialPMF = binomialPMF;
+            window.poissonPMF = poissonPMF;
+            window.calculateApproximation = calculateApproximation;
+        });
+    </script>
+</body>
+</html>

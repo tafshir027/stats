@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson Probability Calculator | Exact Probabilities</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --prob-color: #2196F3;
+            --pmf-color: #4CAF50;
+            --factorial-color: #FF9800;
+            --lambda-color: #E91E63;
+            --k-color: #3F51B5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--poisson-color), #7B1FA2);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Panel */
+        .input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: #F3E5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            position: relative;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--poisson-color);
+        }
+
+        .parameter-symbol {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .lambda-symbol {
+            background: var(--lambda-color);
+        }
+
+        .k-symbol {
+            background: var(--k-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid var(--poisson-color);
+        }
+
+        /* Value Range Inputs */
+        .value-range {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .range-slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-value {
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Calculation Controls */
+        .calculation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .calculation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Probability Display */
+        .probability-display {
+            background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .probability-title {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        .probability-value {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--prob-color);
+            margin-bottom: 1rem;
+            font-family: 'Times New Roman', serif;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .probability-formula {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .probability-description {
+            font-size: 1rem;
+            color: var(--gray);
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* PMF Formula Section */
+        .pmf-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .pmf-formula-container {
+            background: #F9F9F9;
+            padding: 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+
+        .pmf-formula {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            font-family: 'Times New Roman', serif;
+            margin: 1rem 0;
+        }
+
+        .formula-legend {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .formula-legend {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .lambda-color { background: var(--lambda-color); }
+        .k-color { background: var(--k-color); }
+        .e-color { background: var(--pmf-color); }
+
+        /* Factorial Calculation */
+        .factorial-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .factorial-calculation {
+            background: #FFF3E0;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .factorial-steps {
+            font-size: 1.1rem;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+        }
+
+        .factorial-value {
+            font-weight: 700;
+            color: var(--factorial-color);
+            font-size: 1.2rem;
+        }
+
+        /* PMF Visualization */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .pmf-chart {
+            height: 300px;
+            margin-top: 1.5rem;
+            position: relative;
+            background: #F5F5F5;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 100%;
+            padding: 0 1rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--poisson-color);
+            border-radius: 3px 3px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .chart-bar.highlighted {
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(255, 101, 132, 0.5);
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Distribution Properties */
+        .properties-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .property-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .property-card.mean {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+        }
+
+        .property-card.variance {
+            background: #E3F2FD;
+            border-color: #2196F3;
+        }
+
+        .property-card.mode {
+            background: #FFF3E0;
+            border-color: #FF9800;
+        }
+
+        .property-card.skewness {
+            background: #F3E5F5;
+            border-color: #9C27B0;
+        }
+
+        .property-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .property-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { background: var(--poisson-color); }
+            50% { background: var(--accent); }
+            100% { background: var(--poisson-color); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s ease;
+        }
+
+        .highlight {
+            animation: highlight 2s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .probability-value {
+                font-size: 3rem;
+            }
+            
+            .pmf-formula {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Poisson Formula Animation */
+        .poisson-formula-animation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--poisson-color);
+            opacity: 0.1;
+            animation: float 10s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="poisson-formula-animation">P(X=k) = (λ^k e^{-λ})/k!</div>
+            <h1 data-en="Poisson Probability Calculator" data-bn="পয়সন প্রোবাবিলিটি ক্যালকুলেটর">পয়সন প্রোবাবিলিটি ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate exact Poisson probabilities P(X = k) using Poisson PMF formula and factorial calculations" data-bn="পয়সন PMF সূত্র এবং ফ্যাক্টোরিয়াল গণনা ব্যবহার করে সঠিক পয়সন প্রোবাবিলিটি P(X = k) গণনা করুন">
+                পয়সন PMF সূত্র এবং ফ্যাক্টোরিয়াল গণনা ব্যবহার করে সঠিক পয়সন প্রোবাবিলিটি P(X = k) গণনা করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Poisson Parameters" data-bn="পয়সন প্যারামিটার">পয়সন প্যারামিটার</span>
+                </h2>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-bolt"></i>
+                            <span data-en="Lambda (λ) - Average Rate" data-bn="ল্যাম্বডা (λ) - গড় হার">ল্যাম্বডা (λ) - গড় হার</span>
+                        </div>
+                        <div class="parameter-symbol lambda-symbol">λ</div>
+                        <input type="number" id="lambdaInput" class="value-input" min="0.1" max="50" step="0.1" value="2.5">
+                        <div class="help-text" data-en="Expected number of events in interval" data-bn="ব্যবধানে প্রত্যাশিত ঘটনার সংখ্যা">
+                            ব্যবধানে প্রত্যাশিত ঘটনার সংখ্যা
+                        </div>
+                        <div class="value-range">
+                            <input type="range" id="lambdaSlider" class="range-slider" min="0.1" max="20" step="0.1" value="2.5">
+                            <span class="range-value" id="lambdaValue">2.5</span>
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="k - Number of Events" data-bn="k - ঘটনার সংখ্যা">k - ঘটনার সংখ্যা</span>
+                        </div>
+                        <div class="parameter-symbol k-symbol">k</div>
+                        <input type="number" id="kInput" class="value-input" min="0" max="50" step="1" value="3">
+                        <div class="help-text" data-en="Number of events to calculate probability for" data-bn="প্রোবাবিলিটি গণনার জন্য ঘটনার সংখ্যা">
+                            প্রোবাবিলিটি গণনার জন্য ঘটনার সংখ্যা
+                        </div>
+                        <div class="value-range">
+                            <input type="range" id="kSlider" class="range-slider" min="0" max="20" step="1" value="3">
+                            <span class="range-value" id="kValue">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculation Controls -->
+                <div class="calculation-controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Probability" data-bn="প্রোবাবিলিটি গণনা করুন">প্রোবাবিলিটি গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset Values" data-bn="মান রিসেট করুন">মান রিসেট করুন</span>
+                    </button>
+                </div>
+
+                <!-- Quick Examples -->
+                <h2 class="section-title" style="margin-top: 2rem;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span data-en="Quick Examples" data-bn="দ্রুত উদাহরণ">দ্রুত উদাহরণ</span>
+                </h2>
+                
+                <div class="examples-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <button class="example-btn" data-example="phone" style="padding: 0.8rem; background: #E3F2FD; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <span data-en="Phone calls (λ=3, k=5)" data-bn="ফোন কল (λ=৩, k=৫)">ফোন কল (λ=৩, k=৫)</span>
+                    </button>
+                    <button class="example-btn" data-example="accident" style="padding: 0.8rem; background: #FFEBEE; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <span data-en="Accidents (λ=0.5, k=0)" data-bn="দুর্ঘটনা (λ=০.৫, k=০)">দুর্ঘটনা (λ=০.৫, k=০)</span>
+                    </button>
+                    <button class="example-btn" data-example="customer" style="padding: 0.8rem; background: #E8F5E9; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <span data-en="Customers (λ=10, k=8)" data-bn="গ্রাহক (λ=১০, k=৮)">গ্রাহক (λ=১০, k=৮)</span>
+                    </button>
+                    <button class="example-btn" data-example="defect" style="padding: 0.8rem; background: #FFF3E0; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <span data-en="Defects (λ=1.5, k=2)" data-bn="ত্রুটি (λ=১.৫, k=২)">ত্রুটি (λ=১.৫, k=২)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Probability Display -->
+                <div class="probability-display fade-in">
+                    <div class="probability-title" data-en="Poisson Probability" data-bn="পয়সন প্রোবাবিলিটি">পয়সন প্রোবাবিলিটি</div>
+                    <div class="probability-value" id="probabilityValue">0.2138</div>
+                    <div class="probability-formula" id="probabilityFormula">
+                        P(X = 3) = 0.2138
+                    </div>
+                    <div class="probability-description" id="probabilityDescription">
+                        <span data-en="Probability of exactly 3 events occurring when λ = 2.5" data-bn="যখন λ = ২.৫ তখন ঠিক ৩টি ঘটনা ঘটার সম্ভাবনা">
+                            যখন λ = ২.৫ তখন ঠিক ৩টি ঘটনা ঘটার সম্ভাবনা
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PMF Formula Section -->
+                <div class="pmf-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-square-root-alt"></i>
+                        <span data-en="Poisson PMF Formula" data-bn="পয়সন PMF সূত্র">পয়সন PMF সূত্র</span>
+                    </h2>
+                    
+                    <div class="pmf-formula-container">
+                        <div class="pmf-formula" id="pmfFormula">
+                            P(X = k) = <span style="color: var(--lambda-color)">λ<sup>k</sup></span> 
+                            <span style="color: var(--pmf-color)">e<sup>-λ</sup></span> / 
+                            <span style="color: var(--k-color)">k!</span>
+                        </div>
+                        
+                        <div class="formula-legend">
+                            <div class="legend-item">
+                                <div class="legend-color lambda-color"></div>
+                                <div>
+                                    <strong>λ (lambda)</strong>
+                                    <div data-en="Average rate of events" data-bn="ঘটনার গড় হার">ঘটনার গড় হার</div>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color k-color"></div>
+                                <div>
+                                    <strong>k</strong>
+                                    <div data-en="Number of events" data-bn="ঘটনার সংখ্যা">ঘটনার সংখ্যা</div>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color e-color"></div>
+                                <div>
+                                    <strong>e ≈ 2.71828</strong>
+                                    <div data-en="Euler's number" data-bn="অয়লারের সংখ্যা">অয়লারের সংখ্যা</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Factorial Calculation -->
+                <div class="factorial-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Factorial Calculation" data-bn="ফ্যাক্টোরিয়াল গণনা">ফ্যাক্টোরিয়াল গণনা</span>
+                    </h2>
+                    
+                    <div class="factorial-calculation">
+                        <div class="factorial-steps" id="factorialSteps">
+                            <span data-en="For k = 3:" data-bn="k = ৩ এর জন্য:">k = ৩ এর জন্য:</span><br>
+                            3! = 3 × 2 × 1 = <span class="factorial-value">6</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PMF Visualization -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Poisson PMF Visualization" data-bন="পয়সন PMF ভিজ্যুয়ালাইজেশন">পয়সন PMF ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <p data-en="Probability Mass Function for different k values:" data-bন="বিভিন্ন k মানের জন্য প্রোবাবিলিটি ম্যাস ফাংশন:">
+                বিভিন্ন k মানের জন্য প্রোবাবিলিটি ম্যাস ফাংশন:
+            </p>
+            
+            <div class="pmf-chart" id="pmfChart">
+                <!-- Chart bars will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Distribution Properties -->
+        <div class="properties-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                <span data-en="Poisson Distribution Properties" data-bন="পয়সন ডিস্ট্রিবিউশন বৈশিষ্ট্য">পয়সন ডিস্ট্রিবিউশন বৈশিষ্ট্য</span>
+            </h2>
+            
+            <div class="properties-grid">
+                <div class="property-card mean">
+                    <div class="property-label" data-en="Mean (Expected Value)" data-bন="গড় (প্রত্যাশিত মান)">গড় (প্রত্যাশিত মান)</div>
+                    <div class="property-value" id="meanValue">2.5</div>
+                    <div class="help-text">E[X] = λ</div>
+                </div>
+                
+                <div class="property-card variance">
+                    <div class="property-label" data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                    <div class="property-value" id="varianceValue">2.5</div>
+                    <div class="help-text">Var(X) = λ</div>
+                </div>
+                
+                <div class="property-card mode">
+                    <div class="property-label" data-en="Mode" data-bন="মোড">মোড</div>
+                    <div class="property-value" id="modeValue">2</div>
+                    <div class="help-text">⌊λ⌋ or ⌊λ⌋-1 if λ is integer</div>
+                </div>
+                
+                <div class="property-card skewness">
+                    <div class="property-label" data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</div>
+                    <div class="property-value" id="skewnessValue">0.6325</div>
+                    <div class="help-text">γ₁ = 1/√λ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Calculation State
+            let calculationState = {
+                lambda: 2.5,
+                k: 3,
+                probability: 0.2138,
+                factorial: 6
+            };
+
+            // Quick Examples
+            const examples = {
+                phone: { lambda: 3, k: 5 },
+                accident: { lambda: 0.5, k: 0 },
+                customer: { lambda: 10, k: 8 },
+                defect: { lambda: 1.5, k: 2 }
+            };
+
+            // DOM Elements
+            const lambdaInput = document.getElementById('lambdaInput');
+            const lambdaSlider = document.getElementById('lambdaSlider');
+            const lambdaValue = document.getElementById('lambdaValue');
+            const kInput = document.getElementById('kInput');
+            const kSlider = document.getElementById('kSlider');
+            const kValue = document.getElementById('kValue');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const probabilityValue = document.getElementById('probabilityValue');
+            const probabilityFormula = document.getElementById('probabilityFormula');
+            const probabilityDescription = document.getElementById('probabilityDescription');
+            const factorialSteps = document.getElementById('factorialSteps');
+            const pmfChart = document.getElementById('pmfChart');
+            const meanValue = document.getElementById('meanValue');
+            const varianceValue = document.getElementById('varianceValue');
+            const modeValue = document.getElementById('modeValue');
+            const skewnessValue = document.getElementById('skewnessValue');
+
+            // Euler's number
+            const e = Math.E;
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Synchronization
+                lambdaInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    if (!isNaN(value) && value >= 0.1 && value <= 50) {
+                        lambdaSlider.value = value;
+                        lambdaValue.textContent = value.toFixed(1);
+                        calculationState.lambda = value;
+                    }
+                });
+
+                lambdaSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    lambdaInput.value = value;
+                    lambdaValue.textContent = value.toFixed(1);
+                    calculationState.lambda = value;
+                });
+
+                kInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    if (!isNaN(value) && value >= 0 && value <= 50) {
+                        kSlider.value = value;
+                        kValue.textContent = value;
+                        calculationState.k = value;
+                    }
+                });
+
+                kSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    kInput.value = value;
+                    kValue.textContent = value;
+                    calculationState.k = value;
+                });
+
+                // Calculation Controls
+                calculateBtn.addEventListener('click', calculateProbability);
+                clearBtn.addEventListener('click', resetCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Calculate with initial values
+                setTimeout(() => {
+                    calculateProbability();
+                    updatePMFChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function factorial(n) {
+                if (n < 0) return 0;
+                if (n === 0 || n === 1) return 1;
+                
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            }
+
+            function poissonProbability(lambda, k) {
+                if (lambda <= 0 || k < 0) return 0;
+                
+                const numerator = Math.pow(lambda, k) * Math.pow(e, -lambda);
+                const denominator = factorial(k);
+                
+                return numerator / denominator;
+            }
+
+            function calculateFactorialSteps(k) {
+                if (k === 0 || k === 1) {
+                    return `${k}! = 1`;
+                }
+                
+                let steps = '';
+                let result = 1;
+                
+                for (let i = k; i >= 1; i--) {
+                    steps += i;
+                    if (i > 1) steps += ' × ';
+                    result *= i;
+                }
+                
+                return `${k}! = ${steps} = ${result}`;
+            }
+
+            function calculateProbability() {
+                const lambda = calculationState.lambda;
+                const k = calculationState.k;
+                
+                // Calculate probability
+                const probability = poissonProbability(lambda, k);
+                
+                // Update state
+                calculationState.probability = probability;
+                calculationState.factorial = factorial(k);
+                
+                // Update display
+                updateResults(lambda, k, probability);
+                updateDistributionProperties(lambda);
+                updatePMFChart();
+                
+                // Add animation
+                probabilityValue.classList.add('pulse');
+                setTimeout(() => probabilityValue.classList.remove('pulse'), 500);
+            }
+
+            function updateResults(lambda, k, probability) {
+                // Format values
+                const probFormatted = probability.toFixed(4);
+                const lambdaFormatted = lambda.toFixed(1);
+                
+                // Update probability display
+                probabilityValue.textContent = probFormatted;
+                
+                // Update formula display
+                if (currentLanguage === 'bn') {
+                    probabilityFormula.textContent = `P(X = ${k}) = ${probFormatted}`;
+                    probabilityDescription.textContent = `যখন λ = ${lambdaFormatted} তখন ঠিক ${k}টি ঘটনা ঘটার সম্ভাবনা`;
+                } else {
+                    probabilityFormula.textContent = `P(X = ${k}) = ${probFormatted}`;
+                    probabilityDescription.textContent = `Probability of exactly ${k} events occurring when λ = ${lambdaFormatted}`;
+                }
+                
+                // Update factorial steps
+                factorialSteps.innerHTML = `
+                    ${currentLanguage === 'bn' ? `k = ${k} এর জন্য:` : `For k = ${k}:`}<br>
+                    ${calculateFactorialSteps(k)}
+                `;
+                
+                // Update PMF formula with colored values
+                const pmfFormula = document.getElementById('pmfFormula');
+                pmfFormula.innerHTML = `
+                    P(X = k) = <span style="color: var(--lambda-color)">λ<sup>k</sup></span> 
+                    <span style="color: var(--pmf-color)">e<sup>-λ</sup></span> / 
+                    <span style="color: var(--k-color)">k!</span>
+                    <br>
+                    P(X = ${k}) = <span style="color: var(--lambda-color)">${lambdaFormatted}<sup>${k}</sup></span> 
+                    <span style="color: var(--pmf-color)">e<sup>-${lambdaFormatted}</sup></span> / 
+                    <span style="color: var(--k-color)">${k}!</span>
+                `;
+            }
+
+            function updateDistributionProperties(lambda) {
+                const mean = lambda;
+                const variance = lambda;
+                
+                // Calculate mode
+                let mode;
+                if (lambda === Math.floor(lambda)) {
+                    // If lambda is integer, mode = lambda and lambda-1
+                    mode = `${Math.floor(lambda)}, ${Math.floor(lambda)-1}`;
+                } else {
+                    mode = Math.floor(lambda).toString();
+                }
+                
+                // Calculate skewness
+                const skewness = 1 / Math.sqrt(lambda);
+                
+                // Update display
+                meanValue.textContent = mean.toFixed(4);
+                varianceValue.textContent = variance.toFixed(4);
+                modeValue.textContent = mode;
+                skewnessValue.textContent = skewness.toFixed(4);
+            }
+
+            function updatePMFChart() {
+                const lambda = calculationState.lambda;
+                const currentK = calculationState.k;
+                
+                // Clear previous chart
+                pmfChart.innerHTML = '';
+                
+                // Calculate probabilities for k = 0 to maxK
+                const maxK = Math.min(20, Math.ceil(lambda * 3));
+                const probabilities = [];
+                let maxProb = 0;
+                
+                for (let k = 0; k <= maxK; k++) {
+                    const prob = poissonProbability(lambda, k);
+                    probabilities.push(prob);
+                    if (prob > maxProb) maxProb = prob;
+                }
+                
+                // Create chart bars
+                const chartBars = document.createElement('div');
+                chartBars.className = 'chart-bars';
+                
+                probabilities.forEach((prob, k) => {
+                    const barHeight = (prob / maxProb) * 100;
+                    
+                    const bar = document.createElement('div');
+                    bar.className = `chart-bar ${k === currentK ? 'highlighted' : ''}`;
+                    bar.style.height = `${barHeight}%`;
+                    bar.title = `P(X = ${k}) = ${prob.toFixed(4)}`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'chart-label';
+                    label.textContent = k;
+                    
+                    bar.appendChild(label);
+                    chartBars.appendChild(bar);
+                    
+                    // Add click event to select this k value
+                    bar.addEventListener('click', function() {
+                        calculationState.k = k;
+                        kInput.value = k;
+                        kSlider.value = k;
+                        kValue.textContent = k;
+                        calculateProbability();
+                    });
+                });
+                
+                pmfChart.appendChild(chartBars);
+                
+                // Add axis labels
+                const xAxis = document.createElement('div');
+                xAxis.style.position = 'absolute';
+                xAxis.style.bottom = '-30px';
+                xAxis.style.left = '0';
+                xAxis.style.right = '0';
+                xAxis.style.textAlign = 'center';
+                xAxis.style.fontSize = '0.9rem';
+                xAxis.style.color = 'var(--gray)';
+                xAxis.textContent = currentLanguage === 'bn' ? 'ঘটনার সংখ্যা (k)' : 'Number of Events (k)';
+                pmfChart.appendChild(xAxis);
+                
+                const yAxis = document.createElement('div');
+                yAxis.style.position = 'absolute';
+                yAxis.style.top = '10px';
+                yAxis.style.left = '-80px';
+                yAxis.style.transform = 'rotate(-90deg)';
+                yAxis.style.transformOrigin = 'center';
+                yAxis.style.fontSize = '0.9rem';
+                yAxis.style.color = 'var(--gray)';
+                yAxis.textContent = currentLanguage === 'bn' ? 'প্রোবাবিলিটি P(X=k)' : 'Probability P(X=k)';
+                pmfChart.appendChild(yAxis);
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    calculationState.lambda = data.lambda;
+                    calculationState.k = data.k;
+                    
+                    lambdaInput.value = data.lambda;
+                    lambdaSlider.value = data.lambda;
+                    lambdaValue.textContent = data.lambda;
+                    
+                    kInput.value = data.k;
+                    kSlider.value = data.k;
+                    kValue.textContent = data.k;
+                    
+                    calculateProbability();
+                }
+            }
+
+            function resetCalculator() {
+                calculationState.lambda = 2.5;
+                calculationState.k = 3;
+                
+                lambdaInput.value = 2.5;
+                lambdaSlider.value = 2.5;
+                lambdaValue.textContent = '2.5';
+                
+                kInput.value = 3;
+                kSlider.value = 3;
+                kValue.textContent = '3';
+                
+                calculateProbability();
+            }
+
+            // Export functions for debugging
+            window.calculateProbability = calculateProbability;
+            window.poissonProbability = poissonProbability;
+        });
+    </script>
+</body>
+</html>

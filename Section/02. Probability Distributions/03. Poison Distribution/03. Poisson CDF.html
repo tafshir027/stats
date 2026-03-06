@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poisson CDF Calculator | Cumulative Probabilities</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --poisson-color: #9C27B0;
+            --cdf-color: #2196F3;
+            --ccdf-color: #4CAF50;
+            --complement-color: #FF9800;
+            --lambda-color: #E91E63;
+            --k-color: #3F51B5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--poisson-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--poisson-color), #7B1FA2);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Panel */
+        .input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--poisson-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: #F3E5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            position: relative;
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--poisson-color);
+        }
+
+        .parameter-symbol {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .lambda-symbol {
+            background: var(--lambda-color);
+        }
+
+        .k-symbol {
+            background: var(--k-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--poisson-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid var(--poisson-color);
+        }
+
+        /* Value Range Inputs */
+        .value-range {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .range-slider {
+            flex: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--poisson-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-value {
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Probability Type Selection */
+        .probability-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .probability-types {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .type-btn {
+            padding: 1.5rem;
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .type-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .type-btn.active {
+            border-color: var(--poisson-color);
+            background: #F3E5F5;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.1);
+        }
+
+        .type-btn.less-equal.active {
+            border-color: var(--cdf-color);
+            background: #E3F2FD;
+        }
+
+        .type-btn.greater-equal.active {
+            border-color: var(--ccdf-color);
+            background: #E8F5E9;
+        }
+
+        .type-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .type-btn.less-equal .type-icon { color: var(--cdf-color); }
+        .type-btn.greater-equal .type-icon { color: var(--ccdf-color); }
+
+        /* Calculation Controls */
+        .calculation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .calculation-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--poisson-color);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Quick Examples */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .example-btn {
+            padding: 0.8rem;
+            background: #E3F2FD;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .result-card.cdf {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-color: var(--cdf-color);
+        }
+
+        .result-card.ccdf {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-color: var(--ccdf-color);
+        }
+
+        .result-card.complement {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-color: var(--complement-color);
+        }
+
+        .result-card.summary {
+            background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+            border-color: var(--poisson-color);
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .result-card.cdf .result-value { color: var(--cdf-color); }
+        .result-card.ccdf .result-value { color: var(--ccdf-color); }
+        .result-card.complement .result-value { color: var(--complement-color); }
+        .result-card.summary .result-value { color: var(--poisson-color); }
+
+        .result-formula {
+            font-size: 1rem;
+            color: var(--gray);
+            font-family: 'Times New Roman', serif;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.8);
+            border-radius: 5px;
+        }
+
+        /* Formula Explanation */
+        .formula-explanation {
+            background: #F5F5F5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            font-size: 1.1rem;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        .formula-steps {
+            margin-top: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: -1.5rem;
+            color: var(--success);
+        }
+
+        /* CDF Visualization */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .cdf-chart-container {
+            height: 400px;
+            position: relative;
+            margin-top: 1.5rem;
+            background: #F5F5F5;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* CDF Curve */
+        .cdf-curve {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .curve-point {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .cdf-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to top, var(--cdf-color), transparent);
+            opacity: 0.3;
+        }
+
+        .cdf-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--cdf-color);
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .cdf-dot:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0 10px var(--cdf-color);
+        }
+
+        .cdf-dot.selected {
+            background: var(--accent);
+            transform: scale(1.8);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .dot-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            white-space: nowrap;
+        }
+
+        .dot-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--cdf-color);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        /* Connection Line */
+        .connection-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .line {
+            fill: none;
+            stroke: var(--cdf-color);
+            stroke-width: 3;
+        }
+
+        /* Complement Visualization */
+        .complement-visualization {
+            margin-top: 2rem;
+            background: #FFF3E0;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--complement-color);
+        }
+
+        .complement-bar {
+            height: 60px;
+            background: linear-gradient(to right, var(--cdf-color), var(--ccdf-color));
+            border-radius: 5px;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cdf-part {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--cdf-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            transition: width 0.5s ease;
+        }
+
+        .ccdf-part {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            background: var(--ccdf-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            transition: width 0.5s ease;
+        }
+
+        .complement-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Distribution Summary */
+        .summary-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes highlight {
+            0% { background: var(--cdf-color); }
+            50% { background: var(--accent); }
+            100% { background: var(--cdf-color); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s ease;
+        }
+
+        .highlight {
+            animation: highlight 2s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .result-value {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Poisson CDF Calculator" data-bn="পয়সন CDF ক্যালকুলেটর">পয়সন CDF ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate cumulative Poisson probabilities P(X ≤ k) and P(X ≥ k) using complement rule" data-bn="কমপ্লিমেন্ট রুল ব্যবহার করে কুমুলেটিভ পয়সন প্রোবাবিলিটি P(X ≤ k) এবং P(X ≥ k) গণনা করুন">
+                কমপ্লিমেন্ট রুল ব্যবহার করে কুমুলেটিভ পয়সন প্রোবাবিলিটি P(X ≤ k) এবং P(X ≥ k) গণনা করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Poisson Parameters" data-bn="পয়সন প্যারামিটার">পয়সন প্যারামিটার</span>
+                </h2>
+
+                <!-- Parameter Controls -->
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-bolt"></i>
+                            <span data-en="Lambda (λ) - Average Rate" data-bn="ল্যাম্বডা (λ) - গড় হার">ল্যাম্বডা (λ) - গড় হার</span>
+                        </div>
+                        <div class="parameter-symbol lambda-symbol">λ</div>
+                        <input type="number" id="lambdaInput" class="value-input" min="0.1" max="20" step="0.1" value="3.5">
+                        <div class="help-text" data-en="Expected number of events in interval" data-bn="ব্যবধানে প্রত্যাশিত ঘটনার সংখ্যা">
+                            ব্যবধানে প্রত্যাশিত ঘটনার সংখ্যা
+                        </div>
+                        <div class="value-range">
+                            <input type="range" id="lambdaSlider" class="range-slider" min="0.1" max="10" step="0.1" value="3.5">
+                            <span class="range-value" id="lambdaValue">3.5</span>
+                        </div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="k - Number of Events" data-bn="k - ঘটনার সংখ্যা">k - ঘটনার সংখ্যা</span>
+                        </div>
+                        <div class="parameter-symbol k-symbol">k</div>
+                        <input type="number" id="kInput" class="value-input" min="0" max="30" step="1" value="5">
+                        <div class="help-text" data-en="Threshold number of events" data-bn="ঘটনার থ্রেশহোল্ড সংখ্যা">
+                            ঘটনার থ্রেশহোল্ড সংখ্যা
+                        </div>
+                        <div class="value-range">
+                            <input type="range" id="kSlider" class="range-slider" min="0" max="20" step="1" value="5">
+                            <span class="range-value" id="kValue">5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Probability Type Selection -->
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Probability Type" data-bn="প্রোবাবিলিটি ধরন">প্রোবাবিলিটি ধরন</span>
+                </h2>
+
+                <div class="probability-types">
+                    <button class="type-btn less-equal active" data-type="cdf">
+                        <div class="type-icon">
+                            <i class="fas fa-less-than-equal"></i>
+                        </div>
+                        <span data-en="P(X ≤ k)" data-bn="P(X ≤ k)">P(X ≤ k)</span>
+                        <small data-en="Cumulative Distribution Function" data-bn="কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশন">
+                            কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশন
+                        </small>
+                    </button>
+
+                    <button class="type-btn greater-equal" data-type="ccdf">
+                        <div class="type-icon">
+                            <i class="fas fa-greater-than-equal"></i>
+                        </div>
+                        <span data-en="P(X ≥ k)" data-bn="P(X ≥ k)">P(X ≥ k)</span>
+                        <small data-en="Complementary CDF" data-bn="কমপ্লিমেন্টরি CDF">
+                            কমপ্লিমেন্টরি CDF
+                        </small>
+                    </button>
+                </div>
+
+                <!-- Quick Examples -->
+                <h2 class="section-title">
+                    <i class="fas fa-lightbulb"></i>
+                    <span data-en="Quick Examples" data-bn="দ্রুত উদাহরণ">দ্রুত উদাহরণ</span>
+                </h2>
+                
+                <div class="examples-grid">
+                    <button class="example-btn" data-example="calls">
+                        <span data-en="Phone calls ≤ 2 (λ=1.5)" data-bn="ফোন কল ≤ ২ (λ=১.৫)">ফোন কল ≤ ২ (λ=১.৫)</span>
+                    </button>
+                    <button class="example-btn" data-example="defects">
+                        <span data-en="Defects ≥ 3 (λ=2)" data-bn="ত্রুটি ≥ ৩ (λ=২)">ত্রুটি ≥ ৩ (λ=২)</span>
+                    </button>
+                    <button class="example-btn" data-example="accidents">
+                        <span data-en="Accidents ≤ 1 (λ=0.8)" data-bn="দুর্ঘটনা ≤ ১ (λ=০.৮)">দুর্ঘটনা ≤ ১ (λ=০.৮)</span>
+                    </button>
+                    <button class="example-btn" data-example="customers">
+                        <span data-en="Customers ≥ 10 (λ=8)" data-bn="গ্রাহক ≥ ১০ (λ=৮)">গ্রাহক ≥ ১০ (λ=৮)</span>
+                    </button>
+                </div>
+
+                <!-- Calculation Controls -->
+                <div class="calculation-controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Probabilities" data-bn="প্রোবাবিলিটি গণনা করুন">প্রোবাবিলিটি গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset Values" data-bn="মান রিসেট করুন">মান রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Results Grid -->
+                <div class="results-grid">
+                    <div class="result-card cdf fade-in">
+                        <div class="result-title" data-en="Cumulative Probability" data-bn="কুমুলেটিভ প্রোবাবিলিটি">
+                            কুমুলেটিভ প্রোবাবিলিটি
+                        </div>
+                        <div class="result-value" id="cdfValue">0.8576</div>
+                        <div class="result-formula" id="cdfFormula">
+                            P(X ≤ 5) = 0.8576
+                        </div>
+                        <div class="help-text" data-en="Sum of probabilities from 0 to k" data-bন="০ থেকে k পর্যন্ত প্রোবাবিলিটির যোগফল">
+                            ০ থেকে k পর্যন্ত প্রোবাবিলিটির যোগফল
+                        </div>
+                    </div>
+
+                    <div class="result-card ccdf fade-in">
+                        <div class="result-title" data-en="Complementary Probability" data-bন="কমপ্লিমেন্টরি প্রোবাবিলিটি">
+                            কমপ্লিমেন্টরি প্রোবাবিলিটি
+                        </div>
+                        <div class="result-value" id="ccdfValue">0.1424</div>
+                        <div class="result-formula" id="ccdfFormula">
+                            P(X ≥ 6) = 0.1424
+                        </div>
+                        <div class="help-text" data-en="1 - P(X ≤ k-1)" data-bন="১ - P(X ≤ k-১)">
+                            ১ - P(X ≤ k-১)
+                        </div>
+                    </div>
+
+                    <div class="result-card complement fade-in">
+                        <div class="result-title" data-en="Complement Rule" data-bন="কমপ্লিমেন্ট রুল">
+                            কমপ্লিমেন্ট রুল
+                        </div>
+                        <div class="result-value" id="complementValue">1.0000</div>
+                        <div class="result-formula">
+                            P(X ≤ k) + P(X ≥ k+1) = 1
+                        </div>
+                        <div class="help-text" data-en="Sum of CDF and CCDF equals 1" data-bন="CDF এবং CCDF এর যোগফল ১ এর সমান">
+                            CDF এবং CCDF এর যোগফল ১ এর সমান
+                        </div>
+                    </div>
+
+                    <div class="result-card summary fade-in">
+                        <div class="result-title" data-en="Selected k" data-bন="নির্বাচিত k">
+                            নির্বাচিত k
+                        </div>
+                        <div class="result-value" id="selectedKValue">5</div>
+                        <div class="result-formula">
+                            <span data-en="Exact probability at k:" data-bন="k-তে সঠিক প্রোবাবিলিটি:">k-তে সঠিক প্রোবাবিলিটি:</span>
+                            <span id="pmfValue">0.1322</span>
+                        </div>
+                        <div class="help-text" id="rangeInfo" data-en="For k = 5" data-bন="k = ৫ এর জন্য">
+                            k = ৫ এর জন্য
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formula Explanation -->
+                <div class="formula-explanation fade-in">
+                    <div class="formula-title" data-en="Complement Rule Formula" data-bন="কমপ্লিমেন্ট রুল সূত্র">
+                        কমপ্লিমেন্ট রুল সূত্র
+                    </div>
+                    <div class="formula-content">
+                        P(X ≥ k) = 1 - P(X ≤ k-1)
+                    </div>
+                    <ul class="formula-steps">
+                        <li data-en="Calculate P(X ≤ k-1) using CDF" data-bন="CDF ব্যবহার করে P(X ≤ k-১) গণনা করুন">
+                            CDF ব্যবহার করে P(X ≤ k-১) গণনা করুন
+                        </li>
+                        <li data-en="Subtract from 1 to get P(X ≥ k)" data-bন="P(X ≥ k) পেতে ১ থেকে বিয়োগ করুন">
+                            P(X ≥ k) পেতে ১ থেকে বিয়োগ করুন
+                        </li>
+                        <li data-en="Works because probabilities sum to 1" data-bন="কাজ করে কারণ প্রোবাবিলিটির যোগফল ১">
+                            কাজ করে কারণ প্রোবাবিলিটির যোগফল ১
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CDF Visualization -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="CDF Visualization" data-bন="CDF ভিজ্যুয়ালাইজেশন">CDF ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <p data-en="Cumulative Distribution Function for Poisson(λ) distribution:" data-bন="পয়সন(λ) ডিস্ট্রিবিউশনের জন্য কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশন:">
+                পয়সন(λ) ডিস্ট্রিবিউশনের জন্য কুমুলেটিভ ডিস্ট্রিবিউশন ফাংশন:
+            </p>
+            
+            <div class="cdf-chart-container">
+                <div class="chart-wrapper" id="cdfChart">
+                    <!-- CDF curve will be drawn here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Complement Visualization -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Complement Rule Visualization" data-bন="কমপ্লিমেন্ট রুল ভিজ্যুয়ালাইজেশন">কমপ্লিমেন্ট রুল ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="complement-visualization">
+                <div class="complement-bar" id="complementBar">
+                    <div class="cdf-part" id="cdfPart">P(X ≤ 5) = 0.8576</div>
+                    <div class="ccdf-part" id="ccdfPart">P(X ≥ 6) = 0.1424</div>
+                </div>
+                <div class="complement-label">
+                    <span data-en="CDF: P(X ≤ k)" data-bন="CDF: P(X ≤ k)">CDF: P(X ≤ k)</span>
+                    <span data-en="CCDF: P(X ≥ k+1)" data-bন="CCDF: P(X ≥ k+১)">CCDF: P(X ≥ k+১)</span>
+                </div>
+                <p style="margin-top: 1rem; text-align: center;" data-en="The total probability (CDF + CCDF) always equals 1" data-bন="মোট প্রোবাবিলিটি (CDF + CCDF) সর্বদা ১ এর সমান">
+                    মোট প্রোবাবিলিটি (CDF + CCDF) সর্বদা ১ এর সমান
+                </p>
+            </div>
+        </div>
+
+        <!-- Distribution Summary -->
+        <div class="summary-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <span data-en="Distribution Summary" data-bন="ডিস্ট্রিবিউশন সারসংক্ষেপ">ডিস্ট্রিবিউশন সারসংক্ষেপ</span>
+            </h2>
+            
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label" data-en="Mean (λ)" data-bন="গড় (λ)">গড় (λ)</div>
+                    <div class="summary-value" id="meanValue">3.5</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                    <div class="summary-value" id="varianceValue">3.5</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    <div class="summary-value" id="stdDevValue">1.8708</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="Mode" data-bন="মোড">মোড</div>
+                    <div class="summary-value" id="modeValue">3</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="P(X = 0)" data-bন="P(X = ০)">P(X = ০)</div>
+                    <div class="summary-value" id="pZeroValue">0.0302</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="P(X ≤ 2λ)" data-bন="P(X ≤ ২λ)">P(X ≤ ২λ)</div>
+                    <div class="summary-value" id="pTwoLambdaValue">0.9733</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="99% Range" data-bন="৯৯% রেঞ্জ">৯৯% রেঞ্জ</div>
+                    <div class="summary-value" id="ninetyNineRange">0 - 9</div>
+                </div>
+                
+                <div class="summary-item">
+                    <div class="summary-label" data-en="Expected Events" data-bন="প্রত্যাশিত ঘটনা">প্রত্যাশিত ঘটনা</div>
+                    <div class="summary-value" id="expectedEvents">3.5</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Calculation State
+            let calculationState = {
+                lambda: 3.5,
+                k: 5,
+                probabilityType: 'cdf', // 'cdf' or 'ccdf'
+                cdfValue: 0.8576,
+                ccdfValue: 0.1424,
+                pmfValue: 0.1322
+            };
+
+            // Quick Examples
+            const examples = {
+                calls: { lambda: 1.5, k: 2, type: 'cdf' },
+                defects: { lambda: 2, k: 3, type: 'ccdf' },
+                accidents: { lambda: 0.8, k: 1, type: 'cdf' },
+                customers: { lambda: 8, k: 10, type: 'ccdf' }
+            };
+
+            // DOM Elements
+            const lambdaInput = document.getElementById('lambdaInput');
+            const lambdaSlider = document.getElementById('lambdaSlider');
+            const lambdaValue = document.getElementById('lambdaValue');
+            const kInput = document.getElementById('kInput');
+            const kSlider = document.getElementById('kSlider');
+            const kValue = document.getElementById('kValue');
+            const typeBtns = document.querySelectorAll('.type-btn');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const cdfValue = document.getElementById('cdfValue');
+            const cdfFormula = document.getElementById('cdfFormula');
+            const ccdfValue = document.getElementById('ccdfValue');
+            const ccdfFormula = document.getElementById('ccdfFormula');
+            const complementValue = document.getElementById('complementValue');
+            const selectedKValue = document.getElementById('selectedKValue');
+            const pmfValue = document.getElementById('pmfValue');
+            const rangeInfo = document.getElementById('rangeInfo');
+            const cdfPart = document.getElementById('cdfPart');
+            const ccdfPart = document.getElementById('ccdfPart');
+            const complementBar = document.getElementById('complementBar');
+            const cdfChart = document.getElementById('cdfChart');
+
+            // Statistics elements
+            const meanValue = document.getElementById('meanValue');
+            const varianceValue = document.getElementById('varianceValue');
+            const stdDevValue = document.getElementById('stdDevValue');
+            const modeValue = document.getElementById('modeValue');
+            const pZeroValue = document.getElementById('pZeroValue');
+            const pTwoLambdaValue = document.getElementById('pTwoLambdaValue');
+            const ninetyNineRange = document.getElementById('ninetyNineRange');
+            const expectedEvents = document.getElementById('expectedEvents');
+
+            // Euler's number
+            const e = Math.E;
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Synchronization
+                lambdaInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    if (!isNaN(value) && value >= 0.1 && value <= 20) {
+                        lambdaSlider.value = value;
+                        lambdaValue.textContent = value.toFixed(1);
+                        calculationState.lambda = value;
+                    }
+                });
+
+                lambdaSlider.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    lambdaInput.value = value;
+                    lambdaValue.textContent = value.toFixed(1);
+                    calculationState.lambda = value;
+                });
+
+                kInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    if (!isNaN(value) && value >= 0 && value <= 30) {
+                        kSlider.value = value;
+                        kValue.textContent = value;
+                        calculationState.k = value;
+                    }
+                });
+
+                kSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    kInput.value = value;
+                    kValue.textContent = value;
+                    calculationState.k = value;
+                });
+
+                // Probability Type Selection
+                typeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const type = this.dataset.type;
+                        setProbabilityType(type);
+                    });
+                });
+
+                // Calculation Controls
+                calculateBtn.addEventListener('click', calculateProbabilities);
+                clearBtn.addEventListener('click', resetCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Calculate with initial values
+                setTimeout(() => {
+                    calculateProbabilities();
+                    updateCDFChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setProbabilityType(type) {
+                calculationState.probabilityType = type;
+                
+                // Update active button
+                typeBtns.forEach(btn => {
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function factorial(n) {
+                if (n < 0) return 0;
+                if (n === 0 || n === 1) return 1;
+                
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            }
+
+            function poissonPMF(lambda, k) {
+                if (lambda <= 0 || k < 0) return 0;
+                
+                const numerator = Math.pow(lambda, k) * Math.pow(e, -lambda);
+                const denominator = factorial(k);
+                
+                return numerator / denominator;
+            }
+
+            function poissonCDF(lambda, k) {
+                if (k < 0) return 0;
+                
+                let sum = 0;
+                for (let i = 0; i <= k; i++) {
+                    sum += poissonPMF(lambda, i);
+                }
+                
+                return sum;
+            }
+
+            function poissonCCDF(lambda, k) {
+                // P(X ≥ k) = 1 - P(X ≤ k-1)
+                return 1 - poissonCDF(lambda, k - 1);
+            }
+
+            function calculateProbabilities() {
+                const lambda = calculationState.lambda;
+                const k = calculationState.k;
+                
+                // Calculate CDF (P(X ≤ k))
+                const cdf = poissonCDF(lambda, k);
+                
+                // Calculate CCDF (P(X ≥ k+1))
+                const ccdf = poissonCCDF(lambda, k + 1);
+                
+                // Calculate PMF at k (P(X = k))
+                const pmf = poissonPMF(lambda, k);
+                
+                // Update state
+                calculationState.cdfValue = cdf;
+                calculationState.ccdfValue = ccdf;
+                calculationState.pmfValue = pmf;
+                
+                // Update display
+                updateResults(lambda, k, cdf, ccdf, pmf);
+                updateComplementVisualization(cdf, ccdf);
+                updateDistributionSummary(lambda);
+                updateCDFChart();
+                
+                // Add animation
+                cdfValue.classList.add('pulse');
+                ccdfValue.classList.add('pulse');
+                setTimeout(() => {
+                    cdfValue.classList.remove('pulse');
+                    ccdfValue.classList.remove('pulse');
+                }, 500);
+            }
+
+            function updateResults(lambda, k, cdf, ccdf, pmf) {
+                // Format values
+                const cdfFormatted = cdf.toFixed(4);
+                const ccdfFormatted = ccdf.toFixed(4);
+                const pmfFormatted = pmf.toFixed(4);
+                const lambdaFormatted = lambda.toFixed(1);
+                
+                // Update CDF display
+                cdfValue.textContent = cdfFormatted;
+                cdfFormula.textContent = `P(X ≤ ${k}) = ${cdfFormatted}`;
+                
+                // Update CCDF display
+                ccdfValue.textContent = ccdfFormatted;
+                ccdfFormula.textContent = `P(X ≥ ${k + 1}) = ${ccdfFormatted}`;
+                
+                // Update complement value
+                complementValue.textContent = (cdf + ccdf).toFixed(4);
+                
+                // Update selected k display
+                selectedKValue.textContent = k;
+                pmfValue.textContent = pmfFormatted;
+                
+                // Update range info
+                if (currentLanguage === 'bn') {
+                    rangeInfo.textContent = `k = ${k} এর জন্য`;
+                } else {
+                    rangeInfo.textContent = `For k = ${k}`;
+                }
+                
+                // Update formula explanation
+                const formulaContent = document.querySelector('.formula-content');
+                formulaContent.textContent = `P(X ≥ ${k + 1}) = 1 - P(X ≤ ${k})`;
+            }
+
+            function updateComplementVisualization(cdf, ccdf) {
+                const cdfPercent = cdf * 100;
+                const ccdfPercent = ccdf * 100;
+                
+                // Update bar widths
+                cdfPart.style.width = `${cdfPercent}%`;
+                ccdfPart.style.width = `${ccdfPercent}%`;
+                
+                // Update bar text
+                if (currentLanguage === 'bn') {
+                    cdfPart.textContent = `P(X ≤ ${calculationState.k}) = ${cdf.toFixed(4)}`;
+                    ccdfPart.textContent = `P(X ≥ ${calculationState.k + 1}) = ${ccdf.toFixed(4)}`;
+                } else {
+                    cdfPart.textContent = `P(X ≤ ${calculationState.k}) = ${cdf.toFixed(4)}`;
+                    ccdfPart.textContent = `P(X ≥ ${calculationState.k + 1}) = ${ccdf.toFixed(4)}`;
+                }
+                
+                // Update text colors based on background
+                cdfPart.style.color = cdfPercent > 50 ? 'white' : 'var(--dark)';
+                ccdfPart.style.color = ccdfPercent > 50 ? 'white' : 'var(--dark)';
+            }
+
+            function updateDistributionSummary(lambda) {
+                // Calculate statistics
+                const mean = lambda;
+                const variance = lambda;
+                const stdDev = Math.sqrt(lambda);
+                
+                // Calculate mode
+                let mode;
+                if (lambda === Math.floor(lambda)) {
+                    mode = `${Math.floor(lambda)}, ${Math.floor(lambda)-1}`;
+                } else {
+                    mode = Math.floor(lambda).toString();
+                }
+                
+                // Calculate P(X = 0)
+                const pZero = poissonPMF(lambda, 0);
+                
+                // Calculate P(X ≤ 2λ)
+                const pTwoLambda = poissonCDF(lambda, Math.floor(2 * lambda));
+                
+                // Calculate 99% range
+                let lower = 0;
+                let upper = 0;
+                let cumulative = 0;
+                
+                for (let i = 0; i <= 50; i++) {
+                    cumulative += poissonPMF(lambda, i);
+                    if (cumulative >= 0.005 && lower === 0) lower = i;
+                    if (cumulative >= 0.995 && upper === 0) upper = i;
+                }
+                
+                // Update display
+                meanValue.textContent = mean.toFixed(1);
+                varianceValue.textContent = variance.toFixed(1);
+                stdDevValue.textContent = stdDev.toFixed(4);
+                modeValue.textContent = mode;
+                pZeroValue.textContent = pZero.toFixed(4);
+                pTwoLambdaValue.textContent = pTwoLambda.toFixed(4);
+                ninetyNineRange.textContent = `${lower} - ${upper}`;
+                expectedEvents.textContent = mean.toFixed(1);
+            }
+
+            function updateCDFChart() {
+                const lambda = calculationState.lambda;
+                const currentK = calculationState.k;
+                
+                // Clear previous chart
+                cdfChart.innerHTML = '';
+                
+                // Calculate CDF values for k = 0 to maxK
+                const maxK = Math.min(20, Math.ceil(lambda * 3));
+                const cdfValues = [];
+                
+                for (let k = 0; k <= maxK; k++) {
+                    cdfValues.push(poissonCDF(lambda, k));
+                }
+                
+                // Create SVG container
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("class", "connection-line");
+                
+                // Create curve points container
+                const curveContainer = document.createElement('div');
+                curveContainer.className = 'cdf-curve';
+                
+                // Create path for the CDF curve
+                let pathData = `M 0,${100} `;
+                
+                // Draw points and lines
+                cdfValues.forEach((cdf, k) => {
+                    const xPercent = (k / maxK) * 100;
+                    const yPercent = 100 - (cdf * 100);
+                    
+                    // Add to path
+                    pathData += `L ${xPercent},${yPercent} `;
+                    
+                    // Create point
+                    const point = document.createElement('div');
+                    point.className = 'curve-point';
+                    point.style.width = `${100 / maxK}%`;
+                    
+                    // Create vertical line
+                    const line = document.createElement('div');
+                    line.className = 'cdf-line';
+                    point.appendChild(line);
+                    
+                    // Create dot
+                    const dot = document.createElement('div');
+                    dot.className = `cdf-dot ${k === currentK ? 'selected' : ''}`;
+                    dot.style.left = '50%';
+                    dot.style.bottom = `${cdf * 100}%`;
+                    dot.title = `P(X ≤ ${k}) = ${cdf.toFixed(4)}`;
+                    
+                    // Create label
+                    const label = document.createElement('div');
+                    label.className = 'dot-label';
+                    label.textContent = k;
+                    
+                    // Create value display
+                    if (k === currentK || k === 0 || k === maxK || k % 5 === 0) {
+                        const value = document.createElement('div');
+                        value.className = 'dot-value';
+                        value.textContent = cdf.toFixed(2);
+                        dot.appendChild(value);
+                    }
+                    
+                    point.appendChild(dot);
+                    point.appendChild(label);
+                    curveContainer.appendChild(point);
+                    
+                    // Add click event to select this k value
+                    dot.addEventListener('click', function() {
+                        calculationState.k = k;
+                        kInput.value = k;
+                        kSlider.value = k;
+                        kValue.textContent = k;
+                        calculateProbabilities();
+                    });
+                });
+                
+                // Create the path element
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("class", "line");
+                
+                svg.appendChild(path);
+                cdfChart.appendChild(svg);
+                cdfChart.appendChild(curveContainer);
+                
+                // Add axis labels
+                const xAxis = document.createElement('div');
+                xAxis.style.position = 'absolute';
+                xAxis.style.bottom = '-30px';
+                xAxis.style.left = '0';
+                xAxis.style.right = '0';
+                xAxis.style.textAlign = 'center';
+                xAxis.style.fontSize = '0.9rem';
+                xAxis.style.color = 'var(--gray)';
+                xAxis.textContent = currentLanguage === 'bn' ? 'ঘটনার সংখ্যা (k)' : 'Number of Events (k)';
+                cdfChart.appendChild(xAxis);
+                
+                const yAxis = document.createElement('div');
+                yAxis.style.position = 'absolute';
+                yAxis.style.top = '10px';
+                yAxis.style.left = '-80px';
+                yAxis.style.transform = 'rotate(-90deg)';
+                yAxis.style.transformOrigin = 'center';
+                yAxis.style.fontSize = '0.9rem';
+                yAxis.style.color = 'var(--gray)';
+                yAxis.textContent = currentLanguage === 'bn' ? 'কুমুলেটিভ প্রোবাবিলিটি' : 'Cumulative Probability';
+                cdfChart.appendChild(yAxis);
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    
+                    calculationState.lambda = data.lambda;
+                    calculationState.k = data.k;
+                    
+                    lambdaInput.value = data.lambda;
+                    lambdaSlider.value = data.lambda;
+                    lambdaValue.textContent = data.lambda;
+                    
+                    kInput.value = data.k;
+                    kSlider.value = data.k;
+                    kValue.textContent = data.k;
+                    
+                    setProbabilityType(data.type);
+                    
+                    calculateProbabilities();
+                }
+            }
+
+            function resetCalculator() {
+                calculationState.lambda = 3.5;
+                calculationState.k = 5;
+                calculationState.probabilityType = 'cdf';
+                
+                lambdaInput.value = 3.5;
+                lambdaSlider.value = 3.5;
+                lambdaValue.textContent = '3.5';
+                
+                kInput.value = 5;
+                kSlider.value = 5;
+                kValue.textContent = '5';
+                
+                setProbabilityType('cdf');
+                
+                calculateProbabilities();
+            }
+
+            // Export functions for debugging
+            window.calculateProbabilities = calculateProbabilities;
+            window.poissonCDF = poissonCDF;
+            window.poissonCCDF = poissonCCDF;
+        });
+    </script>
+</body>
+</html>

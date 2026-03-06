@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পার্সেন্টাইল টু Z-স্কোর কনভার্টার | নরমাল ডিস্ট্রিবিউশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #2196F3;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --success: #8BC34A;
+            --purple: #9C27B0;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --percentile-fill: rgba(76, 175, 80, 0.2);
+            --zscore-line: rgba(33, 150, 243, 0.8);
+            --cdf-curve: #9C27B0;
+            --normal-curve: #4CAF50;
+            --standard-line: #FF9800;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--accent), var(--purple));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Converter Panel */
+        .converter-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Converter Type Selection */
+        .converter-type-selection {
+            margin-bottom: 2rem;
+        }
+
+        .converter-type-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .converter-type-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .converter-type-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border);
+        }
+
+        .converter-type-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .converter-type-card.selected {
+            border-color: var(--primary);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .converter-type-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .converter-type-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .converter-type-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        /* Test Score Interpretation */
+        .test-score-section {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .test-score-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-score-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .test-score-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .test-score-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .action-btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.purple {
+            background: var(--purple);
+            color: white;
+        }
+
+        .action-btn.purple:hover {
+            background: #7B1FA2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            margin-bottom: 2rem;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .normal-curve-legend { background: var(--normal-curve); }
+        .cdf-curve-legend { background: var(--cdf-curve); }
+        .percentile-fill-legend { background: var(--percentile-fill); }
+        .zscore-line-legend { background: var(--zscore-line); }
+        .standard-line-legend { background: var(--standard-line); }
+
+        /* Results Display */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .result-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-unit {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.3rem;
+        }
+
+        /* Interpretation Section */
+        .interpretation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .interpretation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .interpretation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .interpretation-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .interpretation-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .interpretation-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .interpretation-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .interpretation-content {
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .interpretation-highlight {
+            background: rgba(255, 152, 0, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--warning);
+        }
+
+        /* Quantile Function Section */
+        .quantile-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .formula-card {
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--purple);
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .formula-content {
+            font-size: 1.1rem;
+            color: var(--dark);
+            margin: 1.5rem 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .formula-explanation {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        /* Common Percentiles Table */
+        .percentiles-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+
+        .percentiles-table th,
+        .percentiles-table td {
+            padding: 0.8rem 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .percentiles-table th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .percentiles-table tr:nth-child(even) {
+            background: var(--light-gray);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .converter-panel,
+            .visualization-area,
+            .results-section,
+            .interpretation-section,
+            .quantile-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { background-color: rgba(76, 175, 80, 0.1); }
+            100% { background-color: transparent; }
+        }
+
+        .highlight {
+            animation: highlight 1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Percentile to Z-Score Converter" data-bn="পার্সেন্টাইল টু Z-স্কোর কনভার্টার">পার্সেন্টাইল টু Z-স্কোর কনভার্টার</h1>
+            <p class="subtitle" data-en="Convert percentiles to z-scores and vice versa using inverse CDF calculation, quantile function, and test score interpretation" data-bন="ইনভার্স CDF গণনা, কোয়ান্টাইল ফাংশন এবং টেস্ট স্কোর ইন্টারপ্রিটেশন ব্যবহার করে পার্সেন্টাইলকে Z-স্কোরে এবং এর বিপরীতে কনভার্ট করুন">
+                ইনভার্স CDF গণনা, কোয়ান্টাইল ফাংশন এবং টেস্ট স্কোর ইন্টারপ্রিটেশন ব্যবহার করে পার্সেন্টাইলকে Z-স্কোরে এবং এর বিপরীতে কনভার্ট করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Converter Panel -->
+            <div class="converter-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span data-en="Converter Type" data-bn="কনভার্টার ধরন">কনভার্টার ধরন</span>
+                </h2>
+                
+                <!-- Converter Type Selection -->
+                <div class="converter-type-selection">
+                    <div class="converter-type-grid">
+                        <div class="converter-type-card selected" id="percentileToZCard">
+                            <div class="converter-type-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="converter-type-title" data-en="Percentile to Z-Score" data-bন="পার্সেন্টাইল টু Z-স্কোর">পার্সেন্টাইল টু Z-স্কোর</div>
+                            <div class="converter-type-description" data-en="Convert percentile to standard score" data-bন="পার্সেন্টাইলকে স্ট্যান্ডার্ড স্কোরে রূপান্তর করুন">
+                                পার্সেন্টাইলকে স্ট্যান্ডার্ড স্কোরে রূপান্তর করুন
+                            </div>
+                        </div>
+                        
+                        <div class="converter-type-card" id="zToPercentileCard">
+                            <div class="converter-type-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="converter-type-title" data-en="Z-Score to Percentile" data-bন="Z-স্কোর টু পার্সেন্টাইল">Z-স্কোর টু পার্সেন্টাইল</div>
+                            <div class="converter-type-description" data-en="Convert standard score to percentile" data-bন="স্ট্যান্ডার্ড স্কোরকে পার্সেন্টাইলে রূপান্তর করুন">
+                                স্ট্যান্ডার্ড স্কোরকে পার্সেন্টাইলে রূপান্তর করুন
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Percentile to Z-Score Input -->
+                <div class="input-group" id="percentileInputGroup">
+                    <label class="input-label" data-en="Percentile Value (0 to 100)" data-bন="পার্সেন্টাইল মান (০ থেকে ১০০)">পার্সেন্টাইল মান (০ থেকে ১০০)</label>
+                    <input type="number" class="number-input" id="percentileInput" min="0" max="100" step="0.1" value="84.13">
+                    <div class="input-help" data-en="Enter percentile rank (e.g., 84.13 for 1σ above mean)" data-bন="পার্সেন্টাইল র্যাঙ্ক দিন (যেমন, মিনের উপরে ১σ এর জন্য ৮৪.১৩)">
+                        পার্সেন্টাইল র্যাঙ্ক দিন (যেমন, মিনের উপরে ১σ এর জন্য ৮৪.১৩)
+                    </div>
+                </div>
+
+                <!-- Z-Score to Percentile Input -->
+                <div class="input-group" id="zScoreInputGroup" style="display: none;">
+                    <label class="input-label" data-en="Z-Score Value" data-bন="Z-স্কোর মান">Z-স্কোর মান</label>
+                    <input type="number" class="number-input" id="zScoreInput" min="-5" max="5" step="0.1" value="1.0">
+                    <div class="input-help" data-en="Enter z-score (e.g., 1.0 for 1 standard deviation above mean)" data-bন="Z-স্কোর দিন (যেমন, মিনের উপরে ১ স্ট্যান্ডার্ড ডেভিয়েশনের জন্য ১.০)">
+                        Z-স্কোর দিন (যেমন, মিনের উপরে ১ স্ট্যান্ডার্ড ডেভিয়েশনের জন্য ১.০)
+                    </div>
+                </div>
+
+                <!-- Test Score Interpretation -->
+                <div class="test-score-section">
+                    <div class="test-score-header">
+                        <div class="test-score-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3 class="test-score-title" data-en="Test Score Interpretation" data-bন="টেস্ট স্কোর ইন্টারপ্রিটেশন">টেস্ট স্কোর ইন্টারপ্রিটেশন</h3>
+                    </div>
+                    
+                    <div class="test-score-inputs">
+                        <div class="input-group">
+                            <label class="input-label" data-en="Test Mean (μ)" data-bন="টেস্ট মিন (μ)">টেস্ট মিন (μ)</label>
+                            <input type="number" class="number-input" id="testMeanInput" value="100">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label" data-en="Test SD (σ)" data-bন="টেস্ট SD (σ)">টেস্ট SD (σ)</label>
+                            <input type="number" class="number-input" id="testSDInput" value="15">
+                        </div>
+                    </div>
+                    
+                    <button class="action-btn secondary" id="interpretBtn">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span data-en="Interpret Test Score" data-bন="টেস্ট স্কোর ইন্টারপ্রিট করুন">টেস্ট স্কোর ইন্টারপ্রিট করুন</span>
+                    </button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn primary" id="convertBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Convert" data-bন="কনভার্ট করুন">কনভার্ট করুন</span>
+                    </button>
+                    <button class="action-btn purple" id="showTableBtn">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Show Common Values" data-bন="সাধারণ মান দেখান">সাধারণ মান দেখান</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-area"></i>
+                    <span data-en="Visual Representation" data-bন="ভিজ্যুয়াল উপস্থাপনা">ভিজ্যুয়াল উপস্থাপনা</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="conversionChart"></canvas>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color normal-curve-legend"></div>
+                        <span data-en="Normal Distribution" data-bন="নরমাল ডিস্ট্রিবিউশন">নরমাল ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color cdf-curve-legend"></div>
+                        <span data-en="CDF (Cumulative)" data-bন="CDF (কুমুলেটিভ)">CDF (কুমুলেটিভ)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color percentile-fill-legend"></div>
+                        <span data-en="Percentile Area" data-bন="পার্সেন্টাইল এলাকা">পার্সেন্টাইল এলাকা</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color zscore-line-legend"></div>
+                        <span data-en="Z-Score Position" data-bন="Z-স্কোর অবস্থান">Z-স্কোর অবস্থান</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="results-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Conversion Results" data-bন="কনভার্শন ফলাফল">কনভার্শন ফলাফল</span>
+            </h2>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="result-title" data-en="Percentile" data-bন="পার্সেন্টাইল">পার্সেন্টাইল</div>
+                    <div class="result-value" id="percentileResult">84.13%</div>
+                    <div class="result-unit" id="percentileDescription">1σ above mean</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="result-title" data-en="Z-Score" data-bন="Z-স্কোর">Z-স্কোর</div>
+                    <div class="result-value" id="zScoreResult">1.00</div>
+                    <div class="result-unit">standard deviations</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="result-title" data-en="Test Score" data-bন="টেস্ট স্কোর">টেস্ট স্কোর</div>
+                    <div class="result-value" id="testScoreResult">115.0</div>
+                    <div class="result-unit">raw score</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-sort-amount-up"></i>
+                    </div>
+                    <div class="result-title" data-en="Rank Position" data-bন="র্যাঙ্ক অবস্থান">র্যাঙ্ক অবস্থান</div>
+                    <div class="result-value" id="rankResult">Top 15.87%</div>
+                    <div class="result-unit">of population</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="result-title" data-en="Probability" data-bন="প্রোবাবিলিটি">প্রোবাবিলিটি</div>
+                    <div class="result-value" id="probabilityResult">0.8413</div>
+                    <div class="result-unit">P(Z ≤ z)</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-ruler"></i>
+                    </div>
+                    <div class="result-title" data-en="Distance from Mean" data-bন="মিন থেকে দূরত্ব">মিন থেকে দূরত্ব</div>
+                    <div class="result-value" id="distanceResult">1.00σ</div>
+                    <div class="result-unit">standard deviations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interpretation Section -->
+        <div class="interpretation-section">
+            <h2 class="section-title">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span data-en="Score Interpretation" data-bন="স্কোর ইন্টারপ্রিটেশন">স্কোর ইন্টারপ্রিটেশন</span>
+            </h2>
+            
+            <div class="interpretation-grid">
+                <div class="interpretation-card">
+                    <div class="interpretation-header">
+                        <div class="interpretation-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="interpretation-title" data-en="IQ Score Interpretation" data-bন="আইকিউ স্কোর ইন্টারপ্রিটেশন">আইকিউ স্কোর ইন্টারপ্রিটেশন</h3>
+                    </div>
+                    <div class="interpretation-content">
+                        <p data-en="Based on the standard IQ scale (μ=100, σ=15):" data-bন="স্ট্যান্ডার্ড আইকিউ স্কেলের ভিত্তিতে (μ=100, σ=১৫):">
+                            স্ট্যান্ডার্ড আইকিউ স্কেলের ভিত্তিতে (μ=100, σ=১৫):
+                        </p>
+                        <div class="interpretation-highlight" id="iqInterpretation">
+                            <strong data-en="Z-score of 1.00" data-bন="Z-স্কোর ১.০০">Z-স্কোর ১.০০</strong><br>
+                            <span data-en="corresponds to IQ 115" data-bন="আইকিউ ১১৫ এর সাথে সামঞ্জস্যপূর্ণ">আইকিউ ১১৫ এর সাথে সামঞ্জস্যপূর্ণ</span><br>
+                            <span data-en="Percentile: 84.13%" data-bন="পার্সেন্টাইল: ৮৪.১৩%">পার্সেন্টাইল: ৮৪.১৩%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="interpretation-card">
+                    <div class="interpretation-header">
+                        <div class="interpretation-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <h3 class="interpretation-title" data-en="SAT Score Interpretation" data-bন="SAT স্কোর ইন্টারপ্রিটেশন">SAT স্কোর ইন্টারপ্রিটেশন</h3>
+                    </div>
+                    <div class="interpretation-content">
+                        <p data-en="Based on SAT scale (μ=1050, σ=200):" data-bন="SAT স্কেলের ভিত্তিতে (μ=1050, σ=২০০):">
+                            SAT স্কেলের ভিত্তিতে (μ=1050, σ=২০০):
+                        </p>
+                        <div class="interpretation-highlight" id="satInterpretation">
+                            <strong data-en="Z-score of 1.00" data-bন="Z-স্কোর ১.০০">Z-স্কোর ১.০০</strong><br>
+                            <span data-en="corresponds to SAT 1250" data-bন="SAT ১২৫০ এর সাথে সামঞ্জস্যপূর্ণ">SAT ১২৫০ এর সাথে সামঞ্জস্যপূর্ণ</span><br>
+                            <span data-en="Top 15.87% of test takers" data-bন="পরীক্ষার্থীদের শীর্ষ ১৫.৮৭%">পরীক্ষার্থীদের শীর্ষ ১৫.৮৭%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quantile Function Section -->
+        <div class="quantile-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Inverse CDF & Quantile Function" data-bন="ইনভার্স CDF এবং কোয়ান্টাইল ফাংশন">ইনভার্স CDF এবং কোয়ান্টাইল ফাংশন</span>
+            </h2>
+            
+            <div class="formula-card">
+                <div class="formula-title">
+                    <i class="fas fa-calculator"></i>
+                    <span data-en="Quantile Function (Inverse CDF)" data-bন="কোয়ান্টাইল ফাংশন (ইনভার্স CDF)">কোয়ান্টাইল ফাংশন (ইনভার্স CDF)</span>
+                </div>
+                
+                <div class="formula-content">
+                    <div id="quantileFormulaDisplay">
+                        $$Q(p) = \Phi^{-1}(p) = \mu + \sigma \cdot \sqrt{2} \cdot \text{erf}^{-1}(2p - 1)$$
+                    </div>
+                </div>
+                
+                <div class="formula-explanation">
+                    <p data-en="Where:" data-bn="যেখানে:">যেখানে:</p>
+                    <ul style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                        <li data-en="Q(p) is the quantile function (inverse CDF)" data-bন="Q(p) হল কোয়ান্টাইল ফাংশন (ইনভার্স CDF)">Q(p) হল কোয়ান্টাইল ফাংশন (ইনভার্স CDF)</li>
+                        <li data-en="Φ⁻¹ is the inverse of standard normal CDF" data-bন="Φ⁻¹ হল স্ট্যান্ডার্ড নরমাল CDF এর ইনভার্স">Φ⁻¹ হল স্ট্যান্ডার্ড নরমাল CDF এর ইনভার্স</li>
+                        <li data-en="erf⁻¹ is the inverse error function" data-bন="erf⁻¹ হল ইনভার্স এরর ফাংশন">erf⁻¹ হল ইনভার্স এরর ফাংশন</li>
+                        <li data-en="p is the probability/percentile (0 to 1)" data-bন="p হল প্রোবাবিলিটি/পার্সেন্টাইল (০ থেকে ১)">p হল প্রোবাবিলিটি/পার্সেন্টাইল (০ থেকে ১)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Common Percentiles Table -->
+            <h3 class="section-title" style="margin-top: 2rem;">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Common Percentiles and Z-Scores" data-bন="সাধারণ পার্সেন্টাইল এবং Z-স্কোর">সাধারণ পার্সেন্টাইল এবং Z-স্কোর</span>
+            </h3>
+            
+            <table class="percentiles-table">
+                <thead>
+                    <tr>
+                        <th data-en="Percentile" data-bন="পার্সেন্টাইল">পার্সেন্টাইল</th>
+                        <th data-en="Z-Score" data-bন="Z-স্কোর">Z-স্কোর</th>
+                        <th data-en="Description" data-bন="বর্ণনা">বর্ণনা</th>
+                        <th data-en="IQ Score (μ=100, σ=15)" data-bন="আইকিউ স্কোর (μ=100, σ=15)">আইকিউ স্কোর (μ=100, σ=15)</th>
+                    </tr>
+                </thead>
+                <tbody id="commonPercentilesTable">
+                    <!-- Table will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let chart = null;
+            
+            // Current settings
+            let converterType = 'percentileToZ'; // percentileToZ or zToPercentile
+            let percentile = 84.13;
+            let zScore = 1.0;
+            let testMean = 100;
+            let testSD = 15;
+            
+            // Common percentiles data
+            const commonPercentiles = [
+                { percentile: 0.13, zScore: -3.0, description: '3σ below mean', iq: 55 },
+                { percentile: 0.62, zScore: -2.5, description: '2.5σ below mean', iq: 62.5 },
+                { percentile: 2.28, zScore: -2.0, description: '2σ below mean', iq: 70 },
+                { percentile: 6.68, zScore: -1.5, description: '1.5σ below mean', iq: 77.5 },
+                { percentile: 15.87, zScore: -1.0, description: '1σ below mean', iq: 85 },
+                { percentile: 30.85, zScore: -0.5, description: '0.5σ below mean', iq: 92.5 },
+                { percentile: 50.00, zScore: 0.0, description: 'Mean', iq: 100 },
+                { percentile: 69.15, zScore: 0.5, description: '0.5σ above mean', iq: 107.5 },
+                { percentile: 84.13, zScore: 1.0, description: '1σ above mean', iq: 115 },
+                { percentile: 93.32, zScore: 1.5, description: '1.5σ above mean', iq: 122.5 },
+                { percentile: 97.72, zScore: 2.0, description: '2σ above mean', iq: 130 },
+                { percentile: 99.38, zScore: 2.5, description: '2.5σ above mean', iq: 137.5 },
+                { percentile: 99.87, zScore: 3.0, description: '3σ above mean', iq: 145 },
+                { percentile: 99.99, zScore: 3.5, description: '3.5σ above mean', iq: 152.5 }
+            ];
+            
+            // Initialize Chart.js
+            const ctx = document.getElementById('conversionChart').getContext('2d');
+            
+            // Initialize application
+            initConverter();
+            
+            function initConverter() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+                
+                // Set Bengali as default
+                setLanguage('bn');
+                
+                // Converter type selection
+                document.getElementById('percentileToZCard').addEventListener('click', () => selectConverterType('percentileToZ'));
+                document.getElementById('zToPercentileCard').addEventListener('click', () => selectConverterType('zToPercentile'));
+                
+                // Input event listeners
+                document.getElementById('percentileInput').addEventListener('input', updatePercentile);
+                document.getElementById('zScoreInput').addEventListener('input', updateZScore);
+                document.getElementById('testMeanInput').addEventListener('input', updateTestMean);
+                document.getElementById('testSDInput').addEventListener('input', updateTestSD);
+                
+                // Button event listeners
+                document.getElementById('convertBtn').addEventListener('click', convert);
+                document.getElementById('interpretBtn').addEventListener('click', interpretTestScore);
+                document.getElementById('showTableBtn').addEventListener('click', showCommonValues);
+                
+                // Initialize chart
+                initializeChart();
+                
+                // Populate common percentiles table
+                populateCommonPercentilesTable();
+                
+                // Perform initial conversion
+                setTimeout(() => {
+                    convert();
+                }, 500);
+            }
+            
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+                
+                // Update converter type labels
+                updateConverterTypeUI();
+                
+                // Update common percentiles table
+                populateCommonPercentilesTable();
+                
+                // Update chart if it exists
+                if (chart) {
+                    updateChartLanguage();
+                }
+            }
+            
+            function selectConverterType(type) {
+                converterType = type;
+                updateConverterTypeUI();
+                
+                // Perform conversion based on current input
+                if (type === 'percentileToZ') {
+                    // Convert percentile to z-score
+                    const percentileValue = parseFloat(document.getElementById('percentileInput').value);
+                    if (!isNaN(percentileValue)) {
+                        percentile = percentileValue;
+                        zScore = percentileToZScore(percentile / 100);
+                        updateResults();
+                        updateChart();
+                    }
+                } else {
+                    // Convert z-score to percentile
+                    const zScoreValue = parseFloat(document.getElementById('zScoreInput').value);
+                    if (!isNaN(zScoreValue)) {
+                        zScore = zScoreValue;
+                        percentile = zScoreToPercentile(zScore) * 100;
+                        updateResults();
+                        updateChart();
+                    }
+                }
+            }
+            
+            function updateConverterTypeUI() {
+                // Update UI for selected converter type
+                document.querySelectorAll('.converter-type-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                if (converterType === 'percentileToZ') {
+                    document.getElementById('percentileToZCard').classList.add('selected');
+                    document.getElementById('percentileInputGroup').style.display = 'block';
+                    document.getElementById('zScoreInputGroup').style.display = 'none';
+                } else {
+                    document.getElementById('zToPercentileCard').classList.add('selected');
+                    document.getElementById('percentileInputGroup').style.display = 'none';
+                    document.getElementById('zScoreInputGroup').style.display = 'block';
+                }
+            }
+            
+            function updatePercentile() {
+                percentile = parseFloat(document.getElementById('percentileInput').value) || 84.13;
+                // Clamp between 0 and 100
+                percentile = Math.max(0, Math.min(100, percentile));
+            }
+            
+            function updateZScore() {
+                zScore = parseFloat(document.getElementById('zScoreInput').value) || 1.0;
+            }
+            
+            function updateTestMean() {
+                testMean = parseFloat(document.getElementById('testMeanInput').value) || 100;
+            }
+            
+            function updateTestSD() {
+                testSD = parseFloat(document.getElementById('testSDInput').value) || 15;
+                testSD = Math.max(0.1, testSD); // Ensure positive
+            }
+            
+            function convert() {
+                if (converterType === 'percentileToZ') {
+                    // Convert percentile to z-score
+                    updatePercentile();
+                    zScore = percentileToZScore(percentile / 100);
+                } else {
+                    // Convert z-score to percentile
+                    updateZScore();
+                    percentile = zScoreToPercentile(zScore) * 100;
+                }
+                
+                updateResults();
+                updateChart();
+                
+                // Add animation effect
+                document.getElementById('convertBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('convertBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function percentileToZScore(p) {
+                // Inverse CDF calculation using approximation
+                return inverseNormalCDF(p);
+            }
+            
+            function zScoreToPercentile(z) {
+                // CDF calculation using error function
+                return normalCDF(z, 0, 1);
+            }
+            
+            function normalCDF(x, mu, sigma) {
+                // Approximation of normal CDF using error function
+                const z = (x - mu) / (sigma * Math.SQRT2);
+                return 0.5 * (1 + erf(z));
+            }
+            
+            function erf(x) {
+                // Error function approximation
+                // Abramowitz and Stegun formula 7.1.26
+                const sign = x < 0 ? -1 : 1;
+                x = Math.abs(x);
+                
+                const a1 = 0.254829592;
+                const a2 = -0.284496736;
+                const a3 = 1.421413741;
+                const a4 = -1.453152027;
+                const a5 = 1.061405429;
+                const p = 0.3275911;
+                
+                const t = 1.0 / (1.0 + p * x);
+                const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+                
+                return sign * y;
+            }
+            
+            function inverseNormalCDF(p) {
+                // Approximation of inverse normal CDF
+                // Peter John Acklam's algorithm
+                const a1 = -39.6968302866538;
+                const a2 = 220.946098424521;
+                const a3 = -275.928510446969;
+                const a4 = 138.357751867269;
+                const a5 = -30.6647980661472;
+                const a6 = 2.50662827745924;
+                
+                const b1 = -54.4760987982241;
+                const b2 = 161.585836858041;
+                const b3 = -155.698979859887;
+                const b4 = 66.8013118877197;
+                const b5 = -13.2806815528857;
+                
+                const c1 = -7.78489400243029E-03;
+                const c2 = -0.322396458041136;
+                const c3 = -2.40075827716184;
+                const c4 = -2.54973253934373;
+                const c5 = 4.37466414146497;
+                const c6 = 2.93816398269878;
+                
+                const d1 = 7.78469570904146E-03;
+                const d2 = 0.32246712907004;
+                const d3 = 2.445134137143;
+                const d4 = 3.75440866190742;
+                
+                const p_low = 0.02425;
+                const p_high = 1 - p_low;
+                
+                let q, r;
+                
+                if (p < p_low) {
+                    q = Math.sqrt(-2 * Math.log(p));
+                    return (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / 
+                           ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                } else if (p <= p_high) {
+                    q = p - 0.5;
+                    r = q * q;
+                    return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / 
+                           (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+                } else {
+                    q = Math.sqrt(-2 * Math.log(1 - p));
+                    return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / 
+                            ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                }
+            }
+            
+            function updateResults() {
+                // Calculate derived values
+                const probability = percentile / 100;
+                const testScore = testMean + zScore * testSD;
+                const rankPosition = 100 - percentile;
+                const distance = Math.abs(zScore).toFixed(2) + 'σ';
+                
+                // Update result displays
+                document.getElementById('percentileResult').textContent = percentile.toFixed(2) + '%';
+                document.getElementById('zScoreResult').textContent = zScore.toFixed(2);
+                document.getElementById('testScoreResult').textContent = testScore.toFixed(1);
+                document.getElementById('probabilityResult').textContent = probability.toFixed(4);
+                
+                // Update descriptions
+                let percentileDescription = '';
+                if (zScore === 0) {
+                    percentileDescription = currentLanguage === 'bn' ? 'মিন' : 'Mean';
+                } else if (zScore > 0) {
+                    percentileDescription = `${Math.abs(zScore).toFixed(1)}σ ${currentLanguage === 'bn' ? 'মিনের উপরে' : 'above mean'}`;
+                } else {
+                    percentileDescription = `${Math.abs(zScore).toFixed(1)}σ ${currentLanguage === 'bn' ? 'মিনের নিচে' : 'below mean'}`;
+                }
+                document.getElementById('percentileDescription').textContent = percentileDescription;
+                
+                // Update rank
+                let rankText = '';
+                if (percentile >= 50) {
+                    rankText = currentLanguage === 'bn' 
+                        ? `শীর্ষ ${rankPosition.toFixed(2)}%` 
+                        : `Top ${rankPosition.toFixed(2)}%`;
+                } else {
+                    rankText = currentLanguage === 'bn'
+                        ? `নিচের ${percentile.toFixed(2)}%`
+                        : `Bottom ${percentile.toFixed(2)}%`;
+                }
+                document.getElementById('rankResult').textContent = rankText;
+                
+                // Update distance
+                document.getElementById('distanceResult').textContent = distance;
+                
+                // Update interpretations
+                updateInterpretations();
+            }
+            
+            function updateInterpretations() {
+                // IQ interpretation
+                const iqScore = 100 + zScore * 15;
+                let iqDescription = '';
+                if (zScore >= 2) {
+                    iqDescription = currentLanguage === 'bn' ? 'অসাধারণ মেধাবী' : 'Exceptionally gifted';
+                } else if (zScore >= 1.5) {
+                    iqDescription = currentLanguage === 'bn' ? 'অত্যন্ত মেধাবী' : 'Highly gifted';
+                } else if (zScore >= 1) {
+                    iqDescription = currentLanguage === 'bn' ? 'মেধাবী' : 'Gifted';
+                } else if (zScore >= -1) {
+                    iqDescription = currentLanguage === 'bn' ? 'গড়' : 'Average';
+                } else if (zScore >= -2) {
+                    iqDescription = currentLanguage === 'bn' ? 'সীমিত মেধা' : 'Borderline';
+                } else {
+                    iqDescription = currentLanguage === 'bn' ? 'বুদ্ধিপ্রতিবন্ধী' : 'Intellectually disabled';
+                }
+                
+                document.getElementById('iqInterpretation').innerHTML = `
+                    <strong>${currentLanguage === 'bn' ? 'Z-স্কোর' : 'Z-score'} ${zScore.toFixed(2)}</strong><br>
+                    ${currentLanguage === 'bn' ? 'আইকিউ' : 'IQ'} ${iqScore.toFixed(1)}<br>
+                    ${currentLanguage === 'bn' ? 'পার্সেন্টাইল' : 'Percentile'}: ${percentile.toFixed(2)}%<br>
+                    <em>${iqDescription}</em>
+                `;
+                
+                // SAT interpretation
+                const satScore = 1050 + zScore * 200;
+                let satPercentile = '';
+                if (percentile >= 99) {
+                    satPercentile = currentLanguage === 'bn' ? 'শীর্ষ ১%' : 'Top 1%';
+                } else if (percentile >= 95) {
+                    satPercentile = currentLanguage === 'bn' ? 'শীর্ষ ৫%' : 'Top 5%';
+                } else if (percentile >= 90) {
+                    satPercentile = currentLanguage === 'bn' ? 'শীর্ষ ১০%' : 'Top 10%';
+                } else if (percentile >= 75) {
+                    satPercentile = currentLanguage === 'bn' ? 'শীর্ষ ২৫%' : 'Top 25%';
+                } else {
+                    satPercentile = currentLanguage === 'bn' ? 'গড় থেকে নিচে' : 'Below average';
+                }
+                
+                document.getElementById('satInterpretation').innerHTML = `
+                    <strong>${currentLanguage === 'bn' ? 'Z-স্কোর' : 'Z-score'} ${zScore.toFixed(2)}</strong><br>
+                    ${currentLanguage === 'bn' ? 'SAT স্কোর' : 'SAT score'}: ${satScore.toFixed(0)}<br>
+                    ${currentLanguage === 'bn' ? 'পার্সেন্টাইল' : 'Percentile'}: ${percentile.toFixed(2)}%<br>
+                    <em>${satPercentile}</em>
+                `;
+            }
+            
+            function interpretTestScore() {
+                updateTestMean();
+                updateTestSD();
+                convert();
+                
+                // Add animation effect
+                document.getElementById('interpretBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('interpretBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function showCommonValues() {
+                // Create modal or update table visibility
+                alert(currentLanguage === 'bn' 
+                    ? 'সাধারণ মানগুলি টেবিলে দেখানো হয়েছে। নিচে স্ক্রোল করুন।'
+                    : 'Common values are shown in the table below. Scroll down.');
+                
+                // Scroll to table
+                document.querySelector('.percentiles-table').scrollIntoView({
+                    behavior: 'smooth'
+                });
+                
+                // Add animation effect
+                document.getElementById('showTableBtn').classList.add('pulse');
+                setTimeout(() => {
+                    document.getElementById('showTableBtn').classList.remove('pulse');
+                }, 500);
+            }
+            
+            function initializeChart() {
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'Z-স্কোর' : 'Z-Score',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ঘনত্ব / প্রোবাবিলিটি' : 'Density / Probability',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            y1: {
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কুমুলেটিভ প্রোবাবিলিটি' : 'Cumulative Probability',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                },
+                                min: 0,
+                                max: 1,
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function updateChart() {
+                if (!chart) return;
+                
+                // Clear existing datasets
+                chart.data.datasets = [];
+                
+                // Create normal distribution curve
+                const normalData = createNormalCurveData();
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'নরমাল ডিস্ট্রিবিউশন' : 'Normal Distribution',
+                    data: normalData,
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+                
+                // Create CDF curve
+                const cdfData = createCDFCurveData();
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'CDF (কুমুলেটিভ)' : 'CDF (Cumulative)',
+                    data: cdfData,
+                    borderColor: 'rgba(156, 39, 176, 1)',
+                    backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'y1'
+                });
+                
+                // Create percentile area
+                const areaData = createPercentileAreaData();
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'পার্সেন্টাইল এলাকা' : 'Percentile Area',
+                    data: areaData,
+                    borderColor: 'rgba(76, 175, 80, 0.3)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    borderWidth: 1,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+                
+                // Add vertical line at z-score
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'Z-স্কোর অবস্থান' : 'Z-Score Position',
+                    data: [
+                        {x: zScore, y: 0},
+                        {x: zScore, y: normalPDF(zScore, 0, 1)}
+                    ],
+                    borderColor: 'rgba(33, 150, 243, 1)',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    pointRadius: 0,
+                    borderDash: [5, 5]
+                });
+                
+                // Add horizontal line at percentile
+                const percentileValue = percentile / 100;
+                chart.data.datasets.push({
+                    label: currentLanguage === 'bn' ? 'পার্সেন্টাইল মান' : 'Percentile Value',
+                    data: [
+                        {x: -4, y: percentileValue},
+                        {x: zScore, y: percentileValue}
+                    ],
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0,
+                    borderDash: [2, 2]
+                });
+                
+                // Update x-axis labels
+                const labels = [];
+                for (let x = -4; x <= 4; x += 0.2) {
+                    labels.push(x.toFixed(1));
+                }
+                chart.data.labels = labels;
+                
+                chart.update();
+            }
+            
+            function createNormalCurveData() {
+                const points = [];
+                for (let x = -4; x <= 4; x += 0.1) {
+                    const y = normalPDF(x, 0, 1);
+                    points.push({ x: x, y: y });
+                }
+                return points;
+            }
+            
+            function createCDFCurveData() {
+                const points = [];
+                for (let x = -4; x <= 4; x += 0.1) {
+                    const y = normalCDF(x, 0, 1);
+                    points.push({ x: x, y: y });
+                }
+                return points;
+            }
+            
+            function createPercentileAreaData() {
+                const points = [];
+                const p = percentile / 100;
+                
+                // Create area up to z-score
+                for (let x = -4; x <= zScore; x += 0.1) {
+                    const y = normalPDF(x, 0, 1);
+                    points.push({ x: x, y: y });
+                }
+                
+                // Close the area
+                points.push({ x: zScore, y: 0 });
+                points.push({ x: -4, y: 0 });
+                
+                return points;
+            }
+            
+            function normalPDF(x, mu, sigma) {
+                const variance = sigma * sigma;
+                const exponent = -Math.pow(x - mu, 2) / (2 * variance);
+                const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+                return coefficient * Math.exp(exponent);
+            }
+            
+            function populateCommonPercentilesTable() {
+                const tableBody = document.getElementById('commonPercentilesTable');
+                tableBody.innerHTML = '';
+                
+                commonPercentiles.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    // Highlight current percentile/z-score
+                    const isCurrent = Math.abs(item.zScore - zScore) < 0.01;
+                    if (isCurrent) {
+                        row.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${item.percentile.toFixed(2)}%</td>
+                        <td>${item.zScore.toFixed(2)}</td>
+                        <td>${currentLanguage === 'bn' ? item.description : item.description}</td>
+                        <td>${item.iq.toFixed(1)}</td>
+                    `;
+                    
+                    // Add click event to use this value
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('click', () => {
+                        if (converterType === 'percentileToZ') {
+                            document.getElementById('percentileInput').value = item.percentile;
+                            updatePercentile();
+                        } else {
+                            document.getElementById('zScoreInput').value = item.zScore;
+                            updateZScore();
+                        }
+                        convert();
+                    });
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            function updateChartLanguage() {
+                if (!chart) return;
+                
+                // Update axes labels
+                chart.options.scales.x.title.text = currentLanguage === 'bn' ? 'Z-স্কোর' : 'Z-Score';
+                chart.options.scales.y.title.text = currentLanguage === 'bn' ? 'ঘনত্ব / প্রোবাবিলিটি' : 'Density / Probability';
+                chart.options.scales.y1.title.text = currentLanguage === 'bn' ? 'কুমুলেটিভ প্রোবাবিলিটি' : 'Cumulative Probability';
+                
+                // Update dataset labels
+                chart.data.datasets.forEach(dataset => {
+                    if (dataset.label === 'Normal Distribution' || dataset.label === 'নরমাল ডিস্ট্রিবিউশন') {
+                        dataset.label = currentLanguage === 'bn' ? 'নরমাল ডিস্ট্রিবিউশন' : 'Normal Distribution';
+                    } else if (dataset.label === 'CDF (Cumulative)' || dataset.label === 'CDF (কুমুলেটিভ)') {
+                        dataset.label = currentLanguage === 'bn' ? 'CDF (কুমুলেটিভ)' : 'CDF (Cumulative)';
+                    } else if (dataset.label === 'Percentile Area' || dataset.label === 'পার্সেন্টাইল এলাকা') {
+                        dataset.label = currentLanguage === 'bn' ? 'পার্সেন্টাইল এলাকা' : 'Percentile Area';
+                    } else if (dataset.label === 'Z-Score Position' || dataset.label === 'Z-স্কোর অবস্থান') {
+                        dataset.label = currentLanguage === 'bn' ? 'Z-স্কোর অবস্থান' : 'Z-Score Position';
+                    } else if (dataset.label === 'Percentile Value' || dataset.label === 'পার্সেন্টাইল মান') {
+                        dataset.label = currentLanguage === 'bn' ? 'পার্সেন্টাইল মান' : 'Percentile Value';
+                    }
+                });
+                
+                chart.update();
+            }
+        });
+    </script>
+</body>
+</html>

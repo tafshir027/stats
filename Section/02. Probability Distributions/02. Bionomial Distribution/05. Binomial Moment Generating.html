@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binomial MGF Calculator | Moment Generating Function</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #2196F3;
+            --secondary: #1976D2;
+            --accent: #FF4081;
+            --success: #4CAF50;
+            --info: #00BCD4;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --mgf-color: #9C27B0;
+            --moment-color: #FF9800;
+            --derivative-color: #2196F3;
+            --mgf-bg: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            --moment-bg: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            --chart-bg: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--mgf-color), var(--primary), var(--accent));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #9C27B0, #673AB7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Back Navigation */
+        .back-nav {
+            margin-bottom: 1.5rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateX(-3px);
+            box-shadow: 0 6px 18px rgba(33, 150, 243, 0.2);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            margin-bottom: 2rem;
+        }
+
+        .parameter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .parameter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .parameter-value {
+            font-weight: 700;
+            color: var(--mgf-color);
+        }
+
+        .slider-container {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .parameter-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--light-gray), var(--mgf-color));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .parameter-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--mgf-color);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .parameter-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 10px rgba(156, 39, 176, 0.4);
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            border-color: var(--mgf-color);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .parameter-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* MGF Display */
+        .mgf-display {
+            background: var(--mgf-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 2px solid var(--border);
+        }
+
+        .mgf-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--mgf-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mgf-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.4rem;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        /* Content Container */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* MGF Calculation Section */
+        .mgf-calculation {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .mgf-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .mgf-step {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--mgf-color);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--mgf-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .step-content {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* Moments Section */
+        .moments-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .moments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .moment-card {
+            background: var(--moment-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .moment-order {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--moment-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .moment-derivation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1rem;
+            color: var(--gray);
+            margin: 0.5rem 0;
+            min-height: 60px;
+        }
+
+        .moment-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .moment-formula {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1100px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 450px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Derivative Analysis */
+        .derivative-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .derivative-steps {
+            margin-top: 1.5rem;
+        }
+
+        .derivative-step {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--derivative-color);
+        }
+
+        .derivative-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 0.5rem 0;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* Distribution Characterization */
+        .characterization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .characterization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .characteristic-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .characteristic-title {
+            font-weight: 700;
+            color: var(--mgf-color);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .characteristic-description {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1.2rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--mgf-color);
+            color: white;
+            border-color: var(--mgf-color);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-params {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--mgf-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 350px;
+            }
+            
+            .mgf-steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .moments-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .mgf-equation {
+                font-size: 1.1rem;
+            }
+            
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Mathematical Notation */
+        .math-notation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+        }
+
+        .superscript {
+            vertical-align: super;
+            font-size: 0.8em;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .back-nav,
+            .examples-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .control-panel,
+            .mgf-calculation,
+            .moments-section,
+            .charts-section,
+            .derivative-section,
+            .characterization-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back Navigation -->
+        <div class="back-nav">
+            <a href="../../probability-distributions.html" class="back-btn" data-en="Back to Binomial Distribution" data-bn="বাইনোমিয়াল ডিস্ট্রিবিউশনে ফিরুন">
+                <i class="fas fa-arrow-left"></i>
+                <span>বাইনোমিয়াল ডিস্ট্রিবিউশনে ফিরুন</span>
+            </a>
+        </div>
+
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Binomial Moment Generating Function" data-bn="বাইনোমিয়াল মোমেন্ট জেনারেটিং ফাংশন">বাইনোমিয়াল মোমেন্ট জেনারেটিং ফাংশন</h1>
+            <p class="subtitle" data-en="Generate and analyze the Moment Generating Function (MGF) for binomial distribution, derive moments, and characterize the distribution through MGF properties" data-bn="বাইনোমিয়াল ডিস্ট্রিবিউশনের জন্য মোমেন্ট জেনারেটিং ফাংশন (MGF) তৈরি ও বিশ্লেষণ করুন, মোমেন্ট ডেরিভেশন করুন এবং MGF বৈশিষ্ট্যের মাধ্যমে ডিস্ট্রিবিউশন চিহ্নিত করুন">
+                বাইনোমিয়াল ডিস্ট্রিবিউশনের জন্য মোমেন্ট জেনারেটিং ফাংশন (MGF) তৈরি ও বিশ্লেষণ করুন, মোমেন্ট ডেরিভেশন করুন এবং MGF বৈশিষ্ট্যের মাধ্যমে ডিস্ট্রিবিউশন চিহ্নিত করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Distribution Parameters" data-bn="ডিস্ট্রিবিউশন প্যারামিটার">ডিস্ট্রিবিউশন প্যারামিটার</span>
+                </h2>
+                
+                <div class="parameter-controls">
+                    <!-- Number of Trials (n) -->
+                    <div class="parameter-group">
+                        <label class="parameter-label">
+                            <span data-en="Number of Trials (n)" data-bn="ট্রায়ালের সংখ্যা (n)">ট্রায়ালের সংখ্যা (n)</span>
+                            <span class="parameter-value" id="nValue">10</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="nSlider" class="parameter-slider" min="1" max="30" value="10" step="1">
+                        </div>
+                        <input type="number" id="nInput" class="parameter-input" min="1" max="50" value="10">
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Number of independent Bernoulli trials" data-bn="স্বাধীন বার্নুলি ট্রায়ালের সংখ্যা">
+                                স্বাধীন বার্নুলি ট্রায়ালের সংখ্যা
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Probability of Success (p) -->
+                    <div class="parameter-group">
+                        <label class="parameter-label">
+                            <span data-en="Probability of Success (p)" data-bn="সফলতার সম্ভাবনা (p)">সফলতার সম্ভাবনা (p)</span>
+                            <span class="parameter-value" id="pValue">0.50</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="pSlider" class="parameter-slider" min="0.01" max="0.99" value="0.5" step="0.01">
+                        </div>
+                        <input type="number" id="pInput" class="parameter-input" min="0.01" max="0.99" value="0.5" step="0.01">
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Success probability in each trial" data-bn="প্রতিটি ট্রায়ালে সফলতার সম্ভাবনা">
+                                প্রতিটি ট্রায়ালে সফলতার সম্ভাবনা
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- t Value for MGF -->
+                    <div class="parameter-group">
+                        <label class="parameter-label">
+                            <span data-en="Parameter t" data-bn="প্যারামিটার t">প্যারামিটার t</span>
+                            <span class="parameter-value" id="tValue">0.00</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="tSlider" class="parameter-slider" min="-2" max="2" value="0" step="0.1">
+                        </div>
+                        <input type="number" id="tInput" class="parameter-input" min="-3" max="3" value="0" step="0.1">
+                        <div class="parameter-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Parameter for MGF evaluation" data-bn="MGF মূল্যায়নের জন্য প্যারামিটার">
+                                MGF মূল্যায়নের জন্য প্যারামিটার
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MGF Display -->
+                <div class="mgf-display">
+                    <div class="mgf-title">
+                        <i class="fas fa-function"></i>
+                        <span data-en="Moment Generating Function" data-bn="মোমেন্ট জেনারেটিং ফাংশন">মোমেন্ট জেনারেটিং ফাংশন</span>
+                    </div>
+                    <div class="mgf-equation" id="mgfEquation">
+                        M<sub>X</sub>(t) = (1 - p + pe<sup>t</sup>)<sup>n</sup>
+                    </div>
+                    <div class="parameter-hint">
+                        <i class="fas fa-calculator"></i>
+                        <span id="mgfValue" data-en="MGF(0) = 1.0000" data-bn="MGF(0) = 1.0000">MGF(0) = 1.0000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Container -->
+            <div class="content-container">
+                <!-- MGF Calculation Section -->
+                <div class="mgf-calculation">
+                    <h2 class="section-title">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="MGF Derivation" data-bn="MGF ডেরিভেশন">MGF ডেরিভেশন</span>
+                    </h2>
+                    
+                    <div class="mgf-steps">
+                        <div class="mgf-step">
+                            <div class="step-header">
+                                <div class="step-number">১</div>
+                                <div class="step-title" data-en="Definition of MGF" data-bn="MGF এর সংজ্ঞা">MGF এর সংজ্ঞা</div>
+                            </div>
+                            <div class="step-content">
+                                <p data-en="The moment generating function of a random variable X is defined as:" data-bn="একটি র্যান্ডম ভেরিয়েবল X এর মোমেন্ট জেনারেটিং ফাংশন সংজ্ঞায়িত করা হয়:">
+                                    একটি র্যান্ডম ভেরিয়েবল X এর মোমেন্ট জেনারেটিং ফাংশন সংজ্ঞায়িত করা হয়:
+                                </p>
+                                <div class="step-equation">
+                                    M<sub>X</sub>(t) = E[e<sup>tX</sup>]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mgf-step">
+                            <div class="step-header">
+                                <div class="step-number">২</div>
+                                <div class="step-title" data-en="For Binomial Distribution" data-bn="বাইনোমিয়াল ডিস্ট্রিবিউশনের জন্য">বাইনোমিয়াল ডিস্ট্রিবিউশনের জন্য</div>
+                            </div>
+                            <div class="step-content">
+                                <p data-en="For X ~ Binomial(n, p), we calculate the expected value:" data-bn="X ~ Binomial(n, p) এর জন্য, আমরা এক্সপেক্টেড ভ্যালু গণনা করি:">
+                                    X ~ Binomial(n, p) এর জন্য, আমরা এক্সপেক্টেড ভ্যালু গণনা করি:
+                                </p>
+                                <div class="step-equation">
+                                    M<sub>X</sub>(t) = Σ<sub>k=0</sub><sup>n</sup> e<sup>tk</sup> P(X=k)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mgf-step">
+                            <div class="step-header">
+                                <div class="step-number">৩</div>
+                                <div class="step-title" data-en="Substitute PMF" data-bn="PMF প্রতিস্থাপন">PMF প্রতিস্থাপন</div>
+                            </div>
+                            <div class="step-content">
+                                <p data-en="Replace P(X=k) with binomial probability mass function:" data-bn="P(X=k) কে বাইনোমিয়াল প্রোবাবিলিটি মাস ফাংশন দিয়ে প্রতিস্থাপন করুন:">
+                                    P(X=k) কে বাইনোমিয়াল প্রোবাবিলিটি মাস ফাংশন দিয়ে প্রতিস্থাপন করুন:
+                                </p>
+                                <div class="step-equation">
+                                    = Σ<sub>k=0</sub><sup>n</sup> e<sup>tk</sup> × C(n,k) × p<sup>k</sup> × (1-p)<sup>n-k</sup>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mgf-step">
+                            <div class="step-header">
+                                <div class="step-number">৪</div>
+                                <div class="step-title" data-en="Simplify and Factor" data-bn="সরলীকরণ ও ফ্যাক্টরাইজেশন">সরলীকরণ ও ফ্যাক্টরাইজেশন</div>
+                            </div>
+                            <div class="step-content">
+                                <p data-en="Use binomial theorem to simplify:" data-bn="সরলীকরণের জন্য বাইনোমিয়াল থিওরেম ব্যবহার করুন:">
+                                    সরলীকরণের জন্য বাইনোমিয়াল থিওরেম ব্যবহার করুন:
+                                </p>
+                                <div class="step-equation">
+                                    = [pe<sup>t</sup> + (1-p)]<sup>n</sup>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Moments Section -->
+                <div class="moments-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Moments Derivation" data-bn="মোমেন্ট ডেরিভেশন">মোমেন্ট ডেরিভেশন</span>
+                    </h2>
+                    
+                    <div class="moments-grid">
+                        <div class="moment-card">
+                            <div class="moment-order" data-en="1st" data-bn="১ম">১ম</div>
+                            <div class="moment-derivation" id="moment1Deriv">M'(0)</div>
+                            <div class="moment-value" id="moment1Value">5.00</div>
+                            <div class="moment-formula" data-en="Mean (np)" data-bn="গড় (np)">গড় (np)</div>
+                        </div>
+
+                        <div class="moment-card">
+                            <div class="moment-order" data-en="2nd" data-bn="২য়">২য়</div>
+                            <div class="moment-derivation" id="moment2Deriv">M''(0)</div>
+                            <div class="moment-value" id="moment2Value">27.50</div>
+                            <div class="moment-formula" data-en="E[X²]" data-bn="E[X²]">E[X²]</div>
+                        </div>
+
+                        <div class="moment-card">
+                            <div class="moment-order" data-en="3rd" data-bn="৩য়">৩য়</div>
+                            <div class="moment-derivation" id="moment3Deriv">M'''(0)</div>
+                            <div class="moment-value" id="moment3Value">163.75</div>
+                            <div class="moment-formula" data-en="E[X³]" data-bn="E[X³]">E[X³]</div>
+                        </div>
+
+                        <div class="moment-card">
+                            <div class="moment-order" data-en="4th" data-bn="৪র্থ">৪র্থ</div>
+                            <div class="moment-derivation" id="moment4Deriv">M''''(0)</div>
+                            <div class="moment-value" id="moment4Value">1031.88</div>
+                            <div class="moment-formula" data-en="E[X⁴]" data-bn="E[X⁴]">E[X⁴]</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="MGF Visualization" data-bn="MGF ভিজ্যুয়ালাইজেশন">MGF ভিজ্যুয়ালাইজেশন</span>
+                    </h2>
+                    
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-area"></i>
+                                <span data-en="MGF Plot vs t" data-bn="t বনাম MGF প্লট">t বনাম MGF প্লট</span>
+                            </div>
+                            <div id="mgfPlot" style="width: 100%; height: 350px;"></div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-title">
+                                <i class="fas fa-wave-square"></i>
+                                <span data-en="MGF Derivatives" data-bন="MGF ডেরিভেটিভস">MGF ডেরিভেটিভস</span>
+                            </div>
+                            <div id="derivativePlot" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Derivative Analysis -->
+                <div class="derivative-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-square-root-alt"></i>
+                        <span data-en="Derivative Analysis" data-bn="ডেরিভেটিভ বিশ্লেষণ">ডেরিভেটিভ বিশ্লেষণ</span>
+                    </h2>
+                    
+                    <div class="derivative-steps">
+                        <div class="derivative-step">
+                            <p data-en="First derivative (Mean):" data-bn="প্রথম ডেরিভেটিভ (গড়):">প্রথম ডেরিভেটিভ (গড়):</p>
+                            <div class="derivative-equation">
+                                M'(t) = npe<sup>t</sup>[pe<sup>t</sup> + (1-p)]<sup>n-1</sup>
+                            </div>
+                            <p data-en="At t=0: M'(0) = np (Mean)" data-bন="t=0 এ: M'(0) = np (গড়)">t=0 এ: M'(0) = np (গড়)</p>
+                        </div>
+
+                        <div class="derivative-step">
+                            <p data-en="Second derivative:" data-bন="দ্বিতীয় ডেরিভেটিভ:">দ্বিতীয় ডেরিভেটিভ:</p>
+                            <div class="derivative-equation">
+                                M''(t) = npe<sup>t</sup>[pe<sup>t</sup> + (1-p)]<sup>n-2</sup>[(n-1)pe<sup>t</sup> + pe<sup>t</sup> + (1-p)]
+                            </div>
+                            <p data-en="At t=0: M''(0) = np[(n-1)p + 1]" data-bন="t=0 এ: M''(0) = np[(n-1)p + 1]">t=0 এ: M''(0) = np[(n-1)p + 1]</p>
+                        </div>
+
+                        <div class="derivative-step">
+                            <p data-en="Variance from MGF:" data-bন="MGF থেকে ভ্যারিয়েন্স:">MGF থেকে ভ্যারিয়েন্স:</p>
+                            <div class="derivative-equation">
+                                Var(X) = M''(0) - [M'(0)]² = np(1-p)
+                            </div>
+                            <p data-en="This matches the known variance formula" data-bন="এটি পরিচিত ভ্যারিয়েন্স সূত্রের সাথে মেলে">এটি পরিচিত ভ্যারিয়েন্স সূত্রের সাথে মেলে</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Characterization -->
+                <div class="characterization-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-fingerprint"></i>
+                        <span data-en="Distribution Characterization" data-bন="ডিস্ট্রিবিউশন চিহ্নিতকরণ">ডিস্ট্রিবিউশন চিহ্নিতকরণ</span>
+                    </h2>
+                    
+                    <div class="characterization-grid">
+                        <div class="characteristic-card">
+                            <div class="characteristic-title">
+                                <i class="fas fa-unique"></i>
+                                <span data-en="Uniqueness Property" data-bন="অনন্যতা বৈশিষ্ট্য">অনন্যতা বৈশিষ্ট্য</span>
+                            </div>
+                            <div class="characteristic-description">
+                                <p data-en="The MGF uniquely determines the probability distribution. If two distributions have the same MGF, they are the same distribution." data-bন="MGF সম্ভাব্যতা বিন্যাসকে অনন্যভাবে নির্ধারণ করে। যদি দুটি বিন্যাসের একই MGF থাকে, তবে তারা একই বিন্যাস।">
+                                    MGF সম্ভাব্যতা বিন্যাসকে অনন্যভাবে নির্ধারণ করে। যদি দুটি বিন্যাসের একই MGF থাকে, তবে তারা একই বিন্যাস।
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="characteristic-card">
+                            <div class="characteristic-title">
+                                <i class="fas fa-link"></i>
+                                <span data-en="Moment Extraction" data-bন="মোমেন্ট এক্সট্রাকশন">মোমেন্ট এক্সট্রাকশন</span>
+                            </div>
+                            <div class="characteristic-description">
+                                <p data-en="All moments can be obtained by taking successive derivatives of the MGF at t=0. The k-th moment is M⁽ᵏ⁾(0)." data-bন="সমস্ত মোমেন্ট MGF এর t=0 এ ক্রমাগত ডেরিভেটিভ নিয়ে পাওয়া যায়। k-তম মোমেন্ট হল M⁽ᵏ⁾(0)।">
+                                    সমস্ত মোমেন্ট MGF এর t=0 এ ক্রমাগত ডেরিভেটিভ নিয়ে পাওয়া যায়। k-তম মোমেন্ট হল M⁽ᵏ⁾(0)।
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="characteristic-card">
+                            <div class="characteristic-title">
+                                <i class="fas fa-project-diagram"></i>
+                                <span data-en="Sum of Independent Variables" data-bন="স্বাধীন ভেরিয়েবলের যোগফল">স্বাধীন ভেরিয়েবলের যোগফল</span>
+                            </div>
+                            <div class="characteristic-description">
+                                <p data-en="For independent binomial variables X ~ Bin(n₁,p) and Y ~ Bin(n₂,p), the MGF of X+Y is the product of their MGFs, confirming X+Y ~ Bin(n₁+n₂, p)." data-bন="স্বাধীন বাইনোমিয়াল ভেরিয়েবল X ~ Bin(n₁,p) এবং Y ~ Bin(n₂,p) এর জন্য, X+Y এর MGF তাদের MGF এর গুণফল, যা নিশ্চিত করে X+Y ~ Bin(n₁+n₂, p)।">
+                                    স্বাধীন বাইনোমিয়াল ভেরিয়েবল X ~ Bin(n₁,p) এবং Y ~ Bin(n₂,p) এর জন্য, X+Y এর MGF তাদের MGF এর গুণফল, যা নিশ্চিত করে X+Y ~ Bin(n₁+n₂, p)।
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="characteristic-card">
+                            <div class="characteristic-title">
+                                <i class="fas fa-infinity"></i>
+                                <span data-en="Convergence to Normal" data-bন="স্বাভাবিক অভিসরণ">স্বাভাবিক অভিসরণ</span>
+                            </div>
+                            <div class="characteristic-description">
+                                <p data-en="As n → ∞, the binomial MGF converges to the MGF of normal distribution, illustrating the Central Limit Theorem." data-bন="n → ∞ হিসাবে, বাইনোমিয়াল MGF স্বাভাবিক বিন্যাসের MGF তে অভিসৃত হয়, যা কেন্দ্রীয় সীমা উপপাদ্য চিত্রিত করে।">
+                                    n → ∞ হিসাবে, বাইনোমিয়াল MGF স্বাভাবিক বিন্যাসের MGF তে অভিসৃত হয়, যা কেন্দ্রীয় সীমা উপপাদ্য চিত্রিত করে।
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples Section -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="MGF Examples" data-bন="MGF উদাহরণ">MGF উদাহরণ</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on examples to explore different binomial MGFs:" data-bন="বিভিন্ন বাইনোমিয়াল MGF অন্বেষণ করতে উদাহরণে ক্লিক করুন:">
+                বিভিন্ন বাইনোমিয়াল MGF অন্বেষণ করতে উদাহরণে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="fairCoin">
+                    <div class="example-title" data-en="Fair Coin (n=10, p=0.5)" data-bন="ন্যায্য কয়েন (n=10, p=0.5)">ন্যায্য কয়েন (n=10, p=0.5)</div>
+                    <div class="example-params">M(t) = (0.5 + 0.5eᵗ)¹⁰</div>
+                </button>
+                <button class="example-btn" data-example="biasedCoin">
+                    <div class="example-title" data-en="Biased Coin (n=15, p=0.7)" data-bন="পক্ষপাতমূলক কয়েন (n=15, p=0.7)">পক্ষপাতমূলক কয়েন (n=15, p=0.7)</div>
+                    <div class="example-params">M(t) = (0.3 + 0.7eᵗ)¹⁵</div>
+                </button>
+                <button class="example-btn" data-example="largeSample">
+                    <div class="example-title" data-en="Large Sample (n=30, p=0.3)" data-bন="বড় নমুনা (n=30, p=0.3)">বড় নমুনা (n=30, p=0.3)</div>
+                    <div class="example-params">M(t) = (0.7 + 0.3eᵗ)³⁰</div>
+                </button>
+                <button class="example-btn" data-example="rareEvent">
+                    <div class="example-title" data-en="Rare Event (n=20, p=0.1)" data-bন="বিরল ঘটনা (n=20, p=0.1)">বিরল ঘটনা (n=20, p=0.1)</div>
+                    <div class="example-params">M(t) = (0.9 + 0.1eᵗ)²⁰</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Current parameters
+            let currentN = 10;
+            let currentP = 0.5;
+            let currentT = 0;
+            let currentLanguage = 'bn';
+            
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            
+            // Example configurations
+            const examples = {
+                fairCoin: { n: 10, p: 0.5, t: 0 },
+                biasedCoin: { n: 15, p: 0.7, t: 0 },
+                largeSample: { n: 30, p: 0.3, t: 0 },
+                rareEvent: { n: 20, p: 0.1, t: 0 }
+            };
+
+            // Initialize the application
+            init();
+
+            function init() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Initialize UI controls
+                initControls();
+                
+                // Initialize charts
+                initCharts();
+                
+                // Calculate initial MGF
+                updateMGF();
+            }
+
+            function initControls() {
+                // n parameter controls
+                const nSlider = document.getElementById('nSlider');
+                const nInput = document.getElementById('nInput');
+                const nValue = document.getElementById('nValue');
+                
+                nSlider.addEventListener('input', function() {
+                    currentN = parseInt(this.value);
+                    nInput.value = currentN;
+                    nValue.textContent = currentN;
+                    updateMGF();
+                });
+                
+                nInput.addEventListener('input', function() {
+                    let value = parseInt(this.value);
+                    if (value < 1) value = 1;
+                    if (value > 50) value = 50;
+                    currentN = value;
+                    nSlider.value = currentN;
+                    nValue.textContent = currentN;
+                    updateMGF();
+                });
+                
+                // p parameter controls
+                const pSlider = document.getElementById('pSlider');
+                const pInput = document.getElementById('pInput');
+                const pValue = document.getElementById('pValue');
+                
+                pSlider.addEventListener('input', function() {
+                    currentP = parseFloat(this.value);
+                    pInput.value = currentP.toFixed(2);
+                    pValue.textContent = currentP.toFixed(2);
+                    updateMGF();
+                });
+                
+                pInput.addEventListener('input', function() {
+                    let value = parseFloat(this.value);
+                    if (value < 0.01) value = 0.01;
+                    if (value > 0.99) value = 0.99;
+                    currentP = value;
+                    pSlider.value = currentP;
+                    pValue.textContent = currentP.toFixed(2);
+                    updateMGF();
+                });
+                
+                // t parameter controls
+                const tSlider = document.getElementById('tSlider');
+                const tInput = document.getElementById('tInput');
+                const tValue = document.getElementById('tValue');
+                
+                tSlider.addEventListener('input', function() {
+                    currentT = parseFloat(this.value);
+                    tInput.value = currentT.toFixed(1);
+                    tValue.textContent = currentT.toFixed(2);
+                    updateMGF();
+                });
+                
+                tInput.addEventListener('input', function() {
+                    let value = parseFloat(this.value);
+                    if (value < -3) value = -3;
+                    if (value > 3) value = 3;
+                    currentT = value;
+                    tSlider.value = currentT;
+                    tValue.textContent = currentT.toFixed(2);
+                    updateMGF();
+                });
+                
+                // Example buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+            }
+
+            function calculateMGF(n, p, t) {
+                return Math.pow((1 - p) + p * Math.exp(t), n);
+            }
+
+            function calculateMGFFirstDerivative(n, p, t) {
+                return n * p * Math.exp(t) * Math.pow((1 - p) + p * Math.exp(t), n - 1);
+            }
+
+            function calculateMGFSecondDerivative(n, p, t) {
+                const term = (1 - p) + p * Math.exp(t);
+                return n * p * Math.exp(t) * Math.pow(term, n - 2) * ((n - 1) * p * Math.exp(t) + term);
+            }
+
+            function calculateMGFThirdDerivative(n, p, t) {
+                const term = (1 - p) + p * Math.exp(t);
+                const power = Math.pow(term, n - 3);
+                const coeff = n * p * Math.exp(t);
+                const inner = (n - 1) * (n - 2) * Math.pow(p * Math.exp(t), 2) + 
+                            3 * (n - 1) * p * Math.exp(t) * term + 
+                            Math.pow(term, 2);
+                return coeff * power * inner;
+            }
+
+            function calculateMoments(n, p) {
+                const moments = {
+                    first: n * p,
+                    second: n * p * ((n - 1) * p + 1),
+                    third: n * p * (Math.pow(n - 1, 2) * Math.pow(p, 2) + 3 * (n - 1) * p + 1),
+                    fourth: n * p * (Math.pow(n - 1, 3) * Math.pow(p, 3) + 6 * Math.pow(n - 1, 2) * Math.pow(p, 2) + 7 * (n - 1) * p + 1)
+                };
+                
+                return moments;
+            }
+
+            function updateMGF() {
+                // Calculate MGF at current t
+                const mgfValue = calculateMGF(currentN, currentP, currentT);
+                
+                // Update MGF display
+                document.getElementById('mgfEquation').innerHTML = 
+                    `M<sub>X</sub>(t) = (${(1-currentP).toFixed(2)} + ${currentP.toFixed(2)}e<sup>t</sup>)<sup>${currentN}</sup>`;
+                
+                document.getElementById('mgfValue').textContent = 
+                    currentLanguage === 'bn' ? 
+                    `MGF(${currentT.toFixed(2)}) = ${mgfValue.toFixed(4)}` :
+                    `MGF(${currentT.toFixed(2)}) = ${mgfValue.toFixed(4)}`;
+                
+                // Calculate moments
+                const moments = calculateMoments(currentN, currentP);
+                
+                // Update moments display
+                document.getElementById('moment1Value').textContent = moments.first.toFixed(2);
+                document.getElementById('moment2Value').textContent = moments.second.toFixed(2);
+                document.getElementById('moment3Value').textContent = moments.third.toFixed(2);
+                document.getElementById('moment4Value').textContent = moments.fourth.toFixed(2);
+                
+                // Update moment derivations
+                const mgfAt0 = calculateMGF(currentN, currentP, 0);
+                const mgf1At0 = calculateMGFFirstDerivative(currentN, currentP, 0);
+                const mgf2At0 = calculateMGFSecondDerivative(currentN, currentP, 0);
+                const mgf3At0 = calculateMGFThirdDerivative(currentN, currentP, 0);
+                
+                document.getElementById('moment1Deriv').textContent = `M'(0) = ${mgf1At0.toFixed(2)}`;
+                document.getElementById('moment2Deriv').textContent = `M''(0) = ${mgf2At0.toFixed(2)}`;
+                document.getElementById('moment3Deriv').textContent = `M'''(0) = ${mgf3At0.toFixed(2)}`;
+                
+                // Update charts
+                updateCharts();
+            }
+
+            function initCharts() {
+                // Generate data for MGF plot
+                const tValues = Array.from({length: 121}, (_, i) => -2 + i * 0.033);
+                
+                // MGF Plot
+                const mgfTrace = {
+                    x: tValues,
+                    y: tValues.map(t => calculateMGF(currentN, currentP, t)),
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? 'MGF(t)' : 'MGF(t)',
+                    line: {color: '#9C27B0', width: 3},
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(156, 39, 176, 0.1)'
+                };
+                
+                const mgfAtPoint = {
+                    x: [currentT],
+                    y: [calculateMGF(currentN, currentP, currentT)],
+                    mode: 'markers',
+                    name: currentLanguage === 'bn' ? `t=${currentT.toFixed(2)}` : `t=${currentT.toFixed(2)}`,
+                    marker: {size: 12, color: '#FF4081'}
+                };
+                
+                const mgfLayout = {
+                    title: currentLanguage === 'bn' ? 'MGF vs t' : 'MGF vs t',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'প্যারামিটার t' : 'Parameter t',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'MGF(t)' : 'MGF(t)',
+                        gridcolor: 'lightgray'
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
+                };
+                
+                Plotly.newPlot('mgfPlot', [mgfTrace, mgfAtPoint], mgfLayout);
+                
+                // Derivatives Plot
+                const derivative1Trace = {
+                    x: tValues,
+                    y: tValues.map(t => calculateMGFFirstDerivative(currentN, currentP, t)),
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? "১ম ডেরিভেটিভ" : "1st Derivative",
+                    line: {color: '#2196F3', width: 2}
+                };
+                
+                const derivative2Trace = {
+                    x: tValues,
+                    y: tValues.map(t => calculateMGFSecondDerivative(currentN, currentP, t)),
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? "২য় ডেরিভেটিভ" : "2nd Derivative",
+                    line: {color: '#4CAF50', width: 2}
+                };
+                
+                const derivative3Trace = {
+                    x: tValues,
+                    y: tValues.map(t => calculateMGFThirdDerivative(currentN, currentP, t)),
+                    mode: 'lines',
+                    name: currentLanguage === 'bn' ? "৩য় ডেরিভেটিভ" : "3rd Derivative",
+                    line: {color: '#FF9800', width: 2}
+                };
+                
+                const derivativeLayout = {
+                    title: currentLanguage === 'bn' ? 'MGF ডেরিভেটিভস' : 'MGF Derivatives',
+                    xaxis: {
+                        title: currentLanguage === 'bn' ? 'প্যারামিটার t' : 'Parameter t',
+                        gridcolor: 'lightgray'
+                    },
+                    yaxis: {
+                        title: currentLanguage === 'bn' ? 'ডেরিভেটিভ মান' : 'Derivative Value',
+                        gridcolor: 'lightgray'
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white',
+                    showlegend: true
+                };
+                
+                Plotly.newPlot('derivativePlot', [derivative1Trace, derivative2Trace, derivative3Trace], derivativeLayout);
+            }
+
+            function updateCharts() {
+                // Update MGF Plot
+                const tValues = Array.from({length: 121}, (_, i) => -2 + i * 0.033);
+                
+                const mgfUpdate = {
+                    'y[0]': tValues.map(t => calculateMGF(currentN, currentP, t)),
+                    'x[1]': [currentT],
+                    'y[1]': [calculateMGF(currentN, currentP, currentT)]
+                };
+                
+                Plotly.update('mgfPlot', mgfUpdate);
+                
+                // Update Derivatives Plot
+                const derivativeUpdate = {
+                    'y[0]': tValues.map(t => calculateMGFFirstDerivative(currentN, currentP, t)),
+                    'y[1]': tValues.map(t => calculateMGFSecondDerivative(currentN, currentP, t)),
+                    'y[2]': tValues.map(t => calculateMGFThirdDerivative(currentN, currentP, t))
+                };
+                
+                Plotly.update('derivativePlot', derivativeUpdate);
+                
+                // Update titles if language changed
+                if (currentLanguage === 'bn') {
+                    Plotly.relayout('mgfPlot', {
+                        'title': 'MGF vs t',
+                        'xaxis.title': 'প্যারামিটার t',
+                        'yaxis.title': 'MGF(t)'
+                    });
+                    
+                    Plotly.relayout('derivativePlot', {
+                        'title': 'MGF ডেরিভেটিভস',
+                        'xaxis.title': 'প্যারামিটার t',
+                        'yaxis.title': 'ডেরিভেটিভ মান'
+                    });
+                } else {
+                    Plotly.relayout('mgfPlot', {
+                        'title': 'MGF vs t',
+                        'xaxis.title': 'Parameter t',
+                        'yaxis.title': 'MGF(t)'
+                    });
+                    
+                    Plotly.relayout('derivativePlot', {
+                        'title': 'MGF Derivatives',
+                        'xaxis.title': 'Parameter t',
+                        'yaxis.title': 'Derivative Value'
+                    });
+                }
+            }
+
+            function loadExample(example) {
+                if (examples[example]) {
+                    const data = examples[example];
+                    currentN = data.n;
+                    currentP = data.p;
+                    currentT = data.t;
+                    
+                    // Update UI controls
+                    document.getElementById('nSlider').value = currentN;
+                    document.getElementById('nInput').value = currentN;
+                    document.getElementById('nValue').textContent = currentN;
+                    
+                    document.getElementById('pSlider').value = currentP;
+                    document.getElementById('pInput').value = currentP.toFixed(2);
+                    document.getElementById('pValue').textContent = currentP.toFixed(2);
+                    
+                    document.getElementById('tSlider').value = currentT;
+                    document.getElementById('tInput').value = currentT.toFixed(1);
+                    document.getElementById('tValue').textContent = currentT.toFixed(2);
+                    
+                    // Update MGF
+                    updateMGF();
+                }
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update dynamic content
+                updateMGF();
+            }
+        });
+    </script>
+</body>
+</html>

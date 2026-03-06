@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Mean Distribution Visualizer | Central Limit Theorem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --sample-color: #2196F3;
+            --population-color: #FF5722;
+            --distribution-color: #4CAF50;
+            --ci-color: #9C27B0;
+            --se-color: #FF9800;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--sample-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--sample-color), var(--distribution-color), var(--ci-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--sample-color);
+        }
+
+        /* Population Distribution Selection */
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .distribution-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .distribution-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .distribution-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .distribution-btn.active {
+            border-color: var(--population-color);
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .distribution-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parameter-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .parameter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-label i {
+            color: var(--sample-color);
+        }
+
+        .value-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .value-input:focus {
+            outline: none;
+            border-color: var(--sample-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .range-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        /* Sample Settings */
+        .sample-settings {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Visualization Controls */
+        .visualization-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .simulate-btn {
+            background: var(--sample-color);
+            color: white;
+        }
+
+        .simulate-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        /* Statistics Display */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Confidence Interval Panel */
+        .ci-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .ci-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .ci-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .ci-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .ci-btn.active {
+            background: var(--ci-color);
+            color: white;
+            border-color: var(--ci-color);
+        }
+
+        .ci-display {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            margin-top: 1.5rem;
+        }
+
+        .ci-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--ci-color);
+            margin: 1rem 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* Distribution Comparison */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .comparison-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .distribution-card {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Standard Error Visualization */
+        .se-visualization {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .se-chart-container {
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--sample-color);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Toggle Controls */
+        .toggle-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn.active {
+            background: var(--distribution-color);
+            color: white;
+            border-color: var(--distribution-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .ci-value {
+                font-size: 2rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Sample Mean Distribution Visualizer" data-bn="স্যাম্পল মিন ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজার">স্যাম্পল মিন ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Visualize distribution of sample means using Central Limit Theorem" data-bn="সেন্ট্রাল লিমিট থিওরেম ব্যবহার করে স্যাম্পল গড়ের ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজ করুন">
+                সেন্ট্রাল লিমিট থিওরেম ব্যবহার করে স্যাম্পল গড়ের ডিস্ট্রিবিউশন ভিজ্যুয়ালাইজ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Population Distribution" data-bn="জনসংখ্যা ডিস্ট্রিবিউশন">জনসংখ্যা ডিস্ট্রিবিউশন</span>
+                </h2>
+
+                <!-- Distribution Selection -->
+                <div class="distribution-grid">
+                    <button class="distribution-btn active" data-distribution="normal">
+                        <div class="distribution-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <span data-en="Normal" data-bn="নরমাল">নরমাল</span>
+                        <small data-en="Symmetric, bell-shaped" data-bn="সিমেট্রিক, বেল-আকৃতির">সিমেট্রিক, বেল-আকৃতির</small>
+                    </button>
+
+                    <button class="distribution-btn" data-distribution="uniform">
+                        <div class="distribution-icon">
+                            <i class="fas fa-square"></i>
+                        </div>
+                        <span data-en="Uniform" data-bn="ইউনিফর্ম">ইউনিফর্ম</span>
+                        <small data-en="Equal probability" data-bn="সমান সম্ভাবনা">সমান সম্ভাবনা</small>
+                    </button>
+
+                    <button class="distribution-btn" data-distribution="exponential">
+                        <div class="distribution-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span data-en="Exponential" data-bন="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</span>
+                        <small data-en="Right-skewed" data-bন="ডানদিকে তির্যক">ডানদিকে তির্যক</small>
+                    </button>
+                </div>
+
+                <!-- Population Parameters -->
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    <span data-en="Population Parameters" data-bন="জনসংখ্যা প্যারামিটার">জনসংখ্যা প্যারামিটার</span>
+                </h2>
+
+                <div class="parameter-controls">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-mu"></i>
+                            <span data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</span>
+                        </div>
+                        <input type="number" id="populationMean" class="value-input" value="50" step="0.1">
+                        <input type="range" id="populationMeanRange" class="range-slider" min="0" max="100" value="50" step="1">
+                        <div class="help-text" data-en="Population mean" data-bন="জনসংখ্যার গড়">জনসংখ্যার গড়</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-sigma"></i>
+                            <span data-en="Std Dev (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</span>
+                        </div>
+                        <input type="number" id="populationStdDev" class="value-input" value="15" step="0.1">
+                        <input type="range" id="populationStdDevRange" class="range-slider" min="1" max="30" value="15" step="0.5">
+                        <div class="help-text" data-en="Population standard deviation" data-bন="জনসংখ্যার স্ট্যান্ডার্ড ডেভিয়েশন">জনসংখ্যার স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                    </div>
+                </div>
+
+                <!-- Sample Settings -->
+                <h2 class="section-title">
+                    <i class="fas fa-vial"></i>
+                    <span data-en="Sample Settings" data-bন="নমুনা সেটিংস">নমুনা সেটিংস</span>
+                </h2>
+
+                <div class="sample-settings">
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-hashtag"></i>
+                            <span data-en="Sample Size (n)" data-bন="নমুনা আকার (n)">নমুনা আকার (n)</span>
+                        </div>
+                        <input type="number" id="sampleSize" class="value-input" value="30" min="1" max="1000">
+                        <input type="range" id="sampleSizeRange" class="range-slider" min="1" max="200" value="30" step="1">
+                        <div class="help-text" data-en="Number of observations per sample" data-bন="প্রতি নমুনায় পর্যবেক্ষণের সংখ্যা">প্রতি নমুনায় পর্যবেক্ষণের সংখ্যা</div>
+                    </div>
+
+                    <div class="parameter-group">
+                        <div class="parameter-label">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Number of Samples" data-bন="নমুনার সংখ্যা">নমুনার সংখ্যা</span>
+                        </div>
+                        <input type="number" id="numSamples" class="value-input" value="1000" min="10" max="10000">
+                        <input type="range" id="numSamplesRange" class="range-slider" min="100" max="5000" value="1000" step="100">
+                        <div class="help-text" data-en="Total samples to simulate" data-bন="সিমুলেট করতে মোট নমুনা">সিমুলেট করতে মোট নমুনা</div>
+                    </div>
+                </div>
+
+                <!-- Visualization Controls -->
+                <div class="visualization-controls">
+                    <button class="control-btn simulate-btn" id="simulateBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Simulate Sample Means" data-bন="নমুনা গড় সিমুলেট করুন">নমুনা গড় সিমুলেট করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট করুন">রিসেট করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Sample Mean Distribution" data-bন="নমুনা গড় ডিস্ট্রিবিউশন">নমুনা গড় ডিস্ট্রিবিউশন</span>
+                </h2>
+
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+
+                <!-- Legend -->
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--sample-color);"></div>
+                        <span data-en="Sample Mean Distribution (X̄)" data-bন="নমুনা গড় ডিস্ট্রিবিউশন (X̄)">নমুনা গড় ডিস্ট্রিবিউশন (X̄)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--population-color);"></div>
+                        <span data-en="Population Distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশন">জনসংখ্যা ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--distribution-color);"></div>
+                        <span data-en="Theoretical Normal Distribution" data-bন="তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন">তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--ci-color);"></div>
+                        <span data-en="Confidence Interval" data-bন="কনফিডেন্স ইন্টারভ্যাল">কনফিডেন্স ইন্টারভ্যাল</span>
+                    </div>
+                </div>
+
+                <!-- Statistics Display -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Mean (X̄)" data-bন="নমুনা গড় (X̄)">নমুনা গড় (X̄)</div>
+                        <div class="stat-value" id="sampleMean">50.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Standard Error (σ/√n)" data-bন="স্ট্যান্ডার্ড এরর (σ/√n)">স্ট্যান্ডার্ড এরর (σ/√n)</div>
+                        <div class="stat-value" id="standardError">2.74</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sample Std Dev" data-bন="নমুনা স্ট্যান্ডার্ড ডেভিয়েশন">নমুনা স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="stat-value" id="sampleStdDev">15.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="CLT Convergence" data-bন="CLT কনভারজেন্স">CLT কনভারজেন্স</div>
+                        <div class="stat-value" id="convergenceScore">0.98</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confidence Interval Panel -->
+        <div class="ci-panel">
+            <h2 class="section-title">
+                <i class="fas fa-ruler-combined"></i>
+                <span data-en="Confidence Interval Overlay" data-bন="কনফিডেন্স ইন্টারভ্যাল ওভারলে">কনফিডেন্স ইন্টারভ্যাল ওভারলে</span>
+            </h2>
+
+            <!-- Confidence Level Selection -->
+            <div class="ci-controls">
+                <button class="ci-btn" data-level="0.90">
+                    90% <small data-en="z=1.645" data-bন="z=1.645">z=1.645</small>
+                </button>
+                <button class="ci-btn active" data-level="0.95">
+                    95% <small data-en="z=1.960" data-bন="z=1.960">z=1.960</small>
+                </button>
+                <button class="ci-btn" data-level="0.99">
+                    99% <small data-en="z=2.576" data-bন="z=2.576">z=2.576</small>
+                </button>
+                <button class="ci-btn" data-level="0.999">
+                    99.9% <small data-en="z=3.291" data-bন="z=3.291">z=3.291</small>
+                </button>
+            </div>
+
+            <!-- Toggle Controls -->
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="toggleCI">
+                    <i class="fas fa-eye"></i>
+                    <span data-en="Show CI" data-bন="CI দেখান">CI দেখান</span>
+                </button>
+                <button class="toggle-btn" id="togglePopulation">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Show Population" data-bন="জনসংখ্যা দেখান">জনসংখ্যা দেখান</span>
+                </button>
+                <button class="toggle-btn active" id="toggleNormal">
+                    <i class="fas fa-bell"></i>
+                    <span data-en="Show Theoretical" data-bন="তাত্ত্বিক দেখান">তাত্ত্বিক দেখান</span>
+                </button>
+            </div>
+
+            <!-- Confidence Interval Display -->
+            <div class="ci-display">
+                <div class="ci-title" data-en="95% Confidence Interval for Population Mean" data-bন="জনসংখ্যা গড়ের জন্য ৯৫% কনফিডেন্স ইন্টারভ্যাল">
+                    ৯৫% কনফিডেন্স ইন্টারভ্যাল
+                </div>
+                <div class="ci-value" id="ciValue">
+                    44.63 – 55.37
+                </div>
+                <div class="help-text" data-en="Interval Width: 10.74" data-bন="ইন্টারভ্যাল প্রস্থ: ১০.৭৪">
+                    ইন্টারভ্যাল প্রস্থ: <span id="ciWidth">10.74</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Comparison -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Distribution Comparison" data-bন="ডিস্ট্রিবিউশন তুলনা">ডিস্ট্রিবিউশন তুলনা</span>
+            </h2>
+
+            <div class="comparison-charts">
+                <div class="distribution-card">
+                    <h3 data-en="Population Distribution" data-bন="জনসংখ্যা ডিস্ট্রিবিউশন">জনসংখ্যা ডিস্ট্রিবিউশন</h3>
+                    <div class="chart-container">
+                        <canvas id="populationChart" height="200"></canvas>
+                    </div>
+                    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 1rem;">
+                        <div class="stat-card" style="padding: 1rem;">
+                            <div class="stat-label" data-en="Mean" data-bন="গড়">গড়</div>
+                            <div class="stat-value" style="font-size: 1.2rem;" id="popMeanDisplay">50.00</div>
+                        </div>
+                        <div class="stat-card" style="padding: 1rem;">
+                            <div class="stat-label" data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                            <div class="stat-value" style="font-size: 1.2rem;" id="popStdDevDisplay">15.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="distribution-card">
+                    <h3 data-en="Sampling Distribution of X̄" data-bন="X̄-এর স্যাম্পলিং ডিস্ট্রিবিউশন">X̄-এর স্যাম্পলিং ডিস্ট্রিবিউশন</h3>
+                    <div class="chart-container">
+                        <canvas id="samplingChart" height="200"></canvas>
+                    </div>
+                    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 1rem;">
+                        <div class="stat-card" style="padding: 1rem;">
+                            <div class="stat-label" data-en="Mean of X̄" data-bন="X̄-এর গড়">X̄-এর গড়</div>
+                            <div class="stat-value" style="font-size: 1.2rem;" id="samplingMean">50.00</div>
+                        </div>
+                        <div class="stat-card" style="padding: 1rem;">
+                            <div class="stat-label" data-en="SE (σ/√n)" data-bন="SE (σ/√n)">SE (σ/√n)</div>
+                            <div class="stat-value" style="font-size: 1.2rem;" id="samplingSE">2.74</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Standard Error Visualization -->
+        <div class="se-visualization">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Standard Error vs Sample Size" data-bন="স্ট্যান্ডার্ড এরর বনাম নমুনা আকার">স্ট্যান্ডার্ড এরর বনাম নমুনা আকার</span>
+            </h2>
+
+            <div class="se-chart-container">
+                <canvas id="seChart"></canvas>
+            </div>
+
+            <div class="help-text" data-en="Standard Error = σ / √n. As sample size increases, standard error decreases." data-bন="স্ট্যান্ডার্ড এরর = σ / √n। নমুনা আকার বাড়ার সাথে সাথে স্ট্যান্ডার্ড এরর হ্রাস পায়।">
+                স্ট্যান্ডার্ড এরর = σ / √n। নমুনা আকার বাড়ার সাথে সাথে স্ট্যান্ডার্ড এরর হ্রাস পায়।
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart Instances
+            let distributionChart = null;
+            let populationChart = null;
+            let samplingChart = null;
+            let seChart = null;
+
+            // Simulation State
+            let simulationState = {
+                distribution: 'normal',
+                populationMean: 50,
+                populationStdDev: 15,
+                sampleSize: 30,
+                numSamples: 1000,
+                confidenceLevel: 0.95,
+                zValue: 1.960,
+                showCI: true,
+                showPopulation: false,
+                showNormal: true
+            };
+
+            // Z-values for confidence levels
+            const zValues = {
+                0.90: 1.645,
+                0.95: 1.960,
+                0.99: 2.576,
+                0.999: 3.291
+            };
+
+            // DOM Elements
+            const distributionBtns = document.querySelectorAll('.distribution-btn');
+            const populationMeanInput = document.getElementById('populationMean');
+            const populationMeanRange = document.getElementById('populationMeanRange');
+            const populationStdDevInput = document.getElementById('populationStdDev');
+            const populationStdDevRange = document.getElementById('populationStdDevRange');
+            const sampleSizeInput = document.getElementById('sampleSize');
+            const sampleSizeRange = document.getElementById('sampleSizeRange');
+            const numSamplesInput = document.getElementById('numSamples');
+            const numSamplesRange = document.getElementById('numSamplesRange');
+            const simulateBtn = document.getElementById('simulateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const ciBtns = document.querySelectorAll('.ci-btn');
+            const toggleCI = document.getElementById('toggleCI');
+            const togglePopulation = document.getElementById('togglePopulation');
+            const toggleNormal = document.getElementById('toggleNormal');
+            
+            // Statistics Elements
+            const sampleMeanEl = document.getElementById('sampleMean');
+            const standardErrorEl = document.getElementById('standardError');
+            const sampleStdDevEl = document.getElementById('sampleStdDev');
+            const convergenceScoreEl = document.getElementById('convergenceScore');
+            const ciValueEl = document.getElementById('ciValue');
+            const ciWidthEl = document.getElementById('ciWidth');
+            const popMeanDisplayEl = document.getElementById('popMeanDisplay');
+            const popStdDevDisplayEl = document.getElementById('popStdDevDisplay');
+            const samplingMeanEl = document.getElementById('samplingMean');
+            const samplingSEEl = document.getElementById('samplingSE');
+
+            // Initialize
+            initVisualizer();
+
+            function initVisualizer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Distribution Selection
+                distributionBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const distribution = this.dataset.distribution;
+                        setDistribution(distribution);
+                    });
+                });
+
+                // Input Bindings
+                bindInputs();
+                
+                // Confidence Level Selection
+                ciBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const level = parseFloat(this.dataset.level);
+                        setConfidenceLevel(level);
+                    });
+                });
+
+                // Toggle Controls
+                toggleCI.addEventListener('click', function() {
+                    simulationState.showCI = !simulationState.showCI;
+                    this.classList.toggle('active');
+                    updateChart();
+                });
+
+                togglePopulation.addEventListener('click', function() {
+                    simulationState.showPopulation = !simulationState.showPopulation;
+                    this.classList.toggle('active');
+                    updateChart();
+                });
+
+                toggleNormal.addEventListener('click', function() {
+                    simulationState.showNormal = !simulationState.showNormal;
+                    this.classList.toggle('active');
+                    updateChart();
+                });
+
+                // Simulation Controls
+                simulateBtn.addEventListener('click', runSimulation);
+                resetBtn.addEventListener('click', resetSimulation);
+
+                // Initialize Charts
+                initializeCharts();
+
+                // Run initial simulation
+                setTimeout(() => {
+                    runSimulation();
+                    updateSEChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function setDistribution(distribution) {
+                simulationState.distribution = distribution;
+                
+                // Update active button
+                distributionBtns.forEach(btn => {
+                    if (btn.dataset.distribution === distribution) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            function bindInputs() {
+                // Population Mean
+                populationMeanInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationMean = value;
+                    populationMeanRange.value = value;
+                    updateSimulation();
+                });
+                
+                populationMeanRange.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationMean = value;
+                    populationMeanInput.value = value;
+                    updateSimulation();
+                });
+
+                // Population Std Dev
+                populationStdDevInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationStdDev = value;
+                    populationStdDevRange.value = value;
+                    updateSimulation();
+                });
+                
+                populationStdDevRange.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    simulationState.populationStdDev = value;
+                    populationStdDevInput.value = value;
+                    updateSimulation();
+                });
+
+                // Sample Size
+                sampleSizeInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.sampleSize = Math.min(1000, Math.max(1, value));
+                    sampleSizeRange.value = simulationState.sampleSize;
+                    updateSimulation();
+                });
+                
+                sampleSizeRange.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.sampleSize = value;
+                    sampleSizeInput.value = value;
+                    updateSimulation();
+                });
+
+                // Number of Samples
+                numSamplesInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.numSamples = Math.min(10000, Math.max(10, value));
+                    numSamplesRange.value = simulationState.numSamples;
+                    updateSimulation();
+                });
+                
+                numSamplesRange.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.numSamples = value;
+                    numSamplesInput.value = value;
+                    updateSimulation();
+                });
+            }
+
+            function setConfidenceLevel(level) {
+                simulationState.confidenceLevel = level;
+                simulationState.zValue = zValues[level];
+                
+                // Update active button
+                ciBtns.forEach(btn => {
+                    if (parseFloat(btn.dataset.level) === level) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                updateChart();
+            }
+
+            function initializeCharts() {
+                // Main Distribution Chart
+                const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+                distributionChart = new Chart(distributionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'নমুনা গড় ডিস্ট্রিবিউশন (X̄)' : 'Sample Mean Distribution (X̄)',
+                                data: [],
+                                borderColor: 'var(--sample-color)',
+                                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'জনসংখ্যা ডিস্ট্রিবিউশন' : 'Population Distribution',
+                                data: [],
+                                borderColor: 'var(--population-color)',
+                                backgroundColor: 'rgba(255, 87, 34, 0.05)',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                hidden: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'তাত্ত্বিক নরমাল ডিস্ট্রিবিউশন' : 'Theoretical Normal Distribution',
+                                data: [],
+                                borderColor: 'var(--distribution-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [3, 3],
+                                tension: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ঘনত্ব' : 'Density',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Population Chart
+                const populationCtx = document.getElementById('populationChart').getContext('2d');
+                populationChart = new Chart(populationCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'জনসংখ্যা' : 'Population',
+                            data: [],
+                            backgroundColor: 'rgba(255, 87, 34, 0.7)',
+                            borderColor: 'var(--population-color)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+
+                // Sampling Distribution Chart
+                const samplingCtx = document.getElementById('samplingChart').getContext('2d');
+                samplingChart = new Chart(samplingCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'স্যাম্পলিং ডিস্ট্রিবিউশন' : 'Sampling Distribution',
+                            data: [],
+                            backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                            borderColor: 'var(--sample-color)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+
+                // Standard Error Chart
+                const seCtx = document.getElementById('seChart').getContext('2d');
+                seChart = new Chart(seCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error',
+                            data: [],
+                            borderColor: 'var(--se-color)',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error'}: ${context.parsed.y.toFixed(3)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'নমুনা আকার (n)' : 'Sample Size (n)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড এরর' : 'Standard Error',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            function generatePopulationData() {
+                const { distribution, populationMean, populationStdDev } = simulationState;
+                const data = [];
+                const nPoints = 100;
+                
+                switch(distribution) {
+                    case 'normal':
+                        for (let i = 0; i < nPoints; i++) {
+                            const x = populationMean - 4 * populationStdDev + (8 * populationStdDev * i) / nPoints;
+                            const y = normalPDF(x, populationMean, populationStdDev);
+                            data.push({ x, y });
+                        }
+                        break;
+                        
+                    case 'uniform':
+                        const min = populationMean - Math.sqrt(12) * populationStdDev / 2;
+                        const max = populationMean + Math.sqrt(12) * populationStdDev / 2;
+                        for (let i = 0; i < nPoints; i++) {
+                            const x = min + (max - min) * i / nPoints;
+                            const y = (x >= min && x <= max) ? 1 / (max - min) : 0;
+                            data.push({ x, y });
+                        }
+                        break;
+                        
+                    case 'exponential':
+                        const lambda = 1 / populationStdDev; // For exponential, mean = 1/lambda
+                        for (let i = 0; i < nPoints; i++) {
+                            const x = i * populationStdDev * 4 / nPoints;
+                            const y = lambda * Math.exp(-lambda * x);
+                            data.push({ x, y });
+                        }
+                        break;
+                }
+                
+                return data;
+            }
+
+            function normalPDF(x, mean, stdDev) {
+                return Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2)) / (stdDev * Math.sqrt(2 * Math.PI));
+            }
+
+            function generateSampleMeans() {
+                const { distribution, populationMean, populationStdDev, sampleSize, numSamples } = simulationState;
+                const sampleMeans = [];
+                
+                for (let i = 0; i < numSamples; i++) {
+                    let sampleSum = 0;
+                    
+                    for (let j = 0; j < sampleSize; j++) {
+                        let value;
+                        switch(distribution) {
+                            case 'normal':
+                                // Box-Muller transform for normal distribution
+                                let u1 = Math.random();
+                                let u2 = Math.random();
+                                let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                                value = populationMean + populationStdDev * z;
+                                break;
+                                
+                            case 'uniform':
+                                const min = populationMean - Math.sqrt(12) * populationStdDev / 2;
+                                const max = populationMean + Math.sqrt(12) * populationStdDev / 2;
+                                value = min + Math.random() * (max - min);
+                                break;
+                                
+                            case 'exponential':
+                                const lambda = 1 / populationStdDev;
+                                value = -Math.log(1 - Math.random()) / lambda;
+                                break;
+                        }
+                        sampleSum += value;
+                    }
+                    
+                    sampleMeans.push(sampleSum / sampleSize);
+                }
+                
+                return sampleMeans;
+            }
+
+            function calculateStatistics(sampleMeans) {
+                const { populationMean, populationStdDev, sampleSize } = simulationState;
+                
+                // Sample mean of sample means
+                const sampleMean = sampleMeans.reduce((a, b) => a + b, 0) / sampleMeans.length;
+                
+                // Sample standard deviation of sample means
+                const variance = sampleMeans.reduce((sum, x) => sum + Math.pow(x - sampleMean, 2), 0) / sampleMeans.length;
+                const sampleStdDev = Math.sqrt(variance);
+                
+                // Theoretical standard error
+                const standardError = populationStdDev / Math.sqrt(sampleSize);
+                
+                // Convergence score (how close sampleStdDev is to standardError)
+                const convergenceScore = Math.min(1, Math.max(0, 1 - Math.abs(sampleStdDev - standardError) / standardError));
+                
+                // Confidence interval
+                const marginOfError = simulationState.zValue * standardError;
+                const lowerBound = sampleMean - marginOfError;
+                const upperBound = sampleMean + marginOfError;
+                const intervalWidth = marginOfError * 2;
+                
+                return {
+                    sampleMean,
+                    sampleStdDev,
+                    standardError,
+                    convergenceScore,
+                    lowerBound,
+                    upperBound,
+                    intervalWidth
+                };
+            }
+
+            function createHistogramData(sampleMeans, bins = 30) {
+                const min = Math.min(...sampleMeans);
+                const max = Math.max(...sampleMeans);
+                const binWidth = (max - min) / bins;
+                
+                const histogram = Array(bins).fill(0);
+                const labels = [];
+                
+                for (let i = 0; i < bins; i++) {
+                    const binStart = min + i * binWidth;
+                    const binEnd = binStart + binWidth;
+                    labels.push((binStart + binWidth / 2).toFixed(1));
+                    
+                    histogram[i] = sampleMeans.filter(x => x >= binStart && x < binEnd).length;
+                }
+                
+                // Normalize to density
+                const total = sampleMeans.length;
+                const density = histogram.map(count => count / (total * binWidth));
+                
+                return { labels, density };
+            }
+
+            function updateChart() {
+                if (!distributionChart) return;
+                
+                const sampleMeans = generateSampleMeans();
+                const stats = calculateStatistics(sampleMeans);
+                const histData = createHistogramData(sampleMeans);
+                const popData = generatePopulationData();
+                
+                // Update main distribution chart
+                distributionChart.data.labels = histData.labels;
+                distributionChart.data.datasets[0].data = histData.density;
+                distributionChart.data.datasets[0].label = currentLanguage === 'bn' ? 'নমুনা গড় ডিস্ট্রিবিউশন (X̄)' : 'Sample Mean Distribution (X̄)';
+                
+                // Update population distribution
+                distributionChart.data.datasets[1].data = popData.map(d => d.y);
+                distributionChart.data.datasets[1].hidden = !simulationState.showPopulation;
+                
+                // Update theoretical normal distribution
+                const theoreticalData = histData.labels.map(x => 
+                    normalPDF(parseFloat(x), stats.sampleMean, stats.standardError)
+                );
+                distributionChart.data.datasets[2].data = theoreticalData;
+                distributionChart.data.datasets[2].hidden = !simulationState.showNormal;
+                
+                // Update x-axis scale for population data
+                if (simulationState.showPopulation) {
+                    const allX = [...popData.map(d => d.x), ...histData.labels.map(x => parseFloat(x))];
+                    const xMin = Math.min(...allX);
+                    const xMax = Math.max(...allX);
+                    
+                    distributionChart.options.scales.x.min = xMin;
+                    distributionChart.options.scales.x.max = xMax;
+                } else {
+                    delete distributionChart.options.scales.x.min;
+                    delete distributionChart.options.scales.x.max;
+                }
+                
+                // Add confidence interval annotation if enabled
+                if (distributionChart.options.plugins.annotation) {
+                    delete distributionChart.options.plugins.annotation;
+                }
+                
+                if (simulationState.showCI) {
+                    distributionChart.options.plugins.annotation = {
+                        annotations: {
+                            ciBox: {
+                                type: 'box',
+                                xMin: stats.lowerBound,
+                                xMax: stats.upperBound,
+                                backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                                borderColor: 'var(--ci-color)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                    display: true,
+                                    content: `${(simulationState.confidenceLevel * 100).toFixed(1)}% CI`,
+                                    position: 'top',
+                                    color: 'var(--ci-color)',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            meanLine: {
+                                type: 'line',
+                                xMin: stats.sampleMean,
+                                xMax: stats.sampleMean,
+                                borderColor: 'var(--sample-color)',
+                                borderWidth: 3,
+                                borderDash: [5, 5],
+                                label: {
+                                    display: true,
+                                    content: `X̄ = ${stats.sampleMean.toFixed(2)}`,
+                                    position: 'top',
+                                    color: 'var(--sample-color)',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    };
+                }
+                
+                distributionChart.update();
+                
+                // Update statistics display
+                updateStatisticsDisplay(stats);
+                
+                // Update comparison charts
+                updateComparisonCharts(sampleMeans, popData);
+            }
+
+            function updateStatisticsDisplay(stats) {
+                sampleMeanEl.textContent = stats.sampleMean.toFixed(2);
+                standardErrorEl.textContent = stats.standardError.toFixed(2);
+                sampleStdDevEl.textContent = stats.sampleStdDev.toFixed(2);
+                convergenceScoreEl.textContent = stats.convergenceScore.toFixed(2);
+                
+                // Update confidence interval display
+                const confidencePercent = (simulationState.confidenceLevel * 100).toFixed(1);
+                ciValueEl.textContent = `${stats.lowerBound.toFixed(2)} – ${stats.upperBound.toFixed(2)}`;
+                ciWidthEl.textContent = stats.intervalWidth.toFixed(2);
+                
+                // Update comparison statistics
+                popMeanDisplayEl.textContent = simulationState.populationMean.toFixed(2);
+                popStdDevDisplayEl.textContent = simulationState.populationStdDev.toFixed(2);
+                samplingMeanEl.textContent = stats.sampleMean.toFixed(2);
+                samplingSEEl.textContent = stats.standardError.toFixed(2);
+            }
+
+            function updateComparisonCharts(sampleMeans, popData) {
+                // Update population chart
+                const popHistData = createHistogramData(popData.map(d => d.x), 20);
+                populationChart.data.labels = popHistData.labels;
+                populationChart.data.datasets[0].data = popHistData.density;
+                populationChart.data.datasets[0].label = currentLanguage === 'bn' ? 'জনসংখ্যা' : 'Population';
+                populationChart.update();
+                
+                // Update sampling distribution chart
+                const sampleHistData = createHistogramData(sampleMeans, 20);
+                samplingChart.data.labels = sampleHistData.labels;
+                samplingChart.data.datasets[0].data = sampleHistData.density;
+                samplingChart.data.datasets[0].label = currentLanguage === 'bn' ? 'স্যাম্পলিং ডিস্ট্রিবিউশন' : 'Sampling Distribution';
+                samplingChart.update();
+            }
+
+            function updateSEChart() {
+                const { populationStdDev } = simulationState;
+                const sampleSizes = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200];
+                const standardErrors = sampleSizes.map(n => populationStdDev / Math.sqrt(n));
+                
+                seChart.data.labels = sampleSizes;
+                seChart.data.datasets[0].data = standardErrors;
+                seChart.update();
+            }
+
+            function updateSimulation() {
+                // Update displays
+                popMeanDisplayEl.textContent = simulationState.populationMean.toFixed(2);
+                popStdDevDisplayEl.textContent = simulationState.populationStdDev.toFixed(2);
+                
+                // Update SE chart
+                updateSEChart();
+                
+                // Run simulation if auto-update is enabled
+                runSimulation();
+            }
+
+            function runSimulation() {
+                simulateBtn.classList.add('pulse');
+                simulateBtn.disabled = true;
+                
+                setTimeout(() => {
+                    updateChart();
+                    simulateBtn.classList.remove('pulse');
+                    simulateBtn.disabled = false;
+                }, 100);
+            }
+
+            function resetSimulation() {
+                // Reset to defaults
+                simulationState = {
+                    distribution: 'normal',
+                    populationMean: 50,
+                    populationStdDev: 15,
+                    sampleSize: 30,
+                    numSamples: 1000,
+                    confidenceLevel: 0.95,
+                    zValue: 1.960,
+                    showCI: true,
+                    showPopulation: false,
+                    showNormal: true
+                };
+                
+                // Update inputs
+                populationMeanInput.value = 50;
+                populationMeanRange.value = 50;
+                populationStdDevInput.value = 15;
+                populationStdDevRange.value = 15;
+                sampleSizeInput.value = 30;
+                sampleSizeRange.value = 30;
+                numSamplesInput.value = 1000;
+                numSamplesRange.value = 1000;
+                
+                // Update distribution buttons
+                distributionBtns.forEach(btn => {
+                    if (btn.dataset.distribution === 'normal') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update CI button
+                ciBtns.forEach(btn => {
+                    if (parseFloat(btn.dataset.level) === 0.95) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Update toggle buttons
+                toggleCI.classList.add('active');
+                togglePopulation.classList.remove('active');
+                toggleNormal.classList.add('active');
+                
+                // Run simulation
+                runSimulation();
+                updateSEChart();
+            }
+        });
+    </script>
+</body>
+</html>

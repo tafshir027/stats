@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Pi Estimator | π Calculation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2E7D32;
+            --accent: #FF5722;
+            --success: #2196F3;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --inside-circle: #4CAF50;
+            --outside-circle: #FF5722;
+            --grid-bg: #f5f5f5;
+            --pi-color: #9C27B0;
+            --convergence-color: #2196F3;
+            --error-color: #FF5722;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--pi-color));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .control-group {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control-label i {
+            color: var(--primary);
+        }
+
+        /* Range Slider */
+        .range-container {
+            margin-bottom: 1rem;
+        }
+
+        .range-value {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .preset-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Control Buttons */
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Panel */
+        .visualization-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 1;
+            background: var(--grid-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--border);
+            min-height: 400px;
+        }
+
+        #piCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Point Counter */
+        .point-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .counter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .counter-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .inside-color {
+            background: var(--inside-circle);
+        }
+
+        .outside-color {
+            background: var(--outside-circle);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Pi Estimation Results */
+        .pi-results {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .pi-results {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .pi-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .result-card.highlight {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-color: var(--primary);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .pi-value {
+            color: var(--pi-color);
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* Convergence Chart Container */
+        .convergence-container {
+            margin-top: 2rem;
+            height: 200px;
+            position: relative;
+        }
+
+        .convergence-chart {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        /* Error Analysis */
+        .error-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .error-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .error-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .error-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .error-card h3 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .error-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--error-color);
+        }
+
+        .error-progress {
+            margin-top: 1rem;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .error-progress-fill {
+            height: 100%;
+            background: var(--error-color);
+            transition: width 0.5s ease;
+        }
+
+        /* Simulation Info */
+        .simulation-info {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .info-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .info-card h4 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-content {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Formula Display */
+        .formula-display {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 100%);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 1rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            font-family: 'Times New Roman', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        /* Speed Analysis */
+        .speed-analysis {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .speed-icon {
+            font-size: 2rem;
+            color: var(--convergence-color);
+        }
+
+        .speed-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--convergence-color);
+        }
+
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .result-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Help Text */
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Progress Bar */
+        .simulation-progress {
+            margin-top: 1rem;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s ease;
+        }
+
+        /* Monte Carlo Visualization */
+        .mc-visualization {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .viz-circle {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 2;
+        }
+
+        .viz-square {
+            fill: none;
+            stroke: var(--gray);
+            stroke-width: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Monte Carlo π Estimator" data-bn="মন্টে কার্লো π এস্টিমেটর">মন্টে কার্লো π এস্টিমেটর</h1>
+            <p class="subtitle" data-en="Estimate π using random sampling in a unit square with convergence analysis and error calculation" data-bn="ইউনিট স্কোয়ারে র্যান্ডম স্যাম্পলিং ব্যবহার করে π অনুমান করুন কনভারজেন্স বিশ্লেষণ এবং ত্রুটি গণনার মাধ্যমে">
+                ইউনিট স্কোয়ারে র্যান্ডম স্যাম্পলিং ব্যবহার করে π অনুমান করুন কনভারজেন্স বিশ্লেষণ এবং ত্রুটি গণনার মাধ্যমে
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Simulation Controls" data-bn="সিমুলেশন কন্ট্রোল">সিমুলেশন কন্ট্রোল</span>
+                </h2>
+
+                <!-- Number of Points Control -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Number of Points" data-bn="পয়েন্ট সংখ্যা">পয়েন্ট সংখ্যা</span>
+                    </div>
+                    <div class="range-container">
+                        <div class="range-value" id="pointsValue">1,000</div>
+                        <input type="range" min="100" max="10000" value="1000" class="range-slider" id="pointsSlider" step="100">
+                    </div>
+                    
+                    <div class="preset-buttons">
+                        <button class="preset-btn" data-points="100">100</button>
+                        <button class="preset-btn" data-points="500">500</button>
+                        <button class="preset-btn" data-points="1000">1K</button>
+                        <button class="preset-btn" data-points="2500">2.5K</button>
+                        <button class="preset-btn active" data-points="5000">5K</button>
+                        <button class="preset-btn" data-points="10000">10K</button>
+                    </div>
+                    
+                    <div class="help-text" data-en="More points = more accurate but slower" data-bn="বেশি পয়েন্ট = বেশি সঠিক কিন্তু ধীর">
+                        বেশি পয়েন্ট = বেশি সঠিক কিন্তু ধীর
+                    </div>
+                </div>
+
+                <!-- Simulation Speed -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span data-en="Simulation Speed" data-bন="সিমুলেশন গতি">সিমুলেশন গতি</span>
+                    </div>
+                    <div class="range-container">
+                        <div class="range-value" id="speedValue">Medium</div>
+                        <input type="range" min="1" max="5" value="3" class="range-slider" id="speedSlider">
+                    </div>
+                    
+                    <div class="help-text" data-en="Control animation speed for visualization" data-bন="ভিজ্যুয়ালাইজেশনের জন্য অ্যানিমেশন গতি নিয়ন্ত্রণ করুন">
+                        ভিজ্যুয়ালাইজেশনের জন্য অ্যানিমেশন গতি নিয়ন্ত্রণ করুন
+                    </div>
+                </div>
+
+                <!-- Point Size -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        <span data-en="Point Size" data-bন="পয়েন্ট সাইজ">পয়েন্ট সাইজ</span>
+                    </div>
+                    <div class="range-container">
+                        <div class="range-value" id="pointSizeValue">2px</div>
+                        <input type="range" min="1" max="5" value="2" class="range-slider" id="pointSizeSlider">
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="control-buttons">
+                    <button class="control-btn start-btn" id="startBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Start Simulation" data-bন="সিমুলেশন শুরু করুন">সিমুলেশন শুরু করুন</span>
+                    </button>
+                    <button class="control-btn reset-btn" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span data-en="Reset" data-bন="রিসেট">রিসেট</span>
+                    </button>
+                </div>
+
+                <!-- Simulation Progress -->
+                <div class="simulation-progress">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Visualization Panel -->
+            <div class="visualization-panel">
+                <div class="canvas-container">
+                    <!-- Monte Carlo Visualization -->
+                    <div class="mc-visualization">
+                        <svg viewBox="0 0 100 100">
+                            <rect class="viz-square" x="10" y="10" width="80" height="80"/>
+                            <circle class="viz-circle" cx="50" cy="50" r="40"/>
+                        </svg>
+                    </div>
+                    
+                    <canvas id="piCanvas"></canvas>
+                    
+                    <!-- Point Counter -->
+                    <div class="point-counter">
+                        <div class="counter-value" id="pointsPlaced">0</div>
+                        <div class="counter-label" data-en="Points Placed" data-bন="পয়েন্ট স্থাপিত">পয়েন্ট স্থাপিত</div>
+                    </div>
+                    
+                    <!-- Legend -->
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color inside-color"></div>
+                            <span data-en="Inside circle (counted)" data-bন="বৃত্তের ভিতরে (গণনা করা)">বৃত্তের ভিতরে (গণনা করা)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color outside-color"></div>
+                            <span data-en="Outside circle (not counted)" data-bন="বৃত্তের বাইরে (গণনা করা নয়)">বৃত্তের বাইরে (গণনা করা নয়)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="π Estimation Results" data-bন="π অনুমান ফলাফল">π অনুমান ফলাফল</span>
+            </h2>
+
+            <div class="pi-results">
+                <div class="result-card">
+                    <div class="result-label" data-en="Estimated π" data-bন="অনুমানিত π">অনুমানিত π</div>
+                    <div class="result-value pi-value" id="estimatedPi">3.1416</div>
+                </div>
+                
+                <div class="result-card highlight">
+                    <div class="result-label" data-en="True π" data-bন="সত্য π">সত্য π</div>
+                    <div class="result-value pi-value">3.14159265</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label" data-en="Absolute Error" data-bন="পরম ত্রুটি">পরম ত্রুটি</div>
+                    <div class="result-value" id="absoluteError">0.000007</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label" data-en="Relative Error" data-bন="আপেক্ষিক ত্রুটি">আপেক্ষিক ত্রুটি</div>
+                    <div class="result-value" id="relativeError">0.0002%</div>
+                </div>
+            </div>
+
+            <!-- Formula Display -->
+            <div class="formula-display">
+                π ≈ 4 × (points inside circle / total points)
+            </div>
+
+            <!-- Convergence Chart -->
+            <div class="section-title" style="margin-top: 2rem;">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Convergence Speed Analysis" data-bন="কনভারজেন্স গতি বিশ্লেষণ">কনভারজেন্স গতি বিশ্লেষণ</span>
+            </div>
+            
+            <div class="convergence-container">
+                <canvas class="convergence-chart" id="convergenceChart"></canvas>
+            </div>
+
+            <!-- Speed Analysis -->
+            <div class="speed-analysis">
+                <div class="speed-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <div data-en="Convergence Speed:" data-bন="কনভারজেন্স গতি:">কনভারজেন্স গতি:</div>
+                    <div class="speed-value" id="convergenceSpeed">Fast</div>
+                </div>
+                <div class="help-text" style="margin-left: auto;">
+                    <span data-en="Based on error reduction rate" data-bন="ত্রুটি হ্রাস হারের উপর ভিত্তি করে">ত্রুটি হ্রাস হারের উপর ভিত্তি করে</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Analysis -->
+        <div class="error-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Error Rate Calculation & Analysis" data-bন="ত্রুটি হার গণনা ও বিশ্লেষণ">ত্রুটি হার গণনা ও বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="error-cards">
+                <div class="error-card">
+                    <h3 data-en="Current Error Rate" data-bন="বর্তমান ত্রুটি হার">বর্তমান ত্রুটি হার</h3>
+                    <div class="error-value" id="currentErrorRate">0.01%</div>
+                    <div class="error-progress">
+                        <div class="error-progress-fill" id="currentErrorBar" style="width: 10%"></div>
+                    </div>
+                </div>
+                
+                <div class="error-card">
+                    <h3 data-en="Error Reduction Rate" data-bন="ত্রুটি হ্রাস হার">ত্রুটি হ্রাস হার</h3>
+                    <div class="error-value" id="errorReductionRate">15%/K</div>
+                    <div class="help-text" data-en="Per 1000 points" data-bন="প্রতি ১০০০ পয়েন্টে">প্রতি ১০০০ পয়েন্টে</div>
+                </div>
+                
+                <div class="error-card">
+                    <h3 data-en="Expected Error at 100K points" data-bন="১০০কে পয়েন্টে প্রত্যাশিত ত্রুটি">১০০কে পয়েন্টে প্রত্যাশিত ত্রুটি</h3>
+                    <div class="error-value" id="expectedError">0.001%</div>
+                    <div class="help-text" data-en="Based on current convergence" data-bন="বর্তমান কনভারজেন্সের উপর ভিত্তি করে">বর্তমান কনভারজেন্সের উপর ভিত্তি করে</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Info -->
+        <div class="simulation-info">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <span data-en="Monte Carlo π Estimation Theory" data-bন="মন্টে কার্লো π অনুমান তত্ত্ব">মন্টে কার্লো π অনুমান তত্ত্ব</span>
+            </h2>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-shapes"></i>
+                        <span data-en="Geometric Principle" data-bন="জ্যামিতিক নীতি">জ্যামিতিক নীতি</span>
+                    </h4>
+                    <div class="info-content" data-en="The area ratio of a quarter circle to its containing square is π/4. Random points approximate this ratio." data-bন="একটি কোয়ার্টার সার্কেল এবং এর আবদ্ধ বর্গক্ষেত্রের ক্ষেত্রফল অনুপাত π/4। র্যান্ডম পয়েন্ট এই অনুপাত আনুমানিক করে।">
+                        একটি কোয়ার্টার সার্কেল এবং এর আবদ্ধ বর্গক্ষেত্রের ক্ষেত্রফল অনুপাত π/4। র্যান্ডম পয়েন্ট এই অনুপাত আনুমানিক করে।
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-random"></i>
+                        <span data-en="Convergence Rate" data-bন="কনভারজেন্স হার">কনভারজেন্স হার</span>
+                    </h4>
+                    <div class="info-content" data-en="Monte Carlo methods converge at rate O(1/√n), meaning error decreases with square root of sample size." data-bন="মন্টে কার্লো পদ্ধতি O(1/√n) হারে কনভারজ করে, মানে ত্রুটি নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়।">
+                        মন্টে কার্লো পদ্ধতি O(1/√n) হারে কনভারজ করে, মানে ত্রুটি নমুনা আকারের বর্গমূলের সাথে হ্রাস পায়।
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-chart-pie"></i>
+                        <span data-en="Error Analysis" data-bন="ত্রুটি বিশ্লেষণ">ত্রুটি বিশ্লেষণ</span>
+                    </h4>
+                    <div class="info-content" data-en="Standard error of π estimate is approximately √(π(4-π)/n). Error decreases with more points." data-bন="π অনুমানের স্ট্যান্ডার্ড এরর আনুমানিক √(π(4-π)/n)। বেশি পয়েন্টের সাথে ত্রুটি হ্রাস পায়।">
+                        π অনুমানের স্ট্যান্ডার্ড এরর আনুমানিক √(π(4-π)/n)। বেশি পয়েন্টের সাথে ত্রুটি হ্রাস পায়।
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Visual Point Plotting" data-bন="ভিজ্যুয়াল পয়েন্ট প্লটিং">ভিজ্যুয়াল পয়েন্ট প্লটিং</span>
+                    </h4>
+                    <div class="info-content" data-en="Each random point is plotted with real-time color coding: green inside circle, red outside. Animation shows convergence." data-bন="প্রতিটি র্যান্ডম পয়েন্ট রিয়েল-টাইম কালার কোডিং সহ প্লট করা হয়: সবুজ বৃত্তের ভিতরে, লাল বাইরে। অ্যানিমেশন কনভারজেন্স দেখায়।">
+                        প্রতিটি র্যান্ডম পয়েন্ট রিয়েল-টাইম কালার কোডিং সহ প্লট করা হয়: সবুজ বৃত্তের ভিতরে, লাল বাইরে। অ্যানিমেশন কনভারজেন্স দেখায়।
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Chart.js global configuration
+            Chart.defaults.font.family = "'Poppins', 'Hind Siliguri', sans-serif";
+            Chart.defaults.color = '#718096';
+
+            // Simulation State
+            let simulationState = {
+                totalPoints: 5000,
+                pointsPlaced: 0,
+                insideCircle: 0,
+                estimatedPi: 0,
+                isRunning: false,
+                animationSpeed: 3,
+                pointSize: 2,
+                truePi: Math.PI,
+                convergenceData: [],
+                errorHistory: [],
+                startTime: null,
+                animationId: null
+            };
+
+            // Canvas and Context
+            const canvas = document.getElementById('piCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Chart instances
+            let convergenceChart = null;
+
+            // DOM Elements
+            const pointsValue = document.getElementById('pointsValue');
+            const pointsSlider = document.getElementById('pointsSlider');
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            const speedValue = document.getElementById('speedValue');
+            const speedSlider = document.getElementById('speedSlider');
+            const pointSizeValue = document.getElementById('pointSizeValue');
+            const pointSizeSlider = document.getElementById('pointSizeSlider');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const progressFill = document.getElementById('progressFill');
+            const pointsPlacedEl = document.getElementById('pointsPlaced');
+            const estimatedPiEl = document.getElementById('estimatedPi');
+            const absoluteErrorEl = document.getElementById('absoluteError');
+            const relativeErrorEl = document.getElementById('relativeError');
+            const convergenceSpeedEl = document.getElementById('convergenceSpeed');
+            const currentErrorRateEl = document.getElementById('currentErrorRate');
+            const currentErrorBar = document.getElementById('currentErrorBar');
+            const errorReductionRateEl = document.getElementById('errorReductionRate');
+            const expectedErrorEl = document.getElementById('expectedError');
+
+            // Initialize
+            initCalculator();
+            setupCanvas();
+            updateDisplay();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Points Slider
+                pointsSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.totalPoints = value;
+                    pointsValue.textContent = value.toLocaleString();
+                    updatePresetButtons(value);
+                });
+
+                // Preset Buttons
+                presetButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const points = parseInt(this.dataset.points);
+                        simulationState.totalPoints = points;
+                        pointsSlider.value = points;
+                        pointsValue.textContent = points.toLocaleString();
+                        updatePresetButtons(points);
+                    });
+                });
+
+                // Speed Slider
+                speedSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.animationSpeed = value;
+                    const speeds = ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'];
+                    speedValue.textContent = currentLanguage === 'bn' 
+                        ? ['খুব ধীর', 'ধীর', 'মধ্যম', 'দ্রুত', 'খুব দ্রুত'][value-1]
+                        : speeds[value-1];
+                });
+
+                // Point Size Slider
+                pointSizeSlider.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    simulationState.pointSize = value;
+                    pointSizeValue.textContent = `${value}px`;
+                });
+
+                // Control Buttons
+                startBtn.addEventListener('click', toggleSimulation);
+                resetBtn.addEventListener('click', resetSimulation);
+
+                // Window Resize
+                window.addEventListener('resize', setupCanvas);
+
+                // Initialize Chart
+                initConvergenceChart();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+
+                // Update speed value display
+                const value = parseInt(speedSlider.value);
+                const speeds = ['Very Slow', 'Slow', 'Medium', 'Fast', 'Very Fast'];
+                speedValue.textContent = lang === 'bn' 
+                    ? ['খুব ধীর', 'ধীর', 'মধ্যম', 'দ্রুত', 'খুব দ্রুত'][value-1]
+                    : speeds[value-1];
+            }
+
+            function setupCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                
+                // Draw initial state
+                drawBackground();
+            }
+
+            function drawBackground() {
+                const width = canvas.width;
+                const height = canvas.height;
+                const size = Math.min(width, height) * 0.8;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = size / 2;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Draw square
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(centerX - size/2, centerY - size/2, size, size);
+                
+                // Draw quarter circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            function updatePresetButtons(selectedPoints) {
+                presetButtons.forEach(btn => {
+                    const points = parseInt(btn.dataset.points);
+                    if (points === selectedPoints) {
+                        btn.classList.add('active');
+                        btn.style.background = 'var(--primary)';
+                        btn.style.color = 'white';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }
+                });
+            }
+
+            function toggleSimulation() {
+                if (simulationState.isRunning) {
+                    stopSimulation();
+                } else {
+                    startSimulation();
+                }
+            }
+
+            function startSimulation() {
+                if (simulationState.isRunning) return;
+                
+                simulationState.isRunning = true;
+                simulationState.startTime = Date.now();
+                simulationState.convergenceData = [];
+                simulationState.errorHistory = [];
+                
+                startBtn.innerHTML = currentLanguage === 'bn' 
+                    ? '<i class="fas fa-pause"></i><span>বিরতি দিন</span>'
+                    : '<i class="fas fa-pause"></i><span>Pause</span>';
+                startBtn.style.background = 'var(--warning)';
+                
+                updateDisplay();
+                simulatePoints();
+            }
+
+            function stopSimulation() {
+                simulationState.isRunning = false;
+                
+                if (simulationState.animationId) {
+                    cancelAnimationFrame(simulationState.animationId);
+                    simulationState.animationId = null;
+                }
+                
+                startBtn.innerHTML = currentLanguage === 'bn' 
+                    ? '<i class="fas fa-play"></i><span>সিমুলেশন শুরু করুন</span>'
+                    : '<i class="fas fa-play"></i><span>Start Simulation</span>';
+                startBtn.style.background = 'var(--primary)';
+            }
+
+            function simulatePoints() {
+                if (!simulationState.isRunning) return;
+                
+                const pointsPerFrame = Math.pow(2, simulationState.animationSpeed - 1) * 10;
+                const targetPoints = simulationState.totalPoints;
+                const pointsToAdd = Math.min(pointsPerFrame, targetPoints - simulationState.pointsPlaced);
+                
+                if (pointsToAdd <= 0) {
+                    stopSimulation();
+                    return;
+                }
+                
+                // Generate and plot points
+                for (let i = 0; i < pointsToAdd; i++) {
+                    const point = generateRandomPoint();
+                    plotPoint(point);
+                    
+                    if (isInsideCircle(point)) {
+                        simulationState.insideCircle++;
+                    }
+                    
+                    simulationState.pointsPlaced++;
+                    
+                    // Update π estimate periodically
+                    if (simulationState.pointsPlaced % 100 === 0 || simulationState.pointsPlaced === targetPoints) {
+                        updatePiEstimate();
+                    }
+                }
+                
+                // Update progress
+                const progress = (simulationState.pointsPlaced / targetPoints) * 100;
+                progressFill.style.width = `${progress}%`;
+                
+                // Update display
+                updateDisplay();
+                
+                // Continue simulation
+                simulationState.animationId = requestAnimationFrame(simulatePoints);
+            }
+
+            function generateRandomPoint() {
+                const width = canvas.width;
+                const height = canvas.height;
+                const size = Math.min(width, height) * 0.8;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                const x = Math.random() * size - size/2 + centerX;
+                const y = Math.random() * size - size/2 + centerY;
+                
+                return { x, y };
+            }
+
+            function plotPoint(point) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const size = Math.min(width, height) * 0.8;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = size / 2;
+                
+                // Calculate distance from center
+                const dx = point.x - centerX;
+                const dy = point.y - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Set color based on position
+                ctx.fillStyle = distance <= radius ? 'var(--inside-circle)' : 'var(--outside-circle)';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, simulationState.pointSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            function isInsideCircle(point) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const size = Math.min(width, height) * 0.8;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = size / 2;
+                
+                const dx = point.x - centerX;
+                const dy = point.y - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                return distance <= radius;
+            }
+
+            function updatePiEstimate() {
+                if (simulationState.pointsPlaced === 0) return;
+                
+                const ratio = simulationState.insideCircle / simulationState.pointsPlaced;
+                simulationState.estimatedPi = 4 * ratio;
+                
+                // Calculate error
+                const absoluteError = Math.abs(simulationState.estimatedPi - simulationState.truePi);
+                const relativeError = (absoluteError / simulationState.truePi) * 100;
+                
+                // Store convergence data
+                simulationState.convergenceData.push({
+                    points: simulationState.pointsPlaced,
+                    pi: simulationState.estimatedPi,
+                    error: absoluteError
+                });
+                
+                simulationState.errorHistory.push(relativeError);
+                
+                // Update convergence chart
+                updateConvergenceChart();
+                
+                // Update error analysis
+                updateErrorAnalysis();
+            }
+
+            function updateDisplay() {
+                // Update point counter
+                pointsPlacedEl.textContent = simulationState.pointsPlaced.toLocaleString();
+                
+                // Update π estimate
+                if (simulationState.pointsPlaced > 0) {
+                    estimatedPiEl.textContent = simulationState.estimatedPi.toFixed(8);
+                    
+                    // Calculate and update errors
+                    const absoluteError = Math.abs(simulationState.estimatedPi - simulationState.truePi);
+                    const relativeError = (absoluteError / simulationState.truePi) * 100;
+                    
+                    absoluteErrorEl.textContent = absoluteError.toFixed(8);
+                    relativeErrorEl.textContent = relativeError.toFixed(4) + '%';
+                    
+                    // Update convergence speed
+                    updateConvergenceSpeed();
+                }
+            }
+
+            function initConvergenceChart() {
+                const chartCtx = document.getElementById('convergenceChart').getContext('2d');
+                
+                convergenceChart = new Chart(chartCtx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'π অনুমান' : 'π Estimate',
+                            data: [],
+                            borderColor: 'var(--pi-color)',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'পয়েন্ট সংখ্যা (লগারিদমিক)' : 'Number of Points (Log)'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'π মান' : 'π Value'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                min: 2.8,
+                                max: 3.4
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateConvergenceChart() {
+                if (!convergenceChart) return;
+                
+                const dataPoints = simulationState.convergenceData
+                    .filter((_, index) => index % 10 === 0 || index === simulationState.convergenceData.length - 1)
+                    .map(data => ({
+                        x: data.points,
+                        y: data.pi
+                    }));
+                
+                convergenceChart.data.datasets[0].data = dataPoints;
+                convergenceChart.update('none');
+            }
+
+            function updateConvergenceSpeed() {
+                if (simulationState.errorHistory.length < 10) {
+                    convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'প্রক্রিয়াধীন' : 'Processing';
+                    return;
+                }
+                
+                // Calculate error reduction rate
+                const recentErrors = simulationState.errorHistory.slice(-10);
+                const reductionRate = recentErrors[0] - recentErrors[recentErrors.length-1];
+                const avgReduction = reductionRate / 10;
+                
+                if (avgReduction > 0.5) {
+                    convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'খুব দ্রুত' : 'Very Fast';
+                    convergenceSpeedEl.style.color = 'var(--success)';
+                } else if (avgReduction > 0.1) {
+                    convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'দ্রুত' : 'Fast';
+                    convergenceSpeedEl.style.color = 'var(--primary)';
+                } else if (avgReduction > 0.01) {
+                    convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'মধ্যম' : 'Medium';
+                    convergenceSpeedEl.style.color = 'var(--warning)';
+                } else {
+                    convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'ধীর' : 'Slow';
+                    convergenceSpeedEl.style.color = 'var(--error-color)';
+                }
+            }
+
+            function updateErrorAnalysis() {
+                if (simulationState.errorHistory.length === 0) return;
+                
+                const currentError = simulationState.errorHistory[simulationState.errorHistory.length - 1];
+                currentErrorRateEl.textContent = currentError.toFixed(4) + '%';
+                
+                // Update error progress bar (inverse - lower error = higher bar)
+                const errorPercentage = Math.min(100, currentError * 5); // Scale for visualization
+                currentErrorBar.style.width = `${errorPercentage}%`;
+                
+                // Calculate error reduction rate
+                if (simulationState.errorHistory.length >= 10) {
+                    const recentErrors = simulationState.errorHistory.slice(-10);
+                    const totalReduction = recentErrors[0] - recentErrors[recentErrors.length-1];
+                    const reductionPerPoint = totalReduction / 10;
+                    const reductionPerK = reductionPerPoint * 1000;
+                    
+                    errorReductionRateEl.textContent = `${Math.abs(reductionPerK).toFixed(2)}%/K`;
+                    
+                    // Estimate error at 100K points
+                    const expectedError = Math.max(0, currentError - (reductionPerPoint * 95));
+                    expectedErrorEl.textContent = expectedError.toFixed(4) + '%';
+                }
+            }
+
+            function resetSimulation() {
+                stopSimulation();
+                
+                simulationState.pointsPlaced = 0;
+                simulationState.insideCircle = 0;
+                simulationState.estimatedPi = 0;
+                simulationState.convergenceData = [];
+                simulationState.errorHistory = [];
+                
+                // Clear canvas
+                drawBackground();
+                
+                // Reset progress bar
+                progressFill.style.width = '0%';
+                
+                // Reset chart
+                if (convergenceChart) {
+                    convergenceChart.data.datasets[0].data = [];
+                    convergenceChart.update();
+                }
+                
+                // Reset display
+                updateDisplay();
+                
+                // Reset error analysis
+                currentErrorRateEl.textContent = '0.0000%';
+                currentErrorBar.style.width = '0%';
+                errorReductionRateEl.textContent = '0.00%/K';
+                expectedErrorEl.textContent = '0.0000%';
+                convergenceSpeedEl.textContent = currentLanguage === 'bn' ? 'প্রক্রিয়াধীন' : 'Processing';
+                convergenceSpeedEl.style.color = 'var(--gray)';
+            }
+
+            // Add particle animation effect
+            function animateParticles() {
+                if (!simulationState.isRunning) return;
+                
+                const points = simulationState.convergenceData.length;
+                if (points > 0) {
+                    const lastPi = simulationState.convergenceData[points-1].pi;
+                    const error = Math.abs(lastPi - Math.PI);
+                    
+                    if (error < 0.01) {
+                        // Add celebration effect when close to π
+                        if (points % 100 === 0) {
+                            addCelebrationEffect();
+                        }
+                    }
+                }
+            }
+
+            function addCelebrationEffect() {
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                for (let i = 0; i < 5; i++) {
+                    const x = Math.random() * width;
+                    const y = Math.random() * height;
+                    const size = Math.random() * 3 + 1;
+                    const color = i % 2 === 0 ? 'var(--pi-color)' : 'var(--primary)';
+                    
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Auto-start with 100 points
+            setTimeout(() => {
+                simulationState.totalPoints = 100;
+                pointsSlider.value = 100;
+                pointsValue.textContent = '100';
+                updatePresetButtons(100);
+                startSimulation();
+                setTimeout(() => stopSimulation(), 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

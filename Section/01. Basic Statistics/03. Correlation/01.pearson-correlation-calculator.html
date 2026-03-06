@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পিয়ারসন কোরিলেশন ক্যালকুলেটর | লিনিয়ার সম্পর্ক বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --positive-correlation: #36D1DC;
+            --negative-correlation: #FF6584;
+            --no-correlation: #718096;
+            --scatter-point: #6C63FF;
+            --regression-line: #FF9A3D;
+            --confidence-band: rgba(255, 154, 61, 0.2);
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--positive-correlation), var(--primary), var(--negative-correlation));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .variable-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .variable-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .variable-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .variable-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .variable-label i {
+            color: var(--primary);
+        }
+
+        .variable-label .var-name {
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-hint i {
+            color: var(--info);
+        }
+
+        /* Confidence Level Selection */
+        .confidence-level {
+            margin-bottom: 1.5rem;
+        }
+
+        .confidence-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .confidence-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .confidence-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .confidence-option {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .confidence-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Correlation Results Cards */
+        .correlation-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .correlation-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.correlation::before { background: var(--primary); }
+        .result-card.pvalue::before { background: var(--success); }
+        .result-card.significance::before { background: var(--warning); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.correlation .result-icon { color: var(--primary); }
+        .result-card.pvalue .result-icon { color: var(--success); }
+        .result-card.significance .result-icon { color: var(--warning); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Correlation Interpretation */
+        .correlation-interpretation {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .interpretation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .interpretation-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .interpretation-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .correlation-strength {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .strength-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .interpretation-text {
+            flex: 2;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Confidence Interval */
+        .confidence-interval {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--info);
+        }
+
+        .interval-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .interval-bound {
+            text-align: center;
+            flex: 1;
+        }
+
+        .interval-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .interval-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .interval-separator {
+            padding: 0 1rem;
+            color: var(--gray);
+            font-weight: 600;
+        }
+
+        /* Regression Results */
+        .regression-results {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--regression-line);
+        }
+
+        .regression-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        .regression-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .regression-stat {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .regression-stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .regression-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chart-legend {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-color.scatter { background: var(--scatter-point); }
+        .legend-color.regression { 
+            background: var(--regression-line);
+            height: 3px;
+            margin: 0 2px;
+        }
+        .legend-color.confidence { 
+            background: var(--confidence-band);
+            border: 1px solid var(--regression-line);
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .correlation-guide {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .guide-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .guide-strength {
+            width: 60px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .guide-strength.strong-positive { 
+            background: var(--positive-correlation);
+            color: white;
+        }
+        .guide-strength.moderate-positive { 
+            background: rgba(54, 209, 220, 0.3);
+            color: var(--dark);
+        }
+        .guide-strength.weak-positive { 
+            background: rgba(54, 209, 220, 0.1);
+            color: var(--dark);
+        }
+        .guide-strength.strong-negative { 
+            background: var(--negative-correlation);
+            color: white;
+        }
+        .guide-strength.moderate-negative { 
+            background: rgba(255, 101, 132, 0.3);
+            color: var(--dark);
+        }
+        .guide-strength.weak-negative { 
+            background: rgba(255, 101, 132, 0.1);
+            color: var(--dark);
+        }
+        .guide-strength.no-correlation { 
+            background: var(--no-correlation);
+            color: white;
+        }
+
+        .guide-description {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .chart-placeholder p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-placeholder .hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .pearson-formula .formula-icon { background: var(--primary); }
+        .pvalue-formula .formula-icon { background: var(--success); }
+        .regression-formula .formula-icon { background: var(--regression-line); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Calculation Tables */
+        .calculation-tables {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        .data-table .formula-cell {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            background: var(--formula-bg);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .chart-info {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .calculation-tables,
+            .step-by-step,
+            .visualization-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .data-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+            
+            .chart-box {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Pearson Correlation Calculator" data-bn="পিয়ারসন কোরিলেশন ক্যালকুলেটর">পিয়ারসন কোরিলেশন ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate linear correlation between continuous variables with Pearson's r, confidence intervals, and scatter plot visualization" data-bn="পিয়ারসনের r, কনফিডেন্স ইন্টারভাল, এবং স্ক্যাটার প্লট ভিজ্যুয়ালাইজেশন সহ কন্টিনিউয়াস ভেরিয়েবলগুলির মধ্যে লিনিয়ার কোরিলেশন গণনা করুন">
+                পিয়ারসনের r, কনফিডেন্স ইন্টারভাল, এবং স্ক্যাটার প্লট ভিজ্যুয়ালাইজেশন সহ কন্টিনিউয়াস ভেরিয়েবলগুলির মধ্যে লিনিয়ার কোরিলেশন গণনা করুন
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="upload">
+                        <i class="fas fa-upload"></i>
+                        <span data-en="Upload CSV" data-bn="CSV আপলোড">CSV আপলোড</span>
+                    </button>
+                </div>
+
+                <div class="data-input-area">
+                    <div class="variable-inputs">
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span data-en="Variable X" data-bn="ভেরিয়েবল X">ভেরিয়েবল X</span>
+                                <span class="var-name">(X)</span>
+                            </label>
+                            <textarea id="dataX" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+বা: 1 2 3 4 5 6 7 8 9 10">65, 72, 68, 74, 82, 70, 85, 78, 90, 62, 95, 58</textarea>
+                        </div>
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-chart-bar"></i>
+                                <span data-en="Variable Y" data-bn="ভেরিয়েবল Y">ভেরিয়েবল Y</span>
+                                <span class="var-name">(Y)</span>
+                            </label>
+                            <textarea id="dataY" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 15, 13, 17, 20, 18, 22, 25, 23, 28
+বা: 10 15 13 17 20 18 22 25 23 28">140, 152, 144, 158, 174, 148, 180, 166, 190, 132, 200, 124</textarea>
+                        </div>
+                    </div>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Enter paired data points for X and Y variables. Both variables must have same number of values." data-bn="X এবং Y ভেরিয়েবলের জন্য জোড়া ডেটা পয়েন্ট ইনপুট করুন। উভয় ভেরিয়েবলের সমান সংখ্যক মান থাকতে হবে।">
+                            X এবং Y ভেরিয়েবলের জন্য জোড়া ডেটা পয়েন্ট ইনপুট করুন। উভয় ভেরিয়েবলের সমান সংখ্যক মান থাকতে হবে।
+                        </span>
+                    </div>
+                </div>
+
+                <div class="confidence-level">
+                    <label class="variable-label">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Confidence Level" data-bn="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</span>
+                    </label>
+                    <div class="confidence-options">
+                        <div class="confidence-option active" data-level="0.90">90%</div>
+                        <div class="confidence-option" data-level="0.95">95%</div>
+                        <div class="confidence-option" data-level="0.99">99%</div>
+                        <div class="confidence-option" data-level="0.999">99.9%</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Correlation" data-bn="কোরিলেশন গণনা করুন">কোরিলেশন গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bn="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Correlation Results" data-bn="কোরিলেশন ফলাফল">কোরিলেশন ফলাফল</span>
+                </h2>
+                
+                <div class="correlation-results">
+                    <!-- Pearson's r -->
+                    <div class="result-card correlation">
+                        <div class="result-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="result-title" data-en="Pearson's r" data-bn="পিয়ারসনের r">পিয়ারসনের r</div>
+                        <div class="result-value" id="correlationResult">--</div>
+                        <div class="result-description" data-en="Correlation Coefficient" data-bn="কোরিলেশন কোফিশিয়েন্ট">কোরিলেশন কোফিশিয়েন্ট</div>
+                    </div>
+
+                    <!-- P-Value -->
+                    <div class="result-card pvalue">
+                        <div class="result-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="result-title" data-en="P-Value" data-bn="P-মান">P-মান</div>
+                        <div class="result-value" id="pValueResult">--</div>
+                        <div class="result-description" data-en="Statistical Significance" data-bন="পরিসংখ্যানগত তাৎপর্য">পরিসংখ্যানগত তাৎপর্য</div>
+                    </div>
+
+                    <!-- Significance -->
+                    <div class="result-card significance">
+                        <div class="result-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="result-title" data-en="Significance" data-bন="তাৎপর্য">তাৎপর্য</div>
+                        <div class="result-value" id="significanceResult">--</div>
+                        <div class="result-description" data-en="At α = 0.05" data-bন="α = ০.০৫ এ">α = ০.০৫ এ</div>
+                    </div>
+                </div>
+
+                <!-- Correlation Interpretation -->
+                <div class="correlation-interpretation">
+                    <div class="interpretation-title">
+                        <i class="fas fa-comment-alt"></i>
+                        <span data-en="Correlation Interpretation" data-bন="কোরিলেশন ব্যাখ্যা">কোরিলেশন ব্যাখ্যা</span>
+                    </div>
+                    <div class="interpretation-content">
+                        <div class="correlation-strength">
+                            <div class="strength-value" id="strengthValue">--</div>
+                            <div class="strength-label" data-en="Strength" data-bন="শক্তি">শক্তি</div>
+                        </div>
+                        <div class="interpretation-text" id="interpretationText" data-en="Enter data and calculate to see interpretation" data-bন="ব্যাখ্যা দেখতে ডেটা ইনপুট করুন এবং গণনা করুন">
+                            ব্যাখ্যা দেখতে ডেটা ইনপুট করুন এবং গণনা করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confidence Interval -->
+                <div class="confidence-interval">
+                    <div class="interpretation-title">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Confidence Interval" data-bন="কনফিডেন্স ইন্টারভাল">কনফিডেন্স ইন্টারভাল</span>
+                    </div>
+                    <div class="interval-display">
+                        <div class="interval-bound">
+                            <div class="interval-label" data-en="Lower Bound" data-bন="নিম্ন সীমা">নিম্ন সীমা</div>
+                            <div class="interval-value" id="lowerBound">--</div>
+                        </div>
+                        <div class="interval-separator">to</div>
+                        <div class="interval-bound">
+                            <div class="interval-label" data-en="Upper Bound" data-bন="উচ্চ সীমা">উচ্চ সীমা</div>
+                            <div class="interval-value" id="upperBound">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regression Results -->
+                <div class="regression-results">
+                    <div class="interpretation-title">
+                        <i class="fas fa-ruler-combined"></i>
+                        <span data-en="Linear Regression" data-bন="লিনিয়ার রিগ্রেশন">লিনিয়ার রিগ্রেশন</span>
+                    </div>
+                    <div class="regression-equation" id="regressionEquation">
+                        Y = -- X + --
+                    </div>
+                    <div class="regression-stats">
+                        <div class="regression-stat">
+                            <div class="regression-stat-label" data-en="Slope (m)" data-bন="ঢাল (m)">ঢাল (m)</div>
+                            <div class="regression-stat-value" id="slopeValue">--</div>
+                        </div>
+                        <div class="regression-stat">
+                            <div class="regression-stat-label" data-en="Intercept (b)" data-bন="ইন্টারসেপ্ট (b)">ইন্টারসেপ্ট (b)</div>
+                            <div class="regression-stat-value" id="interceptValue">--</div>
+                        </div>
+                        <div class="regression-stat">
+                            <div class="regression-stat-label" data-en="R²" data-bন="R²">R²</div>
+                            <div class="regression-stat-value" id="rSquaredValue">--</div>
+                        </div>
+                        <div class="regression-stat">
+                            <div class="regression-stat-label" data-en="Sample Size (n)" data-bন="স্যাম্পল সাইজ (n)">স্যাম্পল সাইজ (n)</div>
+                            <div class="regression-stat-value" id="sampleSize">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Scatter Plot Visualization" data-bন="স্ক্যাটার প্লট ভিজ্যুয়ালাইজেশন">স্ক্যাটার প্লট ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <div class="chart-box">
+                    <div id="scatterPlotPlaceholder" class="chart-placeholder">
+                        <i class="fas fa-chart-scatter"></i>
+                        <p data-en="No data to visualize" data-bন="ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই">ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই</p>
+                        <p class="hint" data-en="Enter X and Y data and calculate correlation to see scatter plot" data-bন="স্ক্যাটার প্লট দেখতে X এবং Y ডেটা ইনপুট করুন এবং কোরিলেশন গণনা করুন">
+                            স্ক্যাটার প্লট দেখতে X এবং Y ডেটা ইনপুট করুন এবং কোরিলেশন গণনা করুন
+                        </p>
+                    </div>
+                    <canvas id="scatterPlotCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="chart-info">
+                    <div class="chart-legend">
+                        <div class="legend-title">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Chart Legend" data-bন="চার্ট লেজেন্ড">চার্ট লেজেন্ড</span>
+                        </div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color scatter"></div>
+                                <div class="legend-text" data-en="Data Points (X,Y)" data-bন="ডেটা পয়েন্ট (X,Y)">ডেটা পয়েন্ট (X,Y)</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color regression"></div>
+                                <div class="legend-text" data-en="Regression Line" data-bন="রিগ্রেশন লাইন">রিগ্রেশন লাইন</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color confidence"></div>
+                                <div class="legend-text" data-en="95% Confidence Band" data-bন="৯৫% কনফিডেন্স ব্যান্ড">৯৫% কনফিডেন্স ব্যান্ড</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="correlation-guide">
+                        <div class="guide-title">
+                            <i class="fas fa-book"></i>
+                            <span data-en="Correlation Strength Guide" data-bন="কোরিলেশন শক্তি নির্দেশিকা">কোরিলেশন শক্তি নির্দেশিকা</span>
+                        </div>
+                        <div class="guide-items">
+                            <div class="guide-item">
+                                <div class="guide-strength strong-positive" data-en="Strong +" data-bন="শক্তিশালী +">শক্তিশালী +</div>
+                                <div class="guide-description" data-en="r ≥ 0.7" data-bন="r ≥ ০.৭">r ≥ ০.৭</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength moderate-positive" data-en="Moderate +" data-bন="মাঝারি +">মাঝারি +</div>
+                                <div class="guide-description" data-en="0.3 ≤ r < 0.7" data-bন="০.৩ ≤ r < ০.৭">০.৩ ≤ r < ০.৭</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength weak-positive" data-en="Weak +" data-bন="দুর্বল +">দুর্বল +</div>
+                                <div class="guide-description" data-en="0 < r < 0.3" data-bন="০ < r < ০.৩">০ < r < ০.৩</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength no-correlation" data-en="None" data-bন="কোনটিই নয়">কোনটিই নয়</div>
+                                <div class="guide-description" data-en="r ≈ 0" data-bন="r ≈ ০">r ≈ ০</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength weak-negative" data-en="Weak -" data-bন="দুর্বল -">দুর্বল -</div>
+                                <div class="guide-description" data-en="-0.3 < r < 0" data-bন="-০.৩ < r < ০">-০.৩ < r < ০</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength moderate-negative" data-en="Moderate -" data-bন="মাঝারি -">মাঝারি -</div>
+                                <div class="guide-description" data-en="-0.7 < r ≤ -0.3" data-bন="-০.৭ < r ≤ -০.৩">-০.৭ < r ≤ -০.৩</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-strength strong-negative" data-en="Strong -" data-bন="শক্তিশালী -">শক্তিশালী -</div>
+                                <div class="guide-description" data-en="r ≤ -0.7" data-bন="r ≤ -০.৭">r ≤ -০.৭</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Definitions" data-bন="সূত্র এবং সংজ্ঞা">সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Pearson's r Formula -->
+                <div class="formula-card pearson-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Pearson's r Formula" data-bন="পিয়ারসনের r সূত্র">পিয়ারসনের r সূত্র</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures linear correlation between two continuous variables" data-bন="দুটি কন্টিনিউয়াস ভেরিয়েবলের মধ্যে লিনিয়ার সম্পর্ক পরিমাপ করে">
+                            দুটি কন্টিনিউয়াস ভেরিয়েবলের মধ্যে লিনিয়ার সম্পর্ক পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            r = Σ[(Xᵢ - X̄)(Yᵢ - Ȳ)] / √[Σ(Xᵢ - X̄)² × Σ(Yᵢ - Ȳ)²]
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="r ranges from -1 to +1" data-bন="r -১ থেকে +১ এর মধ্যে থাকে">r -১ থেকে +১ এর মধ্যে থাকে</li>
+                            <li data-en="+1: Perfect positive correlation" data-bন="+১: পারফেক্ট পজিটিভ কোরিলেশন">+১: পারফেক্ট পজিটিভ কোরিলেশন</li>
+                            <li data-en="-1: Perfect negative correlation" data-bন="-১: পারফেক্ট নেগেটিভ কোরিলেশন">-১: পারফেক্ট নেগেটিভ কোরিলেশন</li>
+                            <li data-en="0: No linear correlation" data-bন="০: কোন লিনিয়ার কোরিলেশন নেই">০: কোন লিনিয়ার কোরিলেশন নেই</li>
+                            <li data-en="Assumes linear relationship and normality" data-bন="লিনিয়ার সম্পর্ক এবং নরমালিটি ধরে নেয়">লিনিয়ার সম্পর্ক এবং নরমালিটি ধরে নেয়</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- P-Value and Significance -->
+                <div class="formula-card pvalue-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="P-Value & Significance" data-bন="P-মান ও তাৎপর্য">P-মান ও তাৎপর্য</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Tests if correlation is statistically significant" data-bন="কোরিলেশনটি পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ কিনা তা পরীক্ষা করে">
+                            কোরিলেশনটি পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ কিনা তা পরীক্ষা করে
+                        </p>
+                        <div class="formula-equation">
+                            t = r × √[(n-2)/(1-r²)]<br>
+                            df = n - 2
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Null hypothesis: r = 0 (no correlation)" data-bন="নাল হাইপোথিসিস: r = ০ (কোন কোরিলেশন নেই)">নাল হাইপোথিসিস: r = ০ (কোন কোরিলেশন নেই)</li>
+                            <li data-en="P-value: Probability of observing data if null is true" data-bন="P-মান: নাল সত্য হলে ডেটা পর্যবেক্ষণের সম্ভাবনা">P-মান: নাল সত্য হলে ডেটা পর্যবেক্ষণের সম্ভাবনা</li>
+                            <li data-en="α = 0.05: Common significance level" data-bন="α = ০.০৫: সাধারণ তাৎপর্য স্তর">α = ০.০৫: সাধারণ তাৎপর্য স্তর</li>
+                            <li data-en="P < 0.05: Statistically significant" data-bন="P < ০.০৫: পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ">P < ০.০৫: পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ</li>
+                            <li data-en="Confidence interval: Range of plausible r values" data-bন="কনফিডেন্স ইন্টারভাল: সম্ভাব্য r মানের পরিসর">কনফিডেন্স ইন্টারভাল: সম্ভাব্য r মানের পরিসর</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Linear Regression -->
+                <div class="formula-card regression-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Linear Regression" data-bন="লিনিয়ার রিগ্রেশন">লিনিয়ার রিগ্রেশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Finds best-fit line through data points" data-bন="ডেটা পয়েন্টের মাধ্যমে সবচেয়ে উপযুক্ত রেখা খুঁজে বের করে">
+                            ডেটা পয়েন্টের মাধ্যমে সবচেয়ে উপযুক্ত রেখা খুঁজে বের করে
+                        </p>
+                        <div class="formula-equation">
+                            Y = mX + b<br>
+                            m = r × (σᵧ/σₓ)<br>
+                            b = Ȳ - mX̄
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="m: Slope (change in Y per unit X)" data-bন="m: ঢাল (X এর প্রতি ইউনিটে Y এর পরিবর্তন)">m: ঢাল (X এর প্রতি ইউনিটে Y এর পরিবর্তন)</li>
+                            <li data-en="b: Y-intercept (Y when X = 0)" data-bন="b: Y-ইন্টারসেপ্ট (X = ০ হলে Y)">b: Y-ইন্টারসেপ্ট (X = ০ হলে Y)</li>
+                            <li data-en="R²: Proportion of variance explained" data-bন="R²: ব্যাখ্যাকৃত ভ্যারিয়েন্সের অনুপাত">R²: ব্যাখ্যাকৃত ভ্যারিয়েন্সের অনুপাত</li>
+                            <li data-en="R² = r² for simple linear regression" data-bন="সাধারণ লিনিয়ার রিগ্রেশনের জন্য R² = r²">সাধারণ লিনিয়ার রিগ্রেশনের জন্য R² = r²</li>
+                            <li data-en="Used for prediction and understanding relationships" data-bন="পূর্বাভাস এবং সম্পর্ক বোঝার জন্য ব্যবহৃত">পূর্বাভাস এবং সম্পর্ক বোঝার জন্য ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculation Tables -->
+        <div class="calculation-tables">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Calculation Tables" data-bন="বিস্তারিত গণনা টেবিল">বিস্তারিত গণনা টেবিল</span>
+            </h2>
+            
+            <div id="tablesContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" data-en="Enter data and click Calculate to see detailed tables" data-bন="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bন="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter data and click Calculate to see step-by-step calculations" data-bন="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="height-weight">
+                    <div class="example-title" data-en="Height vs Weight" data-bন="উচ্চতা বনাম ওজন">উচ্চতা বনাম ওজন</div>
+                    <div class="example-description" data-en="Positive correlation example" data-bন="পজিটিভ কোরিলেশন উদাহরণ">পজিটিভ কোরিলেশন উদাহরণ</div>
+                </button>
+                <button class="example-btn" data-example="temperature-sales">
+                    <div class="example-title" data-en="Temperature vs Sales" data-bন="তাপমাত্রা বনাম বিক্রয়">তাপমাত্রা বনাম বিক্রয়</div>
+                    <div class="example-description" data-en="Strong positive correlation" data-bন="শক্তিশালী পজিটিভ কোরিলেশন">শক্তিশালী পজিটিভ কোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="age-income">
+                    <div class="example-title" data-en="Age vs Income" data-bন="বয়স বনাম আয়">বয়স বনাম আয়</div>
+                    <div class="example-description" data-en="Moderate positive correlation" data-bন="মাঝারি পজিটিভ কোরিলেশন">মাঝারি পজিটিভ কোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="study-time-grades">
+                    <div class="example-title" data-en="Study Time vs Grades" data-bন="অধ্যয়ন সময় বনাম গ্রেড">অধ্যয়ন সময় বনাম গ্রেড</div>
+                    <div class="example-description" data-en="Strong positive correlation" data-bন="শক্তিশালী পজিটিভ কোরিলেশন">শক্তিশালী পজিটিভ কোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="temp-icecream">
+                    <div class="example-title" data-en="Temp vs Ice Cream Sales" data-bন="তাপমাত্রা বনাম আইসক্রিম বিক্রয়">তাপমাত্রা বনাম আইসক্রিম বিক্রয়</div>
+                    <div class="example-description" data-en="Positive correlation" data-bন="পজিটিভ কোরিলেশন">পজিটিভ কোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="no-correlation">
+                    <div class="example-title" data-en="No Correlation" data-bন="কোন কোরিলেশন নেই">কোন কোরিলেশন নেই</div>
+                    <div class="example-description" data-en="Random data with no relationship" data-bন="কোন সম্পর্ক নেই এমন র্যান্ডম ডেটা">কোন সম্পর্ক নেই এমন র্যান্ডম ডেটা</div>
+                </button>
+                <button class="example-btn" data-example="negative-correlation">
+                    <div class="example-title" data-en="Negative Correlation" data-bন="নেগেটিভ কোরিলেশন">নেগেটিভ কোরিলেশন</div>
+                    <div class="example-description" data-en="Price vs Demand example" data-bন="মূল্য বনাম চাহিদা উদাহরণ">মূল্য বনাম চাহিদা উদাহরণ</div>
+                </button>
+                <button class="example-btn" data-example="perfect-correlation">
+                    <div class="example-title" data-en="Perfect Correlation" data-bন="পারফেক্ট কোরিলেশন">পারফেক্ট কোরিলেশন</div>
+                    <div class="example-description" data-en="Theoretical perfect relationship" data-bন="তাত্ত্বিক পারফেক্ট সম্পর্ক">তাত্ত্বিক পারফেক্ট সম্পর্ক</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-trendline"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            
+            // Current state
+            let currentDataX = [];
+            let currentDataY = [];
+            let currentConfidenceLevel = 0.95;
+            let scatterPlot = null;
+
+            // Example Datasets
+            const examples = {
+                'height-weight': {
+                    x: [150, 155, 160, 165, 170, 175, 180, 185, 190, 195],
+                    y: [50, 52, 55, 58, 60, 65, 68, 72, 75, 78],
+                    xLabel: 'Height (cm)',
+                    yLabel: 'Weight (kg)'
+                },
+                'temperature-sales': {
+                    x: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38],
+                    y: [100, 120, 150, 180, 200, 220, 240, 260, 280, 300],
+                    xLabel: 'Temperature (°C)',
+                    yLabel: 'Sales (units)'
+                },
+                'age-income': {
+                    x: [25, 30, 35, 40, 45, 50, 55, 60, 65, 70],
+                    y: [30000, 35000, 40000, 45000, 50000, 55000, 58000, 60000, 62000, 63000],
+                    xLabel: 'Age (years)',
+                    yLabel: 'Income ($)'
+                },
+                'study-time-grades': {
+                    x: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+                    y: [50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
+                    xLabel: 'Study Time (hours/week)',
+                    yLabel: 'Grade (%)'
+                },
+                'temp-icecream': {
+                    x: [15, 18, 20, 22, 25, 28, 30, 32, 35, 38],
+                    y: [50, 65, 80, 100, 120, 150, 180, 200, 220, 250],
+                    xLabel: 'Temperature (°C)',
+                    yLabel: 'Ice Cream Sales'
+                },
+                'no-correlation': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [10, 5, 15, 3, 12, 8, 18, 2, 14, 6],
+                    xLabel: 'X Variable',
+                    yLabel: 'Y Variable'
+                },
+                'negative-correlation': {
+                    x: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+                    y: [200, 180, 160, 140, 120, 100, 80, 60, 40, 20],
+                    xLabel: 'Price ($)',
+                    yLabel: 'Demand (units)'
+                },
+                'perfect-correlation': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+                    xLabel: 'X Variable',
+                    yLabel: 'Y Variable'
+                }
+            };
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        } else if (this.dataset.method === 'upload') {
+                            // For demo purposes, we'll simulate upload with random data
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Confidence Level Selection
+                document.querySelectorAll('.confidence-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.confidence-option').forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        currentConfidenceLevel = parseFloat(this.dataset.level);
+                        
+                        // Recalculate if data exists
+                        if (currentDataX.length > 0 && currentDataY.length > 0) {
+                            calculateCorrelation();
+                        }
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateCorrelation);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataX').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateCorrelation();
+                    }
+                });
+                
+                document.getElementById('dataY').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateCorrelation();
+                    }
+                });
+
+                // Load default example
+                setTimeout(() => {
+                    loadExample('height-weight');
+                    calculateCorrelation();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateCorrelation() {
+                const inputX = document.getElementById('dataX').value;
+                const inputY = document.getElementById('dataY').value;
+                
+                const dataX = parseInputData(inputX);
+                const dataY = parseInputData(inputY);
+                
+                if (dataX.length === 0 || dataY.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে X এবং Y উভয় ভেরিয়েবলের জন্য ডেটা ইনপুট করুন' : 
+                        'Please enter data for both X and Y variables');
+                    return;
+                }
+                
+                if (dataX.length !== dataY.length) {
+                    alert(currentLanguage === 'bn' ? 
+                        'X এবং Y ভেরিয়েবলে সমান সংখ্যক মান থাকতে হবে' : 
+                        'X and Y variables must have the same number of values');
+                    return;
+                }
+                
+                if (dataX.length < 3) {
+                    alert(currentLanguage === 'bn' ? 
+                        'কোরিলেশন গণনার জন্য কমপক্ষে ৩টি ডেটা পয়েন্ট প্রয়োজন' : 
+                        'At least 3 data points are required for correlation calculation');
+                    return;
+                }
+                
+                currentDataX = dataX;
+                currentDataY = dataY;
+                
+                // Calculate all statistics
+                const stats = calculateAllStatistics(dataX, dataY);
+                
+                // Update results
+                updateResults(stats);
+                
+                // Update visualization
+                updateScatterPlot(dataX, dataY, stats);
+                
+                // Update detailed tables
+                updateCalculationTables(dataX, dataY, stats);
+                
+                // Update step-by-step calculations
+                updateStepByStep(dataX, dataY, stats);
+            }
+
+            function calculateAllStatistics(x, y) {
+                const n = x.length;
+                
+                // Calculate means
+                const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Calculate standard deviations
+                const varianceX = x.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0) / n;
+                const varianceY = y.reduce((sum, val) => sum + Math.pow(val - meanY, 2), 0) / n;
+                const stdX = Math.sqrt(varianceX);
+                const stdY = Math.sqrt(varianceY);
+                
+                // Calculate covariance
+                let covariance = 0;
+                for (let i = 0; i < n; i++) {
+                    covariance += (x[i] - meanX) * (y[i] - meanY);
+                }
+                covariance /= n;
+                
+                // Calculate Pearson's r
+                const r = covariance / (stdX * stdY);
+                
+                // Calculate R-squared
+                const rSquared = r * r;
+                
+                // Calculate linear regression coefficients
+                const slope = r * (stdY / stdX);
+                const intercept = meanY - slope * meanX;
+                
+                // Calculate t-statistic and p-value
+                const t = r * Math.sqrt((n - 2) / (1 - r * r));
+                const pValue = calculatePValue(t, n - 2);
+                
+                // Calculate confidence interval for r
+                const ci = calculateConfidenceInterval(r, n, currentConfidenceLevel);
+                
+                // Determine significance
+                const significance = pValue < 0.05 ? 
+                    (currentLanguage === 'bn' ? 'তাৎপর্যপূর্ণ' : 'Significant') : 
+                    (currentLanguage === 'bn' ? 'অতাৎপর্যপূর্ণ' : 'Not Significant');
+                
+                // Determine correlation strength
+                const strength = getCorrelationStrength(r);
+                
+                return {
+                    n,
+                    meanX,
+                    meanY,
+                    stdX,
+                    stdY,
+                    covariance,
+                    r,
+                    rSquared,
+                    slope,
+                    intercept,
+                    t,
+                    pValue,
+                    ci,
+                    significance,
+                    strength,
+                    regressionEquation: `Y = ${slope.toFixed(2)}X + ${intercept.toFixed(2)}`
+                };
+            }
+
+            function calculatePValue(t, df) {
+                // Simplified p-value calculation using t-distribution approximation
+                // For a more accurate calculation, use statistical libraries
+                const t2 = t * t;
+                const df2 = df / 2;
+                
+                // Beta function approximation
+                const x = df / (df + t2);
+                const logBeta = 0.5 * (Math.log(df) - Math.log(Math.PI)) + 
+                               lgamma(df2) - lgamma(df2 + 0.5);
+                const logCdf = logBeta + df2 * Math.log(x) + (df2 + 0.5) * Math.log(1 - x);
+                
+                let p = 0.5 * Math.exp(logCdf);
+                if (t > 0) {
+                    p = 1 - p;
+                }
+                
+                return 2 * Math.min(p, 1 - p);
+            }
+
+            function lgamma(x) {
+                // Log gamma function approximation
+                const logSqrtTwoPi = 0.91893853320467274178;
+                if (x < 12) {
+                    return Math.log(Math.abs(gamma(x)));
+                }
+                
+                const invX = 1 / x;
+                const invX2 = invX * invX;
+                const invX3 = invX2 * invX;
+                const invX5 = invX3 * invX2;
+                const invX7 = invX5 * invX2;
+                
+                return (x - 0.5) * Math.log(x) - x + logSqrtTwoPi + 
+                       invX / 12 - invX3 / 360 + invX5 / 1260 - invX7 / 1680;
+            }
+
+            function gamma(x) {
+                // Gamma function approximation
+                const p = [
+                    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                    771.32342877765313, -176.61502916214059, 12.507343278686905,
+                    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+                ];
+                
+                if (x < 0.5) {
+                    return Math.PI / (Math.sin(Math.PI * x) * gamma(1 - x));
+                }
+                
+                x -= 1;
+                let a = p[0];
+                const t = x + 7.5;
+                
+                for (let i = 1; i < p.length; i++) {
+                    a += p[i] / (x + i);
+                }
+                
+                return Math.sqrt(2 * Math.PI) * Math.pow(t, x + 0.5) * Math.exp(-t) * a;
+            }
+
+            function calculateConfidenceInterval(r, n, confidenceLevel) {
+                if (r === 1 || r === -1) {
+                    return { lower: r, upper: r };
+                }
+                
+                // Fisher's z transformation
+                const z = 0.5 * Math.log((1 + r) / (1 - r));
+                const se = 1 / Math.sqrt(n - 3);
+                
+                // Z-score for confidence level
+                const zScore = getZScore(confidenceLevel);
+                
+                // Confidence interval in z-space
+                const zLower = z - zScore * se;
+                const zUpper = z + zScore * se;
+                
+                // Transform back to r-space
+                const rLower = (Math.exp(2 * zLower) - 1) / (Math.exp(2 * zLower) + 1);
+                const rUpper = (Math.exp(2 * zUpper) - 1) / (Math.exp(2 * zUpper) + 1);
+                
+                return { lower: rLower, upper: rUpper };
+            }
+
+            function getZScore(confidenceLevel) {
+                const zScores = {
+                    0.90: 1.645,
+                    0.95: 1.960,
+                    0.99: 2.576,
+                    0.999: 3.291
+                };
+                return zScores[confidenceLevel] || 1.960;
+            }
+
+            function getCorrelationStrength(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.7) {
+                    return {
+                        value: currentLanguage === 'bn' ? 'শক্তিশালী' : 'Strong',
+                        color: r > 0 ? 'positive' : 'negative',
+                        interpretation: r > 0 ? 
+                            (currentLanguage === 'bn' ? 'শক্তিশালী পজিটিভ সম্পর্ক' : 'Strong positive relationship') :
+                            (currentLanguage === 'bn' ? 'শক্তিশালী নেগেটিভ সম্পর্ক' : 'Strong negative relationship')
+                    };
+                } else if (absR >= 0.3) {
+                    return {
+                        value: currentLanguage === 'bn' ? 'মাঝারি' : 'Moderate',
+                        color: r > 0 ? 'positive' : 'negative',
+                        interpretation: r > 0 ? 
+                            (currentLanguage === 'bn' ? 'মাঝারি পজিটিভ সম্পর্ক' : 'Moderate positive relationship') :
+                            (currentLanguage === 'bn' ? 'মাঝারি নেগেটিভ সম্পর্ক' : 'Moderate negative relationship')
+                    };
+                } else if (absR > 0.1) {
+                    return {
+                        value: currentLanguage === 'bn' ? 'দুর্বল' : 'Weak',
+                        color: r > 0 ? 'positive' : 'negative',
+                        interpretation: r > 0 ? 
+                            (currentLanguage === 'bn' ? 'দুর্বল পজিটিভ সম্পর্ক' : 'Weak positive relationship') :
+                            (currentLanguage === 'bn' ? 'দুর্বল নেগেটিভ সম্পর্ক' : 'Weak negative relationship')
+                    };
+                } else {
+                    return {
+                        value: currentLanguage === 'bn' ? 'কোনটিই নয়' : 'None',
+                        color: 'none',
+                        interpretation: currentLanguage === 'bn' ? 
+                            'কোন সুনির্দিষ্ট লিনিয়ার সম্পর্ক নেই' : 
+                            'No clear linear relationship'
+                    };
+                }
+            }
+
+            function updateResults(stats) {
+                // Update main results
+                document.getElementById('correlationResult').textContent = stats.r.toFixed(4);
+                document.getElementById('pValueResult').textContent = stats.pValue.toFixed(4);
+                document.getElementById('significanceResult').textContent = stats.significance;
+                
+                // Update correlation interpretation
+                document.getElementById('strengthValue').textContent = stats.strength.value;
+                document.getElementById('interpretationText').textContent = stats.strength.interpretation;
+                
+                // Update confidence interval
+                document.getElementById('lowerBound').textContent = stats.ci.lower.toFixed(4);
+                document.getElementById('upperBound').textContent = stats.ci.upper.toFixed(4);
+                
+                // Update regression results
+                document.getElementById('regressionEquation').textContent = stats.regressionEquation;
+                document.getElementById('slopeValue').textContent = stats.slope.toFixed(4);
+                document.getElementById('interceptValue').textContent = stats.intercept.toFixed(4);
+                document.getElementById('rSquaredValue').textContent = stats.rSquared.toFixed(4);
+                document.getElementById('sampleSize').textContent = stats.n;
+                
+                // Color code the correlation result based on strength
+                const correlationElement = document.getElementById('correlationResult');
+                correlationElement.style.color = getCorrelationColor(stats.r);
+            }
+
+            function getCorrelationColor(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.7) {
+                    return r > 0 ? 'var(--positive-correlation)' : 'var(--negative-correlation)';
+                } else if (absR >= 0.3) {
+                    return r > 0 ? 'rgba(54, 209, 220, 0.8)' : 'rgba(255, 101, 132, 0.8)';
+                } else if (absR > 0.1) {
+                    return r > 0 ? 'rgba(54, 209, 220, 0.6)' : 'rgba(255, 101, 132, 0.6)';
+                } else {
+                    return 'var(--no-correlation)';
+                }
+            }
+
+            function updateScatterPlot(x, y, stats) {
+                // Hide placeholder
+                document.getElementById('scatterPlotPlaceholder').style.display = 'none';
+                document.getElementById('scatterPlotCanvas').style.display = 'block';
+                
+                // Get canvas context
+                const canvas = document.getElementById('scatterPlotCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (scatterPlot) {
+                    scatterPlot.destroy();
+                }
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data points
+                const dataPoints = x.map((xi, i) => ({ x: xi, y: y[i] }));
+                
+                // Calculate regression line points
+                const minX = Math.min(...x);
+                const maxX = Math.max(...x);
+                const regressionLine = [
+                    { x: minX, y: stats.slope * minX + stats.intercept },
+                    { x: maxX, y: stats.slope * maxX + stats.intercept }
+                ];
+                
+                // Calculate confidence bands
+                const confidenceBand = [];
+                const step = (maxX - minX) / 100;
+                for (let xi = minX; xi <= maxX; xi += step) {
+                    const yi = stats.slope * xi + stats.intercept;
+                    const se = stats.stdY * Math.sqrt(1/stats.n + Math.pow(xi - stats.meanX, 2) / (stats.n * stats.stdX * stats.stdX));
+                    const tValue = getZScore(currentConfidenceLevel);
+                    const margin = tValue * se;
+                    
+                    confidenceBand.push({
+                        x: xi,
+                        yUpper: yi + margin,
+                        yLower: yi - margin
+                    });
+                }
+                
+                // Create scatter plot
+                scatterPlot = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'কনফিডেন্স ব্যান্ড' : 'Confidence Band',
+                                data: confidenceBand.map(point => ({ x: point.x, y: point.yUpper })),
+                                borderColor: 'transparent',
+                                backgroundColor: 'rgba(255, 154, 61, 0.1)',
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: '+1'
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'কনফিডেন্স ব্যান্ড' : 'Confidence Band',
+                                data: confidenceBand.map(point => ({ x: point.x, y: point.yLower })),
+                                borderColor: 'transparent',
+                                backgroundColor: 'rgba(255, 154, 61, 0.1)',
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points',
+                                data: dataPoints,
+                                backgroundColor: getCorrelationColor(stats.r),
+                                borderColor: '#ffffff',
+                                borderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'রিগ্রেশন লাইন' : 'Regression Line',
+                                data: regressionLine,
+                                borderColor: 'var(--regression-line)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 3,
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 2) {
+                                            return `X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)}`;
+                                        }
+                                        return context.dataset.label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: document.getElementById('dataX').getAttribute('data-label') || 'X Variable',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: document.getElementById('dataY').getAttribute('data-label') || 'Y Variable',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateCalculationTables(x, y, stats) {
+                const container = document.getElementById('tablesContainer');
+                const n = x.length;
+                
+                // Calculate all intermediate values for the table
+                const meanX = stats.meanX;
+                const meanY = stats.meanY;
+                
+                const calculations = x.map((xi, i) => {
+                    const yi = y[i];
+                    const xDiff = xi - meanX;
+                    const yDiff = yi - meanY;
+                    const xDiffSquared = xDiff * xDiff;
+                    const yDiffSquared = yDiff * yDiff;
+                    const product = xDiff * yDiff;
+                    
+                    return {
+                        index: i + 1,
+                        x: xi,
+                        y: yi,
+                        xDiff: xDiff,
+                        yDiff: yDiff,
+                        xDiffSquared: xDiffSquared,
+                        yDiffSquared: yDiffSquared,
+                        product: product
+                    };
+                });
+                
+                const sumX = x.reduce((a, b) => a + b, 0);
+                const sumY = y.reduce((a, b) => a + b, 0);
+                const sumXDiffSquared = calculations.reduce((sum, calc) => sum + calc.xDiffSquared, 0);
+                const sumYDiffSquared = calculations.reduce((sum, calc) => sum + calc.yDiffSquared, 0);
+                const sumProduct = calculations.reduce((sum, calc) => sum + calc.product, 0);
+                
+                container.innerHTML = `
+                    <!-- Data Table -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="i" data-bন="i">i</th>
+                                    <th data-en="Xᵢ" data-bন="Xᵢ">Xᵢ</th>
+                                    <th data-en="Yᵢ" data-bন="Yᵢ">Yᵢ</th>
+                                    <th data-en="Xᵢ - X̄" data-bন="Xᵢ - X̄">Xᵢ - X̄</th>
+                                    <th data-en="Yᵢ - Ȳ" data-bন="Yᵢ - Ȳ">Yᵢ - Ȳ</th>
+                                    <th data-en="(Xᵢ - X̄)²" data-bন="(Xᵢ - X̄)²">(Xᵢ - X̄)²</th>
+                                    <th data-en="(Yᵢ - Ȳ)²" data-bন="(Yᵢ - Ȳ)²">(Yᵢ - Ȳ)²</th>
+                                    <th data-en="(Xᵢ - X̄)(Yᵢ - Ȳ)" data-bন="(Xᵢ - X̄)(Yᵢ - Ȳ)">(Xᵢ - X̄)(Yᵢ - Ȳ)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${calculations.map(calc => `
+                                    <tr>
+                                        <td>${calc.index}</td>
+                                        <td>${calc.x.toFixed(2)}</td>
+                                        <td>${calc.y.toFixed(2)}</td>
+                                        <td>${calc.xDiff.toFixed(2)}</td>
+                                        <td>${calc.yDiff.toFixed(2)}</td>
+                                        <td>${calc.xDiffSquared.toFixed(2)}</td>
+                                        <td>${calc.yDiffSquared.toFixed(2)}</td>
+                                        <td>${calc.product.toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr class="highlight">
+                                    <td>Σ</td>
+                                    <td>${sumX.toFixed(2)}</td>
+                                    <td>${sumY.toFixed(2)}</td>
+                                    <td>0.00</td>
+                                    <td>0.00</td>
+                                    <td>${sumXDiffSquared.toFixed(2)}</td>
+                                    <td>${sumYDiffSquared.toFixed(2)}</td>
+                                    <td>${sumProduct.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Mean</td>
+                                    <td>${meanX.toFixed(2)}</td>
+                                    <td>${meanY.toFixed(2)}</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Calculation Summary -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Calculation Summary" data-bন="গণনা সারাংশ">গণনা সারাংশ</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Statistic" data-bন="পরিসংখ্যান">পরিসংখ্যান</th>
+                                    <th data-en="Formula" data-bন="সূত্র">সূত্র</th>
+                                    <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                    <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-en="Covariance" data-bন="কোভ্যারিয়েন্স">কোভ্যারিয়েন্স</td>
+                                    <td>Σ[(Xᵢ - X̄)(Yᵢ - Ȳ)] / n</td>
+                                    <td>${sumProduct.toFixed(2)} / ${n}</td>
+                                    <td><strong>${stats.covariance.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Std Dev X" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন X">স্ট্যান্ডার্ড ডেভিয়েশন X</td>
+                                    <td>√[Σ(Xᵢ - X̄)² / n]</td>
+                                    <td>√[${sumXDiffSquared.toFixed(2)} / ${n}]</td>
+                                    <td><strong>${stats.stdX.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Std Dev Y" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন Y">স্ট্যান্ডার্ড ডেভিয়েশন Y</td>
+                                    <td>√[Σ(Yᵢ - Ȳ)² / n]</td>
+                                    <td>√[${sumYDiffSquared.toFixed(2)} / ${n}]</td>
+                                    <td><strong>${stats.stdY.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Pearson's r" data-bন="পিয়ারসনের r">পিয়ারসনের r</td>
+                                    <td>Cov(X,Y) / (σₓ × σᵧ)</td>
+                                    <td>${stats.covariance.toFixed(4)} / (${stats.stdX.toFixed(4)} × ${stats.stdY.toFixed(4)})</td>
+                                    <td><strong>${stats.r.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="R²" data-bন="R²">R²</td>
+                                    <td>r²</td>
+                                    <td>${stats.r.toFixed(4)}²</td>
+                                    <td><strong>${stats.rSquared.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Slope (m)" data-bন="ঢাল (m)">ঢাল (m)</td>
+                                    <td>r × (σᵧ/σₓ)</td>
+                                    <td>${stats.r.toFixed(4)} × (${stats.stdY.toFixed(4)} / ${stats.stdX.toFixed(4)})</td>
+                                    <td><strong>${stats.slope.toFixed(4)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Intercept (b)" data-bন="ইন্টারসেপ্ট (b)">ইন্টারসেপ্ট (b)</td>
+                                    <td>Ȳ - mX̄</td>
+                                    <td>${meanY.toFixed(2)} - (${stats.slope.toFixed(4)} × ${meanX.toFixed(2)})</td>
+                                    <td><strong>${stats.intercept.toFixed(4)}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            function updateStepByStep(x, y, stats) {
+                const container = document.getElementById('stepsContainer');
+                const n = x.length;
+                const meanX = stats.meanX;
+                const meanY = stats.meanY;
+                
+                // Calculate intermediate sums for display
+                const calculations = x.map((xi, i) => {
+                    const yi = y[i];
+                    const xDiff = xi - meanX;
+                    const yDiff = yi - meanY;
+                    return { xDiff, yDiff, product: xDiff * yDiff, xDiff2: xDiff * xDiff, yDiff2: yDiff * yDiff };
+                });
+                
+                const sumProduct = calculations.reduce((sum, calc) => sum + calc.product, 0);
+                const sumXDiff2 = calculations.reduce((sum, calc) => sum + calc.xDiff2, 0);
+                const sumYDiff2 = calculations.reduce((sum, calc) => sum + calc.yDiff2, 0);
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate Means" data-bন="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                            <p data-en="Find the average of X and Y variables" data-bন="X এবং Y ভেরিয়েবলের গড় নির্ণয় করুন">
+                                X এবং Y ভেরিয়েবলের গড় নির্ণয় করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formulas:" data-bন="সূত্র:">সূত্র:</strong></p>
+                                <p>X̄ = ΣX / n</p>
+                                <p>Ȳ = ΣY / n</p>
+                                <p><strong data-en="Calculations:" data-bন="গণনা:">গণনা:</strong></p>
+                                <p>X̄ = ${x.reduce((a, b) => a + b, 0).toFixed(2)} / ${n} = <strong>${meanX.toFixed(2)}</strong></p>
+                                <p>Ȳ = ${y.reduce((a, b) => a + b, 0).toFixed(2)} / ${n} = <strong>${meanY.toFixed(2)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Deviations" data-bন="ধাপ ২: বিচ্যুতি গণনা করুন">ধাপ ২: বিচ্যুতি গণনা করুন</h4>
+                            <p data-en="Find how much each point deviates from the mean" data-bন="প্রতিটি পয়েন্ট গড় থেকে কতটা বিচ্যুত হয় তা খুঁজে বের করুন">
+                                প্রতিটি পয়েন্ট গড় থেকে কতটা বিচ্যুত হয় তা খুঁজে বের করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formulas:" data-bন="সূত্র:">সূত্র:</strong></p>
+                                <p>Xᵢ - X̄ and Yᵢ - Ȳ for each data point</p>
+                                <p><strong data-en="Example for first point:" data-bন="প্রথম পয়েন্টের উদাহরণ:">প্রথম পয়েন্টের উদাহরণ:</strong></p>
+                                <p>X₁ - X̄ = ${x[0].toFixed(2)} - ${meanX.toFixed(2)} = ${(x[0] - meanX).toFixed(2)}</p>
+                                <p>Y₁ - Ȳ = ${y[0].toFixed(2)} - ${meanY.toFixed(2)} = ${(y[0] - meanY).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Products and Squares" data-bন="ধাপ ৩: গুণফল ও বর্গ গণনা করুন">ধাপ ৩: গুণফল ও বর্গ গণনা করুন</h4>
+                            <p data-en="Multiply deviations and square them" data-bন="বিচ্যুতিগুলো গুণ করুন এবং বর্গ করুন">
+                                বিচ্যুতিগুলো গুণ করুন এবং বর্গ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="For each point calculate:" data-bন="প্রতিটি পয়েন্টের জন্য গণনা করুন:">প্রতিটি পয়েন্টের জন্য গণনা করুন:</strong></p>
+                                <p>(Xᵢ - X̄)(Yᵢ - Ȳ), (Xᵢ - X̄)², and (Yᵢ - Ȳ)²</p>
+                                <p><strong data-en="Example for first point:" data-bন="প্রথম পয়েন্টের উদাহরণ:">প্রথম পয়েন্টের উদাহরণ:</strong></p>
+                                <p>(X₁ - X̄)(Y₁ - Ȳ) = ${(x[0] - meanX).toFixed(2)} × ${(y[0] - meanY).toFixed(2)} = ${((x[0] - meanX) * (y[0] - meanY)).toFixed(2)}</p>
+                                <p>(X₁ - X̄)² = ${(x[0] - meanX).toFixed(2)}² = ${Math.pow(x[0] - meanX, 2).toFixed(2)}</p>
+                                <p>(Y₁ - Ȳ)² = ${(y[0] - meanY).toFixed(2)}² = ${Math.pow(y[0] - meanY, 2).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Sums" data-bন="ধাপ ৪: যোগফল গণনা করুন">ধাপ ৪: যোগফল গণনা করুন</h4>
+                            <p data-en="Sum all products and squared deviations" data-bন="সমস্ত গুণফল এবং বর্গ বিচ্যুতি যোগ করুন">
+                                সমস্ত গুণফল এবং বর্গ বিচ্যুতি যোগ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Sums:" data-bন="যোগফল:">যোগফল:</strong></p>
+                                <p>Σ[(Xᵢ - X̄)(Yᵢ - Ȳ)] = ${sumProduct.toFixed(2)}</p>
+                                <p>Σ[(Xᵢ - X̄)²] = ${sumXDiff2.toFixed(2)}</p>
+                                <p>Σ[(Yᵢ - Ȳ)²] = ${sumYDiff2.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Calculate Pearson's r" data-bন="ধাপ ৫: পিয়ারসনের r গণনা করুন">ধাপ ৫: পিয়ারসনের r গণনা করুন</h4>
+                            <p data-en="Apply Pearson correlation formula" data-bন="পিয়ারসন কোরিলেশন সূত্র প্রয়োগ করুন">
+                                পিয়ারসন কোরিলেশন সূত্র প্রয়োগ করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    r = Σ[(Xᵢ - X̄)(Yᵢ - Ȳ)] / √[Σ(Xᵢ - X̄)² × Σ(Yᵢ - Ȳ)²]
+                                </p>
+                                <p>= ${sumProduct.toFixed(2)} / √[${sumXDiff2.toFixed(2)} × ${sumYDiff2.toFixed(2)}]</p>
+                                <p>= ${sumProduct.toFixed(2)} / √[${(sumXDiff2 * sumYDiff2).toFixed(2)}]</p>
+                                <p>= ${sumProduct.toFixed(2)} / ${Math.sqrt(sumXDiff2 * sumYDiff2).toFixed(2)}</p>
+                                <p>= <strong>${stats.r.toFixed(4)}</strong></p>
+                                <p><strong data-en="Interpretation:" data-bন="ব্যাখ্যা:">ব্যাখ্যা:</strong> ${stats.strength.interpretation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function generateRandomData() {
+                const n = Math.floor(Math.random() * 15) + 10;
+                const correlation = (Math.random() * 2) - 1; // -1 to 1
+                
+                const x = Array.from({length: n}, (_, i) => i + 1);
+                const y = x.map(xi => {
+                    const base = correlation * xi;
+                    const noise = (Math.random() - 0.5) * 5;
+                    return base + noise + 10;
+                });
+                
+                document.getElementById('dataX').value = x.join(', ');
+                document.getElementById('dataY').value = y.join(', ');
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    document.getElementById('dataX').value = example.x.join(', ');
+                    document.getElementById('dataY').value = example.y.join(', ');
+                    
+                    // Store labels for use in chart
+                    document.getElementById('dataX').setAttribute('data-label', example.xLabel);
+                    document.getElementById('dataY').setAttribute('data-label', example.yLabel);
+                }
+            }
+
+            function clearCalculator() {
+                document.getElementById('dataX').value = '';
+                document.getElementById('dataY').value = '';
+                
+                // Clear results
+                document.getElementById('correlationResult').textContent = '--';
+                document.getElementById('pValueResult').textContent = '--';
+                document.getElementById('significanceResult').textContent = '--';
+                document.getElementById('strengthValue').textContent = '--';
+                document.getElementById('interpretationText').textContent = currentLanguage === 'bn' ? 
+                    'ব্যাখ্যা দেখতে ডেটা ইনপুট করুন এবং গণনা করুন' : 
+                    'Enter data and calculate to see interpretation';
+                document.getElementById('lowerBound').textContent = '--';
+                document.getElementById('upperBound').textContent = '--';
+                document.getElementById('regressionEquation').textContent = 'Y = -- X + --';
+                document.getElementById('slopeValue').textContent = '--';
+                document.getElementById('interceptValue').textContent = '--';
+                document.getElementById('rSquaredValue').textContent = '--';
+                document.getElementById('sampleSize').textContent = '--';
+                
+                // Clear scatter plot
+                if (scatterPlot) {
+                    scatterPlot.destroy();
+                    scatterPlot = null;
+                }
+                
+                // Show placeholder
+                document.getElementById('scatterPlotPlaceholder').style.display = 'flex';
+                document.getElementById('scatterPlotCanvas').style.display = 'none';
+                
+                // Clear tables and steps
+                document.getElementById('tablesContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" 
+                       data-en="Enter data and click Calculate to see detailed tables" 
+                       data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see detailed tables'}
+                    </p>
+                `;
+                
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter data and click Calculate to see step-by-step calculations" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see step-by-step calculations'}
+                    </p>
+                `;
+                
+                currentDataX = [];
+                currentDataY = [];
+            }
+        });
+    </script>
+</body>
+</html>

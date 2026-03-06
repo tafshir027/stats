@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ডেটা সামারি জেনারেটর | Data Summary Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6A11CB;
+            --secondary: #2575FC;
+            --accent: #FF5E62;
+            --success: #00B09B;
+            --info: #36D1DC;
+            --warning: #FFB347;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --statistical-color: #6A11CB;
+            --graphical-color: #2575FC;
+            --export-color: #00B09B;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--statistical-color), var(--graphical-color), var(--export-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input-container textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            line-height: 1.4;
+        }
+
+        .data-input-container textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        }
+
+        .input-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-group {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .option-group select,
+        .option-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Format Example */
+        .format-example {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .format-example h4 {
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .example-code {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        .example-code pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Export Controls */
+        .export-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--export-color);
+            color: white;
+            border-color: var(--export-color);
+            transform: translateY(-2px);
+        }
+
+        .export-btn.pdf {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .export-btn.pdf:hover {
+            background: var(--accent);
+        }
+
+        .export-btn.excel {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .export-btn.excel:hover {
+            background: var(--success);
+        }
+
+        .export-btn.json {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .export-btn.json:hover {
+            background: var(--warning);
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: rgba(106, 17, 203, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .summary-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-description {
+            font-size: 0.85rem;
+            color: var(--gray);
+            line-height: 1.4;
+        }
+
+        /* Detailed Statistics */
+        .detailed-statistics {
+            margin-top: 2rem;
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .statistics-group {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .statistics-group h4 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Distribution Visualization */
+        .distribution-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Box Plot Styles */
+        .box-plot {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            margin-top: 2rem;
+        }
+
+        .box-plot-axis {
+            position: absolute;
+            left: 50px;
+            right: 20px;
+            height: 2px;
+            background: var(--dark);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .box-plot-box {
+            position: absolute;
+            height: 100px;
+            background: rgba(106, 17, 203, 0.1);
+            border: 2px solid var(--primary);
+            border-radius: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .box-plot-median {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: var(--accent);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .box-plot-whisker {
+            position: absolute;
+            width: 2px;
+            height: 120px;
+            background: var(--gray);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .box-plot-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .box-plot-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+
+        /* Histogram Styles */
+        .histogram {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 1rem 0;
+            gap: 2px;
+        }
+
+        .histogram-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 3px 3px 0 0;
+            position: relative;
+            min-width: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .histogram-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .histogram-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .histogram-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+
+        /* Data Table */
+        .data-table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Insights Section */
+        .insights-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .insight-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .insight-content {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .recommendations-list {
+            list-style-type: none;
+            margin-top: 1rem;
+        }
+
+        .recommendations-list li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .recommendations-list li:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-icon {
+            color: var(--success);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+
+        .recommendation-text {
+            flex: 1;
+            color: var(--dark);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .controls,
+            .export-controls,
+            .input-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            .header,
+            .results-section,
+            .distribution-section,
+            .data-table-section,
+            .insights-section,
+            .recommendations {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .chart-box {
+                height: 300px;
+            }
+        }
+
+        /* Scroll to Top */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div data-en="Generating Comprehensive Summary..." data-bn="ব্যাপক সামারি তৈরি করা হচ্ছে...">ব্যাপক সামারি তৈরি করা হচ্ছে...</div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <div class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </div>
+
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Data Summary Generator" data-bn="ডেটা সামারি জেনারেটর">ডেটা সামারি জেনারেটর</h1>
+            <p class="subtitle" data-en="Generate comprehensive statistical summaries with graphical visualizations and export options for data analysis and reporting" data-bন="ডেটা বিশ্লেষণ এবং রিপোর্টিংয়ের জন্য গ্রাফিকাল ভিজ্যুয়ালাইজেশন এবং এক্সপোর্ট অপশন সহ বিস্তারিত পরিসংখ্যানগত সামারি তৈরি করুন">
+                ডেটা বিশ্লেষণ এবং রিপোর্টিংয়ের জন্য গ্রাফিকাল ভিজ্যুয়ালাইজেশন এবং এক্সপোর্ট অপশন সহ বিস্তারিত পরিসংখ্যানগত সামারি তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Data Input" data-bন="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="data-input-container">
+                    <textarea id="dataInput" placeholder="Enter your data here...
+You can use:
+- Simple list: 10, 20, 30, 40, 50
+- Column format: 
+  10
+  20
+  30
+  40
+  50
+- With labels:
+  Age: 25, 30, 35, 40, 45
+  Score: 85, 90, 78, 92, 88
+- CSV format:
+  Name,Age,Score
+  Alice,25,85
+  Bob,30,90
+  Carol,35,78
+  David,40,92
+  Eve,45,88" data-bn-placeholder="আপনার ডেটা এখানে লিখুন...
+আপনি ব্যবহার করতে পারেন:
+- সরল তালিকা: 10, 20, 30, 40, 50
+- কলাম ফরম্যাট:
+  10
+  20
+  30
+  40
+  50
+- লেবেল সহ:
+  বয়স: 25, 30, 35, 40, 45
+  স্কোর: 85, 90, 78, 92, 88
+- CSV ফরম্যাট:
+  নাম,বয়স,স্কোর
+  আলিসা,25,85
+  বব,30,90
+  ক্যারল,35,78
+  ডেভিড,40,92
+  ইভ,45,88">Name,Age,Score,Income
+John,25,85,35000
+Sarah,30,90,42000
+Michael,35,78,38000
+Emily,40,92,45000
+David,45,88,40000
+Lisa,28,95,48000
+Robert,32,82,36000
+Maria,38,89,43000</textarea>
+                </div>
+
+                <div class="input-options">
+                    <div class="option-group">
+                        <label data-en="Data Format" data-bন="ডেটা ফরম্যাট">ডেটা ফরম্যাট</label>
+                        <select id="dataFormat">
+                            <option value="csv" data-en="CSV (Comma Separated)" data-bন="CSV (কমা আলাদা)">CSV (কমা আলাদা)</option>
+                            <option value="list" data-en="Simple List" data-bন="সরল তালিকা">সরল তালিকা</option>
+                            <option value="column" data-en="Column Data" data-bন="কলাম ডেটা">কলাম ডেটা</option>
+                            <option value="json" data-en="JSON Format" data-bন="JSON ফরম্যাট">JSON ফরম্যাট</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label data-en="Analysis Type" data-bন="বিশ্লেষণের ধরন">বিশ্লেষণের ধরন</label>
+                        <select id="analysisType">
+                            <option value="comprehensive" data-en="Comprehensive Analysis" data-bন="ব্যাপক বিশ্লেষণ">ব্যাপক বিশ্লেষণ</option>
+                            <option value="descriptive" data-en="Descriptive Statistics" data-bন="বর্ণনামূলক পরিসংখ্যান">বর্ণনামূলক পরিসংখ্যান</option>
+                            <option value="distribution" data-en="Distribution Analysis" data-bন="বণ্টন বিশ্লেষণ">বণ্টন বিশ্লেষণ</option>
+                            <option value="comparative" data-en="Comparative Analysis" data-bন="তুলনামূলক বিশ্লেষণ">তুলনামূলক বিশ্লেষণ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="format-example">
+                    <h4 data-en="Quick Examples" data-bন="দ্রুত উদাহরণ">দ্রুত উদাহরণ</h4>
+                    <div class="example-code">
+                        <pre data-en="Test Scores: 78, 85, 92, 88, 76, 95, 89, 84, 91, 87
+Sales Data: Jan:1200, Feb:1500, Mar:1300, Apr:1800, May:1600
+Temperature Readings: 22.5, 23.1, 21.8, 24.2, 22.9, 23.5, 22.1" data-bন="পরীক্ষার স্কোর: 78, 85, 92, 88, 76, 95, 89, 84, 91, 87
+বিক্রয় ডেটা: জানু:1200, ফেব্রু:1500, মার্চ:1300, এপ্রিল:1800, মে:1600
+তাপমাত্রা রিডিং: 22.5, 23.1, 21.8, 24.2, 22.9, 23.5, 22.1">পরীক্ষার স্কোর: 78, 85, 92, 88, 76, 95, 89, 84, 91, 87
+বিক্রয় ডেটা: জানু:1200, ফেব্রু:1500, মার্চ:1300, এপ্রিল:1800, মে:1600
+তাপমাত্রা রিডিং: 22.5, 23.1, 21.8, 24.2, 22.9, 23.5, 22.1</pre>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Generate Summary" data-bন="সামারি তৈরি করুন">সামারি তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div class="export-controls">
+                    <button class="export-btn pdf" id="exportPdf">
+                        <i class="fas fa-file-pdf"></i>
+                        <span data-en="Export PDF" data-bন="PDF এক্সপোর্ট">PDF এক্সপোর্ট</span>
+                    </button>
+                    <button class="export-btn excel" id="exportExcel">
+                        <i class="fas fa-file-excel"></i>
+                        <span data-en="Export Excel" data-bন="এক্সেল এক্সপোর্ট">এক্সেল এক্সপোর্ট</span>
+                    </button>
+                    <button class="export-btn json" id="exportJson">
+                        <i class="fas fa-file-code"></i>
+                        <span data-en="Export JSON" data-bন="JSON এক্সপোর্ট">JSON এক্সপোর্ট</span>
+                    </button>
+                    <button class="export-btn" id="exportCSV">
+                        <i class="fas fa-file-csv"></i>
+                        <span data-en="Export CSV" data-bন="CSV এক্সপোর্ট">CSV এক্সপোর্ট</span>
+                    </button>
+                    <button class="export-btn" id="printReport">
+                        <i class="fas fa-print"></i>
+                        <span data-en="Print Report" data-bন="রিপোর্ট প্রিন্ট">রিপোর্ট প্রিন্ট</span>
+                    </button>
+                </div>
+
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    <span data-en="Summary Overview" data-bন="সামারি ওভারভিউ">সামারি ওভারভিউ</span>
+                </h2>
+                
+                <div class="summary-cards" id="summaryCards">
+                    <!-- Cards will be generated here -->
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                        <div class="summary-title" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                        <div class="summary-value">8</div>
+                        <div class="summary-description" data-en="Total number of observations" data-bন="মোট পর্যবেক্ষণের সংখ্যা">মোট পর্যবেক্ষণের সংখ্যা</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="summary-title" data-en="Mean Value" data-bন="গড় মান">গড় মান</div>
+                        <div class="summary-value">34.0</div>
+                        <div class="summary-description" data-en="Average of all values" data-bন="সব মানের গড়">সব মানের গড়</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </div>
+                        <div class="summary-title" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="summary-value">6.52</div>
+                        <div class="summary-description" data-en="Measure of data spread" data-bন="ডেটা বিস্তারের পরিমাপ">ডেটা বিস্তারের পরিমাপ</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="summary-title" data-en="Coefficient of Variation" data-bন="ভ্যারিয়েশন সহগ">ভ্যারিয়েশন সহগ</div>
+                        <div class="summary-value">19.2%</div>
+                        <div class="summary-description" data-en="Relative variability" data-bন="আপেক্ষিক পরিবর্তনশীলতা">আপেক্ষিক পরিবর্তনশীলতা</div>
+                    </div>
+                </div>
+
+                <!-- Detailed Statistics -->
+                <div class="detailed-statistics">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Detailed Statistics" data-bন="বিস্তারিত পরিসংখ্যান">বিস্তারিত পরিসংখ্যান</span>
+                    </h3>
+                    
+                    <div class="statistics-grid" id="detailedStats">
+                        <!-- Statistics will be generated here -->
+                        <div class="statistics-group">
+                            <h4><i class="fas fa-ruler"></i> <span data-en="Central Tendency" data-bন="কেন্দ্রীয় প্রবণতা">কেন্দ্রীয় প্রবণতা</span></h4>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Mean" data-bন="গড়">গড়</span>
+                                <span class="stat-value">34.0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Median" data-bন="মধ্যমা">মধ্যমা</span>
+                                <span class="stat-value">33.5</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Mode" data-bন="মোড">মোড</span>
+                                <span class="stat-value">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="statistics-group">
+                            <h4><i class="fas fa-expand"></i> <span data-en="Dispersion" data-bন="বিচ্ছুরণ">বিচ্ছুরণ</span></h4>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</span>
+                                <span class="stat-value">42.5</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Std Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                                <span class="stat-value">6.52</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Range" data-bন="রেঞ্জ">রেঞ্জ</span>
+                                <span class="stat-value">20</span>
+                            </div>
+                        </div>
+                        
+                        <div class="statistics-group">
+                            <h4><i class="fas fa-chart-bar"></i> <span data-en="Distribution" data-bন="বণ্টন">বণ্টন</span></h4>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Skewness" data-bন="স্কিউনেস">স্কিউনেস</span>
+                                <span class="stat-value">0.35</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="Kurtosis" data-bন="কার্টোসিস">কার্টোসিস</span>
+                                <span class="stat-value">-0.89</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label" data-en="CV" data-bন="CV">CV</span>
+                                <span class="stat-value">19.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Visualization -->
+        <div class="distribution-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Distribution Analysis" data-bন="বণ্টন বিশ্লেষণ">বণ্টন বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Histogram -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Histogram" data-bন="হিস্টোগ্রাম">হিস্টোগ্রাম</span>
+                    </h3>
+                    <div id="histogramChart" class="histogram">
+                        <!-- Histogram will be generated here -->
+                        <div class="chart-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray);">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p data-en="Generate summary to see histogram" data-bন="হিস্টোগ্রাম দেখতে সামারি তৈরি করুন">
+                                হিস্টোগ্রাম দেখতে সামারি তৈরি করুন
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box Plot -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-box"></i>
+                        <span data-en="Box Plot" data-bন="বক্স প্লট">বক্স প্লট</span>
+                    </h3>
+                    <div id="boxPlot" class="box-plot">
+                        <!-- Box plot will be generated here -->
+                        <div class="chart-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray);">
+                            <i class="fas fa-chart-box" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p data-en="Generate summary to see box plot" data-bন="বক্স প্লট দেখতে সামারি তৈরি করুন">
+                                বক্স প্লট দেখতে সামারি তৈরি করুন
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Data Table" data-bন="ডেটা টেবিল">ডেটা টেবিল</span>
+            </h2>
+            
+            <div id="dataTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" data-en="Generate summary to see data table" data-bন="ডেটা টেবিল দেখতে সামারি তৈরি করুন">
+                    ডেটা টেবিল দেখতে সামারি তৈরি করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="insights-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Statistical Insights" data-bন="পরিসংখ্যানগত অন্তর্দৃষ্টি">পরিসংখ্যানগত অন্তর্দৃষ্টি</span>
+            </h2>
+            
+            <div class="insights-grid" id="insightsGrid">
+                <!-- Insights will be generated here -->
+                <div class="insight-card">
+                    <div class="insight-title">
+                        <i class="fas fa-bell"></i>
+                        <span data-en="Data Quality" data-bন="ডেটা কোয়ালিটি">ডেটা কোয়ালিটি</span>
+                    </div>
+                    <div class="insight-content" data-en="No missing values detected in the dataset" data-bন="ডেটাসেটে কোনো অনুপস্থিত মান পাওয়া যায়নি">
+                        ডেটাসেটে কোনো অনুপস্থিত মান পাওয়া যায়নি
+                    </div>
+                </div>
+                
+                <div class="insight-card">
+                    <div class="insight-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Distribution Pattern" data-bন="বণ্টন প্যাটার্ন">বণ্টন প্যাটার্ন</span>
+                    </div>
+                    <div class="insight-content" data-en="Data shows a slightly right-skewed distribution" data-bন="ডেটা সামান্য ডানদিকে স্কিউড বণ্টন দেখায়">
+                        ডেটা সামান্য ডানদিকে স্কিউড বণ্টন দেখায়
+                    </div>
+                </div>
+                
+                <div class="insight-card">
+                    <div class="insight-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="Outlier Detection" data-bন="আউটলায়ার সনাক্তকরণ">আউটলায়ার সনাক্তকরণ</span>
+                    </div>
+                    <div class="insight-content" data-en="No significant outliers detected using IQR method" data-bন="IQR পদ্ধতি ব্যবহার করে কোনো উল্লেখযোগ্য আউটলায়ার পাওয়া যায়নি">
+                        IQR পদ্ধতি ব্যবহার করে কোনো উল্লেখযোগ্য আউটলায়ার পাওয়া যায়নি
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recommendations">
+            <h2 class="section-title">
+                <i class="fas fa-tasks"></i>
+                <span data-en="Recommendations" data-bন="সুপারিশসমূহ">সুপারিশসমূহ</span>
+            </h2>
+            
+            <ul class="recommendations-list" id="recommendationsList">
+                <!-- Recommendations will be generated here -->
+                <li>
+                    <div class="recommendation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="recommendation-text" data-en="Consider collecting more data points for better statistical power" data-bন="ভাল পরিসংখ্যানগত শক্তির জন্য আরও ডেটা পয়েন্ট সংগ্রহ করার বিষয়টি বিবেচনা করুন">
+                        ভাল পরিসংখ্যানগত শক্তির জন্য আরও ডেটা পয়েন্ট সংগ্রহ করার বিষয়টি বিবেচনা করুন
+                    </div>
+                </li>
+                <li>
+                    <div class="recommendation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="recommendation-text" data-en="Normalize the data if planning to use parametric statistical tests" data-bন="প্যারামেট্রিক পরিসংখ্যানগত পরীক্ষা ব্যবহার করার পরিকল্পনা থাকলে ডেটা নরমালাইজ করুন">
+                        প্যারামেট্রিক পরিসংখ্যানগত পরীক্ষা ব্যবহার করার পরিকল্পনা থাকলে ডেটা নরমালাইজ করুন
+                    </div>
+                </li>
+                <li>
+                    <div class="recommendation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="recommendation-text" data-en="Use bootstrapping for confidence intervals due to small sample size" data-bন="ছোট নমুনার আকারের কারণে আত্মবিশ্বাসের ব্যবধানের জন্য বুটস্ট্র্যাপিং ব্যবহার করুন">
+                        ছোট নমুনার আকারের কারণে আত্মবিশ্বাসের ব্যবধানের জন্য বুটস্ট্র্যাপিং ব্যবহার করুন
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let currentData = [];
+            let currentSummary = null;
+
+            // Initialize
+            initSummaryGenerator();
+
+            function initSummaryGenerator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Generate Button
+                document.getElementById('generateBtn').addEventListener('click', generateSummary);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Export Buttons
+                document.getElementById('exportPdf').addEventListener('click', exportPDF);
+                document.getElementById('exportExcel').addEventListener('click', exportExcel);
+                document.getElementById('exportJson').addEventListener('click', exportJSON);
+                document.getElementById('exportCSV').addEventListener('click', exportCSV);
+                document.getElementById('printReport').addEventListener('click', printReport);
+
+                // Scroll to Top
+                document.getElementById('scrollToTop').addEventListener('click', scrollToTop);
+
+                // Scroll event listener for scroll to top button
+                window.addEventListener('scroll', toggleScrollToTop);
+
+                // Generate initial summary
+                setTimeout(() => {
+                    generateSummary();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else if (element.tagName === 'SELECT') {
+                                // Update select options
+                                Array.from(element.options).forEach(option => {
+                                    if (option.hasAttribute(`data-${lang}`)) {
+                                        option.textContent = option.getAttribute(`data-${lang}`);
+                                    }
+                                });
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+
+                // Update preformatted text
+                document.querySelectorAll('.example-code pre').forEach(pre => {
+                    if (pre.hasAttribute(`data-${lang}`)) {
+                        pre.textContent = pre.getAttribute(`data-${lang}`);
+                    }
+                });
+            }
+
+            function parseInputData(input, format) {
+                const cleaned = input.trim();
+                if (!cleaned) return [];
+
+                try {
+                    switch (format) {
+                        case 'csv':
+                            return parseCSV(cleaned);
+                        case 'json':
+                            return parseJSON(cleaned);
+                        case 'column':
+                            return parseColumnData(cleaned);
+                        case 'list':
+                        default:
+                            return parseListData(cleaned);
+                    }
+                } catch (error) {
+                    console.error('Parsing error:', error);
+                    return parseListData(cleaned); // Fallback to list parsing
+                }
+            }
+
+            function parseCSV(input) {
+                const lines = input.split('\n').filter(line => line.trim());
+                if (lines.length === 0) return [];
+
+                // Check if first line contains headers
+                const firstLine = lines[0];
+                const hasHeaders = firstLine.includes(',') && !firstLine.match(/^-?\d+(\.\d+)?$/);
+                
+                let data = [];
+                
+                if (hasHeaders) {
+                    const headers = firstLine.split(',').map(h => h.trim());
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            const value = values[index];
+                            row[header] = isNaN(value) ? value : parseFloat(value);
+                        });
+                        data.push(row);
+                    }
+                } else {
+                    // Single column of numbers
+                    data = lines.map(line => {
+                        const value = line.trim();
+                        return isNaN(value) ? value : parseFloat(value);
+                    }).filter(val => val !== null);
+                }
+                
+                return data;
+            }
+
+            function parseJSON(input) {
+                try {
+                    return JSON.parse(input);
+                } catch {
+                    // Try to parse as JSON-like string
+                    const cleaned = input.replace(/'/g, '"').replace(/(\w+):/g, '"$1":');
+                    return JSON.parse(cleaned);
+                }
+            }
+
+            function parseColumnData(input) {
+                return input.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line && !isNaN(line))
+                    .map(Number);
+            }
+
+            function parseListData(input) {
+                // Remove labels like "Age:", "Score:"
+                const cleaned = input.replace(/[a-zA-Z]+:\s*/g, '');
+                
+                // Split by commas, spaces, or newlines
+                const numbers = cleaned.split(/[,\s\n]+/)
+                    .filter(item => item.trim() && !isNaN(item.trim()))
+                    .map(item => parseFloat(item.trim()));
+                
+                return numbers;
+            }
+
+            function generateSummary() {
+                const input = document.getElementById('dataInput').value.trim();
+                const format = document.getElementById('dataFormat').value;
+                
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে কিছু ডেটা ইনপুট করুন' : 'Please enter some data');
+                    return;
+                }
+
+                // Show loading
+                showLoading(true);
+
+                // Parse data
+                const data = parseInputData(input, format);
+                
+                if (data.length === 0) {
+                    showLoading(false);
+                    alert(currentLanguage === 'bn' ? 'দয়া করে বৈধ ডেটা ইনপুট করুন' : 'Please enter valid data');
+                    return;
+                }
+
+                // Store current data
+                currentData = data;
+                
+                // Generate summary statistics
+                const summary = calculateStatistics(data);
+                currentSummary = summary;
+                
+                // Update UI with summary
+                updateSummaryUI(summary, data);
+                
+                // Hide loading
+                setTimeout(() => {
+                    showLoading(false);
+                    scrollToResults();
+                }, 500);
+            }
+
+            function calculateStatistics(data) {
+                // Handle both array of numbers and array of objects
+                let numericData = [];
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    if (typeof data[0] === 'number') {
+                        numericData = data;
+                    } else if (typeof data[0] === 'object') {
+                        // Extract all numeric values from objects
+                        data.forEach(obj => {
+                            Object.values(obj).forEach(val => {
+                                if (typeof val === 'number') {
+                                    numericData.push(val);
+                                }
+                            });
+                        });
+                    }
+                }
+                
+                if (numericData.length === 0) {
+                    // If no numeric data found, try to convert strings to numbers
+                    numericData = data.map(item => {
+                        const num = parseFloat(item);
+                        return isNaN(num) ? 0 : num;
+                    });
+                }
+                
+                // Sort data for calculations
+                const sortedData = [...numericData].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                if (n === 0) {
+                    return null;
+                }
+                
+                // Basic statistics
+                const sum = sortedData.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                // Median
+                const mid = Math.floor(n / 2);
+                const median = n % 2 === 0 ? 
+                    (sortedData[mid - 1] + sortedData[mid]) / 2 : 
+                    sortedData[mid];
+                
+                // Mode
+                const frequency = {};
+                sortedData.forEach(val => {
+                    frequency[val] = (frequency[val] || 0) + 1;
+                });
+                const mode = Object.keys(frequency).reduce((a, b) => 
+                    frequency[a] > frequency[b] ? a : b
+                );
+                
+                // Variance and standard deviation
+                const variance = sortedData.reduce((sum, val) => 
+                    sum + Math.pow(val - mean, 2), 0) / (n - 1);
+                const stdDev = Math.sqrt(variance);
+                
+                // Range
+                const min = sortedData[0];
+                const max = sortedData[n - 1];
+                const range = max - min;
+                
+                // Quartiles
+                const q1 = getPercentile(sortedData, 25);
+                const q3 = getPercentile(sortedData, 75);
+                const iqr = q3 - q1;
+                
+                // Skewness
+                const skewness = calculateSkewness(sortedData, mean, stdDev, n);
+                
+                // Kurtosis
+                const kurtosis = calculateKurtosis(sortedData, mean, stdDev, n);
+                
+                // Coefficient of variation
+                const cv = (stdDev / Math.abs(mean)) * 100;
+                
+                // Outliers using IQR method
+                const lowerBound = q1 - 1.5 * iqr;
+                const upperBound = q3 + 1.5 * iqr;
+                const outliers = sortedData.filter(val => val < lowerBound || val > upperBound);
+                
+                // Normal distribution test (simplified)
+                const isNormal = Math.abs(skewness) < 1 && Math.abs(kurtosis) < 1;
+                
+                return {
+                    n,
+                    sum,
+                    mean,
+                    median,
+                    mode: parseFloat(mode),
+                    variance,
+                    stdDev,
+                    min,
+                    max,
+                    range,
+                    q1,
+                    q3,
+                    iqr,
+                    skewness,
+                    kurtosis,
+                    cv,
+                    outliers,
+                    outlierCount: outliers.length,
+                    isNormal,
+                    sortedData
+                };
+            }
+
+            function getPercentile(data, percentile) {
+                const index = (percentile / 100) * (data.length - 1);
+                const lower = Math.floor(index);
+                const upper = Math.ceil(index);
+                
+                if (lower === upper) {
+                    return data[lower];
+                }
+                
+                const weight = index - lower;
+                return data[lower] * (1 - weight) + data[upper] * weight;
+            }
+
+            function calculateSkewness(data, mean, stdDev, n) {
+                if (stdDev === 0) return 0;
+                const thirdMoment = data.reduce((sum, val) => 
+                    sum + Math.pow(val - mean, 3), 0) / n;
+                return thirdMoment / Math.pow(stdDev, 3);
+            }
+
+            function calculateKurtosis(data, mean, stdDev, n) {
+                if (stdDev === 0) return -3;
+                const fourthMoment = data.reduce((sum, val) => 
+                    sum + Math.pow(val - mean, 4), 0) / n;
+                return (fourthMoment / Math.pow(stdDev, 4)) - 3;
+            }
+
+            function updateSummaryUI(summary, rawData) {
+                if (!summary) return;
+                
+                // Update summary cards
+                updateSummaryCards(summary);
+                
+                // Update detailed statistics
+                updateDetailedStatistics(summary);
+                
+                // Update charts
+                updateCharts(summary, rawData);
+                
+                // Update data table
+                updateDataTable(rawData);
+                
+                // Update insights
+                updateInsights(summary);
+                
+                // Update recommendations
+                updateRecommendations(summary);
+            }
+
+            function updateSummaryCards(summary) {
+                const cardsContainer = document.getElementById('summaryCards');
+                
+                const cards = [
+                    {
+                        icon: 'fas fa-hashtag',
+                        title: currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points',
+                        value: summary.n,
+                        description: currentLanguage === 'bn' ? 'মোট পর্যবেক্ষণের সংখ্যা' : 'Total number of observations'
+                    },
+                    {
+                        icon: 'fas fa-calculator',
+                        title: currentLanguage === 'bn' ? 'গড় মান' : 'Mean Value',
+                        value: summary.mean.toFixed(2),
+                        description: currentLanguage === 'bn' ? 'সব মানের গড়' : 'Average of all values'
+                    },
+                    {
+                        icon: 'fas fa-expand-arrows-alt',
+                        title: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন' : 'Standard Deviation',
+                        value: summary.stdDev.toFixed(2),
+                        description: currentLanguage === 'bn' ? 'ডেটা বিস্তারের পরিমাপ' : 'Measure of data spread'
+                    },
+                    {
+                        icon: 'fas fa-percentage',
+                        title: currentLanguage === 'bn' ? 'ভ্যারিয়েশন সহগ' : 'Coefficient of Variation',
+                        value: summary.cv.toFixed(1) + '%',
+                        description: currentLanguage === 'bn' ? 'আপেক্ষিক পরিবর্তনশীলতা' : 'Relative variability'
+                    }
+                ];
+                
+                cardsContainer.innerHTML = cards.map(card => `
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="${card.icon}"></i>
+                        </div>
+                        <div class="summary-title">${card.title}</div>
+                        <div class="summary-value">${card.value}</div>
+                        <div class="summary-description">${card.description}</div>
+                    </div>
+                `).join('');
+            }
+
+            function updateDetailedStatistics(summary) {
+                const statsContainer = document.getElementById('detailedStats');
+                
+                const stats = {
+                    centralTendency: [
+                        { label: currentLanguage === 'bn' ? 'গড়' : 'Mean', value: summary.mean.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'মধ্যমা' : 'Median', value: summary.median.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'মোড' : 'Mode', value: summary.mode.toFixed(2) }
+                    ],
+                    dispersion: [
+                        { label: currentLanguage === 'bn' ? 'ভ্যারিয়েন্স' : 'Variance', value: summary.variance.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন' : 'Std Deviation', value: summary.stdDev.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'রেঞ্জ' : 'Range', value: summary.range.toFixed(2) }
+                    ],
+                    distribution: [
+                        { label: currentLanguage === 'bn' ? 'স্কিউনেস' : 'Skewness', value: summary.skewness.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'কার্টোসিস' : 'Kurtosis', value: summary.kurtosis.toFixed(2) },
+                        { label: currentLanguage === 'bn' ? 'CV' : 'CV', value: summary.cv.toFixed(1) + '%' }
+                    ]
+                };
+                
+                statsContainer.innerHTML = `
+                    <div class="statistics-group">
+                        <h4><i class="fas fa-ruler"></i> <span>${currentLanguage === 'bn' ? 'কেন্দ্রীয় প্রবণতা' : 'Central Tendency'}</span></h4>
+                        ${stats.centralTendency.map(item => `
+                            <div class="stat-item">
+                                <span class="stat-label">${item.label}</span>
+                                <span class="stat-value">${item.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="statistics-group">
+                        <h4><i class="fas fa-expand"></i> <span>${currentLanguage === 'bn' ? 'বিচ্ছুরণ' : 'Dispersion'}</span></h4>
+                        ${stats.dispersion.map(item => `
+                            <div class="stat-item">
+                                <span class="stat-label">${item.label}</span>
+                                <span class="stat-value">${item.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="statistics-group">
+                        <h4><i class="fas fa-chart-bar"></i> <span>${currentLanguage === 'bn' ? 'বণ্টন' : 'Distribution'}</span></h4>
+                        ${stats.distribution.map(item => `
+                            <div class="stat-item">
+                                <span class="stat-label">${item.label}</span>
+                                <span class="stat-value">${item.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            function updateCharts(summary, rawData) {
+                updateHistogram(summary.sortedData);
+                updateBoxPlot(summary);
+            }
+
+            function updateHistogram(data) {
+                const histogram = document.getElementById('histogramChart');
+                
+                if (data.length < 2) {
+                    histogram.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray);">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>${currentLanguage === 'bn' ? 'হিস্টোগ্রাম দেখার জন্য পর্যাপ্ত ডেটা নেই' : 'Insufficient data for histogram'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Calculate number of bins using Sturges' formula
+                const n = data.length;
+                const k = Math.ceil(Math.log2(n)) + 1;
+                
+                // Calculate bin ranges
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const binWidth = (max - min) / k;
+                
+                // Initialize bins
+                const bins = Array(k).fill(0);
+                const binLabels = [];
+                
+                // Count values in each bin
+                data.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binWidth), k - 1);
+                    bins[binIndex]++;
+                });
+                
+                // Generate bin labels
+                for (let i = 0; i < k; i++) {
+                    const binStart = min + i * binWidth;
+                    const binEnd = binStart + binWidth;
+                    binLabels.push(`${binStart.toFixed(1)}-${binEnd.toFixed(1)}`);
+                }
+                
+                const maxFrequency = Math.max(...bins);
+                const chartHeight = 250;
+                
+                // Create histogram bars
+                histogram.innerHTML = '';
+                
+                bins.forEach((frequency, index) => {
+                    const barHeight = (frequency / maxFrequency) * (chartHeight - 60);
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'histogram-bar';
+                    bar.style.height = `${barHeight}px`;
+                    
+                    const valueLabel = document.createElement('div');
+                    valueLabel.className = 'histogram-value';
+                    valueLabel.textContent = frequency;
+                    
+                    const binLabel = document.createElement('div');
+                    binLabel.className = 'histogram-label';
+                    binLabel.textContent = binLabels[index];
+                    
+                    bar.appendChild(valueLabel);
+                    bar.appendChild(binLabel);
+                    histogram.appendChild(bar);
+                });
+            }
+
+            function updateBoxPlot(summary) {
+                const boxPlot = document.getElementById('boxPlot');
+                
+                const { min, q1, median, q3, max, outliers } = summary;
+                
+                // Create scale
+                const range = max - min;
+                const plotWidth = 600; // Virtual width for calculations
+                
+                const scale = value => ((value - min) / range) * 80 + 10; // 10% to 90%
+                
+                boxPlot.innerHTML = `
+                    <!-- Axis -->
+                    <div class="box-plot-axis"></div>
+                    
+                    <!-- Whiskers -->
+                    <div class="box-plot-whisker" style="left: ${scale(min)}%; background: var(--gray);"></div>
+                    <div class="box-plot-whisker" style="left: ${scale(max)}%; background: var(--gray);"></div>
+                    
+                    <!-- Box -->
+                    <div class="box-plot-box" style="left: ${scale(q1)}%; width: ${scale(q3) - scale(q1)}%;"></div>
+                    
+                    <!-- Median Line -->
+                    <div class="box-plot-median" style="left: ${scale(median)}%; width: ${scale(q3) - scale(q1)}%;"></div>
+                    
+                    <!-- Outliers -->
+                    ${outliers.map(outlier => `
+                        <div class="box-plot-point" style="left: ${scale(outlier)}%; background: var(--accent);" 
+                             title="${currentLanguage === 'bn' ? 'আউটলায়ার:' : 'Outlier:'} ${outlier.toFixed(2)}"></div>
+                    `).join('')}
+                    
+                    <!-- Labels -->
+                    <div class="box-plot-label" style="left: ${scale(min)}%; top: 60%;">${min.toFixed(2)}</div>
+                    <div class="box-plot-label" style="left: ${scale(q1)}%; top: 60%;">Q1: ${q1.toFixed(2)}</div>
+                    <div class="box-plot-label" style="left: ${scale(median)}%; top: 20%;">Median: ${median.toFixed(2)}</div>
+                    <div class="box-plot-label" style="left: ${scale(q3)}%; top: 60%;">Q3: ${q3.toFixed(2)}</div>
+                    <div class="box-plot-label" style="left: ${scale(max)}%; top: 60%;">${max.toFixed(2)}</div>
+                    
+                    <!-- IQR Label -->
+                    <div class="box-plot-label" style="left: 50%; top: 80%; transform: translateX(-50%); 
+                         font-weight: 600; color: var(--primary);">
+                        IQR: ${summary.iqr.toFixed(2)}
+                    </div>
+                `;
+            }
+
+            function updateDataTable(rawData) {
+                const tableContainer = document.getElementById('dataTableContainer');
+                
+                if (Array.isArray(rawData) && rawData.length > 0) {
+                    if (typeof rawData[0] === 'object') {
+                        // Array of objects
+                        const headers = Object.keys(rawData[0]);
+                        
+                        let tableHTML = `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        ${headers.map(header => `<th>${header}</th>`).join('')}
+                                        <th>${currentLanguage === 'bn' ? 'ক্রম' : 'Rank'}</th>
+                                        <th>${currentLanguage === 'bn' ? 'প্রতিষ্ঠান' : 'Z-Score'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        
+                        rawData.forEach((row, index) => {
+                            const values = headers.map(header => row[header]);
+                            const numericValues = values.filter(val => typeof val === 'number');
+                            const avg = numericValues.length > 0 ? 
+                                numericValues.reduce((a, b) => a + b, 0) / numericValues.length : 0;
+                            
+                            // Calculate z-score if we have summary
+                            let zScore = '-';
+                            if (currentSummary && currentSummary.stdDev > 0) {
+                                zScore = ((avg - currentSummary.mean) / currentSummary.stdDev).toFixed(2);
+                            }
+                            
+                            tableHTML += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    ${values.map(val => `<td>${typeof val === 'number' ? val.toFixed(2) : val}</td>`).join('')}
+                                    <td>${index + 1}</td>
+                                    <td>${zScore}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        tableHTML += `
+                                </tbody>
+                            </table>
+                        `;
+                        
+                        tableContainer.innerHTML = tableHTML;
+                    } else {
+                        // Array of numbers
+                        const sorted = [...rawData].sort((a, b) => a - b);
+                        
+                        let tableHTML = `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>${currentLanguage === 'bn' ? 'মান' : 'Value'}</th>
+                                        <th>${currentLanguage === 'bn' ? 'ক্রম' : 'Rank'}</th>
+                                        <th>${currentLanguage === 'bn' ? 'প্রতিষ্ঠান' : 'Z-Score'}</th>
+                                        <th>${currentLanguage === 'bn' ? 'শতকরা' : 'Percentile'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        
+                        sorted.forEach((value, index) => {
+                            // Calculate z-score
+                            let zScore = '-';
+                            let percentile = '-';
+                            
+                            if (currentSummary && currentSummary.stdDev > 0) {
+                                zScore = ((value - currentSummary.mean) / currentSummary.stdDev).toFixed(2);
+                                percentile = ((index + 1) / sorted.length * 100).toFixed(1) + '%';
+                            }
+                            
+                            tableHTML += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${typeof value === 'number' ? value.toFixed(2) : value}</td>
+                                    <td>${index + 1}</td>
+                                    <td>${zScore}</td>
+                                    <td>${percentile}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        tableHTML += `
+                                </tbody>
+                            </table>
+                        `;
+                        
+                        tableContainer.innerHTML = tableHTML;
+                    }
+                } else {
+                    tableContainer.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 'ডেটা টেবিল দেখার জন্য ডেটা ইনপুট করুন' : 'Enter data to see data table'}
+                        </p>
+                    `;
+                }
+            }
+
+            function updateInsights(summary) {
+                const insightsGrid = document.getElementById('insightsGrid');
+                
+                const insights = [
+                    {
+                        icon: 'fas fa-bell',
+                        title: currentLanguage === 'bn' ? 'ডেটা কোয়ালিটি' : 'Data Quality',
+                        content: currentLanguage === 'bn' ? 
+                            `${summary.n} টি বৈধ ডেটা পয়েন্ট, ${summary.outlierCount} টি আউটলায়ার সনাক্ত করা হয়েছে` :
+                            `${summary.n} valid data points, ${summary.outlierCount} outliers detected`
+                    },
+                    {
+                        icon: 'fas fa-chart-line',
+                        title: currentLanguage === 'bn' ? 'বণ্টন প্যাটার্ন' : 'Distribution Pattern',
+                        content: getDistributionInsight(summary)
+                    },
+                    {
+                        icon: 'fas fa-balance-scale',
+                        title: currentLanguage === 'bn' ? 'কেন্দ্রীয় প্রবণতা' : 'Central Tendency',
+                        content: currentLanguage === 'bn' ?
+                            `গড় (${summary.mean.toFixed(2)}) এবং মধ্যমা (${summary.median.toFixed(2)}) এর মধ্যে পার্থক্য: ${Math.abs(summary.mean - summary.median).toFixed(2)}` :
+                            `Difference between mean (${summary.mean.toFixed(2)}) and median (${summary.median.toFixed(2)}): ${Math.abs(summary.mean - summary.median).toFixed(2)}`
+                    }
+                ];
+                
+                insightsGrid.innerHTML = insights.map(insight => `
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="${insight.icon}"></i>
+                            <span>${insight.title}</span>
+                        </div>
+                        <div class="insight-content">${insight.content}</div>
+                    </div>
+                `).join('');
+            }
+
+            function getDistributionInsight(summary) {
+                const skew = summary.skewness;
+                const kurt = summary.kurtosis;
+                
+                if (currentLanguage === 'bn') {
+                    if (Math.abs(skew) < 0.5 && Math.abs(kurt) < 0.5) {
+                        return 'ডেটা প্রায় স্বাভাবিক বণ্টন অনুসরণ করে';
+                    } else if (skew > 0.5) {
+                        return 'ডেটা ডানদিকে স্কিউড (ধনাত্মক স্কিউনেস)';
+                    } else if (skew < -0.5) {
+                        return 'ডেটা বামদিকে স্কিউড (ঋণাত্মক স্কিউনেস)';
+                    } else if (kurt > 0.5) {
+                        return 'ডেটা লেপ্টোকার্টিক (চূড়া বণ্টন)';
+                    } else if (kurt < -0.5) {
+                        return 'ডেটা প্লাটিকার্টিক (সমতল বণ্টন)';
+                    } else {
+                        return 'ডেটা মাঝারি বিচ্ছুরণ দেখায়';
+                    }
+                } else {
+                    if (Math.abs(skew) < 0.5 && Math.abs(kurt) < 0.5) {
+                        return 'Data follows approximately normal distribution';
+                    } else if (skew > 0.5) {
+                        return 'Data is right-skewed (positive skewness)';
+                    } else if (skew < -0.5) {
+                        return 'Data is left-skewed (negative skewness)';
+                    } else if (kurt > 0.5) {
+                        return 'Data is leptokurtic (peaked distribution)';
+                    } else if (kurt < -0.5) {
+                        return 'Data is platykurtic (flat distribution)';
+                    } else {
+                        return 'Data shows moderate dispersion';
+                    }
+                }
+            }
+
+            function updateRecommendations(summary) {
+                const recommendationsList = document.getElementById('recommendationsList');
+                
+                const recommendations = [
+                    currentLanguage === 'bn' ? 
+                        `${summary.n < 30 ? 'ছোট নমুনার আকারের কারণে নন-প্যারামেট্রিক পরীক্ষা ব্যবহার করুন' : 'প্যারামেট্রিক পরীক্ষার জন্য ডেটা যথেষ্ট'}` :
+                        `${summary.n < 30 ? 'Use non-parametric tests due to small sample size' : 'Data is sufficient for parametric tests'}`,
+                    
+                    currentLanguage === 'bn' ?
+                        `ভ্যারিয়েশন সহগ ${summary.cv.toFixed(1)}% - ${summary.cv < 15 ? 'ডেটা তুলনামূলকভাবে স্থির' : 'ডেটা তুলনামূলকভাবে পরিবর্তনশীল'}` :
+                        `Coefficient of variation ${summary.cv.toFixed(1)}% - ${summary.cv < 15 ? 'data is relatively stable' : 'data is relatively variable'}`,
+                    
+                    currentLanguage === 'bn' ?
+                        `${summary.outlierCount > 0 ? `${summary.outlierCount} টি আউটলায়ারের কারণে রোবাস্ট পরিসংখ্যান ব্যবহার করুন` : 'কোনো উল্লেখযোগ্য আউটলায়ার নেই'}` :
+                        `${summary.outlierCount > 0 ? `Use robust statistics due to ${summary.outlierCount} outliers` : 'No significant outliers present'}`,
+                    
+                    currentLanguage === 'bn' ?
+                        'রিপোর্টে আত্মবিশ্বাসের ব্যবধান অন্তর্ভুক্ত করুন' :
+                        'Include confidence intervals in the report',
+                    
+                    currentLanguage === 'bn' ?
+                        'ডেটা সংগ্রহ পদ্ধতি নথিভুক্ত করুন এবং লিমিটেশনস উল্লেখ করুন' :
+                        'Document data collection methodology and mention limitations'
+                ];
+                
+                recommendationsList.innerHTML = recommendations.map(rec => `
+                    <li>
+                        <div class="recommendation-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="recommendation-text">${rec}</div>
+                    </li>
+                `).join('');
+            }
+
+            function exportPDF() {
+                showLoading(true);
+                setTimeout(() => {
+                    alert(currentLanguage === 'bn' ? 
+                        'PDF এক্সপোর্ট বৈশিষ্ট্যটি ডেমো সংস্করণে উপলব্ধ নয়' :
+                        'PDF export feature is not available in demo version');
+                    showLoading(false);
+                }, 1000);
+            }
+
+            function exportExcel() {
+                if (!currentSummary) {
+                    alert(currentLanguage === 'bn' ? 'প্রথমে একটি সামারি তৈরি করুন' : 'Generate a summary first');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                // Create CSV content
+                const csvContent = createExportCSV();
+                
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `data_summary_${new Date().getTime()}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showLoading(false);
+            }
+
+            function exportJSON() {
+                if (!currentSummary) {
+                    alert(currentLanguage === 'bn' ? 'প্রথমে একটি সামারি তৈরি করুন' : 'Generate a summary first');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                const exportData = {
+                    metadata: {
+                        generatedAt: new Date().toISOString(),
+                        dataPoints: currentSummary.n,
+                        analysisType: document.getElementById('analysisType').value
+                    },
+                    summary: currentSummary,
+                    rawData: currentData
+                };
+                
+                const jsonContent = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `data_summary_${new Date().getTime()}.json`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showLoading(false);
+            }
+
+            function exportCSV() {
+                if (!currentSummary) {
+                    alert(currentLanguage === 'bn' ? 'প্রথমে একটি সামারি তৈরি করুন' : 'Generate a summary first');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                const csvContent = createExportCSV();
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `data_summary_${new Date().getTime()}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showLoading(false);
+            }
+
+            function createExportCSV() {
+                if (!currentSummary) return '';
+                
+                const headers = [
+                    'Statistic',
+                    'Value',
+                    'Description'
+                ];
+                
+                const rows = [
+                    ['Data Points', currentSummary.n, 'Total number of observations'],
+                    ['Mean', currentSummary.mean.toFixed(4), 'Average value'],
+                    ['Median', currentSummary.median.toFixed(4), 'Middle value'],
+                    ['Standard Deviation', currentSummary.stdDev.toFixed(4), 'Measure of spread'],
+                    ['Variance', currentSummary.variance.toFixed(4), 'Square of standard deviation'],
+                    ['Minimum', currentSummary.min.toFixed(4), 'Smallest value'],
+                    ['Maximum', currentSummary.max.toFixed(4), 'Largest value'],
+                    ['Range', currentSummary.range.toFixed(4), 'Difference between max and min'],
+                    ['Q1 (25th Percentile)', currentSummary.q1.toFixed(4), 'First quartile'],
+                    ['Q3 (75th Percentile)', currentSummary.q3.toFixed(4), 'Third quartile'],
+                    ['IQR', currentSummary.iqr.toFixed(4), 'Interquartile range'],
+                    ['Skewness', currentSummary.skewness.toFixed(4), 'Measure of asymmetry'],
+                    ['Kurtosis', currentSummary.kurtosis.toFixed(4), 'Measure of tail heaviness'],
+                    ['Coefficient of Variation', currentSummary.cv.toFixed(2) + '%', 'Relative variability'],
+                    ['Outlier Count', currentSummary.outlierCount, 'Number of outliers detected']
+                ];
+                
+                const csvContent = [
+                    headers.join(','),
+                    ...rows.map(row => row.join(','))
+                ].join('\n');
+                
+                return csvContent;
+            }
+
+            function printReport() {
+                window.print();
+            }
+
+            function clearAll() {
+                if (confirm(currentLanguage === 'bn' ? 'আপনি কি সব ডেটা ক্লিয়ার করতে চান?' : 'Are you sure you want to clear all data?')) {
+                    document.getElementById('dataInput').value = '';
+                    currentData = [];
+                    currentSummary = null;
+                    
+                    // Reset UI to initial state
+                    document.getElementById('summaryCards').innerHTML = `
+                        <div class="summary-card">
+                            <div class="summary-icon">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="summary-title" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                            <div class="summary-value">--</div>
+                            <div class="summary-description" data-en="Total number of observations" data-bন="মোট পর্যবেক্ষণের সংখ্যা">মোট পর্যবেক্ষণের সংখ্যা</div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('dataTableContainer').innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" data-en="Generate summary to see data table" data-bন="ডেটা টেবিল দেখতে সামারি তৈরি করুন">
+                            ${currentLanguage === 'bn' ? 'ডেটা টেবিল দেখতে সামারি তৈরি করুন' : 'Generate summary to see data table'}
+                        </p>
+                    `;
+                    
+                    document.getElementById('histogramChart').innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray);">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>${currentLanguage === 'bn' ? 'হিস্টোগ্রাম দেখতে সামারি তৈরি করুন' : 'Generate summary to see histogram'}</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('boxPlot').innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--gray);">
+                            <i class="fas fa-chart-box" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>${currentLanguage === 'bn' ? 'বক্স প্লট দেখতে সামারি তৈরি করুন' : 'Generate summary to see box plot'}</p>
+                        </div>
+                    `;
+                    
+                    // Update dynamic content
+                    updateDynamicContent();
+                }
+            }
+
+            function showLoading(show) {
+                const overlay = document.getElementById('loadingOverlay');
+                if (show) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            }
+
+            function scrollToResults() {
+                const resultsSection = document.querySelector('.results-section');
+                if (resultsSection) {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            function scrollToTop() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function toggleScrollToTop() {
+                const scrollButton = document.getElementById('scrollToTop');
+                if (window.scrollY > 300) {
+                    scrollButton.classList.add('visible');
+                } else {
+                    scrollButton.classList.remove('visible');
+                }
+            }
+
+            function updateDynamicContent() {
+                // Update all translatable elements with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        if (element.tagName !== 'TEXTAREA' && element.tagName !== 'SELECT' && element.tagName !== 'OPTION') {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

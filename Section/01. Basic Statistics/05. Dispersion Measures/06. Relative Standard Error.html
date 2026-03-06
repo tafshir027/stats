@@ -1,0 +1,2464 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>রিলেটিভ স্ট্যান্ডার্ড এরর (RSE) ক্যালকুলেটর | আনুমানিক নির্ভুলতা</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #2196F3;
+            --secondary: #1976D2;
+            --accent: #FF9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FFC107;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --rse-color: #2196F3;
+            --se-color: #9C27B0;
+            --mean-color: #FF9800;
+            --percentage-color: #4CAF50;
+            --confidence-color: #FF5722;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+            --low-rse: #4CAF50;
+            --medium-rse: #FF9800;
+            --high-rse: #F44336;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e3f2fd 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--rse-color), var(--se-color), var(--percentage-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Advanced Options */
+        .advanced-options {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .option-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-group label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .option-group input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .option-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        /* Confidence Level Selection */
+        .confidence-selection {
+            margin: 1.5rem 0;
+        }
+
+        .confidence-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .confidence-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .confidence-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .confidence-btn.active {
+            background: var(--confidence-color);
+            color: white;
+            border-color: var(--confidence-color);
+        }
+
+        /* Mean Zero Handling */
+        .mean-zero-warning {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: #fff3e0;
+            border-radius: 10px;
+            border: 2px solid #ffb74d;
+            display: none;
+        }
+
+        .mean-zero-warning.active {
+            display: block;
+        }
+
+        .warning-icon {
+            color: #ff9800;
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Main RSE Result */
+        .main-result-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 3px solid var(--rse-color);
+        }
+
+        .main-result-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .main-result-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-result-unit {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .rse-interpretation {
+            font-size: 1rem;
+            color: var(--dark);
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--rse-color);
+        }
+
+        /* RSE Level Indicator */
+        .rse-level-indicator {
+            margin-bottom: 2rem;
+        }
+
+        .level-meter {
+            height: 25px;
+            background: var(--light-gray);
+            border-radius: 12px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .level-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--low-rse), var(--medium-rse), var(--high-rse));
+            border-radius: 12px;
+            transition: width 1s ease;
+        }
+
+        .level-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        .level-marker {
+            position: absolute;
+            top: -5px;
+            width: 2px;
+            height: 35px;
+            background: var(--dark);
+            transform: translateX(-50%);
+        }
+
+        .level-marker::after {
+            content: attr(data-value) '%';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Components Grid */
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .components-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .component-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .component-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .component-card.mean {
+            border-color: var(--mean-color);
+        }
+
+        .component-card.se {
+            border-color: var(--se-color);
+        }
+
+        .component-card.rse {
+            border-color: var(--rse-color);
+        }
+
+        .component-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .component-card.mean .component-icon {
+            color: var(--mean-color);
+        }
+
+        .component-card.se .component-icon {
+            color: var(--se-color);
+        }
+
+        .component-card.rse .component-icon {
+            color: var(--rse-color);
+        }
+
+        .component-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .component-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .component-unit {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-left: 0.25rem;
+        }
+
+        .component-formula {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Confidence Interval Display */
+        .confidence-interval {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+            border-radius: 10px;
+            border: 2px solid var(--confidence-color);
+        }
+
+        .confidence-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--confidence-color);
+            font-weight: 600;
+        }
+
+        .interval-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--dark);
+            margin: 1rem 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Error Distribution Chart */
+        .error-distribution-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+        }
+
+        .mean-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--mean-color);
+            opacity: 0.7;
+        }
+
+        .error-bar {
+            position: absolute;
+            background: var(--se-color);
+            opacity: 0.7;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .error-bar:hover {
+            opacity: 1;
+            transform: scaleX(1.1);
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.mean { background: var(--mean-color); }
+        .legend-color.se { background: var(--se-color); }
+        .legend-color.rse { background: var(--rse-color); }
+        .legend-color.confidence { background: var(--confidence-color); }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Formula Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .rse-formula .formula-icon {
+            background: var(--rse-color);
+        }
+
+        .se-formula .formula-icon {
+            background: var(--se-color);
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* RSE Calculation Steps */
+        .rse-steps {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 500px;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .step-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Applications Section */
+        .applications-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .application-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .application-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .application-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* RSE Interpretation Guide */
+        .interpretation-guide {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .interpretation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .interpretation-table th,
+        .interpretation-table td {
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        .interpretation-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .interpretation-table .low-rse {
+            background: #e8f5e9;
+        }
+
+        .interpretation-table .medium-rse {
+            background: #fff3e0;
+        }
+
+        .interpretation-table .high-rse {
+            background: #ffebee;
+        }
+
+        /* Example Data */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .example-btn.survey {
+            background: var(--success);
+        }
+
+        .example-btn.manufacturing {
+            background: var(--se-color);
+        }
+
+        .example-btn.clinical {
+            background: var(--rse-color);
+        }
+
+        .example-btn.economic {
+            background: var(--confidence-color);
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .applications-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .interpretation-guide {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .step-table,
+            .interpretation-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Relative Standard Error (RSE) Calculator" data-bn="রিলেটিভ স্ট্যান্ডার্ড এরর (RSE) ক্যালকুলেটর">রিলেটিভ স্ট্যান্ডার্ড এরর (RSE) ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate precision of estimate as percentage - Survey data analysis and measurement precision" data-bn="আনুমানিক নির্ভুলতা শতকরা হিসাবে গণনা করুন - সার্ভে ডেটা বিশ্লেষণ এবং পরিমাপ নির্ভুলতা">
+                আনুমানিক নির্ভুলতা শতকরা হিসাবে গণনা করুন - সার্ভে ডেটা বিশ্লেষণ এবং পরিমাপ নির্ভুলতা
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="summary">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Summary Stats" data-bn="সারসংক্ষেপ পরিসংখ্যান">সারসংক্ষেপ পরিসংখ্যান</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="Enter data separated by commas, spaces, or new lines
+Example: 10, 20, 30, 40, 50
+or: 10 20 30 40 50
+or: 
+10
+20
+30
+40
+50" data-bn-placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50
+বা: 10 20 30 40 50
+বা: 
+10
+20
+30
+40
+50">49, 50, 51, 50, 49</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Enter sample data or summary statistics" data-bn="স্যাম্পল ডেটা বা সারসংক্ষেপ পরিসংখ্যান ইনপুট করুন">
+                            স্যাম্পল ডেটা বা সারসংক্ষেপ পরিসংখ্যান ইনপুট করুন
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="advanced-options">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-cog"></i>
+                        <span data-en="Advanced Options" data-bn="এডভান্সড অপশন">এডভান্সড অপশন</span>
+                    </h3>
+                    
+                    <div class="option-row">
+                        <div class="option-group">
+                            <label data-en="Standard Error (SE)" data-bn="স্ট্যান্ডার্ড এরর (SE)">স্ট্যান্ডার্ড এরর (SE)</label>
+                            <input type="number" id="standardErrorInput" placeholder="Enter SE if known" data-bn-placeholder="SE জানা থাকলে ইনপুট করুন" step="0.001">
+                        </div>
+                        <div class="option-group">
+                            <label data-en="Sample Size (n)" data-bn="স্যাম্পল সাইজ (n)">স্যাম্পল সাইজ (n)</label>
+                            <input type="number" id="sampleSizeInput" placeholder="Enter sample size" data-bn-placeholder="স্যাম্পল সাইজ ইনপুট করুন" min="2" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="option-row">
+                        <div class="option-group">
+                            <label data-en="Standard Deviation (σ)" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</label>
+                            <input type="number" id="stdDevInput" placeholder="Enter std dev if known" data-bn-placeholder="স্ট্যান্ডার্ড ডেভিয়েশন জানা থাকলে ইনপুট করুন" step="0.001">
+                        </div>
+                        <div class="option-group">
+                            <label data-en="Mean (μ)" data-bn="গড় (μ)">গড় (μ)</label>
+                            <input type="number" id="meanInput" placeholder="Enter mean if known" data-bn-placeholder="গড় জানা থাকলে ইনপুট করুন" step="0.001">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confidence Level Selection -->
+                <div class="confidence-selection">
+                    <h3 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Confidence Level" data-bন="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</span>
+                    </h3>
+                    <div class="confidence-options">
+                        <button class="confidence-btn" data-level="90">90%</button>
+                        <button class="confidence-btn active" data-level="95">95%</button>
+                        <button class="confidence-btn" data-level="99">99%</button>
+                        <button class="confidence-btn" data-level="custom">Custom</button>
+                    </div>
+                </div>
+
+                <!-- Mean Zero Warning -->
+                <div class="mean-zero-warning" id="meanZeroWarning">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <i class="fas fa-exclamation-triangle warning-icon"></i>
+                        <strong data-en="Warning: Mean is zero or near zero!" data-bন="সতর্কতা: গড় শূন্য বা শূন্যের কাছাকাছি!">সতর্কতা: গড় শূন্য বা শূন্যের কাছাকাছি!</strong>
+                    </div>
+                    <p style="color: var(--gray); font-size: 0.9rem;" data-en="RSE cannot be calculated when mean is zero. Consider using absolute error or different metric." data-bন="গড় শূন্য হলে RSE গণনা করা যায় না। পরম এরর বা ভিন্ন মেট্রিক ব্যবহার করুন।">
+                        গড় শূন্য হলে RSE গণনা করা যায় না। পরম এরর বা ভিন্ন মেট্রিক ব্যবহার করুন।
+                    </p>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate RSE" data-bন="RSE গণনা করুন">RSE গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="RSE Results" data-bন="RSE ফলাফল">RSE ফলাফল</span>
+                </h2>
+                
+                <!-- Main RSE Result -->
+                <div class="main-result-card">
+                    <div class="main-result-label">
+                        <i class="fas fa-percentage"></i>
+                        <span data-en="Relative Standard Error (RSE)" data-bন="রিলেটিভ স্ট্যান্ডার্ড এরর (RSE)">রিলেটিভ স্ট্যান্ডার্ড এরর (RSE)</span>
+                    </div>
+                    <div class="main-result-value" id="rseResult">--</div>
+                    <div class="main-result-unit" id="rseUnit">%</div>
+                    <div class="rse-interpretation" id="rseInterpretation">
+                        <span data-en="Enter data to calculate RSE" data-bন="RSE গণনা করতে ডেটা ইনপুট করুন">RSE গণনা করতে ডেটা ইনপুট করুন</span>
+                    </div>
+                </div>
+
+                <!-- RSE Level Indicator -->
+                <div class="rse-level-indicator">
+                    <h3 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-signal"></i>
+                        <span data-en="Precision Level" data-bন="নির্ভুলতা স্তর">নির্ভুলতা স্তর</span>
+                    </h3>
+                    <div class="level-meter">
+                        <div class="level-fill" id="rseLevelFill" style="width: 0%;"></div>
+                        <div class="level-marker" id="rseLevelMarker" style="left: 0%;" data-value="0"></div>
+                    </div>
+                    <div class="level-labels">
+                        <span data-en="High Precision" data-bন="উচ্চ নির্ভুলতা">উচ্চ নির্ভুলতা</span>
+                        <span data-en="Moderate Precision" data-bন="মধ্যম নির্ভুলতা">মধ্যম নির্ভুলতা</span>
+                        <span data-en="Low Precision" data-bন="নিম্ন নির্ভুলতা">নিম্ন নির্ভুলতা</span>
+                    </div>
+                </div>
+
+                <!-- Components Grid -->
+                <div class="components-grid">
+                    <div class="component-card mean">
+                        <div class="component-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="component-title" data-en="Mean (x̄)" data-bন="গড় (x̄)">গড় (x̄)</div>
+                        <div class="component-value" id="meanResult">--</div>
+                        <div class="component-formula" data-en="Sample mean" data-bন="স্যাম্পল গড়">স্যাম্পল গড়</div>
+                    </div>
+
+                    <div class="component-card se">
+                        <div class="component-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="component-title" data-en="Standard Error (SE)" data-bন="স্ট্যান্ডার্ড এরর (SE)">স্ট্যান্ডার্ড এরর (SE)</div>
+                        <div class="component-value" id="seResult">--</div>
+                        <div class="component-formula" data-en="SE = σ/√n" data-bন="SE = σ/√n">SE = σ/√n</div>
+                    </div>
+
+                    <div class="component-card rse" style="grid-column: span 2;">
+                        <div class="component-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="component-title" data-en="Relative Standard Error" data-bন="রিলেটিভ স্ট্যান্ডার্ড এরর">রিলেটিভ স্ট্যান্ডার্ড এরর</div>
+                        <div class="component-value" id="rseResult2">--</div>
+                        <div class="component-formula" data-en="RSE = (SE/Mean) × 100%" data-bন="RSE = (SE/গড়) × ১০০%">RSE = (SE/গড়) × ১০০%</div>
+                    </div>
+                </div>
+
+                <!-- RSE Formula Display -->
+                <div style="margin: 1.5rem 0; padding: 1rem; background: var(--formula-bg); border-radius: 10px; text-align: center;">
+                    <div style="font-family: 'Times New Roman', serif; font-size: 1.3rem;">
+                        <span data-en="RSE Formula:" data-bন="RSE সূত্র:">RSE সূত্র:</span>
+                        <span id="rseFormula">RSE = (SE / x̄) × 100%</span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--gray); margin-top: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Standard error divided by mean, expressed as percentage" data-bন="স্ট্যান্ডার্ড এররকে গড় দ্বারা ভাগ করে শতকরা হিসাবে প্রকাশ">
+                            স্ট্যান্ডার্ড এররকে গড় দ্বারা ভাগ করে শতকরা হিসাবে প্রকাশ
+                        </span>
+                    </p>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Sample Size (n)" data-bন="স্যাম্পল সাইজ (n)">স্যাম্পল সাইজ (n)</div>
+                        <div class="stat-value" id="sampleSizeResult">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Std Deviation (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</div>
+                        <div class="stat-value" id="stdDevResult">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Variance (σ²)" data-bন="ভ্যারিয়েন্স (σ²)">ভ্যারিয়েন্স (σ²)</div>
+                        <div class="stat-value" id="varianceResult">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Degrees of Freedom" data-bন="ডিগ্রি অফ ফ্রিডম">ডিগ্রি অফ ফ্রিডম</div>
+                        <div class="stat-value" id="dofResult">0</div>
+                    </div>
+                </div>
+
+                <!-- Confidence Interval Display -->
+                <div class="confidence-interval" id="confidenceInterval">
+                    <div class="confidence-header">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="95% Confidence Interval for Mean" data-bন="গড়ের জন্য ৯৫% কনফিডেন্স ইন্টারভাল">গড়ের জন্য ৯৫% কনফিডেন্স ইন্টারভাল</span>
+                    </div>
+                    <div class="interval-display" id="confidenceIntervalDisplay">
+                        -- to --
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--gray); text-align: center;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="We are 95% confident that the true population mean lies within this interval" data-bন="আমরা ৯৫% আত্মবিশ্বাসী যে প্রকৃত পপুলেশন গড় এই ইন্টারভালের মধ্যে রয়েছে">
+                            আমরা ৯৫% আত্মবিশ্বাসী যে প্রকৃত পপুলেশন গড় এই ইন্টারভালের মধ্যে রয়েছে
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bন="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Error Distribution Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Error Distribution" data-bন="এরর বন্টন">এরর বন্টন</span>
+                    </h3>
+                    <div id="errorDistributionChart" class="error-distribution-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p data-en="Enter data to see error distribution" data-bন="ডেটা ইনপুট করে এরর বন্টন দেখুন">ডেটা ইনপুট করে এরর বন্টন দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="errorDistributionChartLegend"></div>
+                </div>
+
+                <!-- Precision Comparison Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Precision Comparison" data-bন="নির্ভুলতা তুলনা">নির্ভুলতা তুলনা</span>
+                    </h3>
+                    <div id="precisionComparisonChart" class="chart-placeholder">
+                        <i class="fas fa-balance-scale"></i>
+                        <p data-en="Enter data to see precision comparison" data-bন="ডেটা ইনপুট করে নির্ভুলতা তুলনা দেখুন">ডেটা ইনপুট করে নির্ভুলতা তুলনা দেখুন</p>
+                    </div>
+                    <div class="chart-legend" id="precisionChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="RSE Formulas and Methods" data-bন="RSE সূত্র এবং পদ্ধতি">RSE সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <!-- Formula Key -->
+            <div class="formula-key" style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--light-gray); border-radius: 10px;">
+                <div class="key-item">
+                    <span class="key-symbol">RSE</span>
+                    <span class="key-label" data-en="Relative Standard Error" data-bন="রিলেটিভ স্ট্যান্ডার্ড এরর">রিলেটিভ স্ট্যান্ডার্ড এরর</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">SE</span>
+                    <span class="key-label" data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">σ</span>
+                    <span class="key-label" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">x̄</span>
+                    <span class="key-label" data-en="Sample Mean" data-bন="স্যাম্পল গড়">স্যাম্পল গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">n</span>
+                    <span class="key-label" data-en="Sample Size" data-bন="স্যাম্পল সাইজ">স্যাম্পল সাইজ</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">%</span>
+                    <span class="key-label" data-en="Percentage" data-bন="শতকরা">শতকরা</span>
+                </div>
+            </div>
+            
+            <div class="formula-cards">
+                <!-- RSE Formula -->
+                <div class="formula-card rse-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Relative Standard Error" data-bন="রিলেটিভ স্ট্যান্ডার্ড এরর">রিলেটিভ স্ট্যান্ডার্ড এরর</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures precision of estimate as percentage of mean" data-bন="গড়ের শতকরা হিসাবে অনুমানের নির্ভুলতা পরিমাপ করে">
+                            গড়ের শতকরা হিসাবে অনুমানের নির্ভুলতা পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="RSE = (SE / x̄) × 100%" data-bন="RSE = (SE / x̄) × ১০০%">RSE = (SE / x̄) × ১০০%</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="SE = Standard error of the mean" data-bন="SE = গড়ের স্ট্যান্ডার্ড এরর">SE = গড়ের স্ট্যান্ডার্ড এরর</li>
+                            <li data-en="x̄ = Sample mean" data-bন="x̄ = স্যাম্পল গড়">x̄ = স্যাম্পল গড়</li>
+                            <li data-en="Expressed as percentage for easier interpretation" data-bন="সহজ ব্যাখ্যার জন্য শতকরা হিসাবে প্রকাশিত">সহজ ব্যাখ্যার জন্য শতকরা হিসাবে প্রকাশিত</li>
+                            <li data-en="Lower RSE indicates higher precision" data-bন="নিম্ন RSE উচ্চ নির্ভুলতা নির্দেশ করে">নিম্ন RSE উচ্চ নির্ভুলতা নির্দেশ করে</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Standard Error Formula -->
+                <div class="formula-card se-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Standard deviation of sampling distribution" data-bন="স্যাম্পলিং বন্টনের স্ট্যান্ডার্ড ডেভিয়েশন">
+                            স্যাম্পলিং বন্টনের স্ট্যান্ডার্ড ডেভিয়েশন
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="SE = σ / √n" data-bন="SE = σ / √n">SE = σ / √n</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="σ = Sample standard deviation" data-bন="σ = স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন">σ = স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন</li>
+                            <li data-en="n = Sample size" data-bন="n = স্যাম্পল সাইজ">n = স্যাম্পল সাইজ</li>
+                            <li data-en="√n = Square root of sample size" data-bন="√n = স্যাম্পল সাইজের বর্গমূল">√n = স্যাম্পল সাইজের বর্গমূল</li>
+                            <li data-en="Decreases with larger sample sizes" data-bন="বড় স্যাম্পল সাইজে হ্রাস পায়">বড় স্যাম্পল সাইজে হ্রাস পায়</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RSE Calculation Steps -->
+            <div class="rse-steps">
+                <h3 class="section-title" style="font-size: 1.3rem;">
+                    <i class="fas fa-list-ol"></i>
+                    <span data-en="Step-by-Step RSE Calculation" data-bন="ধাপে ধাপে RSE গণনা">ধাপে ধাপে RSE গণনা</span>
+                </h3>
+                
+                <div id="rseStepsContainer">
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="rseStepsPlaceholder" 
+                       data-en="Enter data and calculate to see RSE calculation steps" 
+                       data-bন="ডেটা ইনপুট করুন এবং RSE গণনার ধাপগুলো দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং RSE গণনার ধাপগুলো দেখতে গণনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RSE Interpretation Guide -->
+        <div class="interpretation-guide">
+            <h2 class="section-title">
+                <i class="fas fa-book-reader"></i>
+                <span data-en="RSE Interpretation Guide" data-bন="RSE ব্যাখ্যা নির্দেশিকা">RSE ব্যাখ্যা নির্দেশিকা</span>
+            </h2>
+            
+            <table class="interpretation-table">
+                <thead>
+                    <tr>
+                        <th data-en="RSE Range (%)" data-bন="RSE রেঞ্জ (%)">RSE রেঞ্জ (%)</th>
+                        <th data-en="Precision Level" data-bন="নির্ভুলতা স্তর">নির্ভুলতা স্তর</th>
+                        <th data-en="Interpretation" data-bন="ব্যাখ্যা">ব্যাখ্যা</th>
+                        <th data-en="Typical Applications" data-bন="সাধারণ প্রয়োগ">সাধারণ প্রয়োগ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="low-rse">
+                        <td><strong>0-5%</strong></td>
+                        <td data-en="High Precision" data-bন="উচ্চ নির্ভুলতা">উচ্চ নির্ভুলতা</td>
+                        <td data-en="Estimate is very precise, low sampling error" data-bন="অনুমান অত্যন্ত নির্ভুল, নিম্ন স্যাম্পলিং এরর">অনুমান অত্যন্ত নির্ভুল, নিম্ন স্যাম্পলিং এরর</td>
+                        <td data-en="Clinical trials, quality control, precise measurements" data-bন="ক্লিনিকাল ট্রায়াল, কোয়ালিটি কন্ট্রোল, নির্ভুল পরিমাপ">ক্লিনিকাল ট্রায়াল, কোয়ালিটি কন্ট্রোল, নির্ভুল পরিমাপ</td>
+                    </tr>
+                    <tr class="medium-rse">
+                        <td><strong>5-15%</strong></td>
+                        <td data-en="Moderate Precision" data-bন="মধ্যম নির্ভুলতা">মধ্যম নির্ভুলতা</td>
+                        <td data-en="Acceptable precision for most survey applications" data-bন="বেশিরভাগ সার্ভে প্রয়োগের জন্য গ্রহণযোগ্য নির্ভুলতা">বেশিরভাগ সার্ভে প্রয়োগের জন্য গ্রহণযোগ্য নির্ভুলতা</td>
+                        <td data-en="Market research, social surveys, economic indicators" data-bন="মার্কেট রিসার্চ, সামাজিক সার্ভে, অর্থনৈতিক সূচক">মার্কেট রিসার্চ, সামাজিক সার্ভে, অর্থনৈতিক সূচক</td>
+                    </tr>
+                    <tr class="high-rse">
+                        <td><strong>15%+</strong></td>
+                        <td data-en="Low Precision" data-bন="নিম্ন নির্ভুলতা">নিম্ন নির্ভুলতা</td>
+                        <td data-en="High sampling error, results should be interpreted with caution" data-bন="উচ্চ স্যাম্পলিং এরর, ফলাফল সতর্কতার সাথে ব্যাখ্যা করা উচিত">উচ্চ স্যাম্পলিং এরর, ফলাফল সতর্কতার সাথে ব্যাখ্যা করা উচিত</td>
+                        <td data-en="Exploratory research, small sample studies, rare populations" data-bন="অন্বেষণমূলক গবেষণা, ছোট স্যাম্পল অধ্যয়ন, বিরল জনসংখ্যা">অন্বেষণমূলক গবেষণা, ছোট স্যাম্পল অধ্যয়ন, বিরল জনসংখ্যা</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 2rem;">
+                <h4 style="color: var(--dark); margin-bottom: 1rem;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span data-en="Key Insights" data-bন="প্রধান অন্তর্দৃষ্টি">প্রধান অন্তর্দৃষ্টি</span>
+                </h4>
+                <ul style="color: var(--gray); line-height: 1.6;">
+                    <li data-en="RSE is particularly useful in survey sampling where sample sizes vary" data-bন="RSE বিশেষভাবে সার্ভে স্যাম্পলিংয়ে দরকারী যেখানে স্যাম্পল সাইজ পরিবর্তিত হয়">
+                        RSE বিশেষভাবে সার্ভে স্যাম্পলিংয়ে দরকারী যেখানে স্যাম্পল সাইজ পরিবর্তিত হয়
+                    </li>
+                    <li data-en="Allows comparison of precision across different studies with different means" data-bন="বিভিন্ন গড় সহ বিভিন্ন গবেষণার মধ্যে নির্ভুলতা তুলনা করতে দেয়">
+                        বিভিন্ন গড় সহ বিভিন্ন গবেষণার মধ্যে নির্ভুলতা তুলনা করতে দেয়
+                    </li>
+                    <li data-en="Not appropriate when mean is zero or near zero" data-bন="গড় শূন্য বা শূন্যের কাছাকাছি হলে উপযুক্ত নয়">
+                        গড় শূন্য বা শূন্যের কাছাকাছি হলে উপযুক্ত নয়
+                    </li>
+                    <li data-en="Lower RSE indicates estimates are more precise relative to their size" data-bন="নিম্ন RSE নির্দেশ করে যে অনুমানগুলি তাদের আকারের সাপেক্ষে আরও নির্ভুল">
+                        নিম্ন RSE নির্দেশ করে যে অনুমানগুলি তাদের আকারের সাপেক্ষে আরও নির্ভুল
+                    </li>
+                    <li data-en="RSE < 5% is generally considered excellent precision in survey research" data-bন="সার্ভে গবেষণায় RSE < ৫% সাধারণত চমৎকার নির্ভুলতা হিসাবে বিবেচিত">
+                        সার্ভে গবেষণায় RSE < ৫% সাধারণত চমৎকার নির্ভুলতা হিসাবে বিবেচিত
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-rocket"></i>
+                <span data-en="Practical Applications of RSE" data-bন="RSE এর ব্যবহারিক প্রয়োগ">RSE এর ব্যবহারিক প্রয়োগ</span>
+            </h2>
+            
+            <div class="applications-grid">
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-poll"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Survey Research" data-bন="সার্ভে গবেষণা">সার্ভে গবেষণা</h3>
+                    <p class="application-desc" data-en="Assess precision of survey estimates for population parameters" data-bন="জনসংখ্যার প্যারামিটারের জন্য সার্ভে অনুমানের নির্ভুলতা মূল্যায়ন">
+                        জনসংখ্যার প্যারামিটারের জন্য সার্ভে অনুমানের নির্ভুলতা মূল্যায়ন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Quality Control" data-bন="কোয়ালিটি কন্ট্রোল">কোয়ালিটি কন্ট্রোল</h3>
+                    <p class="application-desc" data-en="Monitor measurement precision in manufacturing processes" data-bন="উৎপাদন প্রক্রিয়ায় পরিমাপ নির্ভুলতা পর্যবেক্ষণ">
+                        উৎপাদন প্রক্রিয়ায় পরিমাপ নির্ভুলতা পর্যবেক্ষণ
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Clinical Trials" data-bন="ক্লিনিকাল ট্রায়াল">ক্লিনিকাল ট্রায়াল</h3>
+                    <p class="application-desc" data-en="Evaluate precision of treatment effect estimates" data-bন="চিকিত্সা প্রভাব অনুমানের নির্ভুলতা মূল্যায়ন">
+                        চিকিত্সা প্রভাব অনুমানের নির্ভুলতা মূল্যায়ন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Economic Indicators" data-bন="অর্থনৈতিক সূচক">অর্থনৈতিক সূচক</h3>
+                    <p class="application-desc" data-en="Assess reliability of economic statistics and indicators" data-bন="অর্থনৈতিক পরিসংখ্যান এবং সূচকের নির্ভরযোগ্যতা মূল্যায়ন">
+                        অর্থনৈতিক পরিসংখ্যান এবং সূচকের নির্ভরযোগ্যতা মূল্যায়ন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn survey" data-example="survey">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;" data-en="Survey Data" data-bন="সার্ভে ডেটা">সার্ভে ডেটা</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">75, 80, 78, 82, 79, 81</div>
+                </button>
+                <button class="example-btn manufacturing" data-example="manufacturing">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;" data-en="Manufacturing" data-bন="উৎপাদন">উৎপাদন</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">10.01, 10.02, 9.99, 10.00</div>
+                </button>
+                <button class="example-btn clinical" data-example="clinical">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;" data-en="Clinical Trial" data-bন="ক্লিনিকাল ট্রায়াল">ক্লিনিকাল ট্রায়াল</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">12.5, 13.0, 11.8, 12.2</div>
+                </button>
+                <button class="example-btn economic" data-example="economic">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;" data-en="Economic Data" data-bন="অর্থনৈতিক ডেটা">অর্থনৈতিক ডেটা</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">2.1, 2.3, 2.0, 2.2</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'survey': {
+                    data: [75, 80, 78, 82, 79, 81, 77, 83, 76, 80, 79, 81, 78, 82, 77],
+                    description: 'সার্ভে ডেটা: গ্রাহক সন্তুষ্টি স্কোর'
+                },
+                'manufacturing': {
+                    data: [10.01, 10.02, 9.99, 10.00, 10.01, 10.00, 9.98, 10.02, 10.00, 10.01],
+                    description: 'উৎপাদন: পণ্যের মাত্রা পরিমাপ'
+                },
+                'clinical': {
+                    data: [12.5, 13.0, 11.8, 12.2, 12.7, 12.9, 12.3, 12.6, 12.4, 12.8, 12.1, 12.5],
+                    description: 'ক্লিনিকাল ট্রায়াল: চিকিত্সা প্রতিক্রিয়া সময়'
+                },
+                'economic': {
+                    data: [2.1, 2.3, 2.0, 2.2, 2.4, 2.1, 2.3, 2.0, 2.2, 2.1, 2.3, 2.2],
+                    description: 'অর্থনৈতিক ডেটা: মাসিক মুদ্রাস্ফীতি হার'
+                }
+            };
+
+            // Store data and configuration
+            let dataset = [];
+            let confidenceLevel = 95;
+            let zScore = 1.96; // Default for 95% confidence
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Confidence Level Selection
+                const confidenceBtns = document.querySelectorAll('.confidence-btn');
+                confidenceBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        confidenceBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.level === 'custom') {
+                            // For custom, show an input field
+                            const customLevel = prompt(currentLanguage === 'bn' ? 
+                                'কাস্টম কনফিডেন্স লেভেল ইনপুট করুন (90-99):' : 
+                                'Enter custom confidence level (90-99):', '95');
+                            
+                            if (customLevel && customLevel >= 90 && customLevel <= 99) {
+                                confidenceLevel = parseFloat(customLevel);
+                                this.textContent = `${customLevel}%`;
+                                updateZScore(confidenceLevel);
+                            }
+                        } else {
+                            confidenceLevel = parseFloat(this.dataset.level);
+                            updateZScore(confidenceLevel);
+                        }
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', function() {
+                    calculateRSE();
+                });
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Perform initial calculation
+                setTimeout(() => {
+                    calculateRSE();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+
+                // Update dynamic content
+                if (dataset.length > 0) {
+                    updateInterpretation();
+                }
+            }
+
+            function updateZScore(confidence) {
+                // Common z-scores for confidence levels
+                const zScores = {
+                    90: 1.645,
+                    95: 1.96,
+                    99: 2.576
+                };
+                
+                zScore = zScores[confidence] || 1.96; // Default to 95% if not found
+            }
+
+            function parseInputData(input) {
+                if (!input) return [];
+                
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                return cleaned.split(/[,\s]+/)
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+            }
+
+            function calculateMean(data) {
+                if (data.length === 0) return 0;
+                return data.reduce((a, b) => a + b, 0) / data.length;
+            }
+
+            function calculateStandardDeviation(data) {
+                if (data.length < 2) return 0;
+                
+                const mean = calculateMean(data);
+                const squaredDeviations = data.map(x => Math.pow(x - mean, 2));
+                
+                // Sample standard deviation (n-1)
+                const variance = squaredDeviations.reduce((a, b) => a + b, 0) / (data.length - 1);
+                return Math.sqrt(variance);
+            }
+
+            function calculateStandardError(data) {
+                if (data.length < 2) return 0;
+                
+                const std = calculateStandardDeviation(data);
+                return std / Math.sqrt(data.length);
+            }
+
+            function calculateRSEFromData(data) {
+                if (data.length < 2) return { rse: 0, mean: 0, se: 0, std: 0, n: 0, variance: 0 };
+                
+                const mean = calculateMean(data);
+                const se = calculateStandardError(data);
+                const std = calculateStandardDeviation(data);
+                const n = data.length;
+                const variance = Math.pow(std, 2);
+                
+                let rse = 0;
+                if (mean !== 0) {
+                    rse = (se / Math.abs(mean)) * 100; // Use absolute value for mean
+                }
+                
+                return { 
+                    rse, 
+                    mean, 
+                    se, 
+                    std,
+                    n,
+                    variance
+                };
+            }
+
+            function calculateRSEFromSummaryStats(mean, std, n) {
+                if (n < 2) return { rse: 0, mean: mean || 0, se: 0, std: std || 0, n: n || 0, variance: 0 };
+                
+                const se = std / Math.sqrt(n);
+                const variance = Math.pow(std, 2);
+                
+                let rse = 0;
+                if (mean !== 0) {
+                    rse = (se / Math.abs(mean)) * 100;
+                }
+                
+                return {
+                    rse,
+                    mean: mean,
+                    se,
+                    std,
+                    n,
+                    variance
+                };
+            }
+
+            function getRSEInterpretation(rseValue) {
+                if (rseValue < 5) {
+                    return {
+                        en: "High precision: Estimate is very precise, low sampling error",
+                        bn: "উচ্চ নির্ভুলতা: অনুমান অত্যন্ত নির্ভুল, নিম্ন স্যাম্পলিং এরর"
+                    };
+                } else if (rseValue < 15) {
+                    return {
+                        en: "Moderate precision: Acceptable for most survey applications",
+                        bn: "মধ্যম নির্ভুলতা: বেশিরভাগ সার্ভে প্রয়োগের জন্য গ্রহণযোগ্য"
+                    };
+                } else {
+                    return {
+                        en: "Low precision: High sampling error, interpret with caution",
+                        bn: "নিম্ন নির্ভুলতা: উচ্চ স্যাম্পলিং এরর, সতর্কতার সাথে ব্যাখ্যা করুন"
+                    };
+                }
+            }
+
+            function getRSELevel(rseValue) {
+                if (rseValue < 5) return 'low';
+                if (rseValue < 15) return 'medium';
+                return 'high';
+            }
+
+            function getRSEColor(rseValue) {
+                const level = getRSELevel(rseValue);
+                switch (level) {
+                    case 'low': return 'var(--low-rse)';
+                    case 'medium': return 'var(--medium-rse)';
+                    case 'high': return 'var(--high-rse)';
+                    default: return 'var(--gray)';
+                }
+            }
+
+            function calculateRSE() {
+                // Get input values
+                const dataInput = document.getElementById('dataInput').value;
+                const meanInput = document.getElementById('meanInput').value;
+                const stdDevInput = document.getElementById('stdDevInput').value;
+                const sampleSizeInput = document.getElementById('sampleSizeInput').value;
+                
+                let result;
+                
+                // Check which method to use
+                if (meanInput && stdDevInput && sampleSizeInput) {
+                    // Use summary statistics
+                    const mean = parseFloat(meanInput);
+                    const std = parseFloat(stdDevInput);
+                    const n = parseInt(sampleSizeInput);
+                    
+                    if (isNaN(mean) || isNaN(std) || isNaN(n) || n < 2) {
+                        alert(currentLanguage === 'bn' ? 
+                            'অবৈধ ইনপুট! দয়া করে বৈধ সংখ্যা ইনপুট করুন এবং নিশ্চিত করুন n >= 2' : 
+                            'Invalid input! Please enter valid numbers and ensure n >= 2');
+                        return;
+                    }
+                    
+                    result = calculateRSEFromSummaryStats(mean, std, n);
+                    dataset = Array(n).fill(mean); // Create dummy dataset for visualization
+                } else {
+                    // Use raw data
+                    dataset = parseInputData(dataInput);
+                    
+                    if (dataset.length < 2) {
+                        alert(currentLanguage === 'bn' ? 
+                            'RSE গণনার জন্য কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 
+                            'At least 2 numbers are required for RSE calculation');
+                        return;
+                    }
+                    
+                    result = calculateRSEFromData(dataset);
+                }
+                
+                // Check for mean zero warning
+                const meanZeroWarning = document.getElementById('meanZeroWarning');
+                if (result.mean === 0 || Math.abs(result.mean) < 0.0001) {
+                    meanZeroWarning.classList.add('active');
+                } else {
+                    meanZeroWarning.classList.remove('active');
+                }
+                
+                // Update results
+                updateResults(result);
+                
+                // Update visualizations
+                updateCharts(result);
+                
+                // Update detailed calculations
+                updateDetailedCalculations(result);
+            }
+
+            function updateResults(result) {
+                const rseFormatted = result.rse.toFixed(2);
+                const interpretation = getRSEInterpretation(result.rse);
+                
+                // Update main RSE result
+                document.getElementById('rseResult').textContent = rseFormatted;
+                document.getElementById('rseResult2').textContent = rseFormatted;
+                document.getElementById('rseUnit').textContent = '%';
+                document.getElementById('rseInterpretation').innerHTML = `
+                    <i class="fas fa-${getRSELevel(result.rse) === 'low' ? 'check-circle' : 
+                                      getRSELevel(result.rse) === 'medium' ? 'info-circle' : 'exclamation-circle'}" 
+                       style="color: ${getRSEColor(result.rse)}; margin-right: 0.5rem;"></i>
+                    ${currentLanguage === 'bn' ? interpretation.bn : interpretation.en}
+                `;
+                
+                // Update formula
+                document.getElementById('rseFormula').textContent = currentLanguage === 'bn' ? 
+                    'RSE = (SE / x̄) × ১০০%' : 'RSE = (SE / x̄) × 100%';
+                
+                // Update components
+                document.getElementById('meanResult').textContent = result.mean.toFixed(4);
+                document.getElementById('seResult').textContent = result.se.toFixed(4);
+                
+                // Update RSE level indicator
+                const rseLevelFill = document.getElementById('rseLevelFill');
+                const rseLevelMarker = document.getElementById('rseLevelMarker');
+                
+                // Calculate marker position (0-100% scale for 0-30% RSE range)
+                let markerPosition = Math.min(result.rse * (100/30), 100);
+                rseLevelFill.style.width = `${markerPosition}%`;
+                rseLevelFill.style.background = getRSEColor(result.rse);
+                rseLevelMarker.style.left = `${markerPosition}%`;
+                rseLevelMarker.setAttribute('data-value', result.rse.toFixed(1));
+                
+                // Update statistics
+                document.getElementById('sampleSizeResult').textContent = result.n;
+                document.getElementById('stdDevResult').textContent = result.std.toFixed(4);
+                document.getElementById('varianceResult').textContent = result.variance.toFixed(4);
+                document.getElementById('dofResult').textContent = result.n - 1;
+                
+                // Calculate confidence interval
+                const marginOfError = zScore * result.se;
+                const lowerBound = result.mean - marginOfError;
+                const upperBound = result.mean + marginOfError;
+                
+                document.getElementById('confidenceIntervalDisplay').innerHTML = `
+                    ${lowerBound.toFixed(4)} < μ < ${upperBound.toFixed(4)}
+                `;
+                
+                // Update confidence interval header
+                const confidenceHeader = document.querySelector('.confidence-header span');
+                confidenceHeader.textContent = currentLanguage === 'bn' ? 
+                    `গড়ের জন্য ${confidenceLevel}% কনফিডেন্স ইন্টারভাল` :
+                    `${confidenceLevel}% Confidence Interval for Mean`;
+            }
+
+            function updateCharts(result) {
+                updateErrorDistributionChart(result);
+                updateChartLegends();
+            }
+
+            function updateErrorDistributionChart(result) {
+                const chart = document.getElementById('errorDistributionChart');
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                // Calculate plot dimensions
+                const plotWidth = chart.offsetWidth - 40;
+                const plotHeight = 210;
+                
+                // Create simulated data points for visualization
+                const dataPoints = Math.min(20, result.n);
+                const simulatedData = [];
+                for (let i = 0; i < dataPoints; i++) {
+                    // Generate normally distributed data around the mean
+                    const value = result.mean + (Math.random() - 0.5) * result.std * 2;
+                    simulatedData.push(value);
+                }
+                
+                // Find data ranges
+                const minVal = Math.min(...simulatedData, result.mean - result.std * 2);
+                const maxVal = Math.max(...simulatedData, result.mean + result.std * 2);
+                const range = maxVal - minVal;
+                
+                if (range === 0) return; // Prevent division by zero
+                
+                // Add mean line
+                const meanLine = document.createElement('div');
+                meanLine.className = 'mean-line';
+                const meanY = plotHeight - ((result.mean - minVal) / range * plotHeight);
+                meanLine.style.top = `${meanY}px`;
+                chart.appendChild(meanLine);
+                
+                // Add error bars (standard error)
+                const errorMargin = result.se;
+                const errorBar = document.createElement('div');
+                errorBar.className = 'error-bar';
+                const errorTop = plotHeight - ((result.mean + errorMargin - minVal) / range * plotHeight);
+                const errorBottom = plotHeight - ((result.mean - errorMargin - minVal) / range * plotHeight);
+                errorBar.style.top = `${Math.min(errorTop, errorBottom)}px`;
+                errorBar.style.left = '50%';
+                errorBar.style.width = '40px';
+                errorBar.style.height = `${Math.abs(errorTop - errorBottom)}px`;
+                errorBar.style.transform = 'translateX(-50%)';
+                errorBar.title = `Standard Error: ±${errorMargin.toFixed(4)}`;
+                chart.appendChild(errorBar);
+                
+                // Add data points
+                simulatedData.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'data-point';
+                    point.style.background = 'var(--primary)';
+                    point.style.width = '8px';
+                    point.style.height = '8px';
+                    point.style.borderRadius = '50%';
+                    
+                    // Calculate position
+                    const xPos = (index / (simulatedData.length - 1)) * plotWidth + 20;
+                    const yPos = plotHeight - ((value - minVal) / range * plotHeight);
+                    
+                    point.style.left = `${xPos}px`;
+                    point.style.top = `${yPos}px`;
+                    point.style.position = 'absolute';
+                    
+                    const deviation = value - result.mean;
+                    point.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${value.toFixed(2)}\n` +
+                                 `${currentLanguage === 'bn' ? 'গড় থেকে বিচ্যুতি' : 'Deviation from mean'}: ${deviation.toFixed(2)}`;
+                    
+                    chart.appendChild(point);
+                });
+            }
+
+            function updateChartLegends() {
+                const errorDistributionLegend = document.getElementById('errorDistributionChartLegend');
+                
+                errorDistributionLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Mean Line" data-bন="গড় লাইন">গড় লাইন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color se"></div>
+                        <span data-en="Standard Error (±SE)" data-bন="স্ট্যান্ডার্ড এরর (±SE)">স্ট্যান্ডার্ড এরর (±SE)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div style="background: var(--primary);" class="legend-color"></div>
+                        <span data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                    </div>
+                `;
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function updateDetailedCalculations(result) {
+                updateRSESteps(result);
+            }
+
+            function updateRSESteps(result) {
+                const container = document.getElementById('rseStepsContainer');
+                
+                if (result.n === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'ডেটা ইনপুট করুন এবং RSE গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                                'Enter data and calculate to see RSE calculation steps'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const stepsHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate the Mean" data-bন="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                            <p data-en="Calculate sample mean (x̄)" data-bন="স্যাম্পল গড় (x̄) গণনা করুন">
+                                স্যাম্পল গড় (x̄) গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> x̄ = Σxᵢ / n</p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${result.mean.toFixed(4)}</strong></p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        'গড় হল স্যাম্পল মানগুলির কেন্দ্রীয় প্রবণতা' : 
+                                        'The mean represents the central tendency of the sample values'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Standard Deviation" data-bন="ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন">ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন</h4>
+                            <p data-en="Calculate sample standard deviation (s)" data-bন="স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s) গণনা করুন">
+                                স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s) গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> s = √[Σ(xᵢ - x̄)² / (n-1)]</p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${result.std.toFixed(4)}</strong></p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        'স্ট্যান্ডার্ড ডেভিয়েশন হল স্যাম্পলে পরিবর্তনশীলতার পরিমাপ' : 
+                                        'Standard deviation measures variability in the sample'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Standard Error" data-bন="ধাপ ৩: স্ট্যান্ডার্ড এরর গণনা করুন">ধাপ ৩: স্ট্যান্ডার্ড এরর গণনা করুন</h4>
+                            <p data-en="Calculate standard error of the mean (SE)" data-bন="গড়ের স্ট্যান্ডার্ড এরর (SE) গণনা করুন">
+                                গড়ের স্ট্যান্ডার্ড এরর (SE) গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> SE = s / √n</p>
+                                <div class="step-equation">
+                                    SE = ${result.std.toFixed(4)} / √${result.n}
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> 
+                                    ${result.std.toFixed(4)} / ${Math.sqrt(result.n).toFixed(4)}
+                                </p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${result.se.toFixed(4)}</strong></p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        'স্ট্যান্ডার্ড এরর হল স্যাম্পলিং বন্টনের স্ট্যান্ডার্ড ডেভিয়েশন' : 
+                                        'Standard error is the standard deviation of the sampling distribution'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Relative Standard Error" data-bন="ধাপ ৪: রিলেটিভ স্ট্যান্ডার্ড এরর গণনা করুন">ধাপ ৪: রিলেটিভ স্ট্যান্ডার্ড এরর গণনা করুন</h4>
+                            <p data-en="Divide standard error by mean and multiply by 100%" data-bন="স্ট্যান্ডার্ড এররকে গড় দ্বারা ভাগ করুন এবং ১০০% দ্বারা গুণ করুন">
+                                স্ট্যান্ডার্ড এররকে গড় দ্বারা ভাগ করুন এবং ১০০% দ্বারা গুণ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> RSE = (SE / |x̄|) × 100%</p>
+                                <div class="step-equation">
+                                    RSE = (${result.se.toFixed(4)} / ${Math.abs(result.mean).toFixed(4)}) × 100%
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> 
+                                    (${result.se.toFixed(4)} / ${Math.abs(result.mean).toFixed(4)}) × 100%
+                                </p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> 
+                                    <strong>${result.rse.toFixed(2)}%</strong>
+                                </p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        `RSE ${result.rse.toFixed(2)}% নির্দেশ করে ${getRSEInterpretation(result.rse).bn.toLowerCase()}` : 
+                                        `RSE of ${result.rse.toFixed(2)}% indicates ${getRSEInterpretation(result.rse).en.toLowerCase()}`}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Calculate Confidence Interval" data-bন="ধাপ ৫: কনফিডেন্স ইন্টারভাল গণনা করুন">ধাপ ৫: কনফিডেন্স ইন্টারভাল গণনা করুন</h4>
+                            <p data-en="Calculate confidence interval for the population mean" data-bন="পপুলেশন গড়ের জন্য কনফিডেন্স ইন্টারভাল গণনা করুন">
+                                পপুলেশন গড়ের জন্য কনফিডেন্স ইন্টারভাল গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> CI = x̄ ± (z × SE)</p>
+                                <div class="step-equation">
+                                    CI = ${result.mean.toFixed(4)} ± (${zScore.toFixed(3)} × ${result.se.toFixed(4)})
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> 
+                                    ${result.mean.toFixed(4)} ± ${(zScore * result.se).toFixed(4)}
+                                </p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> 
+                                    ${(result.mean - zScore * result.se).toFixed(4)} < μ < ${(result.mean + zScore * result.se).toFixed(4)}
+                                </p>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        `আমরা ${confidenceLevel}% আত্মবিশ্বাসী যে প্রকৃত পপুলেশন গড় এই সীমার মধ্যে রয়েছে` : 
+                                        `We are ${confidenceLevel}% confident that the true population mean lies within this range`}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function updateInterpretation() {
+                if (dataset.length > 0) {
+                    const result = calculateRSEFromData(dataset);
+                    const interpretation = getRSEInterpretation(result.rse);
+                    
+                    document.getElementById('rseInterpretation').innerHTML = `
+                        <i class="fas fa-${getRSELevel(result.rse) === 'low' ? 'check-circle' : 
+                                          getRSELevel(result.rse) === 'medium' ? 'info-circle' : 'exclamation-circle'}" 
+                           style="color: ${getRSEColor(result.rse)}; margin-right: 0.5rem;"></i>
+                        ${currentLanguage === 'bn' ? interpretation.bn : interpretation.en}
+                    `;
+                }
+            }
+
+            function updateDynamicContent() {
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 50) + 10; // 10-60 data points
+                const data = [];
+                
+                // Generate normally distributed data
+                for (let i = 0; i < count; i++) {
+                    const value = 50 + (Math.random() - 0.5) * 10; // Around 50 with some variation
+                    data.push(Math.round(value * 100) / 100); // Round to 2 decimal places
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                calculateRSE();
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                document.getElementById('dataInput').value = data.data.join(', ');
+                calculateRSE();
+            }
+
+            function clearCalculator() {
+                // Clear inputs
+                document.getElementById('dataInput').value = '';
+                document.getElementById('meanInput').value = '';
+                document.getElementById('stdDevInput').value = '';
+                document.getElementById('sampleSizeInput').value = '';
+                
+                // Reset methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    if (btn.dataset.method === 'manual') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Reset confidence level
+                document.querySelectorAll('.confidence-btn').forEach(btn => {
+                    if (btn.dataset.level === '95') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                confidenceLevel = 95;
+                updateZScore(confidenceLevel);
+                
+                // Reset results
+                resetResults();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function resetResults() {
+                // Clear result values
+                document.getElementById('rseResult').textContent = '--';
+                document.getElementById('rseResult2').textContent = '--';
+                document.getElementById('rseUnit').textContent = '%';
+                document.getElementById('rseInterpretation').innerHTML = `
+                    <span>${currentLanguage === 'bn' ? 
+                        'RSE গণনা করতে ডেটা ইনপুট করুন' : 
+                        'Enter data to calculate RSE'}</span>
+                `;
+                
+                // Clear components
+                document.getElementById('meanResult').textContent = '--';
+                document.getElementById('seResult').textContent = '--';
+                
+                // Clear formula
+                document.getElementById('rseFormula').textContent = currentLanguage === 'bn' ? 
+                    'RSE = (SE / x̄) × ১০০%' : 'RSE = (SE / x̄) × 100%';
+                
+                // Reset RSE level indicator
+                document.getElementById('rseLevelFill').style.width = '0%';
+                document.getElementById('rseLevelMarker').style.left = '0%';
+                document.getElementById('rseLevelMarker').setAttribute('data-value', '0');
+                
+                // Clear statistics
+                document.getElementById('sampleSizeResult').textContent = '0';
+                document.getElementById('stdDevResult').textContent = '--';
+                document.getElementById('varianceResult').textContent = '--';
+                document.getElementById('dofResult').textContent = '0';
+                
+                // Hide mean zero warning
+                document.getElementById('meanZeroWarning').classList.remove('active');
+                
+                // Clear confidence interval
+                document.getElementById('confidenceIntervalDisplay').innerHTML = '-- to --';
+                
+                // Clear charts
+                document.getElementById('errorDistributionChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-bullseye"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে এরর বন্টন দেখুন' : 'Enter data to see error distribution'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('precisionComparisonChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে নির্ভুলতা তুলনা দেখুন' : 'Enter data to see precision comparison'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('errorDistributionChartLegend').innerHTML = '';
+                document.getElementById('precisionChartLegend').innerHTML = '';
+                
+                // Clear detailed sections
+                document.getElementById('rseStepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং RSE গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                            'Enter data and calculate to see RSE calculation steps'}
+                    </p>
+                `;
+                
+                // Reset dataset
+                dataset = [];
+            }
+        });
+    </script>
+</body>
+</html>

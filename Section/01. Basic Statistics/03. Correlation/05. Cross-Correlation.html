@@ -1,0 +1,2685 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ক্রস-কোরিলেশন টুল | টাইম সিরিজ সম্পর্ক বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --positive-correlation: #36D1DC;
+            --negative-correlation: #FF6584;
+            --no-correlation: #718096;
+            --time-series-1: #6C63FF;
+            --time-series-2: #36D1DC;
+            --cross-correlation: #FF9A3D;
+            --confidence-band: rgba(255, 154, 61, 0.2);
+            --lag-highlight: rgba(108, 99, 255, 0.1);
+            --peak-color: #FF4757;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--time-series-1), var(--time-series-2), var(--cross-correlation));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .time-series-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .time-series-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .time-series-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .time-series-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-series-label i {
+            color: var(--primary);
+        }
+
+        .time-series-label .ts-name {
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        /* Lag Range Input */
+        .lag-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .lag-settings {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .lag-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .lag-slider-container {
+            margin-top: 0.5rem;
+        }
+
+        .lag-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--time-series-1), var(--time-series-2));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .lag-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .lag-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .current-lag {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Input Hint */
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-hint i {
+            color: var(--info);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Lag Results Cards */
+        .lag-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .lag-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.optimal-lag::before { background: var(--peak-color); }
+        .result-card.max-correlation::before { background: var(--cross-correlation); }
+        .result-card.significance::before { background: var(--info); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.optimal-lag .result-icon { color: var(--peak-color); }
+        .result-card.max-correlation .result-icon { color: var(--cross-correlation); }
+        .result-card.significance .result-icon { color: var(--info); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Lag Interpretation */
+        .lag-interpretation {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--cross-correlation);
+        }
+
+        .interpretation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .interpretation-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .interpretation-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .lag-direction {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .direction-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .direction-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .interpretation-text {
+            flex: 2;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Lag Statistics */
+        .lag-statistics {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--info);
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .statistic-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .statistic-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* CCF Table */
+        .ccf-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .ccf-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ccf-table th {
+            background: var(--table-header);
+            padding: 0.8rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+
+        .ccf-table td {
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+        }
+
+        .ccf-table tr:hover td {
+            background: var(--light-gray);
+        }
+
+        .ccf-table .lag-cell {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .ccf-table .correlation-cell {
+            font-weight: 600;
+        }
+
+        .ccf-table .peak-row {
+            background: var(--lag-highlight);
+        }
+
+        .ccf-table .peak-row td {
+            border-color: var(--peak-color);
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Chart Tabs */
+        .chart-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-tab {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .chart-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .chart-tab:hover:not(.active) {
+            color: var(--dark);
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-color.ts1 { background: var(--time-series-1); }
+        .legend-color.ts2 { background: var(--time-series-2); }
+        .legend-color.ccf { 
+            background: var(--cross-correlation);
+            height: 3px;
+            margin: 0 2px;
+        }
+        .legend-color.confidence { 
+            background: var(--confidence-band);
+            border: 1px solid var(--cross-correlation);
+        }
+        .legend-color.peak { 
+            background: var(--peak-color);
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Lag Guide */
+        .lag-guide {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .guide-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .guide-indicator {
+            width: 60px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .guide-indicator.positive-lag { 
+            background: var(--time-series-1);
+            color: white;
+        }
+        .guide-indicator.zero-lag { 
+            background: var(--primary);
+            color: white;
+        }
+        .guide-indicator.negative-lag { 
+            background: var(--time-series-2);
+            color: white;
+        }
+        .guide-indicator.peak { 
+            background: var(--peak-color);
+            color: white;
+        }
+
+        .guide-description {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .chart-placeholder p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-placeholder .hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .ccf-formula .formula-icon { background: var(--cross-correlation); }
+        .significance-formula .formula-icon { background: var(--info); }
+        .lag-formula .formula-icon { background: var(--peak-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Time Series Table */
+        .time-series-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .time-series-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .time-series-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .time-series-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Peak Highlight Animation */
+        @keyframes peakHighlight {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
+        .peak-highlight {
+            animation: peakHighlight 2s ease-in-out;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .chart-info,
+            .chart-tabs {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .step-by-step,
+            .visualization-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .time-series-table,
+            .ccf-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+            
+            .chart-box {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Cross-Correlation Tool" data-bn="ক্রস-কোরিলেশন টুল">ক্রস-কোরিলেশন টুল</h1>
+            <p class="subtitle" data-en="Analyze time-lagged relationships between time series with cross-correlation function, optimal lag detection, and time series visualization" data-bn="ক্রস-কোরিলেশন ফাংশন, অপটিমাল ল্যাগ ডিটেকশন, এবং টাইম সিরিজ ভিজ্যুয়ালাইজেশন সহ টাইম সিরিজের মধ্যে টাইম-ল্যাগড সম্পর্ক বিশ্লেষণ করুন">
+                ক্রস-কোরিলেশন ফাংশন, অপটিমাল ল্যাগ ডিটেকশন, এবং টাইম সিরিজ ভিজ্যুয়ালাইজেশন সহ টাইম সিরিজের মধ্যে টাইম-ল্যাগড সম্পর্ক বিশ্লেষণ করুন
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Time Series Input" data-bn="টাইম সিরিজ ইনপুট">টাইম সিরিজ ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bন="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="upload">
+                        <i class="fas fa-upload"></i>
+                        <span data-en="Upload CSV" data-bন="CSV আপলোড">CSV আপলোড</span>
+                    </button>
+                </div>
+
+                <div class="data-input-area">
+                    <div class="time-series-inputs">
+                        <div class="time-series-input">
+                            <label class="time-series-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span data-en="Time Series X(t)" data-bন="টাইম সিরিজ X(t)">টাইম সিরিজ X(t)</span>
+                                <span class="ts-name">(X)</span>
+                            </label>
+                            <textarea id="dataX" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 1.2, 2.3, 3.1, 4.5, 5.6, 6.7, 7.8, 8.9, 9.5, 10.2
+বা: 1.2 2.3 3.1 4.5 5.6 6.7 7.8 8.9 9.5 10.2">10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38</textarea>
+                        </div>
+                        <div class="time-series-input">
+                            <label class="time-series-label">
+                                <i class="fas fa-chart-bar"></i>
+                                <span data-en="Time Series Y(t)" data-bন="টাইম সিরিজ Y(t)">টাইম সিরিজ Y(t)</span>
+                                <span class="ts-name">(Y)</span>
+                            </label>
+                            <textarea id="dataY" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 2, 5, 8, 11, 14, 17, 20, 23, 26, 29
+বা: 2 5 8 11 14 17 20 23 26 29">5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="lag-settings">
+                        <div class="lag-input">
+                            <label class="time-series-label">
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <span data-en="Maximum Lag (k)" data-bন="সর্বোচ্চ ল্যাগ (k)">সর্বোচ্চ ল্যাগ (k)</span>
+                            </label>
+                            <div class="lag-slider-container">
+                                <input type="range" id="maxLagSlider" class="lag-slider" min="1" max="20" value="5">
+                                <div class="lag-display">
+                                    <span>1</span>
+                                    <span class="current-lag" id="currentLag">5</span>
+                                    <span>20</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="lag-input">
+                            <label class="time-series-label">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span data-en="Time Interval" data-bন="সময় ব্যবধান">সময় ব্যবধান</span>
+                            </label>
+                            <select id="timeInterval" class="data-input" style="height: auto; min-height: auto;">
+                                <option value="1" data-en="1 unit" data-bন="১ একক">১ একক</option>
+                                <option value="2" data-en="2 units" data-bন="২ একক">২ একক</option>
+                                <option value="5" data-en="5 units" data-bন="৫ একক">৫ একক</option>
+                                <option value="10" data-en="10 units" data-bন="১০ একক">১০ একক</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Enter time series data for X(t) and Y(t). Positive lags: X leads Y, Negative lags: Y leads X." data-bন="X(t) এবং Y(t) এর জন্য টাইম সিরিজ ডেটা ইনপুট করুন। পজিটিভ ল্যাগ: X, Y কে অগ্রণী করে, নেগেটিভ ল্যাগ: Y, X কে অগ্রণী করে।">
+                            X(t) এবং Y(t) এর জন্য টাইম সিরিজ ডেটা ইনপুট করুন। পজিটিভ ল্যাগ: X, Y কে অগ্রণী করে, নেগেটিভ ল্যাগ: Y, X কে অগ্রণী করে।
+                        </span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate CCF" data-bন="CCF গণনা করুন">CCF গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bন="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Cross-Correlation Results" data-bন="ক্রস-কোরিলেশন ফলাফল">ক্রস-কোরিলেশন ফলাফল</span>
+                </h2>
+                
+                <div class="lag-results">
+                    <!-- Optimal Lag -->
+                    <div class="result-card optimal-lag">
+                        <div class="result-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div class="result-title" data-en="Optimal Lag" data-bন="অপটিমাল ল্যাগ">অপটিমাল ল্যাগ</div>
+                        <div class="result-value" id="optimalLagResult">--</div>
+                        <div class="result-description" data-en="Most significant time shift" data-bন="সবচেয়ে তাৎপর্যপূর্ণ সময় স্থানান্তর">সবচেয়ে তাৎপর্যপূর্ণ সময় স্থানান্তর</div>
+                    </div>
+
+                    <!-- Maximum Correlation -->
+                    <div class="result-card max-correlation">
+                        <div class="result-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="result-title" data-en="Max Correlation" data-bন="সর্বোচ্চ কোরিলেশন">সর্বোচ্চ কোরিলেশন</div>
+                        <div class="result-value" id="maxCorrelationResult">--</div>
+                        <div class="result-description" data-en="At optimal lag" data-bন="অপটিমাল ল্যাগে">অপটিমাল ল্যাগে</div>
+                    </div>
+
+                    <!-- Significance -->
+                    <div class="result-card significance">
+                        <div class="result-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="result-title" data-en="Significance" data-bন="তাৎপর্য">তাৎপর্য</div>
+                        <div class="result-value" id="significanceResult">--</div>
+                        <div class="result-description" data-en="At α = 0.05" data-bন="α = ০.০৫ এ">α = ০.০৫ এ</div>
+                    </div>
+                </div>
+
+                <!-- Lag Interpretation -->
+                <div class="lag-interpretation">
+                    <div class="interpretation-title">
+                        <i class="fas fa-comment-alt"></i>
+                        <span data-en="Lag Interpretation" data-bন="ল্যাগ ব্যাখ্যা">ল্যাগ ব্যাখ্যা</span>
+                    </div>
+                    <div class="interpretation-content">
+                        <div class="lag-direction">
+                            <div class="direction-value" id="lagDirection">--</div>
+                            <div class="direction-label" data-en="Direction" data-bন="দিক">দিক</div>
+                        </div>
+                        <div class="interpretation-text" id="lagInterpretation" data-en="Enter time series and calculate CCF to see interpretation" data-bন="ব্যাখ্যা দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন">
+                            ব্যাখ্যা দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lag Statistics -->
+                <div class="lag-statistics">
+                    <div class="interpretation-title">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Lag Statistics" data-bন="ল্যাগ পরিসংখ্যান">ল্যাগ পরিসংখ্যান</span>
+                    </div>
+                    <div class="statistics-grid">
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Time Points (n)" data-bন="সময় পয়েন্ট (n)">সময় পয়েন্ট (n)</div>
+                            <div class="statistic-value" id="timePoints">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Mean X" data-bন="গড় X">গড় X</div>
+                            <div class="statistic-value" id="meanX">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Mean Y" data-bন="গড় Y">গড় Y</div>
+                            <div class="statistic-value" id="meanY">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Std Dev X" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন X">স্ট্যান্ডার্ড ডেভিয়েশন X</div>
+                            <div class="statistic-value" id="stdDevX">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Std Dev Y" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন Y">স্ট্যান্ডার্ড ডেভিয়েশন Y</div>
+                            <div class="statistic-value" id="stdDevY">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Zero Lag Corr" data-bন="শূন্য ল্যাগ কোরিলেশন">শূন্য ল্যাগ কোরিলেশন</div>
+                            <div class="statistic-value" id="zeroLagCorr">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CCF Table -->
+                <div class="lag-statistics">
+                    <div class="interpretation-title">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Cross-Correlation Function Table" data-bন="ক্রস-কোরিলেশন ফাংশন টেবিল">ক্রস-কোরিলেশন ফাংশন টেবিল</span>
+                    </div>
+                    <div class="ccf-table-container" id="ccfTableContainer">
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" id="ccfPlaceholder" data-en="Enter time series and calculate CCF to see table" data-bন="টেবিল দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন">
+                            টেবিল দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Time Series Visualization" data-bন="টাইম সিরিজ ভিজ্যুয়ালাইজেশন">টাইম সিরিজ ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="ccf">
+                    <i class="fas fa-wave-square"></i>
+                    <span data-en="Cross-Correlation Function" data-bন="ক্রস-কোরিলেশন ফাংশন">ক্রস-কোরিলেশন ফাংশন</span>
+                </button>
+                <button class="chart-tab" data-chart="timeseries">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Time Series Plot" data-bন="টাইম সিরিজ প্লট">টাইম সিরিজ প্লট</span>
+                </button>
+                <button class="chart-tab" data-chart="lagplot">
+                    <i class="fas fa-chart-scatter"></i>
+                    <span data-en="Lag Scatter Plots" data-bন="ল্যাগ স্ক্যাটার প্লট">ল্যাগ স্ক্যাটার প্লট</span>
+                </button>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-box">
+                    <div id="ccfPlaceholder" class="chart-placeholder">
+                        <i class="fas fa-wave-square"></i>
+                        <p data-en="No data to visualize" data-bন="ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই">ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই</p>
+                        <p class="hint" data-en="Enter time series data and calculate CCF to see visualizations" data-bন="ভিজ্যুয়ালাইজেশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং CCF গণনা করুন">
+                            ভিজ্যুয়ালাইজেশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং CCF গণনা করুন
+                        </p>
+                    </div>
+                    <canvas id="ccfCanvas" style="display: none;"></canvas>
+                    <canvas id="timeSeriesCanvas" style="display: none;"></canvas>
+                    <canvas id="lagScatterCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="chart-info">
+                    <div class="chart-legend">
+                        <div class="legend-title">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Chart Legend" data-bন="চার্ট লেজেন্ড">চার্ট লেজেন্ড</span>
+                        </div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color ts1"></div>
+                                <div class="legend-text" data-en="Time Series X(t)" data-bন="টাইম সিরিজ X(t)">টাইম সিরিজ X(t)</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color ts2"></div>
+                                <div class="legend-text" data-en="Time Series Y(t)" data-bন="টাইম সিরিজ Y(t)">টাইম সিরিজ Y(t)</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color ccf"></div>
+                                <div class="legend-text" data-en="Cross-Correlation Function" data-bন="ক্রস-কোরিলেশন ফাংশন">ক্রস-কোরিলেশন ফাংশন</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color confidence"></div>
+                                <div class="legend-text" data-en="95% Confidence Band" data-bন="৯৫% কনফিডেন্স ব্যান্ড">৯৫% কনফিডেন্স ব্যান্ড</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color peak"></div>
+                                <div class="legend-text" data-en="Optimal Lag Peak" data-bন="অপটিমাল ল্যাগ পীক">অপটিমাল ল্যাগ পীক</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lag-guide">
+                        <div class="guide-title">
+                            <i class="fas fa-book"></i>
+                            <span data-en="Lag Interpretation Guide" data-bন="ল্যাগ ব্যাখ্যা নির্দেশিকা">ল্যাগ ব্যাখ্যা নির্দেশিকা</span>
+                        </div>
+                        <div class="guide-items">
+                            <div class="guide-item">
+                                <div class="guide-indicator positive-lag" data-en="k > 0" data-bন="k > ০">k > ০</div>
+                                <div class="guide-description" data-en="X leads Y by k periods" data-bন="X, Y কে k পিরিয়ড অগ্রণী করে">X, Y কে k পিরিয়ড অগ্রণী করে</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator zero-lag" data-en="k = 0" data-bন="k = ০">k = ০</div>
+                                <div class="guide-description" data-en="No time shift, simultaneous" data-bন="কোন সময় স্থানান্তর নেই, একই সাথে">কোন সময় স্থানান্তর নেই, একই সাথে</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator negative-lag" data-en="k < 0" data-bন="k < ০">k < ০</div>
+                                <div class="guide-description" data-en="Y leads X by |k| periods" data-bন="Y, X কে |k| পিরিয়ড অগ্রণী করে">Y, X কে |k| পিরিয়ড অগ্রণী করে</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator peak" data-en="Peak" data-bন="পীক">পীক</div>
+                                <div class="guide-description" data-en="Maximum absolute correlation" data-bন="সর্বোচ্চ পরম কোরিলেশন">সর্বোচ্চ পরম কোরিলেশন</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Definitions" data-bন="সূত্র এবং সংজ্ঞা">সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Cross-Correlation Formula -->
+                <div class="formula-card ccf-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Cross-Correlation Function" data-bন="ক্রস-কোরিলেশন ফাংশন">ক্রস-কোরিলেশন ফাংশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures correlation between two time series at different time lags" data-bন="বিভিন্ন সময় ল্যাগে দুটি টাইম সিরিজের মধ্যে সম্পর্ক পরিমাপ করে">
+                            বিভিন্ন সময় ল্যাগে দুটি টাইম সিরিজের মধ্যে সম্পর্ক পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            CCF(k) = Σ[(X(t) - X̄)(Y(t+k) - Ȳ)] / (σₓσᵧ√(n-|k|))
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="k: Lag (positive or negative)" data-bন="k: ল্যাগ (পজিটিভ বা নেগেটিভ)">k: ল্যাগ (পজিটিভ বা নেগেটিভ)</li>
+                            <li data-en="k > 0: X leads Y" data-bন="k > ০: X, Y কে অগ্রণী করে">k > ০: X, Y কে অগ্রণী করে</li>
+                            <li data-en="k < 0: Y leads X" data-bন="k < ০: Y, X কে অগ্রণী করে">k < ০: Y, X কে অগ্রণী করে</li>
+                            <li data-en="k = 0: Simultaneous correlation" data-bন="k = ০: একই সাথে সম্পর্ক">k = ০: একই সাথে সম্পর্ক</li>
+                            <li data-en="Range: -1 ≤ CCF(k) ≤ 1" data-bন="পরিসর: -১ ≤ CCF(k) ≤ ১">পরিসর: -১ ≤ CCF(k) ≤ ১</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Significance Test Formula -->
+                <div class="formula-card significance-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Significance Testing" data-bন="তাৎপর্য পরীক্ষা">তাৎপর্য পরীক্ষা</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Tests if cross-correlation at a lag is statistically significant" data-bন="একটি ল্যাগে ক্রস-কোরিলেশন পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ কিনা তা পরীক্ষা করে">
+                            একটি ল্যাগে ক্রস-কোরিলেশন পরিসংখ্যানগতভাবে তাৎপর্যপূর্ণ কিনা তা পরীক্ষা করে
+                        </p>
+                        <div class="formula-equation">
+                            SE = 1/√(n-|k|)<br>
+                            CI = ±z<sub>α/2</sub> × SE
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="SE: Standard error at lag k" data-bন="SE: ল্যাগ k এ স্ট্যান্ডার্ড এরর">SE: ল্যাগ k এ স্ট্যান্ডার্ড এরর</li>
+                            <li data-en="CI: Confidence interval" data-bন="CI: কনফিডেন্স ইন্টারভাল">CI: কনফিডেন্স ইন্টারভাল</li>
+                            <li data-en="z-score: Critical value for confidence level" data-bন="z-স্কোর: কনফিডেন্স লেভেলের জন্য ক্রিটিক্যাল ভ্যালু">z-স্কোর: কনফিডেন্স লেভেলের জন্য ক্রিটিক্যাল ভ্যালু</li>
+                            <li data-en="Significant if |CCF(k)| > CI" data-bন="তাৎপর্যপূর্ণ যদি |CCF(k)| > CI হয়">তাৎপর্যপূর্ণ যদি |CCF(k)| > CI হয়</li>
+                            <li data-en="Bartlett's formula for SE calculation" data-bন="SE গণনার জন্য বার্টলেটের সূত্র">SE গণনার জন্য বার্টলেটের সূত্র</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Optimal Lag Detection -->
+                <div class="formula-card lag-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Optimal Lag Detection" data-bন="অপটিমাল ল্যাগ ডিটেকশন">অপটিমাল ল্যাগ ডিটেকশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Finds the lag with maximum absolute correlation" data-bন="সর্বোচ্চ পরম কোরিলেশন সহ ল্যাগ খুঁজে বের করে">
+                            সর্বোচ্চ পরম কোরিলেশন সহ ল্যাগ খুঁজে বের করে
+                        </p>
+                        <div class="formula-equation">
+                            k* = argmax<sub>k</sub> |CCF(k)|
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="k*: Optimal lag (most significant)" data-bন="k*: অপটিমাল ল্যাগ (সবচেয়ে তাৎপর্যপূর্ণ)">k*: অপটিমাল ল্যাগ (সবচেয়ে তাৎপর্যপূর্ণ)</li>
+                            <li data-en="Search range: -max_k ≤ k ≤ max_k" data-bন="সার্চ রেঞ্জ: -max_k ≤ k ≤ max_k">সার্চ রেঞ্জ: -max_k ≤ k ≤ max_k</li>
+                            <li data-en="Consider both magnitude and significance" data-bন="মাত্রা এবং তাৎপর্য উভয় বিবেচনা করুন">মাত্রা এবং তাৎপর্য উভয় বিবেচনা করুন</li>
+                            <li data-en="Multiple peaks may indicate periodic relationships" data-bন="একাধিক পীক পর্যায়ক্রমিক সম্পর্ক নির্দেশ করতে পারে">একাধিক পীক পর্যায়ক্রমিক সম্পর্ক নির্দেশ করতে পারে</li>
+                            <li data-en="Used for time series forecasting and analysis" data-bন="টাইম সিরিজ পূর্বাভাস এবং বিশ্লেষণের জন্য ব্যবহৃত">টাইম সিরিজ পূর্বাভাস এবং বিশ্লেষণের জন্য ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Series Table -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Time Series Data" data-bন="টাইম সিরিজ ডেটা">টাইম সিরিজ ডেটা</span>
+            </h2>
+            
+            <div id="timeSeriesTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="timeSeriesPlaceholder" data-en="Enter time series data and click Calculate to see time series table" data-bন="টাইম সিরিজ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন">
+                    টাইম সিরিজ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bন="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter time series data and click Calculate to see step-by-step calculations" data-bন="ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন">
+                    ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Time Series" data-bন="উদাহরণ টাইম সিরিজ">উদাহরণ টাইম সিরিজ</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample time series:" data-bন="নমুনা টাইম সিরিজ লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা টাইম সিরিজ লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="lagged-linear">
+                    <div class="example-title" data-en="Lagged Linear" data-bন="ল্যাগড লিনিয়ার">ল্যাগড লিনিয়ার</div>
+                    <div class="example-description" data-en="X leads Y by 2 periods" data-bন="X, Y কে ২ পিরিয়ড অগ্রণী করে">X, Y কে ২ পিরিয়ড অগ্রণী করে</div>
+                </button>
+                <button class="example-btn" data-example="temperature-sales">
+                    <div class="example-title" data-en="Temperature vs Sales" data-bন="তাপমাত্রা বনাম বিক্রয়">তাপমাত্রা বনাম বিক্রয়</div>
+                    <div class="example-description" data-en="Sales lag temperature by 1 day" data-bন="বিক্রয় তাপমাত্রার থেকে ১ দিন ল্যাগ করে">বিক্রয় তাপমাত্রার থেকে ১ দিন ল্যাগ করে</div>
+                </button>
+                <button class="example-btn" data-example="stock-prices">
+                    <div class="example-title" data-en="Stock Prices" data-bন="স্টক মূল্য">স্টক মূল্য</div>
+                    <div class="example-description" data-en="Market indices with lead-lag" data-bন="লিড-ল্যাগ সহ মার্কেট সূচক">লিড-ল্যাগ সহ মার্কেট সূচক</div>
+                </button>
+                <button class="example-btn" data-example="seasonal-data">
+                    <div class="example-title" data-en="Seasonal Data" data-bন="সিজনাল ডেটা">সিজনাল ডেটা</div>
+                    <div class="example-description" data-en="Periodic time series" data-bন="পর্যায়ক্রমিক টাইম সিরিজ">পর্যায়ক্রমিক টাইম সিরিজ</div>
+                </button>
+                <button class="example-btn" data-example="no-lag">
+                    <div class="example-title" data-en="No Lag" data-bন="কোন ল্যাগ নেই">কোন ল্যাগ নেই</div>
+                    <div class="example-description" data-en="Simultaneous correlation" data-bন="একই সাথে সম্পর্ক">একই সাথে সম্পর্ক</div>
+                </button>
+                <button class="example-btn" data-example="negative-lag">
+                    <div class="example-title" data-en="Negative Lag" data-bন="নেগেটিভ ল্যাগ">নেগেটিভ ল্যাগ</div>
+                    <div class="example-description" data-en="Y leads X by 3 periods" data-bন="Y, X কে ৩ পিরিয়ড অগ্রণী করে">Y, X কে ৩ পিরিয়ড অগ্রণী করে</div>
+                </button>
+                <button class="example-btn" data-example="multiple-peaks">
+                    <div class="example-title" data-en="Multiple Peaks" data-bন="একাধিক পীক">একাধিক পীক</div>
+                    <div class="example-description" data-en="Periodic relationship" data-bন="পর্যায়ক্রমিক সম্পর্ক">পর্যায়ক্রমিক সম্পর্ক</div>
+                </button>
+                <button class="example-btn" data-example="random-noise">
+                    <div class="example-title" data-en="Random Noise" data-bন="র্যান্ডম নয়েজ">র্যান্ডম নয়েজ</div>
+                    <div class="example-description" data-en="No significant correlation" data-bন="কোন তাৎপর্যপূর্ণ সম্পর্ক নেই">কোন তাৎপর্যপূর্ণ সম্পর্ক নেই</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            
+            // Current state
+            let currentDataX = [];
+            let currentDataY = [];
+            let currentMaxLag = 5;
+            let currentCharts = {
+                ccf: null,
+                timeSeries: null,
+                lagScatter: null
+            };
+            let currentActiveChart = 'ccf';
+
+            // Example Time Series Datasets
+            const examples = {
+                'lagged-linear': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    y: [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+                    description: 'X leads Y by 2 periods'
+                },
+                'temperature-sales': {
+                    x: [20, 22, 24, 26, 28, 30, 28, 26, 24, 22, 20, 18, 20, 22, 24],
+                    y: [100, 120, 140, 160, 180, 200, 180, 160, 140, 120, 100, 80, 100, 120, 140],
+                    description: 'Sales lag temperature by 1 period'
+                },
+                'stock-prices': {
+                    x: [100, 102, 101, 103, 105, 107, 106, 108, 110, 109, 111, 113, 115, 114, 116],
+                    y: [50, 51, 50.5, 52, 53, 54, 53.5, 54.5, 55, 54.8, 55.5, 56.5, 57.5, 57, 58],
+                    description: 'Correlated stock prices with lag'
+                },
+                'seasonal-data': {
+                    x: [10, 15, 20, 15, 10, 5, 10, 15, 20, 15, 10, 5, 10, 15, 20],
+                    y: [5, 10, 15, 10, 5, 0, 5, 10, 15, 10, 5, 0, 5, 10, 15],
+                    description: 'Seasonal patterns with phase shift'
+                },
+                'no-lag': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    y: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+                    description: 'Perfect simultaneous correlation'
+                },
+                'negative-lag': {
+                    x: [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    y: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    description: 'Y leads X by 3 periods'
+                },
+                'multiple-peaks': {
+                    x: [0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0],
+                    y: [0, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1],
+                    description: 'Periodic signals with multiple lags'
+                },
+                'random-noise': {
+                    x: [5.2, 4.8, 5.5, 4.3, 5.9, 4.1, 5.7, 4.4, 5.3, 4.9, 5.1, 4.7, 5.6, 4.2, 5.4],
+                    y: [3.1, 3.5, 2.9, 3.8, 2.7, 3.9, 2.8, 3.7, 2.9, 3.4, 3.0, 3.6, 2.8, 3.8, 3.1],
+                    description: 'Random noise, no correlation'
+                }
+            };
+
+            // Initialize
+            initTool();
+
+            function initTool() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomTimeSeries();
+                        } else if (this.dataset.method === 'upload') {
+                            // For demo purposes, we'll simulate upload with random data
+                            generateRandomTimeSeries();
+                        }
+                    });
+                });
+
+                // Max Lag Slider
+                const maxLagSlider = document.getElementById('maxLagSlider');
+                const currentLagDisplay = document.getElementById('currentLag');
+                
+                maxLagSlider.addEventListener('input', function() {
+                    currentMaxLag = parseInt(this.value);
+                    currentLagDisplay.textContent = currentMaxLag;
+                    
+                    // Recalculate if data exists
+                    if (currentDataX.length > 0 && currentDataY.length > 0) {
+                        calculateCCF();
+                    }
+                });
+
+                // Chart Tabs
+                const chartTabs = document.querySelectorAll('.chart-tab');
+                chartTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        chartTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        currentActiveChart = this.dataset.chart;
+                        
+                        // Show the selected chart
+                        updateChartVisibility();
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateCCF);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearTool);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataX').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateCCF();
+                    }
+                });
+                
+                document.getElementById('dataY').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateCCF();
+                    }
+                });
+
+                // Load default example
+                setTimeout(() => {
+                    loadExample('lagged-linear');
+                    calculateCCF();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateCCF() {
+                const inputX = document.getElementById('dataX').value;
+                const inputY = document.getElementById('dataY').value;
+                
+                const dataX = parseInputData(inputX);
+                const dataY = parseInputData(inputY);
+                
+                if (dataX.length === 0 || dataY.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে X(t) এবং Y(t) উভয় টাইম সিরিজের জন্য ডেটা ইনপুট করুন' : 
+                        'Please enter data for both X(t) and Y(t) time series');
+                    return;
+                }
+                
+                if (dataX.length !== dataY.length) {
+                    alert(currentLanguage === 'bn' ? 
+                        'X(t) এবং Y(t) টাইম সিরিজে সমান সংখ্যক মান থাকতে হবে' : 
+                        'X(t) and Y(t) time series must have the same number of values');
+                    return;
+                }
+                
+                if (dataX.length < 3) {
+                    alert(currentLanguage === 'bn' ? 
+                        'ক্রস-কোরিলেশন গণনার জন্য কমপক্ষে ৩টি টাইম পয়েন্ট প্রয়োজন' : 
+                        'At least 3 time points are required for cross-correlation calculation');
+                    return;
+                }
+                
+                currentDataX = dataX;
+                currentDataY = dataY;
+                
+                // Calculate all statistics
+                const stats = calculateCrossCorrelation(dataX, dataY, currentMaxLag);
+                
+                // Update results
+                updateResults(stats);
+                
+                // Update CCF table
+                updateCCFTable(stats);
+                
+                // Update visualizations
+                updateVisualizations(dataX, dataY, stats);
+                
+                // Update time series table
+                updateTimeSeriesTable(dataX, dataY);
+                
+                // Update step-by-step calculations
+                updateStepByStep(dataX, dataY, stats);
+            }
+
+            function calculateCrossCorrelation(x, y, maxLag) {
+                const n = x.length;
+                
+                // Calculate means and standard deviations
+                const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+                
+                const stdX = Math.sqrt(x.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0) / n);
+                const stdY = Math.sqrt(y.reduce((sum, val) => sum + Math.pow(val - meanY, 2), 0) / n);
+                
+                // Calculate CCF for different lags
+                const ccfValues = [];
+                let maxCorrelation = -Infinity;
+                let optimalLag = 0;
+                
+                for (let k = -maxLag; k <= maxLag; k++) {
+                    let sum = 0;
+                    let count = 0;
+                    
+                    for (let t = 0; t < n; t++) {
+                        const t2 = t + k;
+                        if (t2 >= 0 && t2 < n) {
+                            sum += (x[t] - meanX) * (y[t2] - meanY);
+                            count++;
+                        }
+                    }
+                    
+                    const correlation = count > 0 ? sum / (count * stdX * stdY) : 0;
+                    
+                    ccfValues.push({
+                        lag: k,
+                        correlation: correlation,
+                        se: 1 / Math.sqrt(n - Math.abs(k)),
+                        significant: Math.abs(correlation) > 1.96 / Math.sqrt(n - Math.abs(k))
+                    });
+                    
+                    if (Math.abs(correlation) > Math.abs(maxCorrelation)) {
+                        maxCorrelation = correlation;
+                        optimalLag = k;
+                    }
+                }
+                
+                // Calculate zero lag correlation
+                const zeroLagCorrelation = ccfValues.find(c => c.lag === 0).correlation;
+                
+                // Determine significance
+                const significance = ccfValues[optimalLag + maxLag].significant ? 
+                    (currentLanguage === 'bn' ? 'তাৎপর্যপূর্ণ' : 'Significant') : 
+                    (currentLanguage === 'bn' ? 'অতাৎপর্যপূর্ণ' : 'Not Significant');
+                
+                // Determine lag direction
+                const lagDirection = optimalLag > 0 ? 
+                    (currentLanguage === 'bn' ? 'X → Y' : 'X → Y') : 
+                    optimalLag < 0 ? 
+                    (currentLanguage === 'bn' ? 'Y → X' : 'Y → X') : 
+                    (currentLanguage === 'bn' ? 'সমকালীন' : 'Simultaneous');
+                
+                const lagInterpretation = optimalLag > 0 ? 
+                    (currentLanguage === 'bn' ? `X(t), Y(t) কে ${optimalLag} পিরিয়ড অগ্রণী করে` : 
+                     `X(t) leads Y(t) by ${optimalLag} periods`) :
+                    optimalLag < 0 ? 
+                    (currentLanguage === 'bn' ? `Y(t), X(t) কে ${Math.abs(optimalLag)} পিরিয়ড অগ্রণী করে` : 
+                     `Y(t) leads X(t) by ${Math.abs(optimalLag)} periods`) :
+                    (currentLanguage === 'bn' ? 'কোন সময় স্থানান্তর নেই, একই সাথে সম্পর্ক' : 
+                     'No time shift, simultaneous relationship');
+                
+                return {
+                    n,
+                    meanX,
+                    meanY,
+                    stdX,
+                    stdY,
+                    zeroLagCorrelation,
+                    ccfValues,
+                    optimalLag,
+                    maxCorrelation,
+                    significance,
+                    lagDirection,
+                    lagInterpretation
+                };
+            }
+
+            function updateResults(stats) {
+                // Update main results
+                document.getElementById('optimalLagResult').textContent = stats.optimalLag;
+                document.getElementById('maxCorrelationResult').textContent = stats.maxCorrelation.toFixed(4);
+                document.getElementById('significanceResult').textContent = stats.significance;
+                
+                // Update lag interpretation
+                document.getElementById('lagDirection').textContent = stats.lagDirection;
+                document.getElementById('lagInterpretation').textContent = stats.lagInterpretation;
+                
+                // Update statistics
+                document.getElementById('timePoints').textContent = stats.n;
+                document.getElementById('meanX').textContent = stats.meanX.toFixed(4);
+                document.getElementById('meanY').textContent = stats.meanY.toFixed(4);
+                document.getElementById('stdDevX').textContent = stats.stdX.toFixed(4);
+                document.getElementById('stdDevY').textContent = stats.stdY.toFixed(4);
+                document.getElementById('zeroLagCorr').textContent = stats.zeroLagCorrelation.toFixed(4);
+                
+                // Highlight optimal lag
+                const optimalLagElement = document.getElementById('optimalLagResult');
+                optimalLagElement.style.color = stats.optimalLag > 0 ? 
+                    'var(--time-series-1)' : stats.optimalLag < 0 ? 
+                    'var(--time-series-2)' : 'var(--primary)';
+                
+                // Add animation for peak highlight
+                optimalLagElement.classList.remove('peak-highlight');
+                void optimalLagElement.offsetWidth; // Trigger reflow
+                optimalLagElement.classList.add('peak-highlight');
+            }
+
+            function updateCCFTable(stats) {
+                const container = document.getElementById('ccfTableContainer');
+                const ccfValues = stats.ccfValues;
+                
+                let tableHTML = `
+                    <table class="ccf-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Lag (k)" data-bন="ল্যাগ (k)">ল্যাগ (k)</th>
+                                <th data-en="Correlation" data-bন="কোরিলেশন">কোরিলেশন</th>
+                                <th data-en="Standard Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</th>
+                                <th data-en="95% CI Lower" data-bন="৯৫% CI নিম্ন">৯৫% CI নিম্ন</th>
+                                <th data-en="95% CI Upper" data-bন="৯৫% CI উচ্চ">৯৫% CI উচ্চ</th>
+                                <th data-en="Significant" data-bন="তাৎপর্যপূর্ণ">তাৎপর্যপূর্ণ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                ccfValues.forEach(ccf => {
+                    const isPeak = ccf.lag === stats.optimalLag;
+                    const ciLower = ccf.correlation - 1.96 * ccf.se;
+                    const ciUpper = ccf.correlation + 1.96 * ccf.se;
+                    const significant = ccf.significant ? 
+                        (currentLanguage === 'bn' ? 'হ্যাঁ' : 'Yes') : 
+                        (currentLanguage === 'bn' ? 'না' : 'No');
+                    
+                    tableHTML += `
+                        <tr ${isPeak ? 'class="peak-row"' : ''}>
+                            <td class="lag-cell">${ccf.lag}</td>
+                            <td class="correlation-cell" style="color: ${getCorrelationColor(ccf.correlation)}">
+                                ${ccf.correlation.toFixed(4)}
+                            </td>
+                            <td>${ccf.se.toFixed(4)}</td>
+                            <td>${ciLower.toFixed(4)}</td>
+                            <td>${ciUpper.toFixed(4)}</td>
+                            <td>${significant}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function getCorrelationColor(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.7) {
+                    return r > 0 ? 'var(--positive-correlation)' : 'var(--negative-correlation)';
+                } else if (absR >= 0.3) {
+                    return r > 0 ? 'rgba(54, 209, 220, 0.8)' : 'rgba(255, 101, 132, 0.8)';
+                } else if (absR > 0.1) {
+                    return r > 0 ? 'rgba(54, 209, 220, 0.6)' : 'rgba(255, 101, 132, 0.6)';
+                } else {
+                    return 'var(--no-correlation)';
+                }
+            }
+
+            function updateVisualizations(x, y, stats) {
+                // Hide placeholder
+                document.getElementById('ccfPlaceholder').style.display = 'none';
+                
+                // Update CCF chart
+                updateCCFChart(stats);
+                
+                // Update time series chart
+                updateTimeSeriesChart(x, y, stats);
+                
+                // Update lag scatter chart
+                updateLagScatterChart(x, y, stats);
+                
+                // Show the active chart
+                updateChartVisibility();
+            }
+
+            function updateCCFChart(stats) {
+                const canvas = document.getElementById('ccfCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.ccf) {
+                    currentCharts.ccf.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const lags = stats.ccfValues.map(c => c.lag);
+                const correlations = stats.ccfValues.map(c => c.correlation);
+                const confidenceUpper = stats.ccfValues.map(c => c.correlation + 1.96 * c.se);
+                const confidenceLower = stats.ccfValues.map(c => c.correlation - 1.96 * c.se);
+                
+                // Create CCF chart
+                currentCharts.ccf = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: lags,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স ব্যান্ড' : '95% Confidence Band',
+                                data: confidenceUpper,
+                                borderColor: 'transparent',
+                                backgroundColor: 'rgba(255, 154, 61, 0.1)',
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: '+1'
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স ব্যান্ড' : '95% Confidence Band',
+                                data: confidenceLower,
+                                borderColor: 'transparent',
+                                backgroundColor: 'rgba(255, 154, 61, 0.1)',
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ক্রস-কোরিলেশন ফাংশন' : 'Cross-Correlation Function',
+                                data: correlations,
+                                borderColor: 'var(--cross-correlation)',
+                                backgroundColor: 'var(--cross-correlation)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 6,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'অপটিমাল ল্যাগ' : 'Optimal Lag',
+                                data: lags.map((lag, i) => lag === stats.optimalLag ? correlations[i] : null),
+                                borderColor: 'var(--peak-color)',
+                                backgroundColor: 'var(--peak-color)',
+                                borderWidth: 3,
+                                pointRadius: 8,
+                                pointHoverRadius: 10,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const lag = lags[context.dataIndex];
+                                        const corr = correlations[context.dataIndex];
+                                        return `Lag ${lag}: ${corr.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ল্যাগ (k)' : 'Lag (k)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কোরিলেশন' : 'Correlation',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: -1,
+                                max: 1,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateTimeSeriesChart(x, y, stats) {
+                const canvas = document.getElementById('timeSeriesCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.timeSeries) {
+                    currentCharts.timeSeries.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const timePoints = x.map((_, i) => i + 1);
+                
+                // Create time series chart
+                currentCharts.timeSeries = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timePoints,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'টাইম সিরিজ X(t)' : 'Time Series X(t)',
+                                data: x,
+                                borderColor: 'var(--time-series-1)',
+                                backgroundColor: 'var(--time-series-1)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 6,
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'টাইম সিরিজ Y(t)' : 'Time Series Y(t)',
+                                data: y,
+                                borderColor: 'var(--time-series-2)',
+                                backgroundColor: 'var(--time-series-2)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 6,
+                                fill: false,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সময় (t)' : 'Time (t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateLagScatterChart(x, y, stats) {
+                const canvas = document.getElementById('lagScatterCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.lagScatter) {
+                    currentCharts.lagScatter.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data for different lags
+                const datasets = [];
+                const optimalLag = stats.optimalLag;
+                
+                // Create scatter plots for different lags
+                [-2, -1, 0, 1, 2].forEach(lag => {
+                    const scatterData = [];
+                    
+                    for (let i = 0; i < x.length; i++) {
+                        const j = i - lag;
+                        if (j >= 0 && j < y.length) {
+                            scatterData.push({ x: x[i], y: y[j] });
+                        }
+                    }
+                    
+                    const isOptimal = lag === optimalLag;
+                    
+                    datasets.push({
+                        label: currentLanguage === 'bn' ? `ল্যাগ ${lag}` : `Lag ${lag}`,
+                        data: scatterData,
+                        backgroundColor: isOptimal ? 
+                            'var(--peak-color)' : 
+                            (lag > 0 ? 'var(--time-series-1)' : 
+                             lag < 0 ? 'var(--time-series-2)' : 'var(--primary)'),
+                        borderColor: '#ffffff',
+                        borderWidth: isOptimal ? 3 : 2,
+                        pointRadius: isOptimal ? 6 : 4,
+                        pointHoverRadius: isOptimal ? 8 : 6,
+                        showLine: false
+                    });
+                });
+                
+                // Create lag scatter chart
+                currentCharts.lagScatter = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'X(t)' : 'X(t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'Y(t+lag)' : 'Y(t+lag)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateChartVisibility() {
+                // Hide all canvases
+                document.getElementById('ccfCanvas').style.display = 'none';
+                document.getElementById('timeSeriesCanvas').style.display = 'none';
+                document.getElementById('lagScatterCanvas').style.display = 'none';
+                
+                // Show active chart
+                if (currentActiveChart === 'ccf') {
+                    document.getElementById('ccfCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'timeseries') {
+                    document.getElementById('timeSeriesCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'lagplot') {
+                    document.getElementById('lagScatterCanvas').style.display = 'block';
+                }
+            }
+
+            function updateTimeSeriesTable(x, y) {
+                const container = document.getElementById('timeSeriesTableContainer');
+                const n = x.length;
+                
+                let tableHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="time-series-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Time (t)" data-bন="সময় (t)">সময় (t)</th>
+                                    <th data-en="X(t)" data-bন="X(t)">X(t)</th>
+                                    <th data-en="Y(t)" data-bন="Y(t)">Y(t)</th>
+                                    <th data-en="X(t) - X̄" data-bন="X(t) - X̄">X(t) - X̄</th>
+                                    <th data-en="Y(t) - Ȳ" data-bন="Y(t) - Ȳ">Y(t) - Ȳ</th>
+                                    <th data-en="Product" data-bন="গুণফল">গুণফল</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                const meanX = x.reduce((a, b) => a + b, 0) / n;
+                const meanY = y.reduce((a, b) => a + b, 0) / n;
+                
+                let sumProduct = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    const xDiff = x[i] - meanX;
+                    const yDiff = y[i] - meanY;
+                    const product = xDiff * yDiff;
+                    sumProduct += product;
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${x[i].toFixed(2)}</td>
+                            <td>${y[i].toFixed(2)}</td>
+                            <td>${xDiff.toFixed(2)}</td>
+                            <td>${yDiff.toFixed(2)}</td>
+                            <td>${product.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHTML += `
+                                <tr style="background: var(--light-gray); font-weight: 600;">
+                                    <td>Σ / Mean</td>
+                                    <td>${meanX.toFixed(2)}</td>
+                                    <td>${meanY.toFixed(2)}</td>
+                                    <td>0.00</td>
+                                    <td>0.00</td>
+                                    <td>${sumProduct.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function updateStepByStep(x, y, stats) {
+                const container = document.getElementById('stepsContainer');
+                const n = x.length;
+                const meanX = stats.meanX;
+                const meanY = stats.meanY;
+                const stdX = stats.stdX;
+                const stdY = stats.stdY;
+                const optimalLag = stats.optimalLag;
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate Means" data-bন="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                            <p data-en="Find the average of X(t) and Y(t) time series" data-bন="X(t) এবং Y(t) টাইম সিরিজের গড় নির্ণয় করুন">
+                                X(t) এবং Y(t) টাইম সিরিজের গড় নির্ণয় করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formulas:" data-bন="সূত্র:">সূত্র:</strong></p>
+                                <p>X̄ = ΣX(t) / n</p>
+                                <p>Ȳ = ΣY(t) / n</p>
+                                <p><strong data-en="Calculations:" data-bন="গণনা:">গণনা:</strong></p>
+                                <p>X̄ = ${x.reduce((a, b) => a + b, 0).toFixed(2)} / ${n} = <strong>${meanX.toFixed(2)}</strong></p>
+                                <p>Ȳ = ${y.reduce((a, b) => a + b, 0).toFixed(2)} / ${n} = <strong>${meanY.toFixed(2)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Standard Deviations" data-bন="ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন">ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন</h4>
+                            <p data-en="Find the standard deviations of both time series" data-bন="উভয় টাইম সিরিজের স্ট্যান্ডার্ড ডেভিয়েশন নির্ণয় করুন">
+                                উভয় টাইম সিরিজের স্ট্যান্ডার্ড ডেভিয়েশন নির্ণয় করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    σₓ = √[Σ(X(t) - X̄)² / n]<br>
+                                    σᵧ = √[Σ(Y(t) - Ȳ)² / n]
+                                </p>
+                                <p>σₓ = <strong>${stdX.toFixed(4)}</strong></p>
+                                <p>σᵧ = <strong>${stdY.toFixed(4)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Cross-Correlation for Each Lag" data-bন="ধাপ ৩: প্রতিটি ল্যাগের জন্য ক্রস-কোরিলেশন গণনা করুন">ধাপ ৩: প্রতিটি ল্যাগের জন্য ক্রস-কোরিলেশন গণনা করুন</h4>
+                            <p data-en="Compute CCF(k) for lags from -${currentMaxLag} to ${currentMaxLag}" data-bন="-${currentMaxLag} থেকে ${currentMaxLag} পর্যন্ত ল্যাগের জন্য CCF(k) গণনা করুন">
+                                -${currentMaxLag} থেকে ${currentMaxLag} পর্যন্ত ল্যাগের জন্য CCF(k) গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    CCF(k) = Σ[(X(t) - X̄)(Y(t+k) - Ȳ)] / (σₓσᵧ√(n-|k|))
+                                </p>
+                                <p><strong data-en="Example for optimal lag k = ${optimalLag}:" data-bন="অপটিমাল ল্যাগ k = ${optimalLag} এর উদাহরণ:">অপটিমাল ল্যাগ k = ${optimalLag} এর উদাহরণ:</strong></p>
+                                <p>CCF(${optimalLag}) = <strong>${stats.maxCorrelation.toFixed(4)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Find Optimal Lag" data-bন="ধাপ ৪: অপটিমাল ল্যাগ খুঁজুন">ধাপ ৪: অপটিমাল ল্যাগ খুঁজুন</h4>
+                            <p data-en="Identify the lag with maximum absolute correlation" data-bন="সর্বোচ্চ পরম কোরিলেশন সহ ল্যাগ চিহ্নিত করুন">
+                                সর্বোচ্চ পরম কোরিলেশন সহ ল্যাগ চিহ্নিত করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    k* = argmax<sub>k</sub> |CCF(k)|
+                                </p>
+                                <p><strong data-en="Result:" data-bন="ফলাফল:">ফলাফল:</strong></p>
+                                <p>Optimal lag k* = <strong>${optimalLag}</strong></p>
+                                <p>Maximum correlation = <strong>${stats.maxCorrelation.toFixed(4)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Interpret Results" data-bন="ধাপ ৫: ফলাফল ব্যাখ্যা করুন">ধাপ ৫: ফলাফল ব্যাখ্যা করুন</h4>
+                            <p data-en="Analyze the time lag relationship" data-bন="সময় ল্যাগ সম্পর্ক বিশ্লেষণ করুন">
+                                সময় ল্যাগ সম্পর্ক বিশ্লেষণ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="${stats.lagInterpretation}" data-bন="${stats.lagInterpretation}">${stats.lagInterpretation}</strong></p>
+                                <p data-en="Significance: ${stats.significance}" data-bন="তাৎপর্য: ${stats.significance}">তাৎপর্য: ${stats.significance}</p>
+                                <p data-en="Zero-lag correlation: ${stats.zeroLagCorrelation.toFixed(4)}" data-bন="শূন্য-ল্যাগ কোরিলেশন: ${stats.zeroLagCorrelation.toFixed(4)}">শূন্য-ল্যাগ কোরিলেশন: ${stats.zeroLagCorrelation.toFixed(4)}</p>
+                                <p data-en="Standard error at optimal lag: ${(1/Math.sqrt(n - Math.abs(optimalLag))).toFixed(4)}" data-bন="অপটিমাল ল্যাগে স্ট্যান্ডার্ড এরর: ${(1/Math.sqrt(n - Math.abs(optimalLag))).toFixed(4)}">
+                                    অপটিমাল ল্যাগে স্ট্যান্ডার্ড এরর: ${(1/Math.sqrt(n - Math.abs(optimalLag))).toFixed(4)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function generateRandomTimeSeries() {
+                const n = 15;
+                const trend = Math.random() * 2 - 1;
+                const seasonal = Math.random() * 0.5;
+                const noise = Math.random() * 0.3;
+                const lag = Math.floor(Math.random() * 5) - 2;
+                
+                const x = [];
+                const y = [];
+                
+                for (let i = 0; i < n; i++) {
+                    const trendVal = trend * i;
+                    const seasonalVal = seasonal * Math.sin(i * 0.5);
+                    const noiseVal = noise * (Math.random() - 0.5);
+                    
+                    x.push(10 + trendVal + seasonalVal + noiseVal);
+                    
+                    // Create y with lag
+                    const j = i - lag;
+                    if (j >= 0) {
+                        const yVal = 5 + 0.8 * (10 + trend * j + seasonal * Math.sin(j * 0.5) + noise * (Math.random() - 0.5));
+                        y.push(yVal);
+                    } else {
+                        y.push(5 + Math.random() * 5);
+                    }
+                }
+                
+                document.getElementById('dataX').value = x.map(v => v.toFixed(2)).join(', ');
+                document.getElementById('dataY').value = y.map(v => v.toFixed(2)).join(', ');
+                
+                // Set appropriate max lag
+                const newMaxLag = Math.min(5, Math.floor(n / 3));
+                document.getElementById('maxLagSlider').value = newMaxLag;
+                document.getElementById('currentLag').textContent = newMaxLag;
+                currentMaxLag = newMaxLag;
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    document.getElementById('dataX').value = example.x.join(', ');
+                    document.getElementById('dataY').value = example.y.join(', ');
+                }
+            }
+
+            function clearTool() {
+                document.getElementById('dataX').value = '';
+                document.getElementById('dataY').value = '';
+                
+                // Reset max lag
+                document.getElementById('maxLagSlider').value = 5;
+                document.getElementById('currentLag').textContent = '5';
+                currentMaxLag = 5;
+                
+                // Clear results
+                document.getElementById('optimalLagResult').textContent = '--';
+                document.getElementById('maxCorrelationResult').textContent = '--';
+                document.getElementById('significanceResult').textContent = '--';
+                document.getElementById('lagDirection').textContent = '--';
+                document.getElementById('lagInterpretation').textContent = currentLanguage === 'bn' ? 
+                    'ব্যাখ্যা দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন' : 
+                    'Enter time series and calculate CCF to see interpretation';
+                document.getElementById('timePoints').textContent = '--';
+                document.getElementById('meanX').textContent = '--';
+                document.getElementById('meanY').textContent = '--';
+                document.getElementById('stdDevX').textContent = '--';
+                document.getElementById('stdDevY').textContent = '--';
+                document.getElementById('zeroLagCorr').textContent = '--';
+                
+                // Clear CCF table
+                document.getElementById('ccfTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="ccfPlaceholder" 
+                       data-en="Enter time series data and calculate CCF to see table" 
+                       data-bন="টেবিল দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'টেবিল দেখতে টাইম সিরিজ ইনপুট করুন এবং CCF গণনা করুন' : 
+                            'Enter time series data and calculate CCF to see table'}
+                    </p>
+                `;
+                
+                // Clear visualizations
+                if (currentCharts.ccf) {
+                    currentCharts.ccf.destroy();
+                    currentCharts.ccf = null;
+                }
+                if (currentCharts.timeSeries) {
+                    currentCharts.timeSeries.destroy();
+                    currentCharts.timeSeries = null;
+                }
+                if (currentCharts.lagScatter) {
+                    currentCharts.lagScatter.destroy();
+                    currentCharts.lagScatter = null;
+                }
+                
+                // Show placeholder
+                document.getElementById('ccfPlaceholder').style.display = 'flex';
+                document.getElementById('ccfCanvas').style.display = 'none';
+                document.getElementById('timeSeriesCanvas').style.display = 'none';
+                document.getElementById('lagScatterCanvas').style.display = 'none';
+                
+                // Clear tables and steps
+                document.getElementById('timeSeriesTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="timeSeriesPlaceholder" 
+                       data-en="Enter time series data and click Calculate to see time series table" 
+                       data-bন="টাইম সিরিজ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'টাইম সিরিজ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন' : 
+                            'Enter time series data and click Calculate to see time series table'}
+                    </p>
+                `;
+                
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter time series data and click Calculate to see step-by-step calculations" 
+                       data-bন="ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং গণনা করুন ক্লিক করুন' : 
+                            'Enter time series data and click Calculate to see step-by-step calculations'}
+                    </p>
+                `;
+                
+                currentDataX = [];
+                currentDataY = [];
+                currentActiveChart = 'ccf';
+                
+                // Reset chart tabs
+                document.querySelectorAll('.chart-tab').forEach((tab, index) => {
+                    if (index === 0) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

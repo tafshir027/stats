@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পাই চার্ট জেনারেটর | প্রোপোরশনাল ডেটা বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --pie-color-1: #6C63FF;
+            --pie-color-2: #FF6584;
+            --pie-color-3: #36D1DC;
+            --pie-color-4: #FF9A3D;
+            --pie-color-5: #5B86E5;
+            --donut-color: #4A44C6;
+            --export-color: #FF6584;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 101, 132, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--pie-color-1), var(--pie-color-2), var(--pie-color-3));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--accent);
+        }
+
+        /* Category Management */
+        .category-management {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: var(--light-gray);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover {
+            background: #e6f7ff;
+            transform: translateX(5px);
+        }
+
+        .category-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .category-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .category-name {
+            font-weight: 600;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .category-value {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .category-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: white;
+            color: var(--gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .category-btn.edit:hover {
+            background: var(--success);
+            color: white;
+        }
+
+        .category-btn.delete:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .category-btn.explode:hover {
+            background: var(--warning);
+            color: white;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .category-input-group {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .color-picker-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+        }
+
+        .add-category-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .add-category-btn:hover {
+            background: #2ab7c1;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Type Selection */
+        .chart-type-selection {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-type-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .chart-type-option {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-type-option.active {
+            background: var(--donut-color);
+            color: white;
+            border-color: var(--donut-color);
+        }
+
+        .chart-type-icon {
+            font-size: 2rem;
+        }
+
+        /* Chart Customization */
+        .chart-customization {
+            margin-bottom: 1.5rem;
+        }
+
+        .customization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .customization-group {
+            margin-bottom: 1rem;
+        }
+
+        .customization-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .range-slider {
+            width: 100%;
+            margin-top: 0.5rem;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--accent);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 101, 132, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pieChart {
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            max-height: 600px;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Chart Controls */
+        .chart-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-control-btn {
+            padding: 0.6rem 1.2rem;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-control-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Export Options */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--export-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 101, 132, 0.3);
+        }
+
+        .export-btn.png {
+            background: var(--accent);
+        }
+
+        .export-btn.csv {
+            background: var(--success);
+        }
+
+        .export-btn.png:hover {
+            background: #e0557a;
+        }
+
+        .export-btn.csv:hover {
+            background: #2ab7c1;
+        }
+
+        /* Statistics Panel */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--accent);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Detailed Data Table */
+        .data-table-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .color-cell {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .percentage-cell {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .angle-cell {
+            font-family: monospace;
+            color: var(--gray);
+        }
+
+        /* Example Datasets */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .legend-item.hidden .legend-color {
+            opacity: 0.5;
+        }
+
+        .legend-item.hidden .legend-text {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        /* Color Picker Modal */
+        .color-picker-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .color-picker-modal.show {
+            display: flex;
+        }
+
+        .color-picker-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .color-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+            border-color: var(--dark);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-type-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .statistics-panel,
+            .data-table-panel,
+            .examples-section {
+                padding: 1.5rem;
+            }
+            
+            .category-input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-picker-btn,
+            .add-category-btn {
+                width: 100%;
+            }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Exploded Segment Controls */
+        .exploded-controls {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .exploded-controls.show {
+            display: block;
+        }
+
+        .exploded-slider-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .exploded-label {
+            min-width: 100px;
+            font-weight: 600;
+        }
+
+        /* Category Color Preview */
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Pie Chart Generator" data-bn="পাই চার্ট জেনারেটর">পাই চার্ট জেনারেটর</h1>
+            <p class="subtitle" data-en="Generate interactive pie and donut charts to visualize proportional data with percentage display, exploded segments, and detailed analysis" data-bn="পার্সেন্টেজ ডিসপ্লে, এক্সপ্লোডেড সেগমেন্ট এবং বিস্তারিত বিশ্লেষণ সহ প্রোপোরশনাল ডেটা ভিজ্যুয়ালাইজ করতে ইন্টারেকটিভ পাই এবং ডোনাট চার্ট তৈরি করুন">
+                পার্সেন্টেজ ডিসপ্লে, এক্সপ্লোডেড সেগমেন্ট এবং বিস্তারিত বিশ্লেষণ সহ প্রোপোরশনাল ডেটা ভিজ্যুয়ালাইজ করতে ইন্টারেকটিভ পাই এবং ডোনাট চার্ট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Control Panel" data-bn="নিয়ন্ত্রণ প্যানেল">নিয়ন্ত্রণ প্যানেল</span>
+                </h2>
+                
+                <!-- Category Management -->
+                <div class="category-management">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-list"></i>
+                        <span data-en="Categories & Data" data-bn="ক্যাটাগরি ও ডেটা">ক্যাটাগরি ও ডেটা</span>
+                    </h3>
+                    
+                    <div class="category-list" id="categoryList">
+                        <!-- Categories will be added here dynamically -->
+                        <div class="category-item">
+                            <div class="category-info">
+                                <div class="color-preview" style="background: var(--pie-color-1);"></div>
+                                <input type="text" class="category-name" value="Category 1" placeholder="Category name">
+                                <input type="number" class="category-value" value="45" placeholder="Value" min="0" step="0.1">
+                            </div>
+                            <div class="category-actions">
+                                <button class="category-btn edit" title="Edit color">
+                                    <i class="fas fa-palette"></i>
+                                </button>
+                                <button class="category-btn delete" title="Delete category">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="category-btn explode" title="Explode segment">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-info">
+                                <div class="color-preview" style="background: var(--pie-color-2);"></div>
+                                <input type="text" class="category-name" value="Category 2" placeholder="Category name">
+                                <input type="number" class="category-value" value="30" placeholder="Value" min="0" step="0.1">
+                            </div>
+                            <div class="category-actions">
+                                <button class="category-btn edit" title="Edit color">
+                                    <i class="fas fa-palette"></i>
+                                </button>
+                                <button class="category-btn delete" title="Delete category">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="category-btn explode" title="Explode segment">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-info">
+                                <div class="color-preview" style="background: var(--pie-color-3);"></div>
+                                <input type="text" class="category-name" value="Category 3" placeholder="Category name">
+                                <input type="number" class="category-value" value="25" placeholder="Value" min="0" step="0.1">
+                            </div>
+                            <div class="category-actions">
+                                <button class="category-btn edit" title="Edit color">
+                                    <i class="fas fa-palette"></i>
+                                </button>
+                                <button class="category-btn delete" title="Delete category">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="category-btn explode" title="Explode segment">
+                                    <i class="fas fa-expand-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="category-input-group">
+                        <input type="text" id="newCategoryName" class="category-input" placeholder="New category name">
+                        <input type="number" id="newCategoryValue" class="category-input" placeholder="Value" min="0" step="0.1" value="10">
+                        <button class="color-picker-btn" id="colorPickerBtn" title="Pick color">
+                            <div class="color-preview" id="selectedColorPreview" style="background: var(--pie-color-4);"></div>
+                        </button>
+                    </div>
+                    
+                    <button class="add-category-btn" id="addCategoryBtn">
+                        <i class="fas fa-plus"></i>
+                        <span data-en="Add Category" data-bn="ক্যাটাগরি যোগ করুন">ক্যাটাগরি যোগ করুন</span>
+                    </button>
+                </div>
+
+                <!-- Chart Type Selection -->
+                <div class="chart-type-selection">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-chart-pie"></i>
+                        <span data-en="Chart Type" data-bn="চার্ট টাইপ">চার্ট টাইপ</span>
+                    </h3>
+                    
+                    <div class="chart-type-options">
+                        <div class="chart-type-option active" data-type="pie">
+                            <i class="fas fa-chart-pie chart-type-icon"></i>
+                            <span data-en="Pie Chart" data-bn="পাই চার্ট">পাই চার্ট</span>
+                            <small data-en="Standard circular chart" data-bn="স্ট্যান্ডার্ড সার্কুলার চার্ট">স্ট্যান্ডার্ড সার্কুলার চার্ট</small>
+                        </div>
+                        <div class="chart-type-option" data-type="donut">
+                            <i class="fas fa-donut-chart chart-type-icon"></i>
+                            <span data-en="Donut Chart" data-bn="ডোনাট চার্ট">ডোনাট চার্ট</span>
+                            <small data-en="Pie chart with hole" data-bn="গর্ত সহ পাই চার্ট">গর্ত সহ পাই চার্ট</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Customization -->
+                <div class="chart-customization">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-palette"></i>
+                        <span data-en="Customization" data-bn="কাস্টমাইজেশন">কাস্টমাইজেশন</span>
+                    </h3>
+                    
+                    <div class="customization-grid">
+                        <div class="customization-group">
+                            <label data-en="Border Width" data-bn="বর্ডার প্রস্থ">বর্ডার প্রস্থ</label>
+                            <input type="range" id="borderWidth" class="range-slider" min="0" max="5" value="2" step="0.5">
+                        </div>
+                        
+                        <div class="customization-group">
+                            <label data-en="Rotation" data-bn="রোটেশন">রোটেশন</label>
+                            <input type="range" id="rotation" class="range-slider" min="0" max="360" value="0" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="customization-grid" style="margin-top: 1rem;">
+                        <div class="customization-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showPercentages" checked>
+                                <label for="showPercentages" data-en="Show Percentages" data-bn="পার্সেন্টেজ দেখান">পার্সেন্টেজ দেখান</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showValues" checked>
+                                <label for="showValues" data-en="Show Values" data-bn="মান দেখান">মান দেখান</label>
+                            </div>
+                        </div>
+                        
+                        <div class="customization-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showLabels" checked>
+                                <label for="showLabels" data-en="Show Labels" data-bn="লেবেল দেখান">লেবেল দেখান</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showLegend" checked>
+                                <label for="showLegend" data-en="Show Legend" data-bn="লেজেন্ড দেখান">লেজেন্ড দেখান</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exploded Segments Controls -->
+                <div class="exploded-controls" id="explodedControls">
+                    <h4 style="margin-bottom: 0.5rem;" data-en="Exploded Segments" data-bn="এক্সপ্লোডেড সেগমেন্ট">এক্সপ্লোডেড সেগমেন্ট</h4>
+                    <div id="explodedSliders">
+                        <!-- Exploded sliders will be added dynamically -->
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span data-en="Generate Chart" data-bn="চার্ট তৈরি করুন">চার্ট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    <span data-en="Chart Visualization" data-bn="চার্ট ভিজ্যুয়ালাইজেশন">চার্ট ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <button class="chart-control-btn" id="animateBtn">
+                        <i class="fas fa-play"></i>
+                        <span data-en="Animate" data-bn="অ্যানিমেট করুন">অ্যানিমেট করুন</span>
+                    </button>
+                    <button class="chart-control-btn" id="highlightBtn">
+                        <i class="fas fa-star"></i>
+                        <span data-en="Highlight Largest" data-bn="সবচেয়ে বড় হাইলাইট করুন">সবচেয়ে বড় হাইলাইট করুন</span>
+                    </button>
+                    <button class="chart-control-btn" id="sortBtn">
+                        <i class="fas fa-sort-amount-down"></i>
+                        <span data-en="Sort by Size" data-bn="সাইজ অনুযায়ী সাজান">সাইজ অনুযায়ী সাজান</span>
+                    </button>
+                    <button class="chart-control-btn" id="resetViewBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span data-en="Reset View" data-bn="ভিউ রিসেট করুন">ভিউ রিসেট করুন</span>
+                    </button>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="loading" id="chartLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-pie"></i>
+                        <p data-en="Add categories and click Generate Chart to visualize" data-bn="ক্যাটাগরি যোগ করুন এবং ভিজ্যুয়ালাইজ করতে চার্ট তৈরি করুন ক্লিক করুন">
+                            ক্যাটাগরি যোগ করুন এবং ভিজ্যুয়ালাইজ করতে চার্ট তৈরি করুন ক্লিক করুন
+                        </p>
+                    </div>
+                    
+                    <canvas id="pieChart"></canvas>
+                </div>
+
+                <!-- Chart Legend -->
+                <div class="chart-legend" id="chartLegend">
+                    <!-- Legend items will be added dynamically -->
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-options">
+                    <button class="export-btn png" id="exportPNG">
+                        <i class="fas fa-download"></i>
+                        <span data-en="Export as PNG" data-bn="PNG হিসেবে এক্সপোর্ট করুন">PNG হিসেবে এক্সপোর্ট করুন</span>
+                    </button>
+                    <button class="export-btn csv" id="exportCSV">
+                        <i class="fas fa-file-csv"></i>
+                        <span data-en="Export Data as CSV" data-bn="CSV হিসেবে ডেটা এক্সপোর্ট করুন">CSV হিসেবে ডেটা এক্সপোর্ট করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="statistics-panel">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="Chart Statistics" data-bn="চার্ট পরিসংখ্যান">চার্ট পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalValue">--</div>
+                    <div class="stat-label" data-en="Total Value" data-bn="মোট মান">মোট মান</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="categoryCount">--</div>
+                    <div class="stat-label" data-en="Categories" data-bn="ক্যাটাগরি">ক্যাটাগরি</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="largestPercentage">--</div>
+                    <div class="stat-label" data-en="Largest Share" data-bn="সবচেয়ে বড় অংশ">সবচেয়ে বড় অংশ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="smallestPercentage">--</div>
+                    <div class="stat-label" data-en="Smallest Share" data-bn="সবচেয়ে ছোট অংশ">সবচেয়ে ছোট অংশ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Data Table -->
+        <div class="data-table-panel">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Data Analysis" data-bন="বিস্তারিত ডেটা বিশ্লেষণ">বিস্তারিত ডেটা বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="table-container">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th data-en="Category" data-bন="ক্যাটাগরি">ক্যাটাগরি</th>
+                            <th data-en="Color" data-bন="রঙ">রঙ</th>
+                            <th data-en="Value" data-bন="মান">মান</th>
+                            <th data-en="Percentage" data-bন="পার্সেন্টেজ">পার্সেন্টেজ</th>
+                            <th data-en="Angle" data-bন="কোণ">কোণ</th>
+                            <th data-en="Exploded" data-bন="এক্সপ্লোডেড">এক্সপ্লোডেড</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="budget">
+                    <span data-en="Monthly Budget" data-bন="মাসিক বাজেট">মাসিক বাজেট</span>
+                    <span class="example-data">Rent: 40%, Food: 25%, Transportation: 15%, Entertainment: 10%, Savings: 10%</span>
+                </button>
+                <button class="example-btn" data-example="survey">
+                    <span data-en="Survey Results" data-bন="সার্ভে ফলাফল">সার্ভে ফলাফল</span>
+                    <span class="example-data">Agree: 45%, Neutral: 30%, Disagree: 20%, No Opinion: 5%</span>
+                </button>
+                <button class="example-btn" data-example="sales">
+                    <span data-en="Sales by Category" data-bন="ক্যাটাগরি অনুযায়ী বিক্রয়">ক্যাটাগরি অনুযায়ী বিক্রয়</span>
+                    <span class="example-data">Electronics: 35%, Clothing: 25%, Home Goods: 20%, Books: 15%, Other: 5%</span>
+                </button>
+                <button class="example-btn" data-example="population">
+                    <span data-en="Population by Age" data-bন="বয়স অনুযায়ী জনসংখ্যা">বয়স অনুযায়ী জনসংখ্যা</span>
+                    <span class="example-data">0-18: 30%, 19-35: 25%, 36-50: 20%, 51-65: 15%, 65+: 10%</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Color Picker Modal -->
+        <div class="color-picker-modal" id="colorPickerModal">
+            <div class="color-picker-content">
+                <h3 class="section-title" style="font-size: 1.2rem;">
+                    <i class="fas fa-palette"></i>
+                    <span data-en="Select Color" data-bন="রঙ নির্বাচন করুন">রঙ নির্বাচন করুন</span>
+                </h3>
+                
+                <div class="color-picker-grid" id="colorPickerGrid">
+                    <!-- Color options will be populated here -->
+                </div>
+                
+                <div class="controls" style="margin-top: 1.5rem;">
+                    <button class="control-btn clear-btn" id="cancelColorBtn">
+                        <i class="fas fa-times"></i>
+                        <span data-en="Cancel" data-bন="বাতিল করুন">বাতিল করুন</span>
+                    </button>
+                    <button class="control-btn generate-btn" id="applyColorBtn">
+                        <i class="fas fa-check"></i>
+                        <span data-en="Apply" data-bন="প্রয়োগ করুন">প্রয়োগ করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentLanguage = 'bn';
+            let pieChart = null;
+            let categories = [
+                { id: 1, name: 'Category 1', value: 45, color: '#6C63FF', exploded: false, explodedOffset: 0 },
+                { id: 2, name: 'Category 2', value: 30, color: '#FF6584', exploded: false, explodedOffset: 0 },
+                { id: 3, name: 'Category 3', value: 25, color: '#36D1DC', exploded: false, explodedOffset: 0 }
+            ];
+            let chartType = 'pie';
+            let selectedColor = '#FF9A3D';
+            let isAnimating = false;
+            let editingCategoryId = null;
+            
+            // Color palette
+            const colorPalette = [
+                '#6C63FF', '#FF6584', '#36D1DC', '#FF9A3D', '#5B86E5',
+                '#9C27B0', '#E91E63', '#00BCD4', '#8BC34A', '#FFC107',
+                '#3F51B5', '#2196F3', '#4CAF50', '#FF9800', '#795548',
+                '#607D8B', '#F44336', '#009688', '#CDDC39', '#9E9E9E'
+            ];
+
+            // Example datasets
+            const examples = {
+                'budget': [
+                    { name: 'Rent', value: 40, color: '#6C63FF' },
+                    { name: 'Food', value: 25, color: '#FF6584' },
+                    { name: 'Transportation', value: 15, color: '#36D1DC' },
+                    { name: 'Entertainment', value: 10, color: '#FF9A3D' },
+                    { name: 'Savings', value: 10, color: '#5B86E5' }
+                ],
+                'survey': [
+                    { name: 'Agree', value: 45, color: '#4CAF50' },
+                    { name: 'Neutral', value: 30, color: '#FFC107' },
+                    { name: 'Disagree', value: 20, color: '#F44336' },
+                    { name: 'No Opinion', value: 5, color: '#9E9E9E' }
+                ],
+                'sales': [
+                    { name: 'Electronics', value: 35, color: '#2196F3' },
+                    { name: 'Clothing', value: 25, color: '#E91E63' },
+                    { name: 'Home Goods', value: 20, color: '#8BC34A' },
+                    { name: 'Books', value: 15, color: '#FF9800' },
+                    { name: 'Other', value: 5, color: '#795548' }
+                ],
+                'population': [
+                    { name: '0-18 years', value: 30, color: '#00BCD4' },
+                    { name: '19-35 years', value: 25, color: '#9C27B0' },
+                    { name: '36-50 years', value: 20, color: '#CDDC39' },
+                    { name: '51-65 years', value: 15, color: '#FF9800' },
+                    { name: '65+ years', value: 10, color: '#795548' }
+                ]
+            };
+
+            // Initialize the application
+            initializeApp();
+
+            function initializeApp() {
+                // Language Management
+                setupLanguageToggle();
+                
+                // Category Management
+                setupCategoryManagement();
+                
+                // Chart Type Selection
+                setupChartTypeSelection();
+                
+                // Chart Customization
+                setupChartCustomization();
+                
+                // Chart Controls
+                setupChartControls();
+                
+                // Control Buttons
+                setupControlButtons();
+                
+                // Export Functions
+                setupExportFunctions();
+                
+                // Color Picker
+                setupColorPicker();
+                
+                // Example Datasets
+                setupExampleDatasets();
+                
+                // Set Bengali as default language
+                setLanguage('bn');
+                
+                // Initialize categories
+                updateCategoryList();
+                generatePieChart();
+            }
+
+            function setupLanguageToggle() {
+                const langBtns = document.querySelectorAll('.lang-btn');
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function setupCategoryManagement() {
+                // Add category button
+                document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
+                
+                // Color picker button
+                document.getElementById('colorPickerBtn').addEventListener('click', showColorPicker);
+                
+                // Category list event delegation
+                document.getElementById('categoryList').addEventListener('click', handleCategoryAction);
+                document.getElementById('categoryList').addEventListener('input', updateCategoryFromInput);
+            }
+
+            function updateCategoryList() {
+                const categoryList = document.getElementById('categoryList');
+                categoryList.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const categoryItem = document.createElement('div');
+                    categoryItem.className = 'category-item';
+                    categoryItem.dataset.id = category.id;
+                    
+                    categoryItem.innerHTML = `
+                        <div class="category-info">
+                            <div class="color-preview" style="background: ${category.color};"></div>
+                            <input type="text" class="category-name" value="${category.name}" placeholder="Category name" data-id="${category.id}">
+                            <input type="number" class="category-value" value="${category.value}" placeholder="Value" min="0" step="0.1" data-id="${category.id}">
+                        </div>
+                        <div class="category-actions">
+                            <button class="category-btn edit" title="${currentLanguage === 'bn' ? 'রঙ সম্পাদনা করুন' : 'Edit color'}" data-action="edit" data-id="${category.id}">
+                                <i class="fas fa-palette"></i>
+                            </button>
+                            <button class="category-btn delete" title="${currentLanguage === 'bn' ? 'ক্যাটাগরি মুছুন' : 'Delete category'}" data-action="delete" data-id="${category.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="category-btn explode" title="${currentLanguage === 'bn' ? 'সেগমেন্ট এক্সপ্লোড করুন' : 'Explode segment'}" data-action="explode" data-id="${category.id}">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    categoryList.appendChild(categoryItem);
+                });
+                
+                // Update exploded controls
+                updateExplodedControls();
+            }
+
+            function handleCategoryAction(e) {
+                const btn = e.target.closest('.category-btn');
+                if (!btn) return;
+                
+                const action = btn.dataset.action;
+                const id = parseInt(btn.dataset.id);
+                
+                switch(action) {
+                    case 'edit':
+                        editCategoryColor(id);
+                        break;
+                    case 'delete':
+                        deleteCategory(id);
+                        break;
+                    case 'explode':
+                        toggleExplodedSegment(id);
+                        break;
+                }
+            }
+
+            function updateCategoryFromInput(e) {
+                const input = e.target;
+                if (!input.classList.contains('category-name') && !input.classList.contains('category-value')) return;
+                
+                const id = parseInt(input.dataset.id);
+                const category = categories.find(c => c.id === id);
+                if (!category) return;
+                
+                if (input.classList.contains('category-name')) {
+                    category.name = input.value.trim() || `Category ${id}`;
+                } else if (input.classList.contains('category-value')) {
+                    category.value = parseFloat(input.value) || 0;
+                }
+                
+                generatePieChart();
+            }
+
+            function editCategoryColor(id) {
+                editingCategoryId = id;
+                const category = categories.find(c => c.id === id);
+                if (category) {
+                    selectedColor = category.color;
+                    document.getElementById('selectedColorPreview').style.background = selectedColor;
+                    showColorPicker();
+                }
+            }
+
+            function deleteCategory(id) {
+                if (categories.length <= 1) {
+                    alert(currentLanguage === 'bn' ? 
+                        'অন্তত একটি ক্যাটাগরি থাকা আবশ্যক' : 
+                        'At least one category is required');
+                    return;
+                }
+                
+                categories = categories.filter(c => c.id !== id);
+                updateCategoryList();
+                generatePieChart();
+            }
+
+            function toggleExplodedSegment(id) {
+                const category = categories.find(c => c.id === id);
+                if (category) {
+                    category.exploded = !category.exploded;
+                    category.explodedOffset = category.exploded ? 10 : 0;
+                    
+                    // Update button state
+                    const btn = document.querySelector(`.category-btn[data-action="explode"][data-id="${id}"]`);
+                    if (btn) {
+                        if (category.exploded) {
+                            btn.style.background = 'var(--warning)';
+                            btn.style.color = 'white';
+                        } else {
+                            btn.style.background = '';
+                            btn.style.color = '';
+                        }
+                    }
+                    
+                    updateExplodedControls();
+                    generatePieChart();
+                }
+            }
+
+            function updateExplodedControls() {
+                const explodedControls = document.getElementById('explodedControls');
+                const explodedSliders = document.getElementById('explodedSliders');
+                
+                // Show/hide exploded controls based on if any segment is exploded
+                const hasExploded = categories.some(c => c.exploded);
+                if (hasExploded) {
+                    explodedControls.classList.add('show');
+                } else {
+                    explodedControls.classList.remove('show');
+                    return;
+                }
+                
+                // Update sliders
+                explodedSliders.innerHTML = '';
+                
+                categories.forEach(category => {
+                    if (!category.exploded) return;
+                    
+                    const sliderGroup = document.createElement('div');
+                    sliderGroup.className = 'exploded-slider-group';
+                    sliderGroup.innerHTML = `
+                        <div class="exploded-label" style="color: ${category.color};">
+                            ${category.name}
+                        </div>
+                        <input type="range" class="range-slider exploded-slider" 
+                               min="0" max="30" value="${category.explodedOffset}" step="1"
+                               data-id="${category.id}">
+                        <span class="exploded-value">${category.explodedOffset}px</span>
+                    `;
+                    
+                    explodedSliders.appendChild(sliderGroup);
+                });
+                
+                // Add slider event listeners
+                document.querySelectorAll('.exploded-slider').forEach(slider => {
+                    slider.addEventListener('input', function() {
+                        const id = parseInt(this.dataset.id);
+                        const category = categories.find(c => c.id === id);
+                        if (category) {
+                            category.explodedOffset = parseInt(this.value);
+                            this.nextElementSibling.textContent = `${this.value}px`;
+                            generatePieChart();
+                        }
+                    });
+                });
+            }
+
+            function addCategory() {
+                const nameInput = document.getElementById('newCategoryName');
+                const valueInput = document.getElementById('newCategoryValue');
+                
+                const name = nameInput.value.trim();
+                const value = parseFloat(valueInput.value);
+                
+                if (!name) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে একটি ক্যাটাগরি নাম লিখুন' : 
+                        'Please enter a category name');
+                    return;
+                }
+                
+                if (isNaN(value) || value <= 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে একটি বৈধ মান লিখুন' : 
+                        'Please enter a valid value');
+                    return;
+                }
+                
+                const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+                
+                const newCategory = {
+                    id: newId,
+                    name: name,
+                    value: value,
+                    color: selectedColor,
+                    exploded: false,
+                    explodedOffset: 0
+                };
+                
+                categories.push(newCategory);
+                
+                // Reset inputs
+                nameInput.value = '';
+                valueInput.value = '10';
+                selectedColor = '#FF9A3D';
+                document.getElementById('selectedColorPreview').style.background = selectedColor;
+                
+                updateCategoryList();
+                generatePieChart();
+            }
+
+            function setupChartTypeSelection() {
+                const chartTypeOptions = document.querySelectorAll('.chart-type-option');
+                chartTypeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        chartTypeOptions.forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        chartType = this.dataset.type;
+                        generatePieChart();
+                    });
+                });
+            }
+
+            function setupChartCustomization() {
+                // Border width
+                document.getElementById('borderWidth').addEventListener('input', function() {
+                    if (pieChart) {
+                        pieChart.data.datasets.forEach(dataset => {
+                            dataset.borderWidth = parseFloat(this.value);
+                        });
+                        pieChart.update();
+                    }
+                });
+                
+                // Rotation
+                document.getElementById('rotation').addEventListener('input', function() {
+                    if (pieChart) {
+                        pieChart.options.rotation = parseInt(this.value) * (Math.PI / 180);
+                        pieChart.update();
+                    }
+                });
+                
+                // Checkboxes
+                document.getElementById('showPercentages').addEventListener('change', generatePieChart);
+                document.getElementById('showValues').addEventListener('change', generatePieChart);
+                document.getElementById('showLabels').addEventListener('change', generatePieChart);
+                document.getElementById('showLegend').addEventListener('change', generatePieChart);
+            }
+
+            function setupChartControls() {
+                document.getElementById('animateBtn').addEventListener('click', toggleAnimation);
+                document.getElementById('highlightBtn').addEventListener('click', highlightLargestSegment);
+                document.getElementById('sortBtn').addEventListener('click', sortBySize);
+                document.getElementById('resetViewBtn').addEventListener('click', resetView);
+            }
+
+            function setupControlButtons() {
+                document.getElementById('generateBtn').addEventListener('click', generatePieChart);
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+            }
+
+            function setupExportFunctions() {
+                document.getElementById('exportPNG').addEventListener('click', exportAsPNG);
+                document.getElementById('exportCSV').addEventListener('click', exportAsCSV);
+            }
+
+            function setupColorPicker() {
+                // Initialize color picker grid
+                const colorPickerGrid = document.getElementById('colorPickerGrid');
+                colorPickerGrid.innerHTML = '';
+                
+                colorPalette.forEach(color => {
+                    const colorOption = document.createElement('div');
+                    colorOption.className = 'color-option';
+                    colorOption.style.background = color;
+                    colorOption.dataset.color = color;
+                    
+                    colorOption.addEventListener('click', function() {
+                        selectedColor = this.dataset.color;
+                        document.getElementById('selectedColorPreview').style.background = selectedColor;
+                    });
+                    
+                    colorPickerGrid.appendChild(colorOption);
+                });
+                
+                // Modal controls
+                document.getElementById('cancelColorBtn').addEventListener('click', hideColorPicker);
+                document.getElementById('applyColorBtn').addEventListener('click', applySelectedColor);
+            }
+
+            function setupExampleDatasets() {
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExampleData(example);
+                    });
+                });
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    categories = examples[example].map((item, index) => ({
+                        id: index + 1,
+                        name: item.name,
+                        value: item.value,
+                        color: item.color,
+                        exploded: false,
+                        explodedOffset: 0
+                    }));
+                    
+                    updateCategoryList();
+                    generatePieChart();
+                }
+            }
+
+            function showColorPicker() {
+                document.getElementById('colorPickerModal').classList.add('show');
+            }
+
+            function hideColorPicker() {
+                document.getElementById('colorPickerModal').classList.remove('show');
+            }
+
+            function applySelectedColor() {
+                if (editingCategoryId) {
+                    // Update existing category color
+                    const category = categories.find(c => c.id === editingCategoryId);
+                    if (category) {
+                        category.color = selectedColor;
+                        updateCategoryList();
+                        generatePieChart();
+                    }
+                    editingCategoryId = null;
+                }
+                hideColorPicker();
+            }
+
+            function generatePieChart() {
+                showLoading(true);
+                
+                // Validate categories
+                if (categories.length === 0 || categories.some(c => c.value <= 0)) {
+                    showError(currentLanguage === 'bn' ? 
+                        'দয়া করে বৈধ ক্যাটাগরি যোগ করুন' : 
+                        'Please add valid categories');
+                    showLoading(false);
+                    return;
+                }
+                
+                // Calculate total and percentages
+                const total = categories.reduce((sum, cat) => sum + cat.value, 0);
+                categories.forEach(category => {
+                    category.percentage = (category.value / total * 100).toFixed(1);
+                    category.angle = (category.value / total * 360).toFixed(1);
+                });
+                
+                // Destroy existing chart if it exists
+                if (pieChart) {
+                    pieChart.destroy();
+                }
+                
+                // Get canvas context
+                const ctx = document.getElementById('pieChart').getContext('2d');
+                
+                // Prepare data
+                const labels = categories.map(c => c.name);
+                const data = categories.map(c => c.value);
+                const backgroundColors = categories.map(c => c.color);
+                const borderColors = categories.map(c => '#ffffff');
+                
+                // Create exploded offsets array
+                const offsets = categories.map(c => c.exploded ? c.explodedOffset : 0);
+                
+                // Prepare chart data
+                const chartData = {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: parseFloat(document.getElementById('borderWidth').value),
+                        hoverOffset: 15,
+                        offset: offsets
+                    }]
+                };
+                
+                // Chart options
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: document.getElementById('showLegend').checked,
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                },
+                                color: 'var(--dark)',
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    const showPercentages = document.getElementById('showPercentages').checked;
+                                    const showValues = document.getElementById('showValues').checked;
+                                    
+                                    let tooltipText = label + ': ';
+                                    if (showValues) {
+                                        tooltipText += value.toFixed(1);
+                                    }
+                                    if (showValues && showPercentages) {
+                                        tooltipText += ' (';
+                                    }
+                                    if (showPercentages) {
+                                        tooltipText += percentage + '%';
+                                    }
+                                    if (showValues && showPercentages) {
+                                        tooltipText += ')';
+                                    }
+                                    
+                                    return tooltipText;
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                family: "'Poppins', 'Hind Siliguri', sans-serif"
+                            },
+                            bodyFont: {
+                                family: "'Poppins', 'Hind Siliguri', sans-serif"
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: isAnimating ? 2000 : 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    rotation: parseInt(document.getElementById('rotation').value) * (Math.PI / 180),
+                    circumference: 360,
+                    cutout: chartType === 'donut' ? '50%' : '0%'
+                };
+                
+                // Create pie chart
+                pieChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: chartData,
+                    options: options
+                });
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Update data table
+                updateDataTable();
+                
+                // Update chart legend
+                updateChartLegend();
+                
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                showLoading(false);
+            }
+
+            function updateStatistics() {
+                const total = categories.reduce((sum, cat) => sum + cat.value, 0);
+                const percentages = categories.map(c => parseFloat(c.percentage));
+                const largestPercentage = Math.max(...percentages);
+                const smallestPercentage = Math.min(...percentages);
+                
+                document.getElementById('totalValue').textContent = total.toFixed(1);
+                document.getElementById('categoryCount').textContent = categories.length;
+                document.getElementById('largestPercentage').textContent = largestPercentage.toFixed(1) + '%';
+                document.getElementById('smallestPercentage').textContent = smallestPercentage.toFixed(1) + '%';
+            }
+
+            function updateDataTable() {
+                const tableBody = document.getElementById('dataTableBody');
+                tableBody.innerHTML = '';
+                
+                const total = categories.reduce((sum, cat) => sum + cat.value, 0);
+                
+                categories.forEach(category => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${category.name}</td>
+                        <td>
+                            <div class="color-cell" style="background: ${category.color};"></div>
+                        </td>
+                        <td>${category.value.toFixed(1)}</td>
+                        <td class="percentage-cell">${category.percentage}%</td>
+                        <td class="angle-cell">${category.angle}°</td>
+                        <td>${category.exploded ? 
+                            `<span style="color: var(--success);"><i class="fas fa-check"></i> ${category.explodedOffset}px</span>` : 
+                            `<span style="color: var(--gray);"><i class="fas fa-times"></i></span>`}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function updateChartLegend() {
+                const legend = document.getElementById('chartLegend');
+                legend.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    legendItem.dataset.id = category.id;
+                    
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background: ${category.color};"></div>
+                        <span class="legend-text">${category.name} (${category.percentage}%)</span>
+                    `;
+                    
+                    legendItem.addEventListener('click', function() {
+                        // Toggle category visibility
+                        const index = categories.findIndex(c => c.id === category.id);
+                        if (index !== -1) {
+                            // In a real implementation, you would hide/show the segment
+                            // For now, we'll just toggle the legend item style
+                            this.classList.toggle('hidden');
+                        }
+                    });
+                    
+                    legend.appendChild(legendItem);
+                });
+            }
+
+            function toggleAnimation() {
+                isAnimating = !isAnimating;
+                const btn = document.getElementById('animateBtn');
+                
+                if (isAnimating) {
+                    btn.innerHTML = '<i class="fas fa-pause"></i>' + 
+                        (currentLanguage === 'bn' ? 'বন্ধ করুন' : 'Pause');
+                    btn.style.background = 'var(--warning)';
+                    
+                    // Restart animation
+                    if (pieChart) {
+                        pieChart.options.animation.duration = 2000;
+                        pieChart.update();
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fas fa-play"></i>' + 
+                        (currentLanguage === 'bn' ? 'অ্যানিমেট করুন' : 'Animate');
+                    btn.style.background = '';
+                    
+                    if (pieChart) {
+                        pieChart.options.animation.duration = 1000;
+                        pieChart.update();
+                    }
+                }
+            }
+
+            function highlightLargestSegment() {
+                if (!pieChart || categories.length === 0) return;
+                
+                // Find largest segment
+                const largestIndex = categories.reduce((maxIndex, cat, index) => 
+                    cat.value > categories[maxIndex].value ? index : maxIndex, 0);
+                
+                // Highlight by exploding it
+                categories.forEach((cat, index) => {
+                    cat.exploded = index === largestIndex;
+                    cat.explodedOffset = index === largestIndex ? 20 : 0;
+                });
+                
+                updateCategoryList();
+                generatePieChart();
+                
+                // Show notification
+                const largestCategory = categories[largestIndex];
+                alert(currentLanguage === 'bn' ? 
+                    `সবচেয়ে বড় অংশ: ${largestCategory.name} (${largestCategory.percentage}%)` : 
+                    `Largest segment: ${largestCategory.name} (${largestCategory.percentage}%)`);
+            }
+
+            function sortBySize() {
+                // Sort categories by value (descending)
+                categories.sort((a, b) => b.value - a.value);
+                updateCategoryList();
+                generatePieChart();
+            }
+
+            function resetView() {
+                // Reset all customizations
+                document.getElementById('borderWidth').value = 2;
+                document.getElementById('rotation').value = 0;
+                document.getElementById('showPercentages').checked = true;
+                document.getElementById('showValues').checked = true;
+                document.getElementById('showLabels').checked = true;
+                document.getElementById('showLegend').checked = true;
+                
+                // Reset exploded segments
+                categories.forEach(cat => {
+                    cat.exploded = false;
+                    cat.explodedOffset = 0;
+                });
+                
+                updateCategoryList();
+                generatePieChart();
+            }
+
+            function exportAsPNG() {
+                if (!pieChart) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি চার্ট তৈরি করুন' : 
+                        'Please generate a chart first');
+                    return;
+                }
+                
+                const chartContainer = document.querySelector('.chart-container');
+                
+                html2canvas(chartContainer).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `piechart_${new Date().getTime()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }
+
+            function exportAsCSV() {
+                if (categories.length === 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে কিছু ক্যাটাগরি যোগ করুন' : 
+                        'Please add some categories first');
+                    return;
+                }
+                
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Pie Chart Data Export\n";
+                csvContent += `Generated: ${new Date().toLocaleString()}\n`;
+                csvContent += `Chart Type: ${chartType}\n\n`;
+                
+                // Headers
+                csvContent += "Category,Value,Percentage,Angle,Color,Exploded,Exploded Offset\n";
+                
+                // Data rows
+                categories.forEach(category => {
+                    csvContent += `"${category.name}",${category.value.toFixed(2)},${category.percentage}%,${category.angle}°,${category.color},${category.exploded},${category.explodedOffset}\n`;
+                });
+                
+                // Summary
+                const total = categories.reduce((sum, cat) => sum + cat.value, 0);
+                csvContent += `\nTotal:,${total.toFixed(2)},100%,360°\n`;
+                csvContent += `Categories:,${categories.length}\n`;
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `piechart_data_${new Date().getTime()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function clearAll() {
+                // Reset to default categories
+                categories = [
+                    { id: 1, name: 'Category 1', value: 45, color: '#6C63FF', exploded: false, explodedOffset: 0 },
+                    { id: 2, name: 'Category 2', value: 30, color: '#FF6584', exploded: false, explodedOffset: 0 },
+                    { id: 3, name: 'Category 3', value: 25, color: '#36D1DC', exploded: false, explodedOffset: 0 }
+                ];
+                
+                // Reset inputs
+                document.getElementById('newCategoryName').value = '';
+                document.getElementById('newCategoryValue').value = '10';
+                selectedColor = '#FF9A3D';
+                document.getElementById('selectedColorPreview').style.background = selectedColor;
+                
+                // Reset chart type
+                chartType = 'pie';
+                document.querySelectorAll('.chart-type-option').forEach(opt => {
+                    opt.classList.remove('active');
+                    if (opt.dataset.type === 'pie') opt.classList.add('active');
+                });
+                
+                // Reset customizations
+                resetView();
+                
+                // Destroy chart
+                if (pieChart) {
+                    pieChart.destroy();
+                    pieChart = null;
+                }
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Update UI
+                updateCategoryList();
+            }
+
+            function showLoading(show) {
+                const loadingElement = document.getElementById('chartLoading');
+                if (show) {
+                    loadingElement.classList.add('show');
+                } else {
+                    loadingElement.classList.remove('show');
+                }
+            }
+
+            function showError(message) {
+                alert(message);
+            }
+        });
+    </script>
+</body>
+</html>

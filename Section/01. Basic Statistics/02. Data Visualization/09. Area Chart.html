@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>এরিয়া চার্ট জেনারেটর | ডেটা ভিজ্যুয়ালাইজেশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --area-1: #6C63FF;
+            --area-2: #FF6584;
+            --area-3: #36D1DC;
+            --area-4: #FF9A3D;
+            --area-5: #5B86E5;
+            --area-6: #9B59B6;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--area-1), var(--area-2), var(--area-3));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Categories Input */
+        .categories-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Series Management */
+        .series-management {
+            margin-bottom: 1.5rem;
+        }
+
+        .series-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .add-series-btn {
+            padding: 0.7rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .add-series-btn:hover {
+            background: var(--secondary);
+        }
+
+        .series-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .series-item {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .series-item.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .series-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .series-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .series-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .series-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .series-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .series-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .series-action-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .series-data-input {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            background: rgba(255,255,255,0.1);
+            color: inherit;
+        }
+
+        .series-data-input:focus {
+            outline: none;
+            border-color: white;
+        }
+
+        /* Chart Type Selection */
+        .chart-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-type-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .chart-type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Chart Settings */
+        .chart-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-select, .setting-input {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .gradient-preview {
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            margin-top: 0.25rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #areaChart {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+        }
+
+        /* Cumulative Total Display */
+        .cumulative-display {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .cumulative-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cumulative-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .cumulative-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .cumulative-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--dark);
+        }
+
+        .cumulative-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Statistics Dashboard */
+        .stats-dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Stack Analysis */
+        .stack-analysis {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .percentage-cell {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Gradient Gallery */
+        .gradient-gallery {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .gradient-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gradient-item {
+            height: 60px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+
+        .gradient-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .gradient-item.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .gradient-name {
+            position: absolute;
+            bottom: 5px;
+            left: 10px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Export Options */
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .legend-name {
+            font-weight: 500;
+        }
+
+        .legend-toggle {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Tooltip */
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            min-width: 200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .tooltip-header {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tooltip-content {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .tooltip-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .tooltip-series {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .tooltip-value {
+            font-weight: 600;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .control-panel,
+            .chart-section,
+            .stats-dashboard,
+            .stack-analysis,
+            .gradient-gallery,
+            .export-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .chart-types {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-settings {
+                grid-template-columns: 1fr;
+            }
+            
+            .series-container {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Area Chart Generator" data-bn="এরিয়া চার্ট জেনারেটর">এরিয়া চার্ট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create area charts to visualize cumulative data with stacked area charts, cumulative totals, and gradient fills" data-bn="স্ট্যাকড এরিয়া চার্ট, কিউমুলেটিভ টোটাল এবং গ্রেডিয়েন্ট ফিল সহ কিউমুলেটিভ ডেটা ভিজ্যুয়ালাইজ করতে এরিয়া চার্ট তৈরি করুন">
+                স্ট্যাকড এরিয়া চার্ট, কিউমুলেটিভ টোটাল এবং গ্রেডিয়েন্ট ফিল সহ কিউমুলেটিভ ডেটা ভিজ্যুয়ালাইজ করতে এরিয়া চার্ট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Chart Controls" data-bn="চার্ট কন্ট্রোলস">চার্ট কন্ট্রোলস</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="sample">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Sample Data" data-bn="স্যাম্পল ডেটা">স্যাম্পল ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- Categories Input -->
+                <div class="categories-input">
+                    <label class="input-label">
+                        <i class="fas fa-tags"></i>
+                        <span data-en="Categories (X-axis)" data-bn="ক্যাটাগরিস (X-অক্ষ)">ক্যাটাগরিস (X-অক্ষ)</span>
+                    </label>
+                    <textarea id="categoriesInput" class="data-input" placeholder="ক্যাটাগরি নামগুলো কমা বা স্পেস দ্বারা আলাদা করুন
+উদাহরণ: Jan, Feb, Mar, Apr, May
+বা: Q1, Q2, Q3, Q4">Q1, Q2, Q3, Q4</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Category names for X-axis" data-bn="X-অক্ষের জন্য ক্যাটাগরি নাম">X-অক্ষের জন্য ক্যাটাগরি নাম</span>
+                    </div>
+                </div>
+
+                <!-- Series Management -->
+                <div class="series-management">
+                    <div class="series-header">
+                        <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 0;">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Data Series" data-bn="ডেটা সিরিজ">ডেটা সিরিজ</span>
+                        </h3>
+                        <button class="add-series-btn" id="addSeriesBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Series" data-bn="সিরিজ যোগ">সিরিজ যোগ</span>
+                        </button>
+                    </div>
+                    
+                    <div class="series-container" id="seriesContainer">
+                        <!-- Series items will be added here -->
+                    </div>
+                </div>
+
+                <!-- Chart Type Selection -->
+                <h3 class="section-title" style="font-size: 1.2rem; margin-top: 1.5rem;">
+                    <i class="fas fa-chart-area"></i>
+                    <span data-en="Area Chart Type" data-bn="এরিয়া চার্ট টাইপ">এরিয়া চার্ট টাইপ</span>
+                </h3>
+                
+                <div class="chart-types">
+                    <button class="chart-type-btn active" data-type="stacked">
+                        <i class="fas fa-layer-group"></i>
+                        <span data-en="Stacked Area" data-bn="স্ট্যাকড এরিয়া">স্ট্যাকড এরিয়া</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="percentage">
+                        <i class="fas fa-percentage"></i>
+                        <span data-en="100% Stacked" data-bn="১০০% স্ট্যাকড">১০০% স্ট্যাকড</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="stream">
+                        <i class="fas fa-wave-square"></i>
+                        <span data-en="Stream Graph" data-bn="স্ট্রিম গ্রাফ">স্ট্রিম গ্রাফ</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="basic">
+                        <i class="fas fa-mountain"></i>
+                        <span data-en="Basic Area" data-bn="বেসিক এরিয়া">বেসিক এরিয়া</span>
+                    </button>
+                </div>
+
+                <!-- Chart Settings -->
+                <h3 class="section-title" style="font-size: 1.2rem; margin-top: 1.5rem;">
+                    <i class="fas fa-cog"></i>
+                    <span data-en="Chart Settings" data-bn="চার্ট সেটিংস">চার্ট সেটিংস</span>
+                </h3>
+                
+                <div class="chart-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Gradient Type" data-bn="গ্রেডিয়েন্ট টাইপ">গ্রেডিয়েন্ট টাইপ</span>
+                        </label>
+                        <select id="gradientType" class="setting-select">
+                            <option value="vertical" data-en="Vertical" data-bn="ভার্টিক্যাল">ভার্টিক্যাল</option>
+                            <option value="horizontal" data-en="Horizontal" data-bন="হরাইজন্টাল">হরাইজন্টাল</option>
+                            <option value="diagonal" data-en="Diagonal" data-bন="ডায়াগোনাল">ডায়াগোনাল</option>
+                            <option value="radial" data-en="Radial" data-bন="রেডিয়াল">রেডিয়াল</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-tint"></i>
+                            <span data-en="Opacity Level" data-bন="অপাসিটি লেভেল">অপাসিটি লেভেল</span>
+                        </label>
+                        <select id="opacityLevel" class="setting-select">
+                            <option value="0.7" data-en="High (70%)" data-bন="উচ্চ (৭০%)">উচ্চ (৭০%)</option>
+                            <option value="0.5" data-en="Medium (50%)" data-bন="মিডিয়াম (৫০%)">মিডিয়াম (৫০%)</option>
+                            <option value="0.3" data-en="Low (30%)" data-bন="নিম্ন (৩০%)">নিম্ন (৩০%)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-border-style"></i>
+                            <span data-en="Border Style" data-bন="বর্ডার স্টাইল">বর্ডার স্টাইল</span>
+                        </label>
+                        <select id="borderStyle" class="setting-select">
+                            <option value="solid" data-en="Solid" data-bন="সলিড">সলিড</option>
+                            <option value="dashed" data-en="Dashed" data-bন="ড্যাশড">ড্যাশড</option>
+                            <option value="dotted" data-en="Dotted" data-bন="ডটেড">ডটেড</option>
+                            <option value="none" data-en="None" data-bন="কোনোটিই না">কোনোটিই না</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-sort-amount-up"></i>
+                            <span data-en="Data Sorting" data-bন="ডেটা সর্টিং">ডেটা সর্টিং</span>
+                        </label>
+                        <select id="dataSorting" class="setting-select">
+                            <option value="none" data-en="None" data-bন="কোনোটিই না">কোনোটিই না</option>
+                            <option value="ascending" data-en="Ascending" data-bন="ঊর্ধ্বক্রম">ঊর্ধ্বক্রম</option>
+                            <option value="descending" data-en="Descending" data-bন="অধঃক্রম">অধঃক্রম</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Gradient Preview -->
+                <div class="chart-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-eye"></i>
+                            <span data-en="Gradient Preview" data-bন="গ্রেডিয়েন্ট প্রিভিউ">গ্রেডিয়েন্ট প্রিভিউ</span>
+                        </label>
+                        <div id="gradientPreview" class="gradient-preview"></div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-font"></i>
+                            <span data-en="Font Size" data-bন="ফন্ট সাইজ">ফন্ট সাইজ</span>
+                        </label>
+                        <select id="fontSize" class="setting-select">
+                            <option value="12" data-en="Small" data-bন="ছোট">ছোট</option>
+                            <option value="14" data-en="Medium" data-bন="মিডিয়াম">মিডিয়াম</option>
+                            <option value="16" data-en="Large" data-bন="বড়">বড়</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Chart Titles -->
+                <div class="chart-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-heading"></i>
+                            <span data-en="Chart Title" data-bন="চার্ট শিরোনাম">চার্ট শিরোনাম</span>
+                        </label>
+                        <input type="text" id="chartTitle" class="setting-input" placeholder="Area Chart Analysis" value="কিউমুলেটিভ ডেটা বিশ্লেষণ">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-x"></i>
+                            <span data-en="X-axis Label" data-bন="X-অক্ষ লেবেল">X-অক্ষ লেবেল</span>
+                        </label>
+                        <input type="text" id="xAxisLabel" class="setting-input" placeholder="Time Period" value="সময়কাল">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-y"></i>
+                            <span data-en="Y-axis Label" data-bন="Y-অক্ষ লেবেল">Y-অক্ষ লেবেল</span>
+                        </label>
+                        <input type="text" id="yAxisLabel" class="setting-input" placeholder="Cumulative Value" value="কিউমুলেটিভ মান">
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Generate Chart" data-bন="চার্ট তৈরি করুন">চার্ট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-area"></i>
+                    <span data-en="Area Chart Visualization" data-bন="এরিয়া চার্ট ভিজ্যুয়ালাইজেশন">এরিয়া চার্ট ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="areaChart"></canvas>
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-area"></i>
+                        <p data-en="Add data series and click Generate to create area chart" data-bন="ডেটা সিরিজ যোগ করুন এবং এরিয়া চার্ট তৈরি করতে জেনারেট ক্লিক করুন">
+                            ডেটা সিরিজ যোগ করুন এবং এরিয়া চার্ট তৈরি করতে জেনারেট ক্লিক করুন
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="chart-legend" id="chartLegend">
+                    <!-- Legend items will be added here -->
+                </div>
+
+                <!-- Cumulative Total Display -->
+                <div class="cumulative-display">
+                    <div class="cumulative-title">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Cumulative Totals" data-bন="কিউমুলেটিভ টোটাল">কিউমুলেটিভ টোটাল</span>
+                    </div>
+                    <div class="cumulative-grid" id="cumulativeGrid">
+                        <!-- Cumulative totals will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Tooltip -->
+        <div class="custom-tooltip" id="customTooltip"></div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-dashboard">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Cumulative Statistics" data-bন="কিউমুলেটিভ পরিসংখ্যান">কিউমুলেটিভ পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid" id="statsGrid">
+                <!-- Statistics will be added here -->
+            </div>
+        </div>
+
+        <!-- Stack Analysis -->
+        <div class="stack-analysis">
+            <h2 class="section-title">
+                <i class="fas fa-layer-group"></i>
+                <span data-en="Stack Analysis" data-bন="স্ট্যাক বিশ্লেষণ">স্ট্যাক বিশ্লেষণ</span>
+            </h2>
+            
+            <div id="stackAnalysisTable">
+                <!-- Stack analysis table will be added here -->
+            </div>
+        </div>
+
+        <!-- Gradient Gallery -->
+        <div class="gradient-gallery">
+            <h2 class="section-title">
+                <i class="fas fa-palette"></i>
+                <span data-en="Gradient Presets" data-bন="গ্রেডিয়েন্ট প্রিসেট">গ্রেডিয়েন্ট প্রিসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on gradient presets to apply:" data-bন="প্রয়োগ করতে গ্রেডিয়েন্ট প্রিসেটে ক্লিক করুন:">
+                প্রয়োগ করতে গ্রেডিয়েন্ট প্রিসেটে ক্লিক করুন:
+            </p>
+            
+            <div class="gradient-grid">
+                <div class="gradient-item active" data-gradient="ocean-blue" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="gradient-name" data-en="Ocean Blue" data-bন="ওশেন ব্লু">ওশেন ব্লু</div>
+                </div>
+                <div class="gradient-item" data-gradient="sunset-orange" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="gradient-name" data-en="Sunset Orange" data-bন="সানসেট অরেঞ্জ">সানসেট অরেঞ্জ</div>
+                </div>
+                <div class="gradient-item" data-gradient="emerald-green" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="gradient-name" data-en="Emerald Green" data-bন="এমারেল্ড গ্রিন">এমারেল্ড গ্রিন</div>
+                </div>
+                <div class="gradient-item" data-gradient="royal-purple" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+                    <div class="gradient-name" data-en="Royal Purple" data-bন="রয়্যাল পার্পল">রয়্যাল পার্পল</div>
+                </div>
+                <div class="gradient-item" data-gradient="fire-red" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                    <div class="gradient-name" data-en="Fire Red" data-bন="ফায়ার রেড">ফায়ার রেড</div>
+                </div>
+                <div class="gradient-item" data-gradient="sky-blue" style="background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);">
+                    <div class="gradient-name" data-en="Sky Blue" data-bন="স্কাই ব্লু">স্কাই ব্লু</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                <span data-en="Export Options" data-bন="এক্সপোর্ট অপশন">এক্সপোর্ট অপশন</span>
+            </h2>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportPNG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as PNG" data-bন="PNG হিসেবে ডাউনলোড">PNG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportJPG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as JPG" data-bন="JPG হিসেবে ডাউনলোড">JPG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-en="Download as PDF" data-bন="PDF হিসেবে ডাউনলোড">PDF হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportData">
+                    <i class="fas fa-file-csv"></i>
+                    <span data-en="Export Data (CSV)" data-bন="ডেটা এক্সপোর্ট (CSV)">ডেটা এক্সপোর্ট (CSV)</span>
+                </button>
+                <button class="export-btn" id="shareLink">
+                    <i class="fas fa-share-alt"></i>
+                    <span data-en="Share Chart" data-bন="চার্ট শেয়ার">চার্ট শেয়ার</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Gradient Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gradient"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Chart.js
+            let areaChart = null;
+            let currentLanguage = 'bn';
+            let currentChartType = 'stacked';
+            let seriesCounter = 1;
+            
+            // Color palette for series
+            const colorPalette = [
+                '#6C63FF', '#FF6584', '#36D1DC', '#FF9A3D', 
+                '#5B86E5', '#9B59B6', '#2ECC71', '#E74C3C',
+                '#3498DB', '#F1C40F', '#1ABC9C', '#95A5A6'
+            ];
+            
+            // Gradient presets
+            const gradientPresets = {
+                'ocean-blue': ['#667eea', '#764ba2'],
+                'sunset-orange': ['#f093fb', '#f5576c'],
+                'emerald-green': ['#4facfe', '#00f2fe'],
+                'royal-purple': ['#a18cd1', '#fbc2eb'],
+                'fire-red': ['#ffecd2', '#fcb69f'],
+                'sky-blue': ['#a1c4fd', '#c2e9fb']
+            };
+            
+            // Data series array
+            let series = [
+                {
+                    id: 1,
+                    name: 'Product A',
+                    color: colorPalette[0],
+                    data: [120, 135, 150, 165],
+                    visible: true,
+                    gradientStart: colorPalette[0],
+                    gradientEnd: colorPalette[0] + '80'
+                },
+                {
+                    id: 2,
+                    name: 'Product B',
+                    color: colorPalette[1],
+                    data: [80, 95, 110, 125],
+                    visible: true,
+                    gradientStart: colorPalette[1],
+                    gradientEnd: colorPalette[1] + '80'
+                },
+                {
+                    id: 3,
+                    name: 'Product C',
+                    color: colorPalette[2],
+                    data: [60, 75, 90, 105],
+                    visible: true,
+                    gradientStart: colorPalette[2],
+                    gradientEnd: colorPalette[2] + '80'
+                }
+            ];
+            
+            // Sample data
+            const sampleData = {
+                title: 'Quarterly Sales Distribution',
+                xLabel: 'Quarters',
+                yLabel: 'Sales (in thousands)',
+                categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+                series: [
+                    {
+                        name: 'Product A',
+                        data: [120, 135, 150, 165],
+                        color: colorPalette[0]
+                    },
+                    {
+                        name: 'Product B',
+                        data: [80, 95, 110, 125],
+                        color: colorPalette[1]
+                    },
+                    {
+                        name: 'Product C',
+                        data: [60, 75, 90, 105],
+                        color: colorPalette[2]
+                    }
+                ]
+            };
+
+            // Initialize the application
+            initAreaChartGenerator();
+
+            function initAreaChartGenerator() {
+                // Language Toggle
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input Methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'sample') {
+                            loadSampleData();
+                        }
+                    });
+                });
+
+                // Chart Type Selection
+                document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentChartType = this.dataset.type;
+                        updateGradientPreview();
+                        
+                        if (areaChart) {
+                            generateChart();
+                        }
+                    });
+                });
+
+                // Add Series Button
+                document.getElementById('addSeriesBtn').addEventListener('click', addSeries);
+
+                // Gradient Type Change
+                document.getElementById('gradientType').addEventListener('change', updateGradientPreview);
+                document.getElementById('opacityLevel').addEventListener('change', updateGradientPreview);
+
+                // Gradient Gallery
+                document.querySelectorAll('.gradient-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.gradient-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                        applyGradientPreset(this.dataset.gradient);
+                    });
+                });
+
+                // Generate Button
+                document.getElementById('generateBtn').addEventListener('click', generateChart);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Export Buttons
+                document.getElementById('exportPNG').addEventListener('click', () => exportChart('png'));
+                document.getElementById('exportJPG').addEventListener('click', () => exportChart('jpg'));
+                document.getElementById('exportPDF').addEventListener('click', exportPDF);
+                document.getElementById('exportData').addEventListener('click', exportCSV);
+                document.getElementById('shareLink').addEventListener('click', shareChart);
+
+                // Set Bengali as default language
+                setLanguage('bn');
+
+                // Initialize series container
+                updateSeriesContainer();
+
+                // Initialize gradient preview
+                updateGradientPreview();
+
+                // Generate initial chart
+                setTimeout(() => {
+                    generateChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update series names
+                updateSeriesContainer();
+
+                // Update chart if exists
+                if (areaChart) {
+                    updateChartLanguage();
+                }
+            }
+
+            function parseCategories(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const items = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                return items;
+            }
+
+            function parseSeriesData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function addSeries() {
+                seriesCounter++;
+                const seriesId = Date.now();
+                const colorIndex = (series.length) % colorPalette.length;
+                const color = colorPalette[colorIndex];
+                
+                // Get categories count
+                const categories = parseCategories(document.getElementById('categoriesInput').value);
+                const defaultLength = categories.length || 4;
+                
+                // Create new series
+                const newSeries = {
+                    id: seriesId,
+                    name: `Series ${seriesCounter}`,
+                    color: color,
+                    data: Array(defaultLength).fill(0).map(() => Math.floor(Math.random() * 100) + 20),
+                    visible: true,
+                    gradientStart: color,
+                    gradientEnd: color + '80'
+                };
+                
+                series.push(newSeries);
+                updateSeriesContainer();
+                
+                // Regenerate chart if exists
+                if (areaChart) {
+                    generateChart();
+                }
+            }
+
+            function removeSeries(seriesId) {
+                if (series.length <= 1) {
+                    alert(currentLanguage === 'bn' ? 
+                        'কমপক্ষে একটি সিরিজ থাকতে হবে' : 
+                        'At least one series must remain');
+                    return;
+                }
+                
+                series = series.filter(s => s.id !== seriesId);
+                updateSeriesContainer();
+                
+                if (areaChart) {
+                    generateChart();
+                }
+            }
+
+            function updateSeriesContainer() {
+                const container = document.getElementById('seriesContainer');
+                container.innerHTML = '';
+                
+                series.forEach((s, index) => {
+                    const seriesElement = document.createElement('div');
+                    seriesElement.className = `series-item ${s.visible ? 'active' : ''}`;
+                    seriesElement.style.borderLeftColor = s.color;
+                    seriesElement.style.background = s.visible ? s.color + '20' : 'var(--light-gray)';
+                    
+                    seriesElement.innerHTML = `
+                        <div class="series-header-row">
+                            <div class="series-info">
+                                <div class="series-color" style="background: ${s.color};"></div>
+                                <span class="series-name">${s.name}</span>
+                            </div>
+                            <div class="series-actions">
+                                <button class="series-action-btn edit-series" data-id="${s.id}" title="${currentLanguage === 'bn' ? 'সম্পাদনা' : 'Edit'}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="series-action-btn remove-series" data-id="${s.id}" title="${currentLanguage === 'bn' ? 'মুছে ফেলা' : 'Remove'}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="text" class="series-data-input" 
+                               data-id="${s.id}"
+                               placeholder="${currentLanguage === 'bn' ? 'ডেটা মান (কমা দ্বারা আলাদা)' : 'Data values (comma separated)'}"
+                               value="${s.data.join(', ')}">
+                    `;
+                    
+                    container.appendChild(seriesElement);
+                    
+                    // Add event listeners
+                    const dataInput = seriesElement.querySelector('.series-data-input');
+                    dataInput.addEventListener('input', function() {
+                        const values = parseSeriesData(this.value);
+                        if (values.length > 0) {
+                            s.data = values;
+                            if (areaChart) {
+                                generateChart();
+                            }
+                        }
+                    });
+                    
+                    // Toggle visibility
+                    seriesElement.addEventListener('click', function(e) {
+                        if (!e.target.closest('.series-actions')) {
+                            s.visible = !s.visible;
+                            this.classList.toggle('active');
+                            this.style.background = s.visible ? s.color + '20' : 'var(--light-gray)';
+                            
+                            if (areaChart) {
+                                updateSeriesVisibility(s.id, s.visible);
+                                updateLegend();
+                            }
+                        }
+                    });
+                });
+                
+                // Add event listeners for action buttons
+                document.querySelectorAll('.edit-series').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const seriesId = parseInt(this.dataset.id);
+                        editSeries(seriesId);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-series').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const seriesId = parseInt(this.dataset.id);
+                        removeSeries(seriesId);
+                    });
+                });
+            }
+
+            function editSeries(seriesId) {
+                const s = series.find(series => series.id === seriesId);
+                if (!s) return;
+                
+                const newName = prompt(currentLanguage === 'bn' ? 
+                    'সিরিজের নতুন নাম লিখুন:' : 
+                    'Enter new series name:', s.name);
+                
+                if (newName && newName.trim()) {
+                    s.name = newName.trim();
+                    updateSeriesContainer();
+                    
+                    if (areaChart) {
+                        generateChart();
+                    }
+                }
+            }
+
+            function updateGradientPreview() {
+                const gradientType = document.getElementById('gradientType').value;
+                const opacity = parseFloat(document.getElementById('opacityLevel').value);
+                const preview = document.getElementById('gradientPreview');
+                
+                let gradientStyle;
+                
+                switch(gradientType) {
+                    case 'vertical':
+                        gradientStyle = `linear-gradient(to bottom, rgba(108, 99, 255, ${opacity}), rgba(108, 99, 255, 0.1))`;
+                        break;
+                    case 'horizontal':
+                        gradientStyle = `linear-gradient(to right, rgba(108, 99, 255, ${opacity}), rgba(108, 99, 255, 0.1))`;
+                        break;
+                    case 'diagonal':
+                        gradientStyle = `linear-gradient(135deg, rgba(108, 99, 255, ${opacity}), rgba(108, 99, 255, 0.1))`;
+                        break;
+                    case 'radial':
+                        gradientStyle = `radial-gradient(circle, rgba(108, 99, 255, ${opacity}), rgba(108, 99, 255, 0.1))`;
+                        break;
+                }
+                
+                preview.style.background = gradientStyle;
+            }
+
+            function applyGradientPreset(presetName) {
+                if (gradientPresets[presetName]) {
+                    const colors = gradientPresets[presetName];
+                    const gradientType = document.getElementById('gradientType').value;
+                    const opacity = parseFloat(document.getElementById('opacityLevel').value);
+                    const preview = document.getElementById('gradientPreview');
+                    
+                    let gradientStyle;
+                    
+                    switch(gradientType) {
+                        case 'vertical':
+                            gradientStyle = `linear-gradient(to bottom, ${colors[0]}, ${colors[1]})`;
+                            break;
+                        case 'horizontal':
+                            gradientStyle = `linear-gradient(to right, ${colors[0]}, ${colors[1]})`;
+                            break;
+                        case 'diagonal':
+                            gradientStyle = `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
+                            break;
+                        case 'radial':
+                            gradientStyle = `radial-gradient(circle, ${colors[0]}, ${colors[1]})`;
+                            break;
+                    }
+                    
+                    preview.style.background = gradientStyle;
+                    
+                    // Apply gradient to series
+                    series.forEach((s, index) => {
+                        const hueShift = index * 60; // Shift hue for each series
+                        s.gradientStart = colors[0];
+                        s.gradientEnd = colors[1];
+                    });
+                    
+                    if (areaChart) {
+                        generateChart();
+                    }
+                }
+            }
+
+            function generateChart() {
+                // Get categories
+                const categories = parseCategories(document.getElementById('categoriesInput').value);
+                if (categories.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে কমপক্ষে একটি ক্যাটাগরি ইনপুট করুন' : 
+                        'Please enter at least one category');
+                    return;
+                }
+                
+                // Update series data from inputs
+                document.querySelectorAll('.series-data-input').forEach(input => {
+                    const seriesId = parseInt(input.dataset.id);
+                    const s = series.find(series => series.id === seriesId);
+                    if (s) {
+                        const values = parseSeriesData(input.value);
+                        if (values.length > 0) {
+                            s.data = values;
+                        }
+                    }
+                });
+                
+                // Validate data
+                const valid = series.every(s => s.data.length === categories.length);
+                if (!valid) {
+                    alert(currentLanguage === 'bn' ? 
+                        `প্রত্যেক সিরিজে ঠিক ${categories.length}টি মান থাকতে হবে` : 
+                        `Each series must have exactly ${categories.length} values`);
+                    return;
+                }
+
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                // Get chart settings
+                const chartTitle = document.getElementById('chartTitle').value || 'Area Chart';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'X-axis';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Y-axis';
+                const gradientType = document.getElementById('gradientType').value;
+                const opacity = parseFloat(document.getElementById('opacityLevel').value);
+                const borderStyle = document.getElementById('borderStyle').value;
+                const dataSorting = document.getElementById('dataSorting').value;
+                const fontSize = parseInt(document.getElementById('fontSize').value);
+                
+                // Sort data if needed
+                if (dataSorting !== 'none') {
+                    sortData(dataSorting);
+                }
+                
+                // Create or update chart
+                createChart(categories, chartTitle, xAxisLabel, yAxisLabel, gradientType, opacity, borderStyle, fontSize);
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Update cumulative totals
+                updateCumulativeTotals(categories);
+                
+                // Update stack analysis
+                updateStackAnalysis(categories);
+                
+                // Update legend
+                updateLegend();
+            }
+
+            function sortData(sortingType) {
+                // Sort each series individually based on selected sorting
+                series.forEach(s => {
+                    const sortedData = [...s.data];
+                    
+                    if (sortingType === 'ascending') {
+                        sortedData.sort((a, b) => a - b);
+                    } else if (sortingType === 'descending') {
+                        sortedData.sort((a, b) => b - a);
+                    }
+                    
+                    s.data = sortedData;
+                });
+            }
+
+            function createChart(labels, chartTitle, xAxisLabel, yAxisLabel, gradientType, opacity, borderStyle, fontSize) {
+                const ctx = document.getElementById('areaChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (areaChart) {
+                    areaChart.destroy();
+                }
+                
+                // Prepare datasets for Chart.js
+                const datasets = series.map(s => {
+                    // Create gradient based on type
+                    let gradient;
+                    const chartArea = ctx.canvas.getBoundingClientRect();
+                    
+                    switch(gradientType) {
+                        case 'vertical':
+                            gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            break;
+                        case 'horizontal':
+                            gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+                            break;
+                        case 'diagonal':
+                            gradient = ctx.createLinearGradient(chartArea.left, chartArea.bottom, chartArea.right, chartArea.top);
+                            break;
+                        case 'radial':
+                            const centerX = (chartArea.right - chartArea.left) / 2;
+                            const centerY = (chartArea.bottom - chartArea.top) / 2;
+                            const radius = Math.max(centerX, centerY);
+                            gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                            break;
+                    }
+                    
+                    if (gradient) {
+                        gradient.addColorStop(0, s.gradientStart);
+                        gradient.addColorStop(1, s.gradientEnd);
+                    }
+                    
+                    // Configure border style
+                    let borderDash = [];
+                    let borderWidth = 2;
+                    
+                    if (borderStyle === 'dashed') {
+                        borderDash = [5, 5];
+                    } else if (borderStyle === 'dotted') {
+                        borderDash = [2, 2];
+                    } else if (borderStyle === 'none') {
+                        borderWidth = 0;
+                    }
+                    
+                    return {
+                        label: s.name,
+                        data: s.data,
+                        backgroundColor: gradient || s.color + Math.round(opacity * 255).toString(16).padStart(2, '0'),
+                        borderColor: s.color,
+                        borderWidth: borderWidth,
+                        borderDash: borderDash,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: s.color,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        hidden: !s.visible
+                    };
+                });
+                
+                // Chart configuration based on type
+                let scalesConfig = {
+                    x: {
+                        title: {
+                            display: true,
+                            text: xAxisLabel,
+                            font: {
+                                size: fontSize,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        },
+                        stacked: currentChartType !== 'basic'
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: yAxisLabel,
+                            font: {
+                                size: fontSize,
+                                weight: 'bold'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        },
+                        stacked: currentChartType !== 'basic',
+                        beginAtZero: true
+                    }
+                };
+                
+                // For percentage stacked area
+                if (currentChartType === 'percentage') {
+                    scalesConfig.y.ticks = {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    };
+                }
+                
+                // For stream graph
+                if (currentChartType === 'stream') {
+                    // Stream graph has symmetrical scaling
+                    scalesConfig.y.stacked = true;
+                    scalesConfig.y.suggestedMin = -50;
+                    scalesConfig.y.suggestedMax = 50;
+                }
+                
+                // Chart configuration
+                const config = {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // We'll use custom legend
+                            },
+                            tooltip: {
+                                enabled: false, // We'll use custom tooltip
+                                external: externalTooltipHandler
+                            },
+                            title: {
+                                display: true,
+                                text: chartTitle,
+                                font: {
+                                    size: fontSize + 2,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        scales: scalesConfig,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                };
+                
+                // Create chart
+                areaChart = new Chart(ctx, config);
+                
+                // Register custom tooltip handler
+                ctx.canvas.addEventListener('mousemove', handleMouseMove);
+                ctx.canvas.addEventListener('mouseleave', handleMouseLeave);
+            }
+
+            function externalTooltipHandler(context) {
+                // Custom tooltip implementation
+                const tooltip = document.getElementById('customTooltip');
+                
+                if (context.tooltip.opacity === 0) {
+                    tooltip.style.display = 'none';
+                    return;
+                }
+                
+                const chart = context.chart;
+                const position = chart.canvas.getBoundingClientRect();
+                const index = context.tooltip.dataPoints[0].dataIndex;
+                const label = chart.data.labels[index];
+                
+                // Calculate cumulative total for this point
+                let cumulativeTotal = 0;
+                context.tooltip.dataPoints.forEach(point => {
+                    cumulativeTotal += point.raw;
+                });
+                
+                // Build tooltip content
+                let content = `<div class="tooltip-header">${label}</div><div class="tooltip-content">`;
+                
+                // Add individual series values
+                context.tooltip.dataPoints.forEach(point => {
+                    const series = chart.data.datasets[point.datasetIndex];
+                    const percentage = cumulativeTotal > 0 ? ((point.raw / cumulativeTotal) * 100).toFixed(1) : 0;
+                    
+                    content += `
+                        <div class="tooltip-item">
+                            <div class="tooltip-series">
+                                <div class="tooltip-color" style="background: ${series.borderColor};"></div>
+                                <span>${series.label}</span>
+                            </div>
+                            <span class="tooltip-value">${point.raw} (${percentage}%)</span>
+                        </div>
+                    `;
+                });
+                
+                // Add cumulative total
+                content += `
+                    <div class="tooltip-item" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <div class="tooltip-series">
+                            <i class="fas fa-calculator" style="font-size: 0.8rem;"></i>
+                            <span style="font-weight: 600;">${currentLanguage === 'bn' ? 'মোট' : 'Total'}</span>
+                        </div>
+                        <span class="tooltip-value" style="color: #36D1DC;">${cumulativeTotal}</span>
+                    </div>
+                `;
+                
+                content += '</div>';
+                tooltip.innerHTML = content;
+                
+                // Position tooltip
+                const left = position.left + context.tooltip.caretX;
+                const top = position.top + context.tooltip.caretY;
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = (top - tooltip.offsetHeight - 10) + 'px';
+                tooltip.style.display = 'block';
+            }
+
+            function handleMouseMove(event) {
+                if (!areaChart) return;
+                
+                const chart = areaChart;
+                const canvas = chart.canvas;
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                // Show custom cursor for better UX
+                canvas.style.cursor = 'crosshair';
+            }
+
+            function handleMouseLeave() {
+                const tooltip = document.getElementById('customTooltip');
+                tooltip.style.display = 'none';
+                
+                if (areaChart && areaChart.canvas) {
+                    areaChart.canvas.style.cursor = 'default';
+                }
+            }
+
+            function updateSeriesVisibility(seriesId, visible) {
+                if (!areaChart) return;
+                
+                const chart = areaChart;
+                const datasetIndex = series.findIndex(s => s.id === seriesId);
+                
+                if (datasetIndex !== -1) {
+                    chart.setDatasetVisibility(datasetIndex, visible);
+                    chart.update();
+                }
+            }
+
+            function updateLegend() {
+                const legendContainer = document.getElementById('chartLegend');
+                legendContainer.innerHTML = '';
+                
+                series.forEach((s, index) => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = `legend-item ${s.visible ? '' : 'hidden'}`;
+                    legendItem.dataset.index = index;
+                    
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background: ${s.color};"></div>
+                        <span class="legend-name">${s.name}</span>
+                        <div class="legend-toggle">
+                            ${s.visible ? '✓' : '×'}
+                        </div>
+                    `;
+                    
+                    legendContainer.appendChild(legendItem);
+                    
+                    // Add click event
+                    legendItem.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        const seriesItem = series[index];
+                        seriesItem.visible = !seriesItem.visible;
+                        
+                        this.classList.toggle('hidden');
+                        this.querySelector('.legend-toggle').textContent = seriesItem.visible ? '✓' : '×';
+                        
+                        // Update chart
+                        updateSeriesVisibility(seriesItem.id, seriesItem.visible);
+                        
+                        // Update series container
+                        updateSeriesContainer();
+                    });
+                });
+            }
+
+            function updateStatistics() {
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = '';
+                
+                // Calculate overall statistics
+                let allValues = [];
+                series.forEach(s => {
+                    allValues = allValues.concat(s.data);
+                });
+                
+                const maxValue = Math.max(...allValues);
+                const minValue = Math.min(...allValues);
+                const total = allValues.reduce((a, b) => a + b, 0);
+                const average = total / allValues.length;
+                
+                // Calculate stack statistics
+                let stackMax = 0;
+                let stackMin = Infinity;
+                
+                // For each data point, calculate stacked total
+                const categories = parseCategories(document.getElementById('categoriesInput').value);
+                categories.forEach((_, index) => {
+                    let stackTotal = 0;
+                    series.forEach(s => {
+                        if (s.visible) {
+                            stackTotal += s.data[index];
+                        }
+                    });
+                    
+                    stackMax = Math.max(stackMax, stackTotal);
+                    stackMin = Math.min(stackMin, stackTotal);
+                });
+                
+                // Statistics cards
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${series.length}</div>
+                        <div class="stat-label" data-en="Total Series" data-bn="মোট সিরিজ">মোট সিরিজ</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${total.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Grand Total" data-bন="গ্র্যান্ড টোটাল">গ্র্যান্ড টোটাল</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${stackMax.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Peak Stack" data-bন="পিক স্ট্যাক">পিক স্ট্যাক</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${stackMin.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Min Stack" data-bন="মিনিমাম স্ট্যাক">মিনিমাম স্ট্যাক</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${(stackMax - stackMin).toLocaleString()}</div>
+                        <div class="stat-label" data-en="Stack Range" data-bন="স্ট্যাক রেঞ্জ">স্ট্যাক রেঞ্জ</div>
+                    </div>
+                `;
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateCumulativeTotals(categories) {
+                const cumulativeGrid = document.getElementById('cumulativeGrid');
+                cumulativeGrid.innerHTML = '';
+                
+                // Calculate cumulative totals for each series
+                series.forEach(s => {
+                    if (!s.visible) return;
+                    
+                    const seriesTotal = s.data.reduce((a, b) => a + b, 0);
+                    const seriesAvg = seriesTotal / s.data.length;
+                    
+                    cumulativeGrid.innerHTML += `
+                        <div class="cumulative-item" style="border-left-color: ${s.color};">
+                            <div class="cumulative-value">${seriesTotal.toLocaleString()}</div>
+                            <div class="cumulative-label">${s.name} ${currentLanguage === 'bn' ? 'টোটাল' : 'Total'}</div>
+                            <div style="font-size: 0.7rem; color: var(--gray); margin-top: 0.25rem;">
+                                Avg: ${seriesAvg.toFixed(1)}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Add overall cumulative total
+                let overallTotal = 0;
+                series.forEach(s => {
+                    if (s.visible) {
+                        overallTotal += s.data.reduce((a, b) => a + b, 0);
+                    }
+                });
+                
+                cumulativeGrid.innerHTML += `
+                    <div class="cumulative-item" style="border-left-color: var(--primary);">
+                        <div class="cumulative-value">${overallTotal.toLocaleString()}</div>
+                        <div class="cumulative-label" data-en="Overall Total" data-bন="সামগ্রিক মোট">সামগ্রিক মোট</div>
+                    </div>
+                `;
+            }
+
+            function updateStackAnalysis(categories) {
+                const container = document.getElementById('stackAnalysisTable');
+                
+                container.innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Category" data-bন="ক্যাটাগরি">ক্যাটাগরি</th>
+                                    ${series.map(s => `
+                                        <th style="background: ${s.color}20;">
+                                            ${s.name}
+                                        </th>
+                                    `).join('')}
+                                    <th data-en="Stack Total" data-bন="স্ট্যাক টোটাল">স্ট্যাক টোটাল</th>
+                                    <th data-en="Stack %" data-bন="স্ট্যাক %">স্ট্যাক %</th>
+                                    <th data-en="Cumulative %" data-bন="কিউমুলেটিভ %">কিউমুলেটিভ %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories.map((category, index) => {
+                                    // Calculate values for this category
+                                    const categoryValues = series.map(s => s.data[index]);
+                                    const stackTotal = categoryValues.reduce((a, b) => a + b, 0);
+                                    
+                                    // Calculate percentages
+                                    const percentages = categoryValues.map(value => 
+                                        stackTotal > 0 ? ((value / stackTotal) * 100).toFixed(1) : 0
+                                    );
+                                    
+                                    // Calculate cumulative percentages
+                                    let cumulativePercent = 0;
+                                    const cumulativePercents = percentages.map(p => {
+                                        cumulativePercent += parseFloat(p);
+                                        return cumulativePercent.toFixed(1);
+                                    });
+                                    
+                                    return `
+                                        <tr>
+                                            <td><strong>${category}</strong></td>
+                                            ${categoryValues.map((value, sIndex) => `
+                                                <td style="background: ${series[sIndex].color}10;">
+                                                    ${value}
+                                                </td>
+                                            `).join('')}
+                                            <td class="highlight">${stackTotal}</td>
+                                            <td>100%</td>
+                                            <td>100%</td>
+                                        </tr>
+                                        <tr style="background: var(--light-gray);">
+                                            <td><em>${currentLanguage === 'bn' ? 'শতকরা' : 'Percentage'}</em></td>
+                                            ${percentages.map((p, sIndex) => `
+                                                <td class="percentage-cell">
+                                                    ${p}%
+                                                </td>
+                                            `).join('')}
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                                <tr class="highlight">
+                                    <td><strong data-en="Series Total" data-bন="সিরিজ টোটাল">সিরিজ টোটাল</strong></td>
+                                    ${series.map(s => {
+                                        const total = s.data.reduce((a, b) => a + b, 0);
+                                        return `
+                                            <td style="background: ${s.color}20;">
+                                                <strong>${total.toLocaleString()}</strong>
+                                            </td>
+                                        `;
+                                    }).join('')}
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function updateChartLanguage() {
+                if (!areaChart) return;
+                
+                const chartTitle = document.getElementById('chartTitle').value || 'Area Chart';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'X-axis';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Y-axis';
+                
+                areaChart.options.plugins.title.text = chartTitle;
+                areaChart.options.scales.x.title.text = xAxisLabel;
+                areaChart.options.scales.y.title.text = yAxisLabel;
+                
+                areaChart.update();
+            }
+
+            function loadSampleData() {
+                // Load sample data
+                document.getElementById('categoriesInput').value = sampleData.categories.join(', ');
+                document.getElementById('chartTitle').value = sampleData.title;
+                document.getElementById('xAxisLabel').value = sampleData.xLabel;
+                document.getElementById('yAxisLabel').value = sampleData.yLabel;
+                
+                // Create series from sample data
+                series = sampleData.series.map((s, index) => ({
+                    id: index + 1,
+                    name: s.name,
+                    color: s.color,
+                    data: s.data,
+                    visible: true,
+                    gradientStart: s.color,
+                    gradientEnd: s.color + '80'
+                }));
+                
+                seriesCounter = series.length;
+                updateSeriesContainer();
+                generateChart();
+            }
+
+            function exportChart(format) {
+                if (!areaChart) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি এরিয়া চার্ট তৈরি করুন' : 
+                        'Please generate an area chart first');
+                    return;
+                }
+                
+                const link = document.createElement('a');
+                link.download = `area-chart.${format}`;
+                link.href = areaChart.toBase64Image();
+                link.click();
+            }
+
+            function exportPDF() {
+                alert(currentLanguage === 'bn' ? 
+                    'PDF এক্সপোর্ট সেটআপ প্রয়োজন' : 
+                    'PDF export requires additional setup');
+            }
+
+            function exportCSV() {
+                const categories = parseCategories(document.getElementById('categoriesInput').value);
+                
+                let csv = 'Category,' + series.map(s => s.name).join(',') + ',Stack Total\n';
+                
+                categories.forEach((category, index) => {
+                    const rowValues = series.map(s => s.data[index]);
+                    const stackTotal = rowValues.reduce((a, b) => a + b, 0);
+                    csv += `${category},${rowValues.join(',')},${stackTotal}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.download = 'area-chart-data.csv';
+                link.href = window.URL.createObjectURL(blob);
+                link.click();
+            }
+
+            function shareChart() {
+                // Create a shareable configuration
+                const config = {
+                    chartType: currentChartType,
+                    title: document.getElementById('chartTitle').value,
+                    xLabel: document.getElementById('xAxisLabel').value,
+                    yLabel: document.getElementById('yAxisLabel').value,
+                    categories: parseCategories(document.getElementById('categoriesInput').value),
+                    series: series.map(s => ({
+                        name: s.name,
+                        data: s.data,
+                        color: s.color,
+                        gradientStart: s.gradientStart,
+                        gradientEnd: s.gradientEnd
+                    }))
+                };
+                
+                // Convert to JSON and create a data URL
+                const jsonString = JSON.stringify(config, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create a temporary link to download the config
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'area-chart-config.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert(currentLanguage === 'bn' ? 
+                    'চার্ট কনফিগারেশন ফাইল ডাউনলোড হয়েছে। অন্যকে শেয়ার করতে এই ফাইলটি পাঠান।' : 
+                    'Chart configuration file downloaded. Share this file with others to load the same chart.');
+            }
+
+            function clearAll() {
+                // Reset to single series
+                series = [
+                    {
+                        id: 1,
+                        name: 'Series 1',
+                        color: colorPalette[0],
+                        data: [],
+                        visible: true,
+                        gradientStart: colorPalette[0],
+                        gradientEnd: colorPalette[0] + '80'
+                    }
+                ];
+                
+                seriesCounter = 1;
+                
+                // Clear inputs
+                document.getElementById('categoriesInput').value = '';
+                document.getElementById('chartTitle').value = '';
+                document.getElementById('xAxisLabel').value = '';
+                document.getElementById('yAxisLabel').value = '';
+                
+                // Update UI
+                updateSeriesContainer();
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Clear statistics and displays
+                document.getElementById('statsGrid').innerHTML = '';
+                document.getElementById('cumulativeGrid').innerHTML = '';
+                document.getElementById('stackAnalysisTable').innerHTML = '';
+                document.getElementById('chartLegend').innerHTML = '';
+                
+                // Reset gradient gallery
+                document.querySelectorAll('.gradient-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector('.gradient-item[data-gradient="ocean-blue"]').classList.add('active');
+                
+                // Destroy chart
+                if (areaChart) {
+                    areaChart.destroy();
+                    areaChart = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

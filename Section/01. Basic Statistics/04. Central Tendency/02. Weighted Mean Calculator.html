@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ভরযুক্ত গড় ক্যালকুলেটর | Weighted Mean Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #EE5A52;
+            --accent: #4ECDC4;
+            --success: #45B7D1;
+            --warning: #FFA726;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --weight-color: #FF6B6B;
+            --value-color: #4ECDC4;
+            --weighted-color: #45B7D1;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff5f5 0%, #f0f9ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--weight-color), var(--value-color), var(--weighted-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-label .value {
+            color: var(--value-color);
+        }
+
+        .input-label .weight {
+            color: var(--weight-color);
+        }
+
+        .input-field {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Data Points Management */
+        .data-points-container {
+            margin-top: 1.5rem;
+        }
+
+        .data-points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .add-point-btn {
+            padding: 0.5rem 1rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-point-btn:hover {
+            background: #3db8af;
+            transform: translateY(-2px);
+        }
+
+        .data-points-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .data-point-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 40px;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .data-point-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .point-index {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .remove-point {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .remove-point:hover {
+            transform: scale(1.2);
+        }
+
+        /* Import Presets */
+        .presets-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preset-btn {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .preset-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .preset-btn:hover .preset-icon {
+            color: white;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Main Result Card */
+        .main-result-card {
+            background: linear-gradient(135deg, var(--primary), var(--weighted-color));
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 50%);
+        }
+
+        .result-label {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .result-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .result-formula {
+            font-size: 1.1rem;
+            font-family: 'Times New Roman', serif;
+            opacity: 0.9;
+        }
+
+        /* Comparison Cards */
+        .comparison-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .comparison-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid;
+        }
+
+        .comparison-card.simple {
+            border-color: var(--value-color);
+        }
+
+        .comparison-card.weighted {
+            border-color: var(--weighted-color);
+        }
+
+        .comparison-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .comparison-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .comparison-diff {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Weight Distribution Chart */
+        .weight-distribution {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .distribution-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .distribution-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 200px;
+            gap: 8px;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .distribution-bar {
+            flex: 1;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .distribution-bar .value-bar {
+            width: 100%;
+            background: var(--value-color);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .distribution-bar .weight-bar {
+            width: 100%;
+            background: var(--weight-color);
+            border-radius: 0 0 6px 6px;
+            margin-top: 2px;
+        }
+
+        .distribution-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+
+        .weighted-mean-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--weighted-color);
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .weighted-mean-line::before {
+            content: 'Weighted Mean';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--weighted-color);
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .simple-mean-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--value-color);
+            border-radius: 2px;
+            opacity: 0.6;
+            transform: translateY(-50%);
+            border-style: dashed;
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Weight Impact Chart */
+        .weight-impact-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .impact-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--value-color) 0% 25%,
+                var(--weight-color) 25% 50%,
+                var(--weighted-color) 50% 75%,
+                var(--accent) 75% 100%
+            );
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .impact-center {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.2rem;
+        }
+
+        .impact-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.value { background: var(--value-color); }
+        .legend-color.weight { background: var(--weight-color); }
+        .legend-color.weighted { background: var(--weighted-color); }
+
+        /* Balance Visualization */
+        .balance-visualization {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .balance-beam {
+            width: 80%;
+            height: 4px;
+            background: var(--dark);
+            position: relative;
+            transform-origin: center;
+            transition: transform 0.5s ease;
+        }
+
+        .balance-pivot {
+            width: 10px;
+            height: 10px;
+            background: var(--dark);
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .balance-weight {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transform: translateY(-50%);
+        }
+
+        .weight-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .weight-value {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Step-by-Step Calculation Section */
+        .calculation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--accent);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .highlight-row {
+            background: #e3f2fd !important;
+            font-weight: 600;
+        }
+
+        /* Formula Section */
+        .formula-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .formula-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            background: var(--primary);
+        }
+
+        .formula-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            line-height: 1.8;
+        }
+
+        .formula-explanation {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Grade Point Average Example */
+        .gpa-example {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .gpa-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .gpa-table th, .gpa-table td {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .gpa-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .gpa-table .credit-col {
+            background: #e8f5e9;
+        }
+
+        .gpa-table .grade-col {
+            background: #fff3e0;
+        }
+
+        .gpa-table .total-col {
+            background: #e3f2fd;
+            font-weight: 600;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .presets-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .calculation-section,
+            .formula-section,
+            .gpa-example {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .step-table,
+            .gpa-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Weighted Mean Calculator" data-bn="ভরযুক্ত গড় ক্যালকুলেটর">ভরযুক্ত গড় ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate average with different weights for values - perfect for GPA calculation, weighted averages, and importance-based means" data-bn="মানগুলির জন্য বিভিন্ন ভর ব্যবহার করে গড় গণনা করুন - জিপিএ গণনা, ভরযুক্ত গড় এবং গুরুত্ব-ভিত্তিক গড়ের জন্য উপযুক্ত">
+                মানগুলির জন্য বিভিন্ন ভর ব্যবহার করে গড় গণনা করুন - জিপিএ গণনা, ভরযুক্ত গড় এবং গুরুত্ব-ভিত্তিক গড়ের জন্য উপযুক্ত
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-balance-scale"></i>
+                    <span data-en="Value and Weight Input" data-bn="মান এবং ভর ইনপুট">মান এবং ভর ইনপুট</span>
+                </h2>
+                
+                <!-- Single Input Row -->
+                <div class="data-input-area">
+                    <div class="data-input-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-plus-circle"></i>
+                            <span data-en="Add Data Point" data-bn="ডেটা পয়েন্ট যোগ করুন">ডেটা পয়েন্ট যোগ করুন</span>
+                        </h3>
+                    </div>
+                    
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <i class="fas fa-hashtag value"></i>
+                                <span class="value" data-en="Value" data-bn="মান">মান</span>
+                            </label>
+                            <input type="number" class="input-field" id="valueInput" placeholder="e.g., 85" step="0.01" data-bn-placeholder="যেমন: ৮৫">
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Enter the numerical value" data-bn="সংখ্যাসূচক মান ইনপুট করুন">সংখ্যাসূচক মান ইনপুট করুন</span>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">
+                                <i class="fas fa-weight-hanging weight"></i>
+                                <span class="weight" data-en="Weight" data-bn="ভর">ভর</span>
+                            </label>
+                            <input type="number" class="input-field" id="weightInput" placeholder="e.g., 3" step="0.01" min="0" data-bn-placeholder="যেমন: ৩">
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Enter the weight (importance)" data-bn="ভর (গুরুত্ব) ইনপুট করুন">ভর (গুরুত্ব) ইনপুট করুন</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="add-point-btn" id="addPointBtn">
+                        <i class="fas fa-plus"></i>
+                        <span data-en="Add Point" data-bn="পয়েন্ট যোগ করুন">পয়েন্ট যোগ করুন</span>
+                    </button>
+                </div>
+                
+                <!-- Data Points List -->
+                <div class="data-points-container">
+                    <div class="data-points-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-list-ol"></i>
+                            <span data-en="Data Points" data-bn="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                        </h3>
+                        <span id="pointsCount" style="color: var(--gray); font-weight: 600;">0 points</span>
+                    </div>
+                    
+                    <div class="data-points-list" id="dataPointsList">
+                        <!-- Data points will be added here -->
+                        <div class="data-point-item" data-index="1">
+                            <div class="point-index">1</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--value-color);">Value: <span class="point-value">85</span></div>
+                                <div style="font-size: 0.9rem; color: var(--weight-color);">Weight: <span class="point-weight">3</span></div>
+                            </div>
+                            <button class="remove-point">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="data-point-item" data-index="2">
+                            <div class="point-index">2</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--value-color);">Value: <span class="point-value">92</span></div>
+                                <div style="font-size: 0.9rem; color: var(--weight-color);">Weight: <span class="point-weight">4</span></div>
+                            </div>
+                            <button class="remove-point">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="data-point-item" data-index="3">
+                            <div class="point-index">3</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--value-color);">Value: <span class="point-value">78</span></div>
+                                <div style="font-size: 0.9rem; color: var(--weight-color);">Weight: <span class="point-weight">3</span></div>
+                            </div>
+                            <button class="remove-point">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import Presets -->
+                <div class="presets-section">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-file-import"></i>
+                        <span data-en="Load Preset Examples" data-bn="প্রিসেট উদাহরণ লোড করুন">প্রিসেট উদাহরণ লোড করুন</span>
+                    </h3>
+                    
+                    <div class="presets-grid">
+                        <button class="preset-btn" data-preset="gpa">
+                            <i class="fas fa-graduation-cap preset-icon"></i>
+                            <span data-en="GPA Calculation" data-bn="জিপিএ গণনা">জিপিএ গণনা</span>
+                        </button>
+                        <button class="preset-btn" data-preset="course-grades">
+                            <i class="fas fa-book preset-icon"></i>
+                            <span data-en="Course Grades" data-bn="কোর্স গ্রেড">কোর্স গ্রেড</span>
+                        </button>
+                        <button class="preset-btn" data-preset="survey-results">
+                            <i class="fas fa-poll preset-icon"></i>
+                            <span data-en="Survey Results" data-bn="সার্ভে ফলাফল">সার্ভে ফলাফল</span>
+                        </button>
+                        <button class="preset-btn" data-preset="investment">
+                            <i class="fas fa-chart-line preset-icon"></i>
+                            <span data-en="Investment Returns" data-bn="বিনিয়োগ রিটার্ন">বিনিয়োগ রিটার্ন</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Weighted Mean" data-bn="ভরযুক্ত গড় গণনা করুন">ভরযুক্ত গড় গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Calculation Results" data-bn="গণনার ফলাফল">গণনার ফলাফল</span>
+                </h2>
+                
+                <!-- Main Result -->
+                <div class="main-result-card">
+                    <div class="result-label" data-en="Weighted Mean" data-bন="ভরযুক্ত গড়">ভরযুক্ত গড়</div>
+                    <div class="result-value" id="weightedMeanResult">85.4</div>
+                    <div class="result-formula" id="formulaResult">
+                        <span data-en="Formula: Σ(wx) / Σw = 854 / 10 = 85.4" data-bন="সূত্র: Σ(wx) / Σw = ৮৫৪ / ১০ = ৮৫.৪">
+                            সূত্র: Σ(wx) / Σw = ৮৫৪ / ১০ = ৮৫.৪
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Comparison Cards -->
+                <div class="comparison-cards">
+                    <div class="comparison-card simple">
+                        <div class="comparison-title" data-en="Simple Mean" data-bn="সরল গড়">সরল গড়</div>
+                        <div class="comparison-value" id="simpleMeanResult">85.00</div>
+                        <div class="comparison-diff" data-en="No weights considered" data-bন="কোন ভর বিবেচনা করা হয়নি">
+                            কোন ভর বিবেচনা করা হয়নি
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-card weighted">
+                        <div class="comparison-title" data-en="Weighted Mean" data-bন="ভরযুক্ত গড়">ভরযুক্ত গড়</div>
+                        <div class="comparison-value" id="comparisonWeightedResult">85.40</div>
+                        <div class="comparison-diff">
+                            <span id="differenceText" data-en="+0.40 higher" data-bন="+০.৪০ বেশি">+০.৪০ বেশি</span>
+                            <span id="differencePercent">(+0.47%)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sum of Weighted Values (Σwx)" data-bন="ভরযুক্ত মানের যোগফল (Σwx)">ভরযুক্ত মানের যোগফল (Σwx)</div>
+                        <div class="stat-value" id="sumWeightedResult">854</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Sum of Weights (Σw)" data-bন="ভরের যোগফল (Σw)">ভরের যোগফল (Σw)</div>
+                        <div class="stat-value" id="sumWeightsResult">10</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                        <div class="stat-value" id="countResult">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Weight Range" data-bন="ভর পরিসর">ভর পরিসর</div>
+                        <div class="stat-value" id="weightRangeResult">1 - 4</div>
+                    </div>
+                </div>
+                
+                <!-- Weight Distribution -->
+                <div class="weight-distribution">
+                    <div class="distribution-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-chart-bar"></i>
+                            <span data-en="Weight Distribution" data-bন="ভর বন্টন">ভর বন্টন</span>
+                        </h3>
+                        <span id="distributionInfo" style="color: var(--gray); font-weight: 600;">Weighted vs Simple</span>
+                    </div>
+                    <div class="distribution-bars" id="distributionChart">
+                        <!-- Bars will be generated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Interpretation Guide -->
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #fff3e0; border-radius: 10px; border-left: 4px solid var(--warning);">
+                    <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Interpretation" data-bন="ব্যাখ্যা">ব্যাখ্যা</span>
+                    </h4>
+                    <p id="interpretationText" style="color: var(--gray); line-height: 1.6;" 
+                       data-en="The weighted mean gives more importance to values with higher weights. In this case, the 92 (weight 4) influences the mean more than the 78 (weight 3)."
+                       data-bn="ভরযুক্ত গড় উচ্চতর ভরযুক্ত মানগুলিকে বেশি গুরুত্ব দেয়। এই ক্ষেত্রে, ৯২ (ভর ৪) গড়কে ৭৮ (ভর ৩) এর চেয়ে বেশি প্রভাবিত করে।">
+                        ভরযুক্ত গড় উচ্চতর ভরযুক্ত মানগুলিকে বেশি গুরুত্ব দেয়। এই ক্ষেত্রে, ৯২ (ভর ৪) গড়কে ৭৮ (ভর ৩) এর চেয়ে বেশি প্রভাবিত করে।
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Weight Impact Visualization" data-bn="ভর প্রভাব ভিজ্যুয়ালাইজেশন">ভর প্রভাব ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Weight Impact Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-pie-chart"></i>
+                        <span data-en="Weight Impact Distribution" data-bন="ভর প্রভাব বন্টন">ভর প্রভাব বন্টন</span>
+                    </h3>
+                    <div id="weightImpactChart" class="weight-impact-chart">
+                        <div class="impact-circle">
+                            <div class="impact-center" id="impactCenter">85.4</div>
+                        </div>
+                        <div class="impact-legend" id="impactLegend"></div>
+                    </div>
+                </div>
+
+                <!-- Balance Visualization -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-balance-scale-right"></i>
+                        <span data-en="Weight Balance" data-bন="ভর ভারসাম্য">ভর ভারসাম্য</span>
+                    </h3>
+                    <div id="balanceVisualization" class="balance-visualization">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-balance-scale-right"></i>
+                            <p data-en="Enter data to see balance visualization" data-bন="ডেটা ইনপুট করে ভারসাম্য ভিজ্যুয়ালাইজেশন দেখুন">ডেটা ইনপুট করে ভারসাম্য ভিজ্যুয়ালাইজেশন দেখুন</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Point Average Example -->
+        <div class="gpa-example">
+            <h2 class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                <span data-en="Grade Point Average (GPA) Example" data-bn="গ্রেড পয়েন্ট গড় (জিপিএ) উদাহরণ">গ্রেড পয়েন্ট গড় (জিপিএ) উদাহরণ</span>
+            </h2>
+            
+            <p style="color: var(--gray); margin-bottom: 1rem; line-height: 1.6;" 
+               data-en="GPA is a perfect example of weighted mean. Each course grade is weighted by its credit hours. Courses with more credits have greater impact on the overall GPA."
+               data-bn="জিপিএ হল ভরযুক্ত গড়ের একটি নিখুঁত উদাহরণ। প্রতিটি কোর্স গ্রেড তার ক্রেডিট আওয়ার দ্বারা ওজনযুক্ত হয়। বেশি ক্রেডিটযুক্ত কোর্সগুলি সামগ্রিক জিপিএতে বেশি প্রভাব ফেলে।">
+                জিপিএ হল ভরযুক্ত গড়ের একটি নিখুঁত উদাহরণ। প্রতিটি কোর্স গ্রেড তার ক্রেডিট আওয়ার দ্বারা ওজনযুক্ত হয়। বেশি ক্রেডিটযুক্ত কোর্সগুলি সামগ্রিক জিপিএতে বেশি প্রভাব ফেলে।
+            </p>
+            
+            <table class="gpa-table">
+                <thead>
+                    <tr>
+                        <th data-en="Course" data-bn="কোর্স">কোর্স</th>
+                        <th class="credit-col" data-en="Credits (Weight)" data-bন="ক্রেডিট (ভর)">ক্রেডিট (ভর)</th>
+                        <th class="grade-col" data-en="Grade (Value)" data-bন="গ্রেড (মান)">গ্রেড (মান)</th>
+                        <th data-en="Grade Points" data-bন="গ্রেড পয়েন্ট">গ্রেড পয়েন্ট</th>
+                        <th data-en="Weighted Score" data-bন="ভরযুক্ত স্কোর">ভরযুক্ত স্কোর</th>
+                    </tr>
+                </thead>
+                <tbody id="gpaTableBody">
+                    <!-- GPA data will be populated here -->
+                </tbody>
+                <tfoot>
+                    <tr class="total-col">
+                        <td data-en="Total" data-bন="মোট">মোট</td>
+                        <td id="totalCredits">0</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td id="totalWeighted">0</td>
+                    </tr>
+                    <tr class="total-col">
+                        <td colspan="4" style="text-align: right;" data-en="GPA (Weighted Mean)" data-bন="জিপিএ (ভরযুক্ত গড়)">জিপিএ (ভরযুক্ত গড়)</td>
+                        <td id="gpaResult">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #e8f5e9; border-radius: 8px; border-left: 4px solid var(--accent);">
+                <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                    <i class="fas fa-calculator"></i>
+                    <span data-en="GPA Formula" data-bন="জিপিএ সূত্র">জিপিএ সূত্র</span>
+                </h4>
+                <div class="step-equation" style="font-size: 1.2rem; margin: 0.5rem 0;">
+                    GPA = Σ(Grade × Credits) / Σ(Credits)
+                </div>
+                <p style="color: var(--gray); font-size: 0.9rem;">
+                    <span data-en="Where Grade is typically on a 4.0 scale (A=4.0, B=3.0, etc.)" data-bন="যেখানে গ্রেড সাধারণত ৪.০ স্কেলে (A=৪.০, B=৩.০, ইত্যাদি)">
+                        যেখানে গ্রেড সাধারণত ৪.০ স্কেলে (A=৪.০, B=৩.০, ইত্যাদি)
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation Section -->
+        <div class="calculation-section">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bn="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: List Values and Weights" data-bন="ধাপ ১: মান এবং ভর তালিকাভুক্ত করুন">ধাপ ১: মান এবং ভর তালিকাভুক্ত করুন</h4>
+                            <p data-en="Organize your data with corresponding weights" data-bন="আপনার ডেটা সংশ্লিষ্ট ভর সহ সাজান">আপনার ডেটা সংশ্লিষ্ট ভর সহ সাজান</p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Point" data-bন="পয়েন্ট">পয়েন্ট</th>
+                                            <th data-en="Value (x)" data-bন="মান (x)">মান (x)</th>
+                                            <th data-en="Weight (w)" data-bন="ভর (w)">ভর (w)</th>
+                                            <th data-en="Weighted Value (wx)" data-bন="ভরযুক্ত মান (wx)">ভরযুক্ত মান (wx)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="step1Table">
+                                        <!-- Data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Weighted Values (wx)" data-bন="ধাপ ২: ভরযুক্ত মান গণনা করুন (wx)">ধাপ ২: ভরযুক্ত মান গণনা করুন (wx)</h4>
+                            <p data-en="Multiply each value by its corresponding weight" data-bন="প্রতিটি মানকে তার সংশ্লিষ্ট ভর দ্বারা গুণ করুন">প্রতিটি মানকে তার সংশ্লিষ্ট ভর দ্বারা গুণ করুন</p>
+                            <div class="step-details">
+                                <div class="step-equation" id="step2Equation">
+                                    wx = x × w
+                                </div>
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                            <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="step2Table">
+                                        <!-- Data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Sum Weighted Values and Weights" data-bন="ধাপ ৩: ভরযুক্ত মান এবং ভরের যোগফল নির্ণয় করুন">ধাপ ৩: ভরযুক্ত মান এবং ভরের যোগফল নির্ণয় করুন</h4>
+                            <p data-en="Calculate Σ(wx) and Σw" data-bন="Σ(wx) এবং Σw গণনা করুন">Σ(wx) এবং Σw গণনা করুন</p>
+                            <div class="step-details">
+                                <div class="step-equation" id="step3Equation">
+                                    Σ(wx) = Sum of all weighted values<br>
+                                    Σw = Sum of all weights
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="text-align: center;">
+                                        <div style="font-weight: 600; color: var(--value-color);" data-en="Σ(wx)" data-bন="Σ(wx)">Σ(wx)</div>
+                                        <div style="font-size: 1.2rem; font-weight: 700;" id="step3SumWX">854</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-weight: 600; color: var(--weight-color);" data-en="Σw" data-bন="Σw">Σw</div>
+                                        <div style="font-size: 1.2rem; font-weight: 700;" id="step3SumW">10</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Weighted Mean" data-bন="ধাপ ৪: ভরযুক্ত গড় গণনা করুন">ধাপ ৪: ভরযুক্ত গড় গণনা করুন</h4>
+                            <p data-en="Divide the sum of weighted values by the sum of weights" data-bন="ভরযুক্ত মানের যোগফলকে ভরের যোগফল দ্বারা ভাগ করুন">ভরযুক্ত মানের যোগফলকে ভরের যোগফল দ্বারা ভাগ করুন</p>
+                            <div class="step-details">
+                                <div class="step-equation" id="step4Equation">
+                                    Weighted Mean = Σ(wx) / Σw
+                                </div>
+                                <div class="step-equation" id="step4Calculation">
+                                    Weighted Mean = 854 / 10 = 85.4
+                                </div>
+                                <p id="step4Result" style="text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--weighted-color);"
+                                   data-en="Weighted Mean = 85.40" data-bন="ভরযুক্ত গড় = ৮৫.৪০">
+                                    ভরযুক্ত গড় = ৮৫.৪০
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="formula-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Weighted Mean Formulas" data-bন="ভরযুক্ত গড় সূত্রসমূহ">ভরযুক্ত গড় সূত্রসমূহ</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Basic Weighted Mean Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Weighted Mean Formula" data-bন="ভরযুক্ত গড় সূত্র">ভরযুক্ত গড় সূত্র</h3>
+                    </div>
+                    <div class="formula-equation">
+                        x̄_w = <div style="display: inline-block; border-top: 2px solid var(--dark); padding-top: 5px;">Σ(w_i × x_i)</div> / Σw_i
+                    </div>
+                    <div class="formula-explanation">
+                        <p data-en="Where:" data-bন="যেখানে:">যেখানে:</p>
+                        <ul style="padding-left: 1.5rem; color: var(--gray);">
+                            <li data-en="x̄_w = Weighted mean" data-bন="x̄_w = ভরযুক্ত গড়">x̄_w = ভরযুক্ত গড়</li>
+                            <li data-en="w_i = Weight of i-th value" data-bন="w_i = i-তম মানের ভর">w_i = i-তম মানের ভর</li>
+                            <li data-en="x_i = i-th value" data-bন="x_i = i-তম মান">x_i = i-তম মান</li>
+                            <li data-en="Σ = Summation (total)" data-bন="Σ = যোগফল (মোট)">Σ = যোগফল (মোট)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Extended Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-expand-alt"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Extended Formula" data-bন="এক্সটেন্ডেড সূত্র">এক্সটেন্ডেড সূত্র</h3>
+                    </div>
+                    <div class="formula-equation">
+                        x̄_w = <div style="display: inline-block; border-top: 2px solid var(--dark); padding-top: 5px;">w₁x₁ + w₂x₂ + ... + wₙxₙ</div> / (w₁ + w₂ + ... + wₙ)
+                    </div>
+                    <div class="formula-explanation">
+                        <p data-en="Alternative notation:" data-bন="বিকল্প নোটেশন:">বিকল্প নোটেশন:</p>
+                        <ul style="padding-left: 1.5rem; color: var(--gray);">
+                            <li data-en="w₁, w₂, ..., wₙ = Individual weights" data-bন="w₁, w₂, ..., wₙ = স্বতন্ত্র ভর">w₁, w₂, ..., wₙ = স্বতন্ত্র ভর</li>
+                            <li data-en="x₁, x₂, ..., xₙ = Individual values" data-bন="x₁, x₂, ..., xₙ = স্বতন্ত্র মান">x₁, x₂, ..., xₙ = স্বতন্ত্র মান</li>
+                            <li data-en="n = Number of data points" data-bন="n = ডেটা পয়েন্টের সংখ্যা">n = ডেটা পয়েন্টের সংখ্যা</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- When to Use Weighted Mean -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="When to Use Weighted Mean" data-bন="কখন ভরযুক্ত গড় ব্যবহার করবেন">কখন ভরযুক্ত গড় ব্যবহার করবেন</h3>
+                    </div>
+                    <div class="formula-explanation">
+                        <ul style="padding-left: 1.5rem; color: var(--gray);">
+                            <li data-en="GPA calculation (credits as weights)" data-bন="জিপিএ গণনা (ভর হিসাবে ক্রেডিট)">জিপিএ গণনা (ভর হিসাবে ক্রেডিট)</li>
+                            <li data-en="Course grades (difficulty as weights)" data-bন="কোর্স গ্রেড (ভর হিসাবে কঠিনতা)">কোর্স গ্রেড (ভর হিসাবে কঠিনতা)</li>
+                            <li data-en="Investment returns (amount invested as weights)" data-bন="বিনিয়োগ রিটার্ন (ভর হিসাবে বিনিয়োগকৃত পরিমাণ)">বিনিয়োগ রিটার্ন (ভর হিসাবে বিনিয়োগকৃত পরিমাণ)</li>
+                            <li data-en="Survey results (respondent importance as weights)" data-bন="সার্ভে ফলাফল (ভর হিসাবে উত্তরদাতার গুরুত্ব)">সার্ভে ফলাফল (ভর হিসাবে উত্তরদাতার গুরুত্ব)</li>
+                            <li data-en="Weighted averages in statistics" data-bন="পরিসংখ্যানে ভরযুক্ত গড়">পরিসংখ্যানে ভরযুক্ত গড়</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Preset data examples
+            const presets = {
+                'gpa': {
+                    name: 'GPA Calculation',
+                    points: [
+                        { value: 4.0, weight: 3, label: 'Mathematics (A)' },
+                        { value: 3.7, weight: 4, label: 'Physics (A-)' },
+                        { value: 3.3, weight: 3, label: 'Chemistry (B+)' },
+                        { value: 3.0, weight: 2, label: 'English (B)' }
+                    ]
+                },
+                'course-grades': {
+                    name: 'Course Grades',
+                    points: [
+                        { value: 85, weight: 3, label: 'Midterm Exam' },
+                        { value: 92, weight: 2, label: 'Final Exam' },
+                        { value: 88, weight: 1, label: 'Quizzes' },
+                        { value: 95, weight: 1, label: 'Assignments' },
+                        { value: 90, weight: 3, label: 'Projects' }
+                    ]
+                },
+                'survey-results': {
+                    name: 'Survey Results',
+                    points: [
+                        { value: 4.2, weight: 150, label: 'Customer Satisfaction' },
+                        { value: 3.8, weight: 200, label: 'Product Quality' },
+                        { value: 4.5, weight: 100, label: 'Service Experience' },
+                        { value: 3.5, weight: 250, label: 'Price Value' }
+                    ]
+                },
+                'investment': {
+                    name: 'Investment Returns',
+                    points: [
+                        { value: 8.5, weight: 50000, label: 'Stock A' },
+                        { value: 6.2, weight: 30000, label: 'Stock B' },
+                        { value: 4.8, weight: 20000, label: 'Bonds' },
+                        { value: 9.1, weight: 40000, label: 'Mutual Funds' }
+                    ]
+                }
+            };
+
+            // Store data points
+            let dataPoints = [
+                { value: 85, weight: 3, label: 'Point 1' },
+                { value: 92, weight: 4, label: 'Point 2' },
+                { value: 78, weight: 3, label: 'Point 3' }
+            ];
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Add Point Button
+                document.getElementById('addPointBtn').addEventListener('click', addDataPoint);
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateWeightedMean);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Preset Buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadPreset(this.dataset.preset);
+                    });
+                });
+
+                // Enter key in value input
+                document.getElementById('valueInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        document.getElementById('weightInput').focus();
+                    }
+                });
+
+                // Enter key in weight input
+                document.getElementById('weightInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addDataPoint();
+                    }
+                });
+
+                // Remove point event delegation
+                document.getElementById('dataPointsList').addEventListener('click', function(e) {
+                    if (e.target.closest('.remove-point')) {
+                        const pointItem = e.target.closest('.data-point-item');
+                        if (pointItem) {
+                            const index = parseInt(pointItem.dataset.index) - 1;
+                            removeDataPoint(index);
+                        }
+                    }
+                });
+
+                // Initial render
+                renderDataPoints();
+                calculateWeightedMean();
+                updateGPATable();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+            }
+
+            function addDataPoint() {
+                const valueInput = document.getElementById('valueInput');
+                const weightInput = document.getElementById('weightInput');
+                
+                const value = parseFloat(valueInput.value);
+                const weight = parseFloat(weightInput.value);
+                
+                if (isNaN(value) || isNaN(weight)) {
+                    showError(currentLanguage === 'bn' ? 
+                        'দয়া করে বৈধ মান এবং ভর ইনপুট করুন' : 
+                        'Please enter valid value and weight');
+                    return;
+                }
+                
+                if (weight < 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'ভর ঋণাত্মক হতে পারে না' : 
+                        'Weight cannot be negative');
+                    return;
+                }
+                
+                // Add new data point
+                dataPoints.push({
+                    value: value,
+                    weight: weight,
+                    label: `Point ${dataPoints.length + 1}`
+                });
+                
+                // Clear inputs
+                valueInput.value = '';
+                weightInput.value = '';
+                valueInput.focus();
+                
+                // Update display
+                renderDataPoints();
+                calculateWeightedMean();
+            }
+
+            function removeDataPoint(index) {
+                if (dataPoints.length <= 1) {
+                    showError(currentLanguage === 'bn' ? 
+                        'কমপক্ষে একটি ডেটা পয়েন্ট থাকতে হবে' : 
+                        'At least one data point must remain');
+                    return;
+                }
+                
+                dataPoints.splice(index, 1);
+                renderDataPoints();
+                calculateWeightedMean();
+            }
+
+            function renderDataPoints() {
+                const list = document.getElementById('dataPointsList');
+                const countElement = document.getElementById('pointsCount');
+                
+                list.innerHTML = '';
+                
+                dataPoints.forEach((point, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'data-point-item';
+                    item.dataset.index = index + 1;
+                    
+                    item.innerHTML = `
+                        <div class="point-index">${index + 1}</div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--value-color);">
+                                ${currentLanguage === 'bn' ? 'মান' : 'Value'}: <span class="point-value">${formatNumber(point.value)}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--weight-color);">
+                                ${currentLanguage === 'bn' ? 'ভর' : 'Weight'}: <span class="point-weight">${formatNumber(point.weight)}</span>
+                            </div>
+                            ${point.label ? `<div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.2rem;">${point.label}</div>` : ''}
+                        </div>
+                        <button class="remove-point">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    list.appendChild(item);
+                });
+                
+                // Update count
+                countElement.textContent = currentLanguage === 'bn' ? 
+                    `${dataPoints.length} টি পয়েন্ট` : 
+                    `${dataPoints.length} points`;
+            }
+
+            function formatNumber(num) {
+                // Format number with appropriate decimal places
+                if (Number.isInteger(num)) {
+                    return num.toString();
+                }
+                
+                const absNum = Math.abs(num);
+                if (absNum >= 1000 || absNum < 0.001) {
+                    return num.toExponential(2);
+                } else if (absNum < 1) {
+                    return num.toFixed(3);
+                } else {
+                    return num.toFixed(2);
+                }
+            }
+
+            function calculateWeightedMean() {
+                if (dataPoints.length === 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'কমপক্ষে একটি ডেটা পয়েন্ট যোগ করুন' : 
+                        'Please add at least one data point');
+                    return;
+                }
+                
+                // Calculate statistics
+                let sumWeighted = 0;
+                let sumWeights = 0;
+                let sumValues = 0;
+                let minWeight = Infinity;
+                let maxWeight = -Infinity;
+                
+                dataPoints.forEach(point => {
+                    const weightedValue = point.value * point.weight;
+                    sumWeighted += weightedValue;
+                    sumWeights += point.weight;
+                    sumValues += point.value;
+                    
+                    if (point.weight < minWeight) minWeight = point.weight;
+                    if (point.weight > maxWeight) maxWeight = point.weight;
+                });
+                
+                const weightedMean = sumWeighted / sumWeights;
+                const simpleMean = sumValues / dataPoints.length;
+                const difference = weightedMean - simpleMean;
+                const differencePercent = (difference / simpleMean) * 100;
+                
+                // Update results
+                updateResults(sumWeighted, sumWeights, weightedMean, simpleMean, difference, differencePercent, minWeight, maxWeight);
+                
+                // Update step-by-step calculation
+                updateStepByStep(sumWeighted, sumWeights, weightedMean);
+                
+                // Update visualizations
+                updateVisualizations(weightedMean, simpleMean);
+                
+                // Update interpretation
+                updateInterpretation(weightedMean, simpleMean, difference);
+            }
+
+            function updateResults(sumWeighted, sumWeights, weightedMean, simpleMean, difference, differencePercent, minWeight, maxWeight) {
+                // Update main results
+                document.getElementById('weightedMeanResult').textContent = formatNumber(weightedMean);
+                document.getElementById('formulaResult').innerHTML = currentLanguage === 'bn' ? 
+                    `সূত্র: Σ(wx) / Σw = ${formatNumber(sumWeighted)} / ${formatNumber(sumWeights)} = ${formatNumber(weightedMean)}` :
+                    `Formula: Σ(wx) / Σw = ${formatNumber(sumWeighted)} / ${formatNumber(sumWeights)} = ${formatNumber(weightedMean)}`;
+                
+                // Update comparison cards
+                document.getElementById('simpleMeanResult').textContent = formatNumber(simpleMean);
+                document.getElementById('comparisonWeightedResult').textContent = formatNumber(weightedMean);
+                
+                const differenceText = document.getElementById('differenceText');
+                const differencePercentElement = document.getElementById('differencePercent');
+                
+                if (difference > 0) {
+                    differenceText.textContent = currentLanguage === 'bn' ? 
+                        `+${formatNumber(difference)} বেশি` : 
+                        `+${formatNumber(difference)} higher`;
+                    differenceText.style.color = 'var(--success)';
+                } else if (difference < 0) {
+                    differenceText.textContent = currentLanguage === 'bn' ? 
+                        `${formatNumber(difference)} কম` : 
+                        `${formatNumber(difference)} lower`;
+                    differenceText.style.color = 'var(--primary)';
+                } else {
+                    differenceText.textContent = currentLanguage === 'bn' ? 'অপরিবর্তিত' : 'unchanged';
+                    differenceText.style.color = 'var(--gray)';
+                }
+                
+                differencePercentElement.textContent = `(${differencePercent > 0 ? '+' : ''}${formatNumber(differencePercent)}%)`;
+                differencePercentElement.style.color = differenceText.style.color;
+                
+                // Update statistics
+                document.getElementById('sumWeightedResult').textContent = formatNumber(sumWeighted);
+                document.getElementById('sumWeightsResult').textContent = formatNumber(sumWeights);
+                document.getElementById('countResult').textContent = dataPoints.length;
+                document.getElementById('weightRangeResult').textContent = `${formatNumber(minWeight)} - ${formatNumber(maxWeight)}`;
+                
+                // Update distribution chart
+                updateDistributionChart(weightedMean, simpleMean);
+            }
+
+            function updateInterpretation(weightedMean, simpleMean, difference) {
+                const interpretation = document.getElementById('interpretationText');
+                
+                let interpretationText = '';
+                if (currentLanguage === 'bn') {
+                    interpretationText = `ভরযুক্ত গড় ${formatNumber(weightedMean)} সরল গড় ${formatNumber(simpleMean)} থেকে `;
+                    
+                    if (difference > 0) {
+                        interpretationText += `${formatNumber(difference)} বেশি। এটি নির্দেশ করে যে উচ্চতর ভরযুক্ত মানগুলি গড়কে উপরের দিকে টেনেছে।`;
+                    } else if (difference < 0) {
+                        interpretationText += `${formatNumber(Math.abs(difference))} কম। এটি নির্দেশ করে যে নিম্নতর ভরযুক্ত মানগুলি গড়কে নিচের দিকে টেনেছে।`;
+                    } else {
+                        interpretationText += `অপরিবর্তিত আছে। ভরগুলি সমানভাবে বণ্টিত।`;
+                    }
+                    
+                    // Add specific observation
+                    const highestWeightIndex = dataPoints.reduce((maxIndex, point, index, arr) => 
+                        point.weight > arr[maxIndex].weight ? index : maxIndex, 0);
+                    const highestWeightValue = dataPoints[highestWeightIndex].value;
+                    
+                    interpretationText += ` সর্বোচ্চ ভর (${formatNumber(dataPoints[highestWeightIndex].weight)}) সহ মান ${formatNumber(highestWeightValue)} গড়কে সবচেয়ে বেশি প্রভাবিত করেছে।`;
+                } else {
+                    interpretationText = `The weighted mean ${formatNumber(weightedMean)} is `;
+                    
+                    if (difference > 0) {
+                        interpretationText += `${formatNumber(difference)} higher than the simple mean ${formatNumber(simpleMean)}. This indicates that values with higher weights pulled the average upward.`;
+                    } else if (difference < 0) {
+                        interpretationText += `${formatNumber(Math.abs(difference))} lower than the simple mean ${formatNumber(simpleMean)}. This indicates that values with lower weights pulled the average downward.`;
+                    } else {
+                        interpretationText += `the same as the simple mean ${formatNumber(simpleMean)}. Weights are evenly distributed.`;
+                    }
+                    
+                    // Add specific observation
+                    const highestWeightIndex = dataPoints.reduce((maxIndex, point, index, arr) => 
+                        point.weight > arr[maxIndex].weight ? index : maxIndex, 0);
+                    const highestWeightValue = dataPoints[highestWeightIndex].value;
+                    
+                    interpretationText += ` The value ${formatNumber(highestWeightValue)} with the highest weight (${formatNumber(dataPoints[highestWeightIndex].weight)}) has the greatest influence on the mean.`;
+                }
+                
+                interpretation.textContent = interpretationText;
+            }
+
+            function updateStepByStep(sumWeighted, sumWeights, weightedMean) {
+                // Step 1: List values and weights
+                const step1Table = document.getElementById('step1Table');
+                step1Table.innerHTML = '';
+                
+                dataPoints.forEach((point, index) => {
+                    const weightedValue = point.value * point.weight;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${formatNumber(point.value)}</td>
+                        <td>${formatNumber(point.weight)}</td>
+                        <td>${formatNumber(weightedValue)}</td>
+                    `;
+                    if (index === dataPoints.length - 1) {
+                        row.classList.add('highlight-row');
+                    }
+                    step1Table.appendChild(row);
+                });
+                
+                // Step 2: Show weighted value calculations
+                const step2Equation = document.getElementById('step2Equation');
+                const step2Table = document.getElementById('step2Table');
+                
+                step2Equation.textContent = currentLanguage === 'bn' ? 
+                    `wx = x × w` : `wx = x × w`;
+                
+                step2Table.innerHTML = `
+                    <tr>
+                        <th>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}</th>
+                        <th>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}</th>
+                    </tr>
+                `;
+                
+                dataPoints.forEach((point, index) => {
+                    const weightedValue = point.value * point.weight;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatNumber(point.value)} × ${formatNumber(point.weight)}</td>
+                        <td>${formatNumber(weightedValue)}</td>
+                    `;
+                    step2Table.appendChild(row);
+                });
+                
+                // Step 3: Update sums
+                document.getElementById('step3SumWX').textContent = formatNumber(sumWeighted);
+                document.getElementById('step3SumW').textContent = formatNumber(sumWeights);
+                
+                // Step 4: Show weighted mean calculation
+                const step4Equation = document.getElementById('step4Equation');
+                const step4Calculation = document.getElementById('step4Calculation');
+                const step4Result = document.getElementById('step4Result');
+                
+                step4Equation.textContent = currentLanguage === 'bn' ? 
+                    `ভরযুক্ত গড় = Σ(wx) / Σw` : `Weighted Mean = Σ(wx) / Σw`;
+                
+                step4Calculation.innerHTML = currentLanguage === 'bn' ? 
+                    `ভরযুক্ত গড় = ${formatNumber(sumWeighted)} / ${formatNumber(sumWeights)} = ${formatNumber(weightedMean)}` :
+                    `Weighted Mean = ${formatNumber(sumWeighted)} / ${formatNumber(sumWeights)} = ${formatNumber(weightedMean)}`;
+                
+                step4Result.textContent = currentLanguage === 'bn' ? 
+                    `ভরযুক্ত গড় = ${formatNumber(weightedMean)}` : 
+                    `Weighted Mean = ${formatNumber(weightedMean)}`;
+            }
+
+            function updateDistributionChart(weightedMean, simpleMean) {
+                const chart = document.getElementById('distributionChart');
+                chart.innerHTML = '';
+                
+                if (dataPoints.length === 0) return;
+                
+                // Find ranges for scaling
+                const values = dataPoints.map(p => p.value);
+                const weights = dataPoints.map(p => p.weight);
+                const minValue = Math.min(...values);
+                const maxValue = Math.max(...values);
+                const maxWeight = Math.max(...weights);
+                const valueRange = maxValue - minValue;
+                const chartHeight = 150;
+                
+                // Create bars for each data point
+                dataPoints.forEach((point, index) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'distribution-bar';
+                    
+                    // Calculate bar heights
+                    const valueHeight = valueRange > 0 ? 
+                        ((point.value - minValue) / valueRange) * chartHeight * 0.7 : chartHeight * 0.7;
+                    const weightHeight = (point.weight / maxWeight) * chartHeight * 0.3;
+                    
+                    // Create value bar
+                    const valueBar = document.createElement('div');
+                    valueBar.className = 'value-bar';
+                    valueBar.style.height = `${valueHeight}px`;
+                    valueBar.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${formatNumber(point.value)}`;
+                    
+                    // Create weight bar
+                    const weightBar = document.createElement('div');
+                    weightBar.className = 'weight-bar';
+                    weightBar.style.height = `${weightHeight}px`;
+                    weightBar.title = `${currentLanguage === 'bn' ? 'ভর' : 'Weight'}: ${formatNumber(point.weight)}`;
+                    
+                    bar.appendChild(valueBar);
+                    bar.appendChild(weightBar);
+                    
+                    // Add label
+                    const label = document.createElement('div');
+                    label.className = 'bar-label';
+                    label.textContent = `P${index + 1}`;
+                    bar.appendChild(label);
+                    
+                    chart.appendChild(bar);
+                });
+                
+                // Add weighted mean line
+                const weightedMeanLine = document.createElement('div');
+                weightedMeanLine.className = 'weighted-mean-line';
+                
+                const weightedMeanPosition = valueRange > 0 ? 
+                    ((weightedMean - minValue) / valueRange) * 100 : 50;
+                
+                weightedMeanLine.style.top = '50%';
+                weightedMeanLine.style.left = `${weightedMeanPosition}%`;
+                
+                // Update mean line label based on language
+                const weightedMeanLabel = document.createElement('span');
+                weightedMeanLabel.textContent = currentLanguage === 'bn' ? 'ভরযুক্ত গড়' : 'Weighted Mean';
+                weightedMeanLine.innerHTML = '';
+                weightedMeanLine.appendChild(weightedMeanLabel);
+                
+                chart.appendChild(weightedMeanLine);
+                
+                // Add simple mean line
+                const simpleMeanLine = document.createElement('div');
+                simpleMeanLine.className = 'simple-mean-line';
+                
+                const simpleMeanPosition = valueRange > 0 ? 
+                    ((simpleMean - minValue) / valueRange) * 100 : 50;
+                
+                simpleMeanLine.style.top = '50%';
+                simpleMeanLine.style.left = `${simpleMeanPosition}%`;
+                
+                chart.appendChild(simpleMeanLine);
+            }
+
+            function updateVisualizations(weightedMean, simpleMean) {
+                updateWeightImpactChart(weightedMean);
+                updateBalanceVisualization(weightedMean);
+            }
+
+            function updateWeightImpactChart(weightedMean) {
+                const impactCenter = document.getElementById('impactCenter');
+                const impactLegend = document.getElementById('impactLegend');
+                
+                impactCenter.textContent = formatNumber(weightedMean);
+                
+                // Calculate contributions
+                const totalWeighted = dataPoints.reduce((sum, point) => sum + (point.value * point.weight), 0);
+                const totalWeight = dataPoints.reduce((sum, point) => sum + point.weight, 0);
+                
+                let legendHTML = '';
+                
+                dataPoints.forEach((point, index) => {
+                    const contribution = ((point.value * point.weight) / totalWeighted) * 100;
+                    legendHTML += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${getColorByIndex(index)}"></div>
+                            <span>P${index + 1}: ${formatNumber(contribution)}%</span>
+                        </div>
+                    `;
+                });
+                
+                impactLegend.innerHTML = legendHTML;
+                
+                // Update the circle with proper conic gradient
+                const impactCircle = document.querySelector('.impact-circle');
+                if (impactCircle) {
+                    let gradientString = '';
+                    let accumulatedPercent = 0;
+                    
+                    dataPoints.forEach((point, index) => {
+                        const contribution = ((point.value * point.weight) / totalWeighted) * 100;
+                        const startPercent = accumulatedPercent;
+                        const endPercent = accumulatedPercent + contribution;
+                        
+                        gradientString += `${getColorByIndex(index)} ${startPercent}% ${endPercent}%, `;
+                        accumulatedPercent = endPercent;
+                    });
+                    
+                    // Remove trailing comma and space
+                    gradientString = gradientString.slice(0, -2);
+                    impactCircle.style.background = `conic-gradient(${gradientString})`;
+                }
+            }
+
+            function getColorByIndex(index) {
+                const colors = [
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA726', 
+                    '#9C27B0', '#4CAF50', '#2196F3', '#FF9800'
+                ];
+                return colors[index % colors.length];
+            }
+
+            function updateBalanceVisualization(weightedMean) {
+                const balanceViz = document.getElementById('balanceVisualization');
+                balanceViz.innerHTML = '';
+                
+                if (dataPoints.length < 2) return;
+                
+                // Calculate weighted sum for each side
+                const leftPoints = dataPoints.slice(0, Math.ceil(dataPoints.length / 2));
+                const rightPoints = dataPoints.slice(Math.ceil(dataPoints.length / 2));
+                
+                const leftSum = leftPoints.reduce((sum, point) => sum + (point.value * point.weight), 0);
+                const rightSum = rightPoints.reduce((sum, point) => sum + (point.value * point.weight), 0);
+                
+                const totalSum = leftSum + rightSum;
+                const balanceRatio = totalSum > 0 ? (rightSum - leftSum) / totalSum : 0;
+                
+                // Create beam
+                const beam = document.createElement('div');
+                beam.className = 'balance-beam';
+                
+                // Calculate beam angle (tilt based on balance)
+                const angle = Math.min(Math.max(balanceRatio * 15, -15), 15); // Limit to ±15 degrees
+                beam.style.transform = `rotate(${angle}deg)`;
+                
+                // Add pivot
+                const pivot = document.createElement('div');
+                pivot.className = 'balance-pivot';
+                beam.appendChild(pivot);
+                
+                // Add left weights
+                leftPoints.forEach((point, index) => {
+                    const weight = document.createElement('div');
+                    weight.className = 'balance-weight';
+                    weight.style.left = `${10 + (index * 15)}%`;
+                    
+                    const circle = document.createElement('div');
+                    circle.className = 'weight-circle';
+                    circle.style.background = getColorByIndex(index);
+                    circle.textContent = formatNumber(point.weight);
+                    circle.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${formatNumber(point.value)}, ${currentLanguage === 'bn' ? 'ভর' : 'Weight'}: ${formatNumber(point.weight)}`;
+                    
+                    const value = document.createElement('div');
+                    value.className = 'weight-value';
+                    value.textContent = formatNumber(point.value);
+                    
+                    weight.appendChild(circle);
+                    weight.appendChild(value);
+                    beam.appendChild(weight);
+                });
+                
+                // Add right weights
+                rightPoints.forEach((point, index) => {
+                    const weight = document.createElement('div');
+                    weight.className = 'balance-weight';
+                    weight.style.left = `${60 + (index * 15)}%`;
+                    
+                    const circle = document.createElement('div');
+                    circle.className = 'weight-circle';
+                    circle.style.background = getColorByIndex(leftPoints.length + index);
+                    circle.textContent = formatNumber(point.weight);
+                    circle.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${formatNumber(point.value)}, ${currentLanguage === 'bn' ? 'ভর' : 'Weight'}: ${formatNumber(point.weight)}`;
+                    
+                    const value = document.createElement('div');
+                    value.className = 'weight-value';
+                    value.textContent = formatNumber(point.value);
+                    
+                    weight.appendChild(circle);
+                    weight.appendChild(value);
+                    beam.appendChild(weight);
+                });
+                
+                balanceViz.appendChild(beam);
+                
+                // Add balance indicator
+                const indicator = document.createElement('div');
+                indicator.style.marginTop = '2rem';
+                indicator.style.textAlign = 'center';
+                indicator.style.fontSize = '0.9rem';
+                indicator.style.color = 'var(--gray)';
+                
+                if (Math.abs(balanceRatio) < 0.1) {
+                    indicator.textContent = currentLanguage === 'bn' ? 'ভারসাম্যপূর্ণ' : 'Balanced';
+                    indicator.style.color = 'var(--accent)';
+                } else if (balanceRatio > 0) {
+                    indicator.textContent = currentLanguage === 'bn' ? 
+                        `ডান দিকে ঝুঁকেছে (${formatNumber(balanceRatio * 100)}%)` : 
+                        `Tilted right (${formatNumber(balanceRatio * 100)}%)`;
+                    indicator.style.color = 'var(--success)';
+                } else {
+                    indicator.textContent = currentLanguage === 'bn' ? 
+                        `বাম দিকে ঝুঁকেছে (${formatNumber(Math.abs(balanceRatio) * 100)}%)` : 
+                        `Tilted left (${formatNumber(Math.abs(balanceRatio) * 100)}%)`;
+                    indicator.style.color = 'var(--primary)';
+                }
+                
+                balanceViz.appendChild(indicator);
+            }
+
+            function updateGPATable() {
+                const gpaTableBody = document.getElementById('gpaTableBody');
+                const totalCreditsElement = document.getElementById('totalCredits');
+                const totalWeightedElement = document.getElementById('totalWeighted');
+                const gpaResultElement = document.getElementById('gpaResult');
+                
+                // Clear existing rows
+                gpaTableBody.innerHTML = '';
+                
+                if (dataPoints.length === 0) {
+                    totalCreditsElement.textContent = '0';
+                    totalWeightedElement.textContent = '0';
+                    gpaResultElement.textContent = '0.00';
+                    return;
+                }
+                
+                let totalCredits = 0;
+                let totalWeighted = 0;
+                
+                // Create rows for each data point
+                dataPoints.forEach((point, index) => {
+                    const weightedValue = point.value * point.weight;
+                    totalCredits += point.weight;
+                    totalWeighted += weightedValue;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${currentLanguage === 'bn' ? 'কোর্স' : 'Course'} ${index + 1}</td>
+                        <td class="credit-col">${formatNumber(point.weight)}</td>
+                        <td class="grade-col">${formatNumber(point.value)}</td>
+                        <td>${formatNumber(point.value)}</td>
+                        <td>${formatNumber(weightedValue)}</td>
+                    `;
+                    gpaTableBody.appendChild(row);
+                });
+                
+                // Update totals
+                totalCreditsElement.textContent = formatNumber(totalCredits);
+                totalWeightedElement.textContent = formatNumber(totalWeighted);
+                
+                // Calculate GPA
+                const gpa = totalCredits > 0 ? totalWeighted / totalCredits : 0;
+                gpaResultElement.textContent = formatNumber(gpa);
+            }
+
+            function loadPreset(presetName) {
+                const preset = presets[presetName];
+                if (!preset) return;
+                
+                // Clear existing data
+                dataPoints = [];
+                
+                // Add preset points
+                preset.points.forEach((point, index) => {
+                    dataPoints.push({
+                        value: point.value,
+                        weight: point.weight,
+                        label: point.label
+                    });
+                });
+                
+                // Update display
+                renderDataPoints();
+                calculateWeightedMean();
+                updateGPATable();
+            }
+
+            function clearCalculator() {
+                // Reset to default data
+                dataPoints = [
+                    { value: 85, weight: 3, label: 'Point 1' },
+                    { value: 92, weight: 4, label: 'Point 2' },
+                    { value: 78, weight: 3, label: 'Point 3' }
+                ];
+                
+                // Clear inputs
+                document.getElementById('valueInput').value = '';
+                document.getElementById('weightInput').value = '';
+                document.getElementById('valueInput').focus();
+                
+                // Update display
+                renderDataPoints();
+                calculateWeightedMean();
+                updateGPATable();
+            }
+
+            function showError(message) {
+                // You can implement a more sophisticated error display
+                alert(message);
+            }
+        });
+    </script>
+</body>
+</html>

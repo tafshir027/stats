@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অটোকোরিলেশন প্লট জেনারেটর | টাইম সিরিজ অ্যানালাইসিস</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --acf-color: #6C63FF;
+            --pacf-color: #36D1DC;
+            --confidence-band: rgba(108, 99, 255, 0.2);
+            --significant-bar: #FF4757;
+            --stationary-color: #36D1DC;
+            --non-stationary-color: #FF6584;
+            --trend-color: #FF9A3D;
+            --seasonal-color: #5B86E5;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--acf-color), var(--pacf-color), var(--success));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Time Series Input */
+        .time-series-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-series-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-series-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        /* Plot Settings */
+        .plot-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .plot-settings {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Statistical Tests Selection */
+        .stat-tests {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .stat-tests {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .test-option {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .test-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Input Hint */
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-hint i {
+            color: var(--info);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Stationarity Results */
+        .stationarity-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stationarity-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.stationarity::before { background: var(--stationary-color); }
+        .result-card.adf-test::before { background: var(--acf-color); }
+        .result-card.kpss-test::before { background: var(--pacf-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.stationarity .result-icon { color: var(--stationary-color); }
+        .result-card.adf-test .result-icon { color: var(--acf-color); }
+        .result-card.kpss-test .result-icon { color: var(--pacf-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Stationarity Assessment */
+        .stationarity-assessment {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--stationary-color);
+        }
+
+        .assessment-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .assessment-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .assessment-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .stationarity-status {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .assessment-text {
+            flex: 2;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ACF/PACF Statistics */
+        .autocorr-statistics {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--acf-color);
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .statistic-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .statistic-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Significant Lags Table */
+        .lags-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .lags-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .lags-table th {
+            background: var(--table-header);
+            padding: 0.8rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+
+        .lags-table td {
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+        }
+
+        .lags-table tr:hover td {
+            background: var(--light-gray);
+        }
+
+        .lags-table .lag-cell {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .lags-table .acf-cell, .lags-table .pacf-cell {
+            font-weight: 600;
+        }
+
+        .lags-table .significant {
+            color: var(--significant-bar);
+            font-weight: 700;
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Chart Tabs */
+        .chart-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-tab {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .chart-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .chart-tab:hover:not(.active) {
+            color: var(--dark);
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-color.acf { background: var(--acf-color); }
+        .legend-color.pacf { background: var(--pacf-color); }
+        .legend-color.confidence { 
+            background: var(--confidence-band);
+            border: 1px solid var(--acf-color);
+        }
+        .legend-color.significant { 
+            background: var(--significant-bar);
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Interpretation Guide */
+        .interpretation-guide {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .guide-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .guide-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .guide-indicator.white-noise { background: #718096; }
+        .guide-indicator.stationary { background: var(--stationary-color); }
+        .guide-indicator.non-stationary { background: var(--non-stationary-color); }
+        .guide-indicator.trend { background: var(--trend-color); }
+        .guide-indicator.seasonal { background: var(--seasonal-color); }
+
+        .guide-description {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .chart-placeholder p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-placeholder .hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .acf-formula .formula-icon { background: var(--acf-color); }
+        .pacf-formula .formula-icon { background: var(--pacf-color); }
+        .stationarity-formula .formula-icon { background: var(--stationary-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Time Series Components */
+        .components-section {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .component-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .component-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .component-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Time Series Table */
+        .time-series-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .time-series-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .time-series-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .time-series-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .chart-info,
+            .chart-tabs {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .step-by-step,
+            .visualization-section,
+            .components-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .time-series-table,
+            .lags-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+            
+            .chart-box {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Autocorrelation Plot Generator" data-bn="অটোকোরিলেশন প্লট জেনারেটর">অটোকোরিলেশন প্লট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create ACF/PACF plots for time series analysis with confidence bands, stationarity assessment, and statistical tests" data-bn="কনফিডেন্স ব্যান্ড, স্টেশনারিটি অ্যাসেসমেন্ট, এবং পরিসংখ্যানিক টেস্ট সহ টাইম সিরিজ অ্যানালাইসিসের জন্য ACF/PACF প্লট তৈরি করুন">
+                কনফিডেন্স ব্যান্ড, স্টেশনারিটি অ্যাসেসমেন্ট, এবং পরিসংখ্যানিক টেস্ট সহ টাইম সিরিজ অ্যানালাইসিসের জন্য ACF/PACF প্লট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Time Series Input" data-bn="টাইম সিরিজ ইনপুট">টাইম সিরিজ ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bন="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="generate">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Generate" data-bন="জেনারেট করুন">জেনারেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="time-series-input">
+                    <label class="time-series-label">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Time Series Data" data-bন="টাইম সিরিজ ডেটা">টাইম সিরিজ ডেটা</span>
+                        <span class="ts-name">(X(t))</span>
+                    </label>
+                    <textarea id="dataInput" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10.2, 12.5, 15.1, 13.8, 16.4, 18.2, 20.5, 19.8, 22.1, 24.3, 23.5, 26.8
+বা: 10.2 12.5 15.1 13.8 16.4 18.2 20.5 19.8 22.1 24.3 23.5 26.8">10, 12, 15, 13, 16, 18, 20, 19, 22, 24, 23, 26, 28, 27, 30, 32, 31, 34, 36, 35, 38, 40, 39, 42</textarea>
+                </div>
+                
+                <div class="plot-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-wave-square"></i>
+                            <span data-en="Maximum Lag" data-bন="সর্বোচ্চ ল্যাগ">সর্বোচ্চ ল্যাগ</span>
+                        </label>
+                        <select id="maxLag" class="setting-input">
+                            <option value="10">10</option>
+                            <option value="15" selected>15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-percentage"></i>
+                            <span data-en="Confidence Level" data-bন="কনফিডেন্স লেভেল">কনফিডেন্স লেভেল</span>
+                        </label>
+                        <select id="confidenceLevel" class="setting-input">
+                            <option value="0.90">90%</option>
+                            <option value="0.95" selected>95%</option>
+                            <option value="0.99">99%</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stat-tests">
+                    <div class="test-option active" data-test="adf">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="ADF Test" data-bন="ADF টেস্ট">ADF টেস্ট</span>
+                    </div>
+                    <div class="test-option active" data-test="kpss">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="KPSS Test" data-bন="KPSS টেস্ট">KPSS টেস্ট</span>
+                    </div>
+                    <div class="test-option active" data-test="ljung-box">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Ljung-Box" data-bন="লজাং-বক্স">লজাং-বক্স</span>
+                    </div>
+                </div>
+
+                <div class="input-hint">
+                    <i class="fas fa-info-circle"></i>
+                    <span data-en="Enter time series data for autocorrelation analysis. ACF measures correlation with past values, PACF measures direct correlation." data-bন="অটোকোরিলেশন অ্যানালাইসিসের জন্য টাইম সিরিজ ডেটা ইনপুট করুন। ACF অতীত মানের সাথে সম্পর্ক পরিমাপ করে, PACF সরাসরি সম্পর্ক পরিমাপ করে।">
+                        অটোকোরিলেশন অ্যানালাইসিসের জন্য টাইম সিরিজ ডেটা ইনপুট করুন। ACF অতীত মানের সাথে সম্পর্ক পরিমাপ করে, PACF সরাসরি সম্পর্ক পরিমাপ করে।
+                    </span>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Generate ACF/PACF" data-bন="ACF/PACF তৈরি করুন">ACF/PACF তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bন="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Analysis Results" data-bন="বিশ্লেষণ ফলাফল">বিশ্লেষণ ফলাফল</span>
+                </h2>
+                
+                <div class="stationarity-results">
+                    <!-- Stationarity -->
+                    <div class="result-card stationarity">
+                        <div class="result-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <div class="result-title" data-en="Stationarity" data-bন="স্টেশনারিটি">স্টেশনারিটি</div>
+                        <div class="result-value" id="stationarityResult">--</div>
+                        <div class="result-description" data-en="Time Series Property" data-bন="টাইম সিরিজ বৈশিষ্ট্য">টাইম সিরিজ বৈশিষ্ট্য</div>
+                    </div>
+
+                    <!-- ADF Test -->
+                    <div class="result-card adf-test">
+                        <div class="result-icon">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="result-title" data-en="ADF Test" data-bন="ADF টেস্ট">ADF টেস্ট</div>
+                        <div class="result-value" id="adfTestResult">--</div>
+                        <div class="result-description" data-en="P-Value" data-bন="P-মান">P-মান</div>
+                    </div>
+
+                    <!-- KPSS Test -->
+                    <div class="result-card kpss-test">
+                        <div class="result-icon">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="result-title" data-en="KPSS Test" data-bন="KPSS টেস্ট">KPSS টেস্ট</div>
+                        <div class="result-value" id="kpssTestResult">--</div>
+                        <div class="result-description" data-en="P-Value" data-bন="P-মান">P-মান</div>
+                    </div>
+                </div>
+
+                <!-- Stationarity Assessment -->
+                <div class="stationarity-assessment">
+                    <div class="assessment-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span data-en="Stationarity Assessment" data-bন="স্টেশনারিটি অ্যাসেসমেন্ট">স্টেশনারিটি অ্যাসেসমেন্ট</span>
+                    </div>
+                    <div class="assessment-content">
+                        <div class="stationarity-status">
+                            <div class="status-value" id="stationarityStatus">--</div>
+                            <div class="status-label" data-en="Status" data-bন="স্ট্যাটাস">স্ট্যাটাস</div>
+                        </div>
+                        <div class="assessment-text" id="stationarityText" data-en="Enter time series data to assess stationarity" data-bন="স্টেশনারিটি অ্যাসেস করার জন্য টাইম সিরিজ ডেটা ইনপুট করুন">
+                            স্টেশনারিটি অ্যাসেস করার জন্য টাইম সিরিজ ডেটা ইনপুট করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACF/PACF Statistics -->
+                <div class="autocorr-statistics">
+                    <div class="assessment-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Autocorrelation Statistics" data-bন="অটোকোরিলেশন পরিসংখ্যান">অটোকোরিলেশন পরিসংখ্যান</span>
+                    </div>
+                    <div class="statistics-grid">
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Series Mean" data-bন="সিরিজ গড়">সিরিজ গড়</div>
+                            <div class="statistic-value" id="seriesMean">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Series Variance" data-bন="সিরিজ ভ্যারিয়েন্স">সিরিজ ভ্যারিয়েন্স</div>
+                            <div class="statistic-value" id="seriesVariance">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="ACF Lag-1" data-bন="ACF ল্যাগ-১">ACF ল্যাগ-১</div>
+                            <div class="statistic-value" id="acfLag1">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="PACF Lag-1" data-bন="PACF ল্যাগ-১">PACF ল্যাগ-১</div>
+                            <div class="statistic-value" id="pacfLag1">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Significant Lags" data-bন="তাৎপর্যপূর্ণ ল্যাগ">তাৎপর্যপূর্ণ ল্যাগ</div>
+                            <div class="statistic-value" id="significantLags">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                            <div class="statistic-value" id="dataPoints">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Significant Lags Table -->
+                <div class="autocorr-statistics">
+                    <div class="assessment-title">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Significant Autocorrelations" data-bন="তাৎপর্যপূর্ণ অটোকোরিলেশন">তাৎপর্যপূর্ণ অটোকোরিলেশন</span>
+                    </div>
+                    <div class="lags-table-container" id="lagsTableContainer">
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" id="lagsPlaceholder" data-en="Enter time series data to see significant lags" data-bন="তাৎপর্যপূর্ণ ল্যাগ দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                            তাৎপর্যপূর্ণ ল্যাগ দেখতে টাইম সিরিজ ডেটা ইনপুট করুন
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Autocorrelation Plots" data-bন="অটোকোরিলেশন প্লট">অটোকোরিলেশন প্লট</span>
+            </h2>
+            
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="acf">
+                    <i class="fas fa-wave-square"></i>
+                    <span data-en="ACF Plot" data-bন="ACF প্লট">ACF প্লট</span>
+                </button>
+                <button class="chart-tab" data-chart="pacf">
+                    <i class="fas fa-wave-square"></i>
+                    <span data-en="PACF Plot" data-bন="PACF প্লট">PACF প্লট</span>
+                </button>
+                <button class="chart-tab" data-chart="combined">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Combined Plot" data-bন="কম্বাইন্ড প্লট">কম্বাইন্ড প্লট</span>
+                </button>
+                <button class="chart-tab" data-chart="timeseries">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Time Series" data-bন="টাইম সিরিজ">টাইম সিরিজ</span>
+                </button>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-box">
+                    <div id="plotPlaceholder" class="chart-placeholder">
+                        <i class="fas fa-wave-square"></i>
+                        <p data-en="No data to visualize" data-bন="ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই">ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই</p>
+                        <p class="hint" data-en="Enter time series data and generate ACF/PACF plots" data-bন="ACF/PACF প্লট দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                            ACF/PACF প্লট দেখতে টাইম সিরিজ ডেটা ইনপুট করুন
+                        </p>
+                    </div>
+                    <canvas id="acfCanvas" style="display: none;"></canvas>
+                    <canvas id="pacfCanvas" style="display: none;"></canvas>
+                    <canvas id="combinedCanvas" style="display: none;"></canvas>
+                    <canvas id="timeSeriesCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="chart-info">
+                    <div class="chart-legend">
+                        <div class="legend-title">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Plot Legend" data-bন="প্লট লেজেন্ড">প্লট লেজেন্ড</span>
+                        </div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color acf"></div>
+                                <div class="legend-text" data-en="ACF Values" data-bন="ACF মান">ACF মান</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color pacf"></div>
+                                <div class="legend-text" data-en="PACF Values" data-bন="PACF মান">PACF মান</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color confidence"></div>
+                                <div class="legend-text" data-en="95% Confidence Band" data-bন="৯৫% কনফিডেন্স ব্যান্ড">৯৫% কনফিডেন্স ব্যান্ড</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color significant"></div>
+                                <div class="legend-text" data-en="Significant Lag" data-bন="তাৎপর্যপূর্ণ ল্যাগ">তাৎপর্যপূর্ণ ল্যাগ</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="interpretation-guide">
+                        <div class="guide-title">
+                            <i class="fas fa-book"></i>
+                            <span data-en="ACF/PACF Interpretation Guide" data-bন="ACF/PACF ব্যাখ্যা নির্দেশিকা">ACF/PACF ব্যাখ্যা নির্দেশিকা</span>
+                        </div>
+                        <div class="guide-items">
+                            <div class="guide-item">
+                                <div class="guide-indicator white-noise"></div>
+                                <div class="guide-description" data-en="White Noise: No significant autocorrelations" data-bন="হোয়াইট নয়েজ: কোন তাৎপর্যপূর্ণ অটোকোরিলেশন নেই">হোয়াইট নয়েজ: কোন তাৎপর্যপূর্ণ অটোকোরিলেশন নেই</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator stationary"></div>
+                                <div class="guide-description" data-en="Stationary: ACF decays quickly" data-bন="স্টেশনারি: ACF দ্রুত হ্রাস পায়">স্টেশনারি: ACF দ্রুত হ্রাস পায়</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator non-stationary"></div>
+                                <div class="guide-description" data-en="Non-Stationary: ACF decays slowly" data-bন="নন-স্টেশনারি: ACF ধীরে হ্রাস পায়">নন-স্টেশনারি: ACF ধীরে হ্রাস পায়</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator trend"></div>
+                                <div class="guide-description" data-en="Trend: ACF starts high, decays slowly" data-bন="ট্রেন্ড: ACF উচ্চ থেকে শুরু হয়, ধীরে হ্রাস পায়">ট্রেন্ড: ACF উচ্চ থেকে শুরু হয়, ধীরে হ্রাস পায়</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator seasonal"></div>
+                                <div class="guide-description" data-en="Seasonal: Peaks at seasonal lags" data-bন="সিজনাল: সিজনাল ল্যাগে পীক">সিজনাল: সিজনাল ল্যাগে পীক</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Series Components -->
+        <div class="components-section">
+            <h2 class="section-title" style="border-bottom: none;">
+                <i class="fas fa-puzzle-piece"></i>
+                <span data-en="Time Series Components" data-bন="টাইম সিরিজ উপাদান">টাইম সিরিজ উপাদান</span>
+            </h2>
+            
+            <div class="components-grid" id="componentsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem; grid-column: 1 / -1;" id="componentsPlaceholder" data-en="Enter time series data to see decomposition" data-bন="ডিকম্পোজিশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                    ডিকম্পোজিশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Definitions" data-bন="সূত্র এবং সংজ্ঞা">সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- ACF Formula -->
+                <div class="formula-card acf-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Autocorrelation Function (ACF)" data-bন="অটোকোরিলেশন ফাংশন (ACF)">অটোকোরিলেশন ফাংশন (ACF)</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures correlation between time series and its lagged values" data-bন="টাইম সিরিজ এবং এর ল্যাগড মানের মধ্যে সম্পর্ক পরিমাপ করে">
+                            টাইম সিরিজ এবং এর ল্যাগড মানের মধ্যে সম্পর্ক পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            ACF(k) = Σ[(X(t) - X̄)(X(t-k) - X̄)] / Σ[(X(t) - X̄)²]
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="k: Lag (time shift)" data-bন="k: ল্যাগ (সময় স্থানান্তর)">k: ল্যাগ (সময় স্থানান্তর)</li>
+                            <li data-en="ACF(0) = 1 (perfect correlation with itself)" data-bন="ACF(0) = ১ (নিজের সাথে পারফেক্ট কোরিলেশন)">ACF(0) = ১ (নিজের সাথে পারফেক্ট কোরিলেশন)</li>
+                            <li data-en="Range: -1 ≤ ACF(k) ≤ 1" data-bন="পরিসর: -১ ≤ ACF(k) ≤ ১">পরিসর: -১ ≤ ACF(k) ≤ ১</li>
+                            <li data-en"Decays slowly for non-stationary series" data-bন="নন-স্টেশনারি সিরিজের জন্য ধীরে হ্রাস পায়">নন-স্টেশনারি সিরিজের জন্য ধীরে হ্রাস পায়</li>
+                            <li data-en="Used to identify AR processes" data-bন="AR প্রসেস চিহ্নিত করতে ব্যবহৃত">AR প্রসেস চিহ্নিত করতে ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- PACF Formula -->
+                <div class="formula-card pacf-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Partial Autocorrelation (PACF)" data-bন="পার্শিয়াল অটোকোরিলেশন (PACF)">পার্শিয়াল অটোকোরিলেশন (PACF)</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures direct correlation after removing indirect effects" data-bন="পরোক্ষ প্রভাব দূর করার পরে সরাসরি সম্পর্ক পরিমাপ করে">
+                            পরোক্ষ প্রভাব দূর করার পরে সরাসরি সম্পর্ক পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            PACF(k) = Corr[X(t), X(t-k) | X(t-1), ..., X(t-k+1)]
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Removes intermediate lag correlations" data-bন="মধ্যমবর্তী ল্যাগ কোরিলেশন দূর করে">মধ্যমবর্তী ল্যাগ কোরিলেশন দূর করে</li>
+                            <li data-en="Cuts off after p lags for AR(p) process" data-bন="AR(p) প্রসেসের জন্য p ল্যাগ পরে কাট অফ">AR(p) প্রসেসের জন্য p ল্যাগ পরে কাট অফ</li>
+                            <li data-en="Useful for AR order identification" data-bন="AR অর্ডার চিহ্নিতকরণে উপযোগী">AR অর্ডার চিহ্নিতকরণে উপযোগী</li>
+                            <li data-en="Computed via Yule-Walker equations" data-bন="ইউল-ওয়াকার সমীকরণের মাধ্যমে গণনা করা হয়">ইউল-ওয়াকার সমীকরণের মাধ্যমে গণনা করা হয়</li>
+                            <li data-en="Shows pure relationship at specific lag" data-bন="নির্দিষ্ট ল্যাগে খাঁটি সম্পর্ক দেখায়">নির্দিষ্ট ল্যাগে খাঁটি সম্পর্ক দেখায়</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stationarity Tests -->
+                <div class="formula-card stationarity-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Stationarity Tests" data-bন="স্টেশনারিটি টেস্ট">স্টেশনারিটি টেস্ট</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Statistical tests to check if time series is stationary" data-bন="টাইম সিরিজ স্টেশনারি কিনা তা পরীক্ষা করার পরিসংখ্যানিক টেস্ট">
+                            টাইম সিরিজ স্টেশনারি কিনা তা পরীক্ষা করার পরিসংখ্যানিক টেস্ট
+                        </p>
+                        <div class="formula-equation">
+                            ADF: H₀: Unit root (non-stationary)<br>
+                            KPSS: H₀: Stationary
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="ADF Test: Tests for unit root" data-bন="ADF টেস্ট: ইউনিট রুট পরীক্ষা করে">ADF টেস্ট: ইউনিট রুট পরীক্ষা করে</li>
+                            <li data-en="KPSS Test: Tests for stationarity" data-bন="KPSS টেস্ট: স্টেশনারিটি পরীক্ষা করে">KPSS টেস্ট: স্টেশনারিটি পরীক্ষা করে</li>
+                            <li data-en="P-value < 0.05: Reject null hypothesis" data-bন="P-মান < ০.০৫: নাল হাইপোথিসিস প্রত্যাখ্যান">P-মান < ০.০৫: নাল হাইপোথিসিস প্রত্যাখ্যান</li>
+                            <li data-en="Ljung-Box: Tests autocorrelation presence" data-bন="লজাং-বক্স: অটোকোরিলেশন উপস্থিতি পরীক্ষা করে">লজাং-বক্স: অটোকোরিলেশন উপস্থিতি পরীক্ষা করে</li>
+                            <li data-en"Critical values depend on sample size" data-bন="ক্রিটিক্যাল ভ্যালু স্যাম্পল সাইজের উপর নির্ভরশীল">ক্রিটিক্যাল ভ্যালু স্যাম্পল সাইজের উপর নির্ভরশীল</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Series Table -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Time Series Data with Lags" data-bন="ল্যাগ সহ টাইম সিরিজ ডেটা">ল্যাগ সহ টাইম সিরিজ ডেটা</span>
+            </h2>
+            
+            <div id="timeSeriesTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="timeSeriesPlaceholder" data-en="Enter time series data to see table with lagged values" data-bন="ল্যাগড মান সহ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                    ল্যাগড মান সহ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step ACF Calculation" data-bন="ধাপে ধাপে ACF গণনা">ধাপে ধাপে ACF গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter time series data to see step-by-step calculations" data-bন="ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                    ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Time Series Patterns" data-bন="উদাহরণ টাইম সিরিজ প্যাটার্ন">উদাহরণ টাইম সিরিজ প্যাটার্ন</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load different time series patterns:" data-bন="বিভিন্ন টাইম সিরিজ প্যাটার্ন লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                বিভিন্ন টাইম সিরিজ প্যাটার্ন লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="white-noise">
+                    <div class="example-title" data-en="White Noise" data-bন="হোয়াইট নয়েজ">হোয়াইট নয়েজ</div>
+                    <div class="example-description" data-en="No autocorrelation" data-bন="কোন অটোকোরিলেশন নেই">কোন অটোকোরিলেশন নেই</div>
+                </button>
+                <button class="example-btn" data-example="ar1-stationary">
+                    <div class="example-title" data-en="AR(1) Stationary" data-bন="AR(1) স্টেশনারি">AR(1) স্টেশনারি</div>
+                    <div class="example-description" data-en="Exponential ACF decay" data-bন="এক্সপোনেনশিয়াল ACF ডিকেই">এক্সপোনেনশিয়াল ACF ডিকেই</div>
+                </button>
+                <button class="example-btn" data-example="ar1-nonstationary">
+                    <div class="example-title" data-en="AR(1) Non-Stationary" data-bন="AR(1) নন-স্টেশনারি">AR(1) নন-স্টেশনারি</div>
+                    <div class="example-description" data-en="Slow ACF decay" data-bন="ধীর ACF ডিকেই">ধীর ACF ডিকেই</div>
+                </button>
+                <button class="example-btn" data-example="ma1">
+                    <div class="example-title" data-en="MA(1)" data-bন="MA(1)">MA(1)</div>
+                    <div class="example-description" data-en="ACF cuts off after lag 1" data-bন="ল্যাগ ১ পরে ACF কাট অফ">ল্যাগ ১ পরে ACF কাট অফ</div>
+                </button>
+                <button class="example-btn" data-example="trend">
+                    <div class="example-title" data-en="Linear Trend" data-bন="লিনিয়ার ট্রেন্ড">লিনিয়ার ট্রেন্ড</div>
+                    <div class="example-description" data-en="Non-stationary with trend" data-bন="ট্রেন্ড সহ নন-স্টেশনারি">ট্রেন্ড সহ নন-স্টেশনারি</div>
+                </button>
+                <button class="example-btn" data-example="seasonal">
+                    <div class="example-title" data-en="Seasonal" data-bন="সিজনাল">সিজনাল</div>
+                    <div class="example-description" data-en="Periodic autocorrelation" data-bন="পর্যায়ক্রমিক অটোকোরিলেশন">পর্যায়ক্রমিক অটোকোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="random-walk">
+                    <div class="example-title" data-en="Random Walk" data-bন="র্যান্ডম ওয়াক">র্যান্ডম ওয়াক</div>
+                    <div class="example-description" data-en="Unit root process" data-bন="ইউনিট রুট প্রসেস">ইউনিট রুট প্রসেস</div>
+                </button>
+                <button class="example-btn" data-example="arma11">
+                    <div class="example-title" data-en="ARMA(1,1)" data-bন="ARMA(1,1)">ARMA(1,1)</div>
+                    <div class="example-description" data-en="Mixed AR and MA effects" data-bন="মিশ্র AR এবং MA ইফেক্ট">মিশ্র AR এবং MA ইফেক্ট</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            
+            // Current state
+            let currentData = [];
+            let currentMaxLag = 15;
+            let currentConfidenceLevel = 0.95;
+            let currentCharts = {
+                acf: null,
+                pacf: null,
+                combined: null,
+                timeSeries: null
+            };
+            let currentActiveChart = 'acf';
+
+            // Example Time Series Patterns
+            const examples = {
+                'white-noise': {
+                    data: Array.from({length: 50}, () => (Math.random() - 0.5) * 10 + 5),
+                    description: 'White noise with no autocorrelation'
+                },
+                'ar1-stationary': {
+                    data: generateAR1(50, 0.7, 0),
+                    description: 'Stationary AR(1) with phi=0.7'
+                },
+                'ar1-nonstationary': {
+                    data: generateAR1(50, 1.05, 0),
+                    description: 'Non-stationary AR(1) with phi=1.05'
+                },
+                'ma1': {
+                    data: generateMA1(50, 0.8, 0),
+                    description: 'MA(1) with theta=0.8'
+                },
+                'trend': {
+                    data: Array.from({length: 50}, (_, i) => 10 + 0.5 * i + (Math.random() - 0.5) * 2),
+                    description: 'Linear trend with noise'
+                },
+                'seasonal': {
+                    data: Array.from({length: 50}, (_, i) => 10 + 3 * Math.sin(i * Math.PI / 6) + (Math.random() - 0.5) * 2),
+                    description: 'Seasonal pattern with period 12'
+                },
+                'random-walk': {
+                    data: generateRandomWalk(50, 0, 1),
+                    description: 'Random walk (unit root process)'
+                },
+                'arma11': {
+                    data: generateARMA11(50, 0.6, 0.4, 0),
+                    description: 'ARMA(1,1) process'
+                }
+            };
+
+            // Time series generation functions
+            function generateAR1(n, phi, seed) {
+                const data = [seed || (Math.random() - 0.5) * 10];
+                for (let i = 1; i < n; i++) {
+                    data.push(phi * data[i-1] + (Math.random() - 0.5) * 2);
+                }
+                return data;
+            }
+
+            function generateMA1(n, theta, seed) {
+                const errors = Array.from({length: n}, () => (Math.random() - 0.5) * 2);
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    if (i === 0) {
+                        data.push(errors[i]);
+                    } else {
+                        data.push(errors[i] + theta * errors[i-1]);
+                    }
+                }
+                return data;
+            }
+
+            function generateRandomWalk(n, start, step) {
+                const data = [start];
+                for (let i = 1; i < n; i++) {
+                    data.push(data[i-1] + (Math.random() - 0.5) * step);
+                }
+                return data;
+            }
+
+            function generateARMA11(n, phi, theta, seed) {
+                const errors = Array.from({length: n}, () => (Math.random() - 0.5) * 2);
+                const data = [seed || (Math.random() - 0.5) * 10];
+                for (let i = 1; i < n; i++) {
+                    data.push(phi * data[i-1] + errors[i] + theta * errors[i-1]);
+                }
+                return data;
+            }
+
+            // Initialize
+            initGenerator();
+
+            function initGenerator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomTimeSeries();
+                        } else if (this.dataset.method === 'generate') {
+                            generateARMATimeSeries();
+                        }
+                    });
+                });
+
+                // Statistical Tests Selection
+                const testOptions = document.querySelectorAll('.test-option');
+                testOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        this.classList.toggle('active');
+                    });
+                });
+
+                // Max Lag Selection
+                document.getElementById('maxLag').addEventListener('change', function() {
+                    currentMaxLag = parseInt(this.value);
+                });
+
+                // Confidence Level Selection
+                document.getElementById('confidenceLevel').addEventListener('change', function() {
+                    currentConfidenceLevel = parseFloat(this.value);
+                });
+
+                // Chart Tabs
+                const chartTabs = document.querySelectorAll('.chart-tab');
+                chartTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        chartTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        currentActiveChart = this.dataset.chart;
+                        
+                        // Show the selected chart
+                        updateChartVisibility();
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', generatePlots);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearGenerator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        generatePlots();
+                    }
+                });
+
+                // Load default example
+                setTimeout(() => {
+                    loadExample('ar1-stationary');
+                    generatePlots();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function generatePlots() {
+                const inputData = document.getElementById('dataInput').value;
+                const data = parseInputData(inputData);
+                
+                if (data.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                        'Please enter time series data');
+                    return;
+                }
+                
+                if (data.length < 10) {
+                    alert(currentLanguage === 'bn' ? 
+                        'অটোকোরিলেশন অ্যানালাইসিসের জন্য কমপক্ষে ১০টি ডেটা পয়েন্ট প্রয়োজন' : 
+                        'At least 10 data points are required for autocorrelation analysis');
+                    return;
+                }
+                
+                currentData = data;
+                
+                // Calculate ACF and PACF
+                const stats = calculateAutocorrelation(data, currentMaxLag);
+                
+                // Run statistical tests
+                const testResults = runStatisticalTests(data);
+                
+                // Update results
+                updateResults(stats, testResults);
+                
+                // Update significant lags table
+                updateSignificantLagsTable(stats);
+                
+                // Update visualizations
+                updateVisualizations(data, stats);
+                
+                // Update time series components
+                updateTimeSeriesComponents(data);
+                
+                // Update time series table
+                updateTimeSeriesTable(data, stats);
+                
+                // Update step-by-step calculations
+                updateStepByStep(data, stats);
+            }
+
+            function calculateAutocorrelation(data, maxLag) {
+                const n = data.length;
+                const mean = data.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Calculate variance
+                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                
+                // Calculate ACF for different lags
+                const acfValues = [];
+                const pacfValues = [];
+                let significantLags = 0;
+                
+                for (let k = 0; k <= maxLag; k++) {
+                    // Calculate ACF(k)
+                    let numerator = 0;
+                    for (let t = k; t < n; t++) {
+                        numerator += (data[t] - mean) * (data[t - k] - mean);
+                    }
+                    const acf = numerator / (n * variance);
+                    
+                    // Calculate standard error for ACF
+                    const se = 1 / Math.sqrt(n);
+                    const confidenceLimit = getZScore(currentConfidenceLevel) * se;
+                    const significant = Math.abs(acf) > confidenceLimit;
+                    
+                    if (significant && k > 0) {
+                        significantLags++;
+                    }
+                    
+                    acfValues.push({
+                        lag: k,
+                        acf: acf,
+                        se: se,
+                        confidenceLimit: confidenceLimit,
+                        significant: significant
+                    });
+                    
+                    // Calculate PACF(k) using Durbin-Levinson algorithm
+                    let pacf = k === 0 ? 1 : calculatePACF(data, k, mean, variance);
+                    pacfValues.push({
+                        lag: k,
+                        pacf: pacf,
+                        significant: Math.abs(pacf) > confidenceLimit
+                    });
+                }
+                
+                return {
+                    n,
+                    mean,
+                    variance,
+                    acfValues,
+                    pacfValues,
+                    significantLags,
+                    acfLag1: acfValues[1]?.acf || 0,
+                    pacfLag1: pacfValues[1]?.pacf || 0
+                };
+            }
+
+            function calculatePACF(data, k, mean, variance) {
+                // Durbin-Levinson algorithm for PACF calculation
+                const n = data.length;
+                const series = data.map(x => x - mean);
+                
+                // Initialize
+                const phi = Array(k + 1).fill(0);
+                const v = Array(k + 1).fill(0);
+                
+                // Step 1
+                phi[1][1] = series.slice(1).reduce((sum, _, i) => 
+                    sum + series[i] * series[i + 1], 0) / 
+                    series.reduce((sum, x) => sum + x * x, 0);
+                v[1] = variance * (1 - phi[1][1] * phi[1][1]);
+                
+                // Recursion
+                for (let j = 2; j <= k; j++) {
+                    const numerator = series.slice(j).reduce((sum, _, i) => 
+                        sum + series[i] * series[i + j], 0);
+                    let denominator = 0;
+                    
+                    for (let i = 1; i < j; i++) {
+                        denominator += phi[j-1][i] * series.slice(j-i).reduce((sum, _, idx) => 
+                            sum + series[idx] * series[idx + j - i], 0);
+                    }
+                    
+                    phi[j][j] = (numerator - denominator) / v[j-1];
+                    
+                    for (let i = 1; i < j; i++) {
+                        phi[j][i] = phi[j-1][i] - phi[j][j] * phi[j-1][j-i];
+                    }
+                    
+                    v[j] = v[j-1] * (1 - phi[j][j] * phi[j][j]);
+                }
+                
+                return phi[k][k];
+            }
+
+            function getZScore(confidenceLevel) {
+                const zScores = {
+                    0.90: 1.645,
+                    0.95: 1.960,
+                    0.99: 2.576
+                };
+                return zScores[confidenceLevel] || 1.960;
+            }
+
+            function runStatisticalTests(data) {
+                const n = data.length;
+                const mean = data.reduce((a, b) => a + b, 0) / n;
+                
+                // ADF Test (simplified version)
+                const adfStatistic = calculateADFStatistic(data, mean);
+                const adfPValue = calculateADFPValue(adfStatistic, n);
+                
+                // KPSS Test (simplified version)
+                const kpssStatistic = calculateKPSSStatistic(data, mean);
+                const kpssPValue = calculateKPSSPValue(kpssStatistic, n);
+                
+                // Determine stationarity
+                const adfStationary = adfPValue < 0.05; // Reject null of unit root
+                const kpssStationary = kpssPValue > 0.05; // Fail to reject null of stationarity
+                
+                let stationarity = 'Unknown';
+                let stationarityStatus = '--';
+                let stationarityText = '';
+                
+                if (adfStationary && kpssStationary) {
+                    stationarity = 'Stationary';
+                    stationarityStatus = currentLanguage === 'bn' ? 'স্টেশনারি' : 'Stationary';
+                    stationarityText = currentLanguage === 'bn' ? 
+                        'টাইম সিরিজটি স্টেশনারি (ADF এবং KPSS টেস্ট উভয়ই স্টেশনারিটি নিশ্চিত করে)' :
+                        'Time series is stationary (both ADF and KPSS tests confirm stationarity)';
+                } else if (!adfStationary && !kpssStationary) {
+                    stationarity = 'Non-Stationary';
+                    stationarityStatus = currentLanguage === 'bn' ? 'নন-স্টেশনারি' : 'Non-Stationary';
+                    stationarityText = currentLanguage === 'bn' ? 
+                        'টাইম সিরিজটি নন-স্টেশনারি (ADF এবং KPSS টেস্ট উভয়ই নন-স্টেশনারিটি নিশ্চিত করে)' :
+                        'Time series is non-stationary (both ADF and KPSS tests confirm non-stationarity)';
+                } else if (!adfStationary && kpssStationary) {
+                    stationarity = 'Trend-Stationary';
+                    stationarityStatus = currentLanguage === 'bn' ? 'ট্রেন্ড-স্টেশনারি' : 'Trend-Stationary';
+                    stationarityText = currentLanguage === 'bn' ? 
+                        'টাইম সিরিজটি ট্রেন্ড-স্টেশনারি (ডিটারমিনিস্টিক ট্রেন্ড পরিষ্কার করার পর স্টেশনারি)' :
+                        'Time series is trend-stationary (stationary after removing deterministic trend)';
+                } else {
+                    stationarity = 'Inconclusive';
+                    stationarityStatus = currentLanguage === 'bn' ? 'অনিশ্চিত' : 'Inconclusive';
+                    stationarityText = currentLanguage === 'bn' ? 
+                        'স্টেশনারিটি অনিশ্চিত (ADF এবং KPSS টেস্টের ফলাফল ভিন্ন)' :
+                        'Stationarity is inconclusive (ADF and KPSS tests give different results)';
+                }
+                
+                return {
+                    adfStatistic,
+                    adfPValue,
+                    kpssStatistic,
+                    kpssPValue,
+                    stationarity,
+                    stationarityStatus,
+                    stationarityText
+                };
+            }
+
+            function calculateADFStatistic(data, mean) {
+                // Simplified ADF statistic calculation
+                const n = data.length;
+                const diff = data.slice(1).map((x, i) => x - data[i]);
+                const lagged = data.slice(0, -1);
+                
+                // Calculate regression of diff on lagged
+                const sumXLagged = lagged.reduce((a, b) => a + b, 0);
+                const sumYDiff = diff.reduce((a, b) => a + b, 0);
+                const sumXY = lagged.reduce((sum, x, i) => sum + x * diff[i], 0);
+                const sumX2 = lagged.reduce((sum, x) => sum + x * x, 0);
+                
+                const beta = (n * sumXY - sumXLagged * sumYDiff) / (n * sumX2 - sumXLagged * sumXLagged);
+                const alpha = (sumYDiff - beta * sumXLagged) / n;
+                
+                // Calculate residuals
+                const residuals = diff.map((y, i) => y - alpha - beta * lagged[i]);
+                const se = Math.sqrt(residuals.reduce((sum, r) => sum + r * r, 0) / (n - 2));
+                const seBeta = se / Math.sqrt(sumX2 - sumXLagged * sumXLagged / n);
+                
+                // ADF statistic
+                return beta / seBeta;
+            }
+
+            function calculateADFPValue(statistic, n) {
+                // Simplified p-value calculation for ADF test
+                const criticalValues = {
+                    1: -2.58, 5: -1.95, 10: -1.62
+                };
+                
+                if (statistic < criticalValues[1]) return 0.01;
+                if (statistic < criticalValues[5]) return 0.05;
+                if (statistic < criticalValues[10]) return 0.10;
+                return 0.50;
+            }
+
+            function calculateKPSSStatistic(data, mean) {
+                // Simplified KPSS statistic calculation
+                const n = data.length;
+                const demeaned = data.map(x => x - mean);
+                
+                // Calculate partial sums
+                const S = [0];
+                for (let i = 0; i < n; i++) {
+                    S.push(S[i] + demeaned[i]);
+                }
+                
+                // Calculate long-run variance (simplified)
+                let lrv = 0;
+                for (let i = 1; i < n; i++) {
+                    lrv += demeaned[i] * demeaned[i-1];
+                }
+                lrv = (demeaned.reduce((sum, x) => sum + x * x, 0) + 2 * lrv) / n;
+                
+                // KPSS statistic
+                const sumS2 = S.reduce((sum, s) => sum + s * s, 0);
+                return sumS2 / (n * n * lrv);
+            }
+
+            function calculateKPSSPValue(statistic, n) {
+                // Simplified p-value calculation for KPSS test
+                const criticalValues = {
+                    0.10: 0.347, 0.05: 0.463, 0.01: 0.739
+                };
+                
+                if (statistic > criticalValues[0.01]) return 0.01;
+                if (statistic > criticalValues[0.05]) return 0.05;
+                if (statistic > criticalValues[0.10]) return 0.10;
+                return 0.50;
+            }
+
+            function updateResults(stats, testResults) {
+                // Update stationarity results
+                document.getElementById('stationarityResult').textContent = testResults.stationarity;
+                document.getElementById('adfTestResult').textContent = testResults.adfPValue.toFixed(4);
+                document.getElementById('kpssTestResult').textContent = testResults.kpssPValue.toFixed(4);
+                
+                // Update stationarity assessment
+                document.getElementById('stationarityStatus').textContent = testResults.stationarityStatus;
+                document.getElementById('stationarityText').textContent = testResults.stationarityText;
+                
+                // Update autocorrelation statistics
+                document.getElementById('seriesMean').textContent = stats.mean.toFixed(4);
+                document.getElementById('seriesVariance').textContent = stats.variance.toFixed(4);
+                document.getElementById('acfLag1').textContent = stats.acfLag1.toFixed(4);
+                document.getElementById('pacfLag1').textContent = stats.pacfLag1.toFixed(4);
+                document.getElementById('significantLags').textContent = stats.significantLags;
+                document.getElementById('dataPoints').textContent = stats.n;
+                
+                // Color code the stationarity result
+                const stationarityElement = document.getElementById('stationarityResult');
+                stationarityElement.style.color = getStationarityColor(testResults.stationarity);
+                
+                const statusElement = document.getElementById('stationarityStatus');
+                statusElement.style.color = getStationarityColor(testResults.stationarity);
+            }
+
+            function getStationarityColor(stationarity) {
+                switch(stationarity) {
+                    case 'Stationary': return 'var(--stationary-color)';
+                    case 'Non-Stationary': return 'var(--non-stationary-color)';
+                    case 'Trend-Stationary': return 'var(--trend-color)';
+                    case 'Inconclusive': return 'var(--gray)';
+                    default: return 'var(--dark)';
+                }
+            }
+
+            function updateSignificantLagsTable(stats) {
+                const container = document.getElementById('lagsTableContainer');
+                const acfValues = stats.acfValues;
+                const pacfValues = stats.pacfValues;
+                
+                let tableHTML = `
+                    <table class="lags-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Lag (k)" data-bন="ল্যাগ (k)">ল্যাগ (k)</th>
+                                <th data-en="ACF(k)" data-bন="ACF(k)">ACF(k)</th>
+                                <th data-en="PACF(k)" data-bন="PACF(k)">PACF(k)</th>
+                                <th data-en="SE" data-bন="SE">SE</th>
+                                <th data-en="Significant" data-bন="তাৎপর্যপূর্ণ">তাৎপর্যপূর্ণ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                for (let i = 1; i < acfValues.length; i++) {
+                    const acf = acfValues[i];
+                    const pacf = pacfValues[i];
+                    const significant = acf.significant || pacf.significant ? 
+                        (currentLanguage === 'bn' ? 'হ্যাঁ' : 'Yes') : 
+                        (currentLanguage === 'bn' ? 'না' : 'No');
+                    
+                    tableHTML += `
+                        <tr ${significant === (currentLanguage === 'bn' ? 'হ্যাঁ' : 'Yes') ? 'style="background: var(--light-gray);"' : ''}>
+                            <td class="lag-cell">${acf.lag}</td>
+                            <td class="acf-cell ${acf.significant ? 'significant' : ''}">${acf.acf.toFixed(4)}</td>
+                            <td class="pacf-cell ${pacf.significant ? 'significant' : ''}">${pacf.pacf.toFixed(4)}</td>
+                            <td>${acf.se.toFixed(4)}</td>
+                            <td>${significant}</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function updateVisualizations(data, stats) {
+                // Hide placeholder
+                document.getElementById('plotPlaceholder').style.display = 'none';
+                
+                // Update ACF plot
+                updateACFPlot(stats);
+                
+                // Update PACF plot
+                updatePACFPlot(stats);
+                
+                // Update combined plot
+                updateCombinedPlot(stats);
+                
+                // Update time series plot
+                updateTimeSeriesPlot(data);
+                
+                // Show the active chart
+                updateChartVisibility();
+            }
+
+            function updateACFPlot(stats) {
+                const canvas = document.getElementById('acfCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.acf) {
+                    currentCharts.acf.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const lags = stats.acfValues.map(a => a.lag);
+                const acfValues = stats.acfValues.map(a => a.acf);
+                const confidenceLimit = stats.acfValues[0]?.confidenceLimit || 0.2;
+                
+                // Create ACF chart
+                currentCharts.acf = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: lags,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => confidenceLimit),
+                                borderColor: 'var(--acf-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => -confidenceLimit),
+                                borderColor: 'var(--acf-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ACF মান' : 'ACF Values',
+                                data: acfValues,
+                                backgroundColor: acfValues.map((val, i) => 
+                                    i > 0 && Math.abs(val) > confidenceLimit ? 
+                                    'var(--significant-bar)' : 'var(--acf-color)'),
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 2) {
+                                            return `ACF(${context.label}) = ${context.parsed.y.toFixed(4)}`;
+                                        }
+                                        return context.dataset.label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ল্যাগ (k)' : 'Lag (k)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: -1,
+                                max: 1,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updatePACFPlot(stats) {
+                const canvas = document.getElementById('pacfCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.pacf) {
+                    currentCharts.pacf.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const lags = stats.pacfValues.map(p => p.lag);
+                const pacfValues = stats.pacfValues.map(p => p.pacf);
+                const confidenceLimit = stats.acfValues[0]?.confidenceLimit || 0.2;
+                
+                // Create PACF chart
+                currentCharts.pacf = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: lags,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => confidenceLimit),
+                                borderColor: 'var(--pacf-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => -confidenceLimit),
+                                borderColor: 'var(--pacf-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'PACF মান' : 'PACF Values',
+                                data: pacfValues,
+                                backgroundColor: pacfValues.map((val, i) => 
+                                    i > 0 && Math.abs(val) > confidenceLimit ? 
+                                    'var(--significant-bar)' : 'var(--pacf-color)'),
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 2) {
+                                            return `PACF(${context.label}) = ${context.parsed.y.toFixed(4)}`;
+                                        }
+                                        return context.dataset.label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ল্যাগ (k)' : 'Lag (k)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'পার্শিয়াল অটোকোরিলেশন' : 'Partial Autocorrelation',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: -1,
+                                max: 1,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateCombinedPlot(stats) {
+                const canvas = document.getElementById('combinedCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.combined) {
+                    currentCharts.combined.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const lags = stats.acfValues.map(a => a.lag);
+                const acfValues = stats.acfValues.map(a => a.acf);
+                const pacfValues = stats.pacfValues.map(p => p.pacf);
+                const confidenceLimit = stats.acfValues[0]?.confidenceLimit || 0.2;
+                
+                // Create combined chart
+                currentCharts.combined = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: lags,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'ACF মান' : 'ACF Values',
+                                data: acfValues,
+                                backgroundColor: 'var(--acf-color)',
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                order: 2
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'PACF মান' : 'PACF Values',
+                                data: pacfValues,
+                                backgroundColor: 'var(--pacf-color)',
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                order: 3
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => confidenceLimit),
+                                borderColor: 'var(--dark)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false,
+                                order: 1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? '৯৫% কনফিডেন্স লিমিট' : '95% Confidence Limit',
+                                data: lags.map(() => -confidenceLimit),
+                                borderColor: 'var(--dark)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ল্যাগ (k)' : 'Lag (k)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'অটোকোরিলেশন' : 'Autocorrelation',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: -1,
+                                max: 1,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateTimeSeriesPlot(data) {
+                const canvas = document.getElementById('timeSeriesCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.timeSeries) {
+                    currentCharts.timeSeries.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const timePoints = data.map((_, i) => i + 1);
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                
+                // Create time series chart
+                currentCharts.timeSeries = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timePoints,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'টাইম সিরিজ' : 'Time Series',
+                                data: data,
+                                borderColor: 'var(--primary)',
+                                backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'গড়' : 'Mean',
+                                data: timePoints.map(() => mean),
+                                borderColor: 'var(--accent)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সময় (t)' : 'Time (t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateChartVisibility() {
+                // Hide all canvases
+                document.getElementById('acfCanvas').style.display = 'none';
+                document.getElementById('pacfCanvas').style.display = 'none';
+                document.getElementById('combinedCanvas').style.display = 'none';
+                document.getElementById('timeSeriesCanvas').style.display = 'none';
+                
+                // Show active chart
+                if (currentActiveChart === 'acf') {
+                    document.getElementById('acfCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'pacf') {
+                    document.getElementById('pacfCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'combined') {
+                    document.getElementById('combinedCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'timeseries') {
+                    document.getElementById('timeSeriesCanvas').style.display = 'block';
+                }
+            }
+
+            function updateTimeSeriesComponents(data) {
+                const container = document.getElementById('componentsContainer');
+                const n = data.length;
+                const mean = data.reduce((a, b) => a + b, 0) / n;
+                
+                // Calculate basic statistics
+                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                const stdDev = Math.sqrt(variance);
+                
+                // Calculate trend (simple linear regression)
+                const time = data.map((_, i) => i + 1);
+                const sumX = time.reduce((a, b) => a + b, 0);
+                const sumY = data.reduce((a, b) => a + b, 0);
+                const sumXY = time.reduce((sum, t, i) => sum + t * data[i], 0);
+                const sumX2 = time.reduce((sum, t) => sum + t * t, 0);
+                
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / n;
+                
+                // Calculate seasonal component (simplified)
+                const seasonalStrength = calculateSeasonalStrength(data);
+                
+                // Calculate noise variance
+                const trendValues = time.map(t => intercept + slope * t);
+                const detrended = data.map((val, i) => val - trendValues[i]);
+                const noiseVariance = detrended.reduce((sum, val) => sum + val * val, 0) / n;
+                
+                container.innerHTML = `
+                    <div class="component-card">
+                        <div class="component-value">${mean.toFixed(2)}</div>
+                        <div class="component-label" data-en="Mean (Level)" data-bন="গড় (লেভেল)">গড় (লেভেল)</div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-value">${stdDev.toFixed(2)}</div>
+                        <div class="component-label" data-en="Std Dev (Variability)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (ভেরিয়েবিলিটি)">স্ট্যান্ডার্ড ডেভিয়েশন (ভেরিয়েবিলিটি)</div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-value">${slope.toFixed(4)}</div>
+                        <div class="component-label" data-en="Trend Slope" data-bন="ট্রেন্ড ঢাল">ট্রেন্ড ঢাল</div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-value">${seasonalStrength.toFixed(2)}</div>
+                        <div class="component-label" data-en="Seasonal Strength" data-bন="সিজনাল শক্তি">সিজনাল শক্তি</div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-value">${noiseVariance.toFixed(2)}</div>
+                        <div class="component-label" data-en="Noise Variance" data-bন="নয়েজ ভ্যারিয়েন্স">নয়েজ ভ্যারিয়েন্স</div>
+                    </div>
+                    <div class="component-card">
+                        <div class="component-value">${(variance - noiseVariance).toFixed(2)}</div>
+                        <div class="component-label" data-en="Signal Variance" data-bন="সিগনাল ভ্যারিয়েন্স">সিগনাল ভ্যারিয়েন্স</div>
+                    </div>
+                `;
+            }
+
+            function calculateSeasonalStrength(data) {
+                // Simplified seasonal strength calculation
+                const n = data.length;
+                const period = 12; // Assume yearly seasonality for monthly data
+                if (n < period * 2) return 0;
+                
+                const seasonalIndices = Array(period).fill(0);
+                const seasonalCounts = Array(period).fill(0);
+                
+                for (let i = 0; i < n; i++) {
+                    const season = i % period;
+                    seasonalIndices[season] += data[i];
+                    seasonalCounts[season]++;
+                }
+                
+                // Calculate seasonal averages
+                const seasonalAverages = seasonalIndices.map((sum, i) => 
+                    seasonalCounts[i] > 0 ? sum / seasonalCounts[i] : 0);
+                
+                // Calculate overall average
+                const overallAverage = data.reduce((a, b) => a + b, 0) / n;
+                
+                // Calculate seasonal strength
+                const seasonalSS = seasonalAverages.reduce((sum, avg) => 
+                    sum + Math.pow(avg - overallAverage, 2), 0);
+                const totalSS = data.reduce((sum, val) => 
+                    sum + Math.pow(val - overallAverage, 2), 0);
+                
+                return totalSS > 0 ? seasonalSS / totalSS : 0;
+            }
+
+            function updateTimeSeriesTable(data, stats) {
+                const container = document.getElementById('timeSeriesTableContainer');
+                const n = data.length;
+                const maxDisplay = Math.min(n, 20);
+                
+                let tableHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="time-series-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Time (t)" data-bন="সময় (t)">সময় (t)</th>
+                                    <th data-en="X(t)" data-bন="X(t)">X(t)</th>
+                                    <th data-en="X(t-1)" data-bন="X(t-1)">X(t-1)</th>
+                                    <th data-en="X(t-2)" data-bন="X(t-2)">X(t-2)</th>
+                                    <th data-en="X(t-3)" data-bন="X(t-3)">X(t-3)</th>
+                                    <th data-en="ΔX(t)" data-bন="ΔX(t)">ΔX(t)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                for (let i = 0; i < maxDisplay; i++) {
+                    const x_t = data[i];
+                    const x_t1 = i > 0 ? data[i-1] : null;
+                    const x_t2 = i > 1 ? data[i-2] : null;
+                    const x_t3 = i > 2 ? data[i-3] : null;
+                    const delta = i > 0 ? (x_t - x_t1).toFixed(2) : null;
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${x_t.toFixed(2)}</td>
+                            <td>${x_t1 !== null ? x_t1.toFixed(2) : '-'}</td>
+                            <td>${x_t2 !== null ? x_t2.toFixed(2) : '-'}</td>
+                            <td>${x_t3 !== null ? x_t3.toFixed(2) : '-'}</td>
+                            <td>${delta !== null ? delta : '-'}</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHTML += `
+                                <tr style="background: var(--light-gray); font-weight: 600;">
+                                    <td>Statistics</td>
+                                    <td>Mean: ${stats.mean.toFixed(2)}</td>
+                                    <td colspan="2">Variance: ${stats.variance.toFixed(2)}</td>
+                                    <td colspan="2">Std Dev: ${Math.sqrt(stats.variance).toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function updateStepByStep(data, stats) {
+                const container = document.getElementById('stepsContainer');
+                const n = data.length;
+                const mean = stats.mean;
+                const variance = stats.variance;
+                
+                // Calculate ACF(1) manually for demonstration
+                let numerator = 0;
+                for (let t = 1; t < n; t++) {
+                    numerator += (data[t] - mean) * (data[t-1] - mean);
+                }
+                const acf1 = numerator / (n * variance);
+                const se = 1 / Math.sqrt(n);
+                const confidenceLimit = getZScore(currentConfidenceLevel) * se;
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate Mean and Variance" data-bন="ধাপ ১: গড় এবং ভ্যারিয়েন্স গণনা করুন">ধাপ ১: গড় এবং ভ্যারিয়েন্স গণনা করুন</h4>
+                            <p data-en="Find the average and variability of the time series" data-bন="টাইম সিরিজের গড় এবং ভেরিয়েবিলিটি নির্ণয় করুন">
+                                টাইম সিরিজের গড় এবং ভেরিয়েবিলিটি নির্ণয় করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formulas:" data-bন="সূত্র:">সূত্র:</strong></p>
+                                <p>Mean (μ) = ΣX(t) / n</p>
+                                <p>Variance (σ²) = Σ[X(t) - μ]² / n</p>
+                                <p><strong data-en="Calculations:" data-bন="গণনা:">গণনা:</strong></p>
+                                <p>μ = ${data.reduce((a, b) => a + b, 0).toFixed(2)} / ${n} = <strong>${mean.toFixed(2)}</strong></p>
+                                <p>σ² = ${variance.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Autocovariance" data-bন="ধাপ ২: অটোকোভ্যারিয়েন্স গণনা করুন">ধাপ ২: অটোকোভ্যারিয়েন্স গণনা করুন</h4>
+                            <p data-en="Find how values correlate with their lagged versions" data-bন="মানগুলি তাদের ল্যাগড ভার্সনের সাথে কীভাবে সম্পর্কিত তা খুঁজে বের করুন">
+                                মানগুলি তাদের ল্যাগড ভার্সনের সাথে কীভাবে সম্পর্কিত তা খুঁজে বের করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    Cov(k) = Σ[(X(t) - μ)(X(t-k) - μ)] / n
+                                </p>
+                                <p><strong data-en="For lag 1 (k=1):" data-bন="ল্যাগ ১ (k=১) এর জন্য:">ল্যাগ ১ (k=১) এর জন্য:</strong></p>
+                                <p>Cov(1) = Σ[(X(t) - ${mean.toFixed(2)})(X(t-1) - ${mean.toFixed(2)})] / ${n}</p>
+                                <p>= ${numerator.toFixed(2)} / ${n} = ${(numerator/n).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate ACF" data-bন="ধাপ ৩: ACF গণনা করুন">ধাপ ৩: ACF গণনা করুন</h4>
+                            <p data-en="Normalize autocovariance by variance to get ACF" data-bন="ভ্যারিয়েন্স দ্বারা অটোকোভ্যারিয়েন্স নরমালাইজ করে ACF পান">
+                                ভ্যারিয়েন্স দ্বারা অটোকোভ্যারিয়েন্স নরমালাইজ করে ACF পান
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    ACF(k) = Cov(k) / σ²
+                                </p>
+                                <p><strong data-en="For lag 1:" data-bন="ল্যাগ ১ এর জন্য:">ল্যাগ ১ এর জন্য:</strong></p>
+                                <p>ACF(1) = ${(numerator/n).toFixed(2)} / ${variance.toFixed(2)}</p>
+                                <p>= <strong>${acf1.toFixed(4)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Standard Error and Confidence Bands" data-bন="ধাপ ৪: স্ট্যান্ডার্ড এরর এবং কনফিডেন্স ব্যান্ড গণনা করুন">ধাপ ৪: স্ট্যান্ডার্ড এরর এবং কনফিডেন্স ব্যান্ড গণনা করুন</h4>
+                            <p data-en="Determine statistical significance of autocorrelations" data-bন="অটোকোরিলেশনের পরিসংখ্যানগত তাৎপর্য নির্ধারণ করুন">
+                                অটোকোরিলেশনের পরিসংখ্যানগত তাৎপর্য নির্ধারণ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Standard Error:" data-bন="স্ট্যান্ডার্ড এরর:">স্ট্যান্ডার্ড এরর:</strong></p>
+                                <p>SE = 1 / √n = 1 / √${n} = ${se.toFixed(4)}</p>
+                                <p><strong data-en="Confidence Limits:" data-bন="কনফিডেন্স লিমিট:">কনফিডেন্স লিমিট:</strong></p>
+                                <p>±z × SE = ±${getZScore(currentConfidenceLevel).toFixed(3)} × ${se.toFixed(4)} = ±${confidenceLimit.toFixed(4)}</p>
+                                <p><strong data-en="Interpretation:" data-bন="ব্যাখ্যা:">ব্যাখ্যা:</strong></p>
+                                <p>|ACF(1)| = ${Math.abs(acf1).toFixed(4)} ${Math.abs(acf1) > confidenceLimit ? '>' : '<'} ${confidenceLimit.toFixed(4)}</p>
+                                <p>ACF(1) is ${Math.abs(acf1) > confidenceLimit ? 'SIGNIFICANT' : 'NOT SIGNIFICANT'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Interpret ACF/PACF Patterns" data-bন="ধাপ ৫: ACF/PACF প্যাটার্ন ব্যাখ্যা করুন">ধাপ ৫: ACF/PACF প্যাটার্ন ব্যাখ্যা করুন</h4>
+                            <p data-en="Identify time series properties from autocorrelation patterns" data-bন="অটোকোরিলেশন প্যাটার্ন থেকে টাইম সিরিজ বৈশিষ্ট্য চিহ্নিত করুন">
+                                অটোকোরিলেশন প্যাটার্ন থেকে টাইম সিরিজ বৈশিষ্ট্য চিহ্নিত করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Pattern Analysis:" data-bন="প্যাটার্ন অ্যানালাইসিস:">প্যাটার্ন অ্যানালাইসিস:</strong></p>
+                                <p data-en="• Significant ACF at multiple lags: Possible AR process" data-bন="• একাধিক ল্যাগে তাৎপর্যপূর্ণ ACF: সম্ভাব্য AR প্রসেস">• একাধিক ল্যাগে তাৎপর্যপূর্ণ ACF: সম্ভাব্য AR প্রসেস</p>
+                                <p data-en="• ACF decays slowly: Possible non-stationarity" data-bন="• ACF ধীরে হ্রাস পায়: সম্ভাব্য নন-স্টেশনারিটি">• ACF ধীরে হ্রাস পায়: সম্ভাব্য নন-স্টেশনারিটি</p>
+                                <p data-en="• PACF cuts off after p lags: AR(p) process" data-bন="• p ল্যাগ পরে PACF কাট অফ: AR(p) প্রসেস">• p ল্যাগ পরে PACF কাট অফ: AR(p) প্রসেস</p>
+                                <p data-en="• ACF cuts off after q lags: MA(q) process" data-bন="• q ল্যাগ পরে ACF কাট অফ: MA(q) প্রসেস">• q ল্যাগ পরে ACF কাট অফ: MA(q) প্রসেস</p>
+                                <p><strong data-en="Our Series:" data-bন="আমাদের সিরিজ:">আমাদের সিরিজ:</strong></p>
+                                <p>Significant lags: ${stats.significantLags}</p>
+                                <p>ACF Lag-1: ${stats.acfLag1.toFixed(4)}</p>
+                                <p>PACF Lag-1: ${stats.pacfLag1.toFixed(4)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function generateRandomTimeSeries() {
+                const n = 50;
+                const type = Math.floor(Math.random() * 4);
+                let data = [];
+                
+                switch(type) {
+                    case 0: // White noise
+                        data = Array.from({length: n}, () => (Math.random() - 0.5) * 10 + 20);
+                        break;
+                    case 1: // AR(1) stationary
+                        data = generateAR1(n, 0.7, 20);
+                        break;
+                    case 2: // Trend
+                        data = Array.from({length: n}, (_, i) => 20 + 0.3 * i + (Math.random() - 0.5) * 3);
+                        break;
+                    case 3: // Seasonal
+                        data = Array.from({length: n}, (_, i) => 20 + 5 * Math.sin(i * Math.PI / 6) + (Math.random() - 0.5) * 2);
+                        break;
+                }
+                
+                document.getElementById('dataInput').value = data.map(v => v.toFixed(2)).join(', ');
+            }
+
+            function generateARMATimeSeries() {
+                const n = 50;
+                const ar = Math.random() * 0.8;
+                const ma = Math.random() * 0.8;
+                const data = generateARMA11(n, ar, ma, 20);
+                
+                document.getElementById('dataInput').value = data.map(v => v.toFixed(2)).join(', ');
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    document.getElementById('dataInput').value = example.data.map(v => v.toFixed(2)).join(', ');
+                }
+            }
+
+            function clearGenerator() {
+                document.getElementById('dataInput').value = '';
+                
+                // Clear results
+                document.getElementById('stationarityResult').textContent = '--';
+                document.getElementById('adfTestResult').textContent = '--';
+                document.getElementById('kpssTestResult').textContent = '--';
+                document.getElementById('stationarityStatus').textContent = '--';
+                document.getElementById('stationarityText').textContent = currentLanguage === 'bn' ? 
+                    'স্টেশনারিটি অ্যাসেস করার জন্য টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                    'Enter time series data to assess stationarity';
+                document.getElementById('seriesMean').textContent = '--';
+                document.getElementById('seriesVariance').textContent = '--';
+                document.getElementById('acfLag1').textContent = '--';
+                document.getElementById('pacfLag1').textContent = '--';
+                document.getElementById('significantLags').textContent = '--';
+                document.getElementById('dataPoints').textContent = '--';
+                
+                // Clear significant lags table
+                document.getElementById('lagsTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="lagsPlaceholder" 
+                       data-en="Enter time series data to see significant lags" 
+                       data-bন="তাৎপর্যপূর্ণ ল্যাগ দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'তাৎপর্যপূর্ণ ল্যাগ দেখতে টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                            'Enter time series data to see significant lags'}
+                    </p>
+                `;
+                
+                // Clear visualizations
+                Object.values(currentCharts).forEach(chart => {
+                    if (chart) {
+                        chart.destroy();
+                    }
+                });
+                currentCharts = { acf: null, pacf: null, combined: null, timeSeries: null };
+                
+                // Show placeholder
+                document.getElementById('plotPlaceholder').style.display = 'flex';
+                document.getElementById('acfCanvas').style.display = 'none';
+                document.getElementById('pacfCanvas').style.display = 'none';
+                document.getElementById('combinedCanvas').style.display = 'none';
+                document.getElementById('timeSeriesCanvas').style.display = 'none';
+                
+                // Clear components
+                document.getElementById('componentsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem; grid-column: 1 / -1;" id="componentsPlaceholder" 
+                       data-en="Enter time series data to see decomposition" 
+                       data-bন="ডিকম্পোজিশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডিকম্পোজিশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                            'Enter time series data to see decomposition'}
+                    </p>
+                `;
+                
+                // Clear tables and steps
+                document.getElementById('timeSeriesTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="timeSeriesPlaceholder" 
+                       data-en="Enter time series data to see table with lagged values" 
+                       data-bন="ল্যাগড মান সহ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ল্যাগড মান সহ টেবিল দেখতে টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                            'Enter time series data to see table with lagged values'}
+                    </p>
+                `;
+                
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter time series data to see step-by-step calculations" 
+                       data-bন="ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ধাপে ধাপে গণনা দেখতে টাইম সিরিজ ডেটা ইনপুট করুন' : 
+                            'Enter time series data to see step-by-step calculations'}
+                    </p>
+                `;
+                
+                currentData = [];
+                currentActiveChart = 'acf';
+                
+                // Reset chart tabs
+                document.querySelectorAll('.chart-tab').forEach((tab, index) => {
+                    if (index === 0) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+                
+                // Reset statistical tests
+                document.querySelectorAll('.test-option').forEach(option => {
+                    option.classList.add('active');
+                });
+                
+                // Reset input method
+                document.querySelectorAll('.method-btn').forEach((btn, index) => {
+                    if (index === 0) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

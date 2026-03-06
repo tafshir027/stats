@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ভ্যারিয়েন্স রেশিও ক্যালকুলেটর (F-রেশিও) | দুই ডেটাসেটের পরিবর্তনশীলতা তুলনা</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --secondary: #388E3C;
+            --accent: #FF9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FFC107;
+            --error: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --dataset1-color: #2196F3;
+            --dataset2-color: #FF5722;
+            --fratio-color: #4CAF50;
+            --variance-color: #9C27B0;
+            --anova-color: #FF9800;
+            --significant: #4CAF50;
+            --not-significant: #F44336;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--dataset1-color), var(--dataset2-color), var(--fratio-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Dataset Input Areas */
+        .dataset-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .dataset-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .dataset-card {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 3px solid;
+            transition: all 0.3s ease;
+        }
+
+        .dataset-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dataset-card.dataset1 {
+            border-color: var(--dataset1-color);
+        }
+
+        .dataset-card.dataset2 {
+            border-color: var(--dataset2-color);
+        }
+
+        .dataset-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .dataset-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .dataset1 .dataset-icon {
+            background: var(--dataset1-color);
+        }
+
+        .dataset2 .dataset-icon {
+            background: var(--dataset2-color);
+        }
+
+        .dataset-header h3 {
+            font-size: 1.3rem;
+            color: var(--dark);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1rem;
+        }
+
+        .data-input-area textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input-area textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Summary Stats Display */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* F-Test Options */
+        .ftest-options {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .option-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .option-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-group label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .option-group select,
+        .option-group input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option-group select:focus,
+        .option-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Main F-Ratio Result */
+        .main-result-card {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 3px solid var(--fratio-color);
+        }
+
+        .main-result-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .main-result-value {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .fratio-significance {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .significant {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--significant);
+            border: 2px solid var(--significant);
+        }
+
+        .not-significant {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--not-significant);
+            border: 2px solid var(--not-significant);
+        }
+
+        /* Variance Comparison Grid */
+        .variance-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .variance-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .variance-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-top: 4px solid;
+        }
+
+        .variance-card.dataset1 {
+            border-color: var(--dataset1-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .variance-card.dataset2 {
+            border-color: var(--dataset2-color);
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .variance-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .variance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .variance-card.dataset1 .variance-icon {
+            background: var(--dataset1-color);
+        }
+
+        .variance-card.dataset2 .variance-icon {
+            background: var(--dataset2-color);
+        }
+
+        .variance-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .variance-stat {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .variance-stat-label {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .variance-stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* F-Distribution Chart */
+        .distribution-chart-container {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 2px solid var(--border);
+        }
+
+        .chart-area {
+            height: 200px;
+            position: relative;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .f-critical-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--error);
+            transform: translateX(-50%);
+        }
+
+        .f-critical-line::after {
+            content: 'F-critical';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .f-ratio-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary);
+            transform: translateX(-50%);
+        }
+
+        .f-ratio-line::after {
+            content: 'F-ratio';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* ANOVA Preparation Table */
+        .anova-table-container {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+            border-radius: 12px;
+            border: 2px solid var(--anova-color);
+        }
+
+        .anova-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .anova-table th,
+        .anova-table td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .anova-table th {
+            background: var(--table-header);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .anova-table .source-between {
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .anova-table .source-within {
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .anova-table .source-total {
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        /* Hypothesis Testing Section */
+        .hypothesis-testing {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+        }
+
+        .hypothesis-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .hypothesis-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hypothesis-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .hypothesis-card.h0 {
+            background: rgba(244, 67, 54, 0.05);
+            border-color: var(--not-significant);
+        }
+
+        .hypothesis-card.h1 {
+            background: rgba(76, 175, 80, 0.05);
+            border-color: var(--significant);
+        }
+
+        .hypothesis-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .hypothesis-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .h0 .hypothesis-icon {
+            background: var(--not-significant);
+        }
+
+        .h1 .hypothesis-icon {
+            background: var(--significant);
+        }
+
+        /* Visual Comparison Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .visual-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .visual-chart {
+            height: 300px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--border);
+        }
+
+        .box-plot-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .box-plot {
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .box-plot-dataset1 {
+            color: var(--dataset1-color);
+        }
+
+        .box-plot-dataset2 {
+            color: var(--dataset2-color);
+        }
+
+        .box {
+            width: 80px;
+            height: 60px;
+            border: 2px solid;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .median-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: currentColor;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .whisker {
+            width: 2px;
+            height: 20px;
+            background: currentColor;
+            margin: 0 auto;
+        }
+
+        /* Detailed Formulas Section */
+        .formulas-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .formula-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .formula-icon.fratio {
+            background: var(--fratio-color);
+        }
+
+        .formula-icon.variance {
+            background: var(--variance-color);
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* Application Examples */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .example-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            .main-result-value {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .main-result-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Variance Ratio Calculator (F-Ratio)" data-bn="ভ্যারিয়েন্স রেশিও ক্যালকুলেটর (F-রেশিও)">ভ্যারিয়েন্স রেশিও ক্যালকুলেটর (F-রেশিও)</h1>
+            <p class="subtitle" data-en="Compare variability between two datasets | F-test for variance equality | ANOVA preparation" data-bn="দুই ডেটাসেটের পরিবর্তনশীলতা তুলনা করুন | ভ্যারিয়েন্স সমতার জন্য F-টেস্ট | ANOVA প্রস্তুতি">
+                দুই ডেটাসেটের পরিবর্তনশীলতা তুলনা করুন | ভ্যারিয়েন্স সমতার জন্য F-টেস্ট | ANOVA প্রস্তুতি
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Dataset Input" data-bn="ডেটাসেট ইনপুট">ডেটাসেট ইনপুট</span>
+                </h2>
+                
+                <div class="dataset-container">
+                    <!-- Dataset 1 -->
+                    <div class="dataset-card dataset1">
+                        <div class="dataset-header">
+                            <div class="dataset-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3 data-en="Dataset 1 (Group A)" data-bn="ডেটাসেট ১ (গ্রুপ A)">ডেটাসেট ১ (গ্রুপ A)</h3>
+                        </div>
+                        
+                        <div class="data-input-area">
+                            <textarea id="dataset1Input" placeholder="Enter data for Group A (comma, space, or newline separated)
+Example: 10, 12, 14, 11, 13, 15, 12, 14, 13, 12" data-bn-placeholder="গ্রুপ A এর ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা)
+উদাহরণ: 10, 12, 14, 11, 13, 15, 12, 14, 13, 12">10, 12, 14, 11, 13, 15, 12, 14, 13, 12</textarea>
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Enter numerical data for first group" data-bn="প্রথম গ্রুপের জন্য সংখ্যাগত ডেটা ইনপুট করুন">
+                                    প্রথম গ্রুপের জন্য সংখ্যাগত ডেটা ইনপুট করুন
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-stats" id="dataset1Stats">
+                            <!-- Stats will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Dataset 2 -->
+                    <div class="dataset-card dataset2">
+                        <div class="dataset-header">
+                            <div class="dataset-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3 data-en="Dataset 2 (Group B)" data-bn="ডেটাসেট ২ (গ্রুপ B)">ডেটাসেট ২ (গ্রুপ B)</h3>
+                        </div>
+                        
+                        <div class="data-input-area">
+                            <textarea id="dataset2Input" placeholder="Enter data for Group B (comma, space, or newline separated)
+Example: 8, 10, 12, 9, 11, 13, 10, 12, 11, 10" data-bn-placeholder="গ্রুপ B এর ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা)
+উদাহরণ: 8, 10, 12, 9, 11, 13, 10, 12, 11, 10">8, 10, 12, 9, 11, 13, 10, 12, 11, 10</textarea>
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Enter numerical data for second group" data-bn="দ্বিতীয় গ্রুপের জন্য সংখ্যাগত ডেটা ইনপুট করুন">
+                                    দ্বিতীয় গ্রুপের জন্য সংখ্যাগত ডেটা ইনপুট করুন
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-stats" id="dataset2Stats">
+                            <!-- Stats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- F-Test Options -->
+                <div class="ftest-options">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="F-Test Settings" data-bn="F-টেস্ট সেটিংস">F-টেস্ট সেটিংস</span>
+                    </h3>
+                    
+                    <div class="option-row">
+                        <div class="option-group">
+                            <label>
+                                <i class="fas fa-chart-line"></i>
+                                <span data-en="Significance Level (α)" data-bn="সিগনিফিকেন্স লেভেল (α)">সিগনিফিকেন্স লেভেল (α)</span>
+                            </label>
+                            <select id="alphaLevel">
+                                <option value="0.01">0.01 (99% confidence)</option>
+                                <option value="0.05" selected>0.05 (95% confidence)</option>
+                                <option value="0.10">0.10 (90% confidence)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label>
+                                <i class="fas fa-exchange-alt"></i>
+                                <span data-en="Test Type" data-bn="টেস্ট টাইপ">টেস্ট টাইপ</span>
+                            </label>
+                            <select id="testType">
+                                <option value="two-tailed" selected data-en="Two-tailed test" data-bn="টু-টেইল্ড টেস্ট">টু-টেইল্ড টেস্ট</option>
+                                <option value="one-tailed-right" data-en="One-tailed (right)" data-bn="ওয়ান-টেইল্ড (ডান)">ওয়ান-টেইল্ড (ডান)</option>
+                                <option value="one-tailed-left" data-en="One-tailed (left)" data-bn="ওয়ান-টেইল্ড (বাম)">ওয়ান-টেইল্ড (বাম)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="option-row">
+                        <div class="option-group">
+                            <label>
+                                <i class="fas fa-balance-scale"></i>
+                                <span data-en="F-Ratio Direction" data-bn="F-রেশিও দিক">F-রেশিও দিক</span>
+                            </label>
+                            <select id="fratioDirection">
+                                <option value="auto" selected data-en="Auto (larger/smaller variance)" data-bn="অটো (বড়/ছোট ভ্যারিয়েন্স)">অটো (বড়/ছোট ভ্যারিয়েন্স)</option>
+                                <option value="dataset1/dataset2" data-en="Dataset1/Dataset2" data-bn="ডেটাসেট১/ডেটাসেট২">ডেটাসেট১/ডেটাসেট২</option>
+                                <option value="dataset2/dataset1" data-en="Dataset2/Dataset1" data-bn="ডেটাসেট২/ডেটাসেট১">ডেটাসেট২/ডেটাসেট১</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label>
+                                <i class="fas fa-calculator"></i>
+                                <span data-en="Degrees of Freedom" data-bn="ডিগ্রি অফ ফ্রিডম">ডিগ্রি অফ ফ্রিডম</span>
+                            </label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="number" id="df1Input" placeholder="df1" style="flex: 1;" min="1" value="">
+                                <input type="number" id="df2Input" placeholder="df2" style="flex: 1;" min="1" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate F-Ratio" data-bn="F-রেশিও গণনা করুন">F-রেশিও গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="F-Ratio Results" data-bn="F-রেশিও ফলাফল">F-রেশিও ফলাফল</span>
+                </h2>
+                
+                <!-- Main F-Ratio Result -->
+                <div class="main-result-card">
+                    <div class="main-result-label">
+                        <i class="fas fa-percentage"></i>
+                        <span data-en="F-Ratio (F-Statistic)" data-bn="F-রেশিও (F-স্ট্যাটিস্টিক)">F-রেশিও (F-স্ট্যাটিস্টিক)</span>
+                    </div>
+                    <div class="main-result-value" id="fratioResult">--</div>
+                    
+                    <div id="significanceResult" class="fratio-significance">
+                        <!-- Significance result will go here -->
+                    </div>
+                    
+                    <div style="margin-top: 1rem; font-size: 1rem; color: var(--gray);">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="fratioInterpretation" data-en="F-ratio interpretation will appear here" data-bn="F-রেশিও ব্যাখ্যা এখানে প্রদর্শিত হবে">
+                            F-রেশিও ব্যাখ্যা এখানে প্রদর্শিত হবে
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Variance Comparison -->
+                <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-balance-scale"></i>
+                    <span data-en="Variance Comparison" data-bn="ভ্যারিয়েন্স তুলনা">ভ্যারিয়েন্স তুলনা</span>
+                </h3>
+                
+                <div class="variance-comparison">
+                    <div class="variance-card dataset1">
+                        <div class="variance-header">
+                            <div class="variance-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h4 data-en="Dataset 1 Variance" data-bন="ডেটাসেট ১ ভ্যারিয়েন্স">ডেটাসেট ১ ভ্যারিয়েন্স</h4>
+                        </div>
+                        
+                        <div class="variance-stats" id="dataset1VarianceStats">
+                            <!-- Variance stats will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="variance-card dataset2">
+                        <div class="variance-header">
+                            <div class="variance-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h4 data-en="Dataset 2 Variance" data-bন="ডেটাসেট ২ ভ্যারিয়েন্স">ডেটাসেট ২ ভ্যারিয়েন্স</h4>
+                        </div>
+                        
+                        <div class="variance-stats" id="dataset2VarianceStats">
+                            <!-- Variance stats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- F-Distribution Chart -->
+                <div class="distribution-chart-container">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="F-Distribution Critical Region" data-bন="F-বন্টন ক্রিটিকাল রিজিয়ন">F-বন্টন ক্রিটিকাল রিজিয়ন</span>
+                    </h3>
+                    
+                    <div class="chart-area" id="fDistributionChart">
+                        <div style="text-align: center; padding: 4rem; color: var(--gray);">
+                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p data-en="Calculate F-ratio to see distribution" data-bন="বন্টন দেখতে F-রেশিও গণনা করুন">
+                                বন্টন দেখতে F-রেশিও গণনা করুন
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-labels">
+                        <span>0</span>
+                        <span id="fCriticalValueLabel">F-critical</span>
+                        <span id="fMaxLabel">10</span>
+                    </div>
+                </div>
+
+                <!-- Hypothesis Testing -->
+                <div class="hypothesis-testing">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-question-circle"></i>
+                        <span data-en="Hypothesis Testing" data-bন="হাইপোথিসিস টেস্টিং">হাইপোথিসিস টেস্টিং</span>
+                    </h3>
+                    
+                    <div class="hypothesis-cards">
+                        <div class="hypothesis-card h0">
+                            <div class="hypothesis-card-header">
+                                <div class="hypothesis-icon">H₀</div>
+                                <h4 data-en="Null Hypothesis" data-bন="নাল হাইপোথিসিস">নাল হাইপোথিসিস</h4>
+                            </div>
+                            <p id="nullHypothesis" style="color: var(--dark);">
+                                <span data-en="Variances are equal: σ₁² = σ₂²" data-bন="ভ্যারিয়েন্স সমান: σ₁² = σ₂²">ভ্যারিয়েন্স সমান: σ₁² = σ₂²</span>
+                            </p>
+                            <p style="font-size: 0.9rem; color: var(--gray); margin-top: 0.5rem;">
+                                <i class="fas fa-lightbulb"></i>
+                                <span data-en="Assumes no difference in variability between groups" data-bন="ধরে নেয় গ্রুপগুলোর মধ্যে পরিবর্তনশীলতার কোন পার্থক্য নেই">
+                                    ধরে নেয় গ্রুপগুলোর মধ্যে পরিবর্তনশীলতার কোন পার্থক্য নেই
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <div class="hypothesis-card h1">
+                            <div class="hypothesis-card-header">
+                                <div class="hypothesis-icon">H₁</div>
+                                <h4 data-en="Alternative Hypothesis" data-bন="অল্টারনেটিভ হাইপোথিসিস">অল্টারনেটিভ হাইপোথিসিস</h4>
+                            </div>
+                            <p id="alternativeHypothesis" style="color: var(--dark);">
+                                <span data-en="Variances are not equal: σ₁² ≠ σ₂²" data-bন="ভ্যারিয়েন্স সমান নয়: σ₁² ≠ σ₂²">ভ্যারিয়েন্স সমান নয়: σ₁² ≠ σ₂²</span>
+                            </p>
+                            <p style="font-size: 0.9rem; color: var(--gray); margin-top: 0.5rem;">
+                                <i class="fas fa-lightbulb"></i>
+                                <span data-en="Assumes significant difference in variability between groups" data-bন="ধরে নেয় গ্রুপগুলোর মধ্যে পরিবর্তনশীলতার উল্লেখযোগ্য পার্থক্য আছে">
+                                    ধরে নেয় গ্রুপগুলোর মধ্যে পরিবর্তনশীলতার উল্লেখযোগ্য পার্থক্য আছে
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--light-gray); border-radius: 8px;">
+                        <h4 style="color: var(--dark); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-gavel"></i>
+                            <span data-en="Test Decision" data-bন="টেস্ট সিদ্ধান্ত">টেস্ট সিদ্ধান্ত</span>
+                        </h4>
+                        <p id="testDecision" style="color: var(--dark);">
+                            <span data-en="Calculate F-ratio to see test decision" data-bন="টেস্ট সিদ্ধান্ত দেখতে F-রেশিও গণনা করুন">
+                                টেস্ট সিদ্ধান্ত দেখতে F-রেশিও গণনা করুন
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ANOVA Preparation Table -->
+                <div class="anova-table-container">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-table"></i>
+                        <span data-en="ANOVA Preparation Table" data-bন="ANOVA প্রস্তুতি টেবিল">ANOVA প্রস্তুতি টেবিল</span>
+                    </h3>
+                    
+                    <table class="anova-table" id="anovaTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Source" data-bন="সোর্স">সোর্স</th>
+                                <th data-en="SS (Sum of Squares)" data-bন="SS (সমষ্টি বর্গ)">SS (সমষ্টি বর্গ)</th>
+                                <th data-en="df" data-bন="df">df</th>
+                                <th data-en="MS (Mean Square)" data-bন="MS (গড় বর্গ)">MS (গড় বর্গ)</th>
+                                <th data-en="F" data-bন="F">F</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="source-between">
+                                <td data-en="Between Groups" data-bন="গ্রুপের মধ্যে">গ্রুপের মধ্যে</td>
+                                <td id="ssBetween">--</td>
+                                <td id="dfBetween">--</td>
+                                <td id="msBetween">--</td>
+                                <td id="fBetween">--</td>
+                            </tr>
+                            <tr class="source-within">
+                                <td data-en="Within Groups" data-bন="গ্রুপের ভিতরে">গ্রুপের ভিতরে</td>
+                                <td id="ssWithin">--</td>
+                                <td id="dfWithin">--</td>
+                                <td id="msWithin">--</td>
+                                <td id="fWithin">--</td>
+                            </tr>
+                            <tr class="source-total">
+                                <td data-en="Total" data-bন="মোট">মোট</td>
+                                <td id="ssTotal">--</td>
+                                <td id="dfTotal">--</td>
+                                <td id="msTotal">--</td>
+                                <td>--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Comparison -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Visual Comparison" data-bন="ভিজ্যুয়াল তুলনা">ভিজ্যুয়াল তুলনা</span>
+            </h2>
+            
+            <div class="visual-grid">
+                <!-- Box Plot Comparison -->
+                <div class="visual-chart">
+                    <h4 style="color: var(--dark); margin-bottom: 1rem; text-align: center;">
+                        <i class="fas fa-box"></i>
+                        <span data-en="Box Plot Comparison" data-bন="বক্স প্লট তুলনা">বক্স প্লট তুলনা</span>
+                    </h4>
+                    <div class="box-plot-container" id="boxPlotContainer">
+                        <div class="box-plot box-plot-dataset1">
+                            <div class="whisker"></div>
+                            <div class="box">
+                                <div class="median-line"></div>
+                            </div>
+                            <div class="whisker"></div>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">Dataset 1</div>
+                        </div>
+                        <div class="box-plot box-plot-dataset2">
+                            <div class="whisker"></div>
+                            <div class="box">
+                                <div class="median-line"></div>
+                            </div>
+                            <div class="whisker"></div>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">Dataset 2</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Variance Bar Chart -->
+                <div class="visual-chart">
+                    <h4 style="color: var(--dark); margin-bottom: 1rem; text-align: center;">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Variance Comparison Chart" data-bন="ভ্যারিয়েন্স তুলনা চার্ট">ভ্যারিয়েন্স তুলনা চার্ট</span>
+                    </h4>
+                    <div id="varianceBarChart" style="width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: space-around; padding: 1rem;">
+                        <div style="text-align: center; color: var(--gray); padding: 2rem;">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p data-en="Calculate to see variance comparison" data-bন="ভ্যারিয়েন্স তুলনা দেখতে গণনা করুন">
+                                ভ্যারিয়েন্স তুলনা দেখতে গণনা করুন
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulas Section -->
+        <div class="formulas-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="F-Ratio Formulas" data-bন="F-রেশিও সূত্র">F-রেশিও সূত্র</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- F-Ratio Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon fratio">
+                            <i class="fas fa-divide"></i>
+                        </div>
+                        <h3 data-en="F-Ratio Formula" data-bন="F-রেশিও সূত্র">F-রেশিও সূত্র</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Ratio of two sample variances" data-bন="দুইটি স্যাম্পল ভ্যারিয়েন্সের অনুপাত">
+                            দুইটি স্যাম্পল ভ্যারিয়েন্সের অনুপাত
+                        </p>
+                        <div class="formula-equation">
+                            F = s₁² / s₂²
+                        </div>
+                        <ul style="color: var(--gray); padding-left: 1.5rem; margin-top: 1rem;">
+                            <li data-en="s₁² = Variance of dataset 1" data-bন="s₁² = ডেটাসেট ১ এর ভ্যারিয়েন্স">s₁² = ডেটাসেট ১ এর ভ্যারিয়েন্স</li>
+                            <li data-en="s₂² = Variance of dataset 2" data-bন="s₂² = ডেটাসেট ২ এর ভ্যারিয়েন্স">s₂² = ডেটাসেট ২ এর ভ্যারিয়েন্স</li>
+                            <li data-en="F > 1 when s₁² > s₂²" data-bন="F > 1 যখন s₁² > s₂²">F > 1 যখন s₁² > s₂²</li>
+                            <li data-en="F < 1 when s₁² < s₂²" data-bন="F < 1 যখন s₁² < s₂²">F < 1 যখন s₁² < s₂²</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Variance Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon variance">
+                            <i class="fas fa-sigma"></i>
+                        </div>
+                        <h3 data-en="Sample Variance" data-bন="স্যাম্পল ভ্যারিয়েন্স">স্যাম্পল ভ্যারিয়েন্স</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measure of dispersion in dataset" data-bন="ডেটাসেটে বিস্তারের পরিমাপ">
+                            ডেটাসেটে বিস্তারের পরিমাপ
+                        </p>
+                        <div class="formula-equation">
+                            s² = Σ(xᵢ - x̄)² / (n-1)
+                        </div>
+                        <ul style="color: var(--gray); padding-left: 1.5rem; margin-top: 1rem;">
+                            <li data-en="xᵢ = Individual data point" data-bন="xᵢ = পৃথক ডেটা পয়েন্ট">xᵢ = পৃথক ডেটা পয়েন্ট</li>
+                            <li data-en="x̄ = Sample mean" data-bন="x̄ = স্যাম্পল গড়">x̄ = স্যাম্পল গড়</li>
+                            <li data-en="n = Sample size" data-bন="n = স্যাম্পল সাইজ">n = স্যাম্পল সাইজ</li>
+                            <li data-en="n-1 = Degrees of freedom" data-bন="n-1 = ডিগ্রি অফ ফ্রিডম">n-1 = ডিগ্রি অফ ফ্রিডম</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load different scenarios:" data-bন="বিভিন্ন দৃশ্যকল্প লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                বিভিন্ন দৃশ্যকল্প লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="equal-variance">
+                    <div class="example-title" data-en="Equal Variance" data-bন="সমান ভ্যারিয়েন্স">সমান ভ্যারিয়েন্স</div>
+                    <div class="example-desc" data-en="Similar variability, F-ratio close to 1" data-bন="সমান পরিবর্তনশীলতা, F-রেশিও ১ এর কাছাকাছি">
+                        সমান পরিবর্তনশীলতা, F-রেশিও ১ এর কাছাকাছি
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="unequal-variance">
+                    <div class="example-title" data-en="Unequal Variance" data-bন="অসমান ভ্যারিয়েন্স">অসমান ভ্যারিয়েন্স</div>
+                    <div class="example-desc" data-en="Different variability, significant F-ratio" data-bন="ভিন্ন পরিবর্তনশীলতা, উল্লেখযোগ্য F-রেশিও">
+                        ভিন্ন পরিবর্তনশীলতা, উল্লেখযোগ্য F-রেশিও
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="anova-example">
+                    <div class="example-title" data-en="ANOVA Example" data-bন="ANOVA উদাহরণ">ANOVA উদাহরণ</div>
+                    <div class="example-desc" data-en="Typical data for ANOVA preparation" data-bন="ANOVA প্রস্তুতির জন্য সাধারণ ডেটা">
+                        ANOVA প্রস্তুতির জন্য সাধারণ ডেটা
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="extreme-variance">
+                    <div class="example-title" data-en="Extreme Variance" data-bন="চরম ভ্যারিয়েন্স">চরম ভ্যারিয়েন্স</div>
+                    <div class="example-desc" data-en="Very different variability, large F-ratio" data-bন="খুব ভিন্ন পরিবর্তনশীলতা, বড় F-রেশিও">
+                        খুব ভিন্ন পরিবর্তনশীলতা, বড় F-রেশিও
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'equal-variance': {
+                    dataset1: [15, 16, 17, 16, 15, 16, 17, 16, 15, 16],
+                    dataset2: [14, 15, 16, 15, 14, 15, 16, 15, 14, 15],
+                    description: 'সমান ভ্যারিয়েন্স - উভয় গ্রুপে সমান পরিবর্তনশীলতা'
+                },
+                'unequal-variance': {
+                    dataset1: [10, 12, 14, 11, 13, 15, 12, 14, 13, 12],
+                    dataset2: [8, 20, 6, 22, 7, 21, 9, 19, 10, 18],
+                    description: 'অসমান ভ্যারিয়েন্স - গ্রুপগুলোর মধ্যে ভিন্ন পরিবর্তনশীলতা'
+                },
+                'anova-example': {
+                    dataset1: [23, 25, 27, 26, 24, 25, 26, 27, 25, 24],
+                    dataset2: [20, 22, 24, 23, 21, 22, 23, 24, 22, 21],
+                    description: 'ANOVA উদাহরণ - সাধারণ ANOVA ডেটা'
+                },
+                'extreme-variance': {
+                    dataset1: [100, 102, 101, 103, 102, 101, 102, 103, 101, 102],
+                    dataset2: [50, 150, 25, 175, 30, 170, 40, 160, 45, 155],
+                    description: 'চরম ভ্যারিয়েন্স - খুব ভিন্ন পরিবর্তনশীলতা'
+                }
+            };
+
+            // F-critical values for common alpha levels and degrees of freedom
+            // Simplified table for demonstration
+            const fCriticalValues = {
+                '0.01': {
+                    '10,10': 4.85,
+                    '10,15': 4.56,
+                    '15,10': 4.56,
+                    '15,15': 4.20,
+                    '20,20': 3.86,
+                    '30,30': 3.32
+                },
+                '0.05': {
+                    '10,10': 2.98,
+                    '10,15': 2.85,
+                    '15,10': 2.85,
+                    '15,15': 2.70,
+                    '20,20': 2.46,
+                    '30,30': 2.21
+                },
+                '0.10': {
+                    '10,10': 2.32,
+                    '10,15': 2.24,
+                    '15,10': 2.24,
+                    '15,15': 2.17,
+                    '20,20': 2.03,
+                    '30,30': 1.84
+                }
+            };
+
+            // Store data and results
+            let dataset1 = [];
+            let dataset2 = [];
+            let results = null;
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateFRatio);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Initial calculation
+                setTimeout(() => {
+                    calculateFRatio();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+
+                // Update option values
+                const selectElements = document.querySelectorAll('option[data-en]');
+                selectElements.forEach(option => {
+                    if (option.hasAttribute(`data-${lang}`)) {
+                        option.textContent = option.getAttribute(`data-${lang}`);
+                    }
+                });
+
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function parseInputData(input) {
+                if (!input) return [];
+                
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                return cleaned.split(/[,\s]+/)
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+            }
+
+            function calculateDatasetStats(data) {
+                if (data.length === 0) {
+                    return {
+                        n: 0,
+                        mean: 0,
+                        variance: 0,
+                        std: 0,
+                        min: 0,
+                        max: 0,
+                        sum: 0
+                    };
+                }
+                
+                const n = data.length;
+                const sum = data.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                // Sample variance (n-1)
+                const squaredDeviations = data.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDeviations.reduce((a, b) => a + b, 0) / (n - 1);
+                const std = Math.sqrt(variance);
+                
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                
+                return {
+                    n,
+                    mean,
+                    variance,
+                    std,
+                    min,
+                    max,
+                    sum
+                };
+            }
+
+            function calculateFRatioFromData() {
+                // Get input data
+                const dataset1Input = document.getElementById('dataset1Input').value;
+                const dataset2Input = document.getElementById('dataset2Input').value;
+                
+                dataset1 = parseInputData(dataset1Input);
+                dataset2 = parseInputData(dataset2Input);
+                
+                if (dataset1.length < 2 || dataset2.length < 2) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রতিটি ডেটাসেটে কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 
+                        'At least 2 numbers are required in each dataset');
+                    return null;
+                }
+                
+                // Calculate statistics
+                const stats1 = calculateDatasetStats(dataset1);
+                const stats2 = calculateDatasetStats(dataset2);
+                
+                // Determine F-ratio direction
+                const fratioDirection = document.getElementById('fratioDirection').value;
+                let numeratorVariance, denominatorVariance;
+                let numeratorDF, denominatorDF;
+                let numeratorLabel, denominatorLabel;
+                
+                if (fratioDirection === 'dataset1/dataset2') {
+                    numeratorVariance = stats1.variance;
+                    denominatorVariance = stats2.variance;
+                    numeratorDF = stats1.n - 1;
+                    denominatorDF = stats2.n - 1;
+                    numeratorLabel = 'Dataset 1';
+                    denominatorLabel = 'Dataset 2';
+                } else if (fratioDirection === 'dataset2/dataset1') {
+                    numeratorVariance = stats2.variance;
+                    denominatorVariance = stats1.variance;
+                    numeratorDF = stats2.n - 1;
+                    denominatorDF = stats1.n - 1;
+                    numeratorLabel = 'Dataset 2';
+                    denominatorLabel = 'Dataset 1';
+                } else {
+                    // Auto: put larger variance in numerator
+                    if (stats1.variance >= stats2.variance) {
+                        numeratorVariance = stats1.variance;
+                        denominatorVariance = stats2.variance;
+                        numeratorDF = stats1.n - 1;
+                        denominatorDF = stats2.n - 1;
+                        numeratorLabel = 'Dataset 1';
+                        denominatorLabel = 'Dataset 2';
+                    } else {
+                        numeratorVariance = stats2.variance;
+                        denominatorVariance = stats1.variance;
+                        numeratorDF = stats2.n - 1;
+                        denominatorDF = stats1.n - 1;
+                        numeratorLabel = 'Dataset 2';
+                        denominatorLabel = 'Dataset 1';
+                    }
+                }
+                
+                // Calculate F-ratio
+                const fratio = numeratorVariance / denominatorVariance;
+                
+                // Get test parameters
+                const alpha = parseFloat(document.getElementById('alphaLevel').value);
+                const testType = document.getElementById('testType').value;
+                
+                // Calculate F-critical value
+                let fCritical;
+                const dfKey = `${numeratorDF},${denominatorDF}`;
+                
+                // Try to find exact critical value
+                if (fCriticalValues[alpha.toFixed(2)] && fCriticalValues[alpha.toFixed(2)][dfKey]) {
+                    fCritical = fCriticalValues[alpha.toFixed(2)][dfKey];
+                } else {
+                    // Approximate critical value (for demonstration)
+                    // In real application, use statistical tables or calculations
+                    fCritical = 2.5; // Default approximation
+                }
+                
+                // Adjust for one-tailed tests
+                if (testType === 'one-tailed-right') {
+                    fCritical = fCritical;
+                } else if (testType === 'one-tailed-left') {
+                    fCritical = 1 / fCritical;
+                }
+                
+                // Test significance
+                let isSignificant = false;
+                if (testType === 'two-tailed') {
+                    isSignificant = fratio > fCritical || fratio < (1 / fCritical);
+                } else if (testType === 'one-tailed-right') {
+                    isSignificant = fratio > fCritical;
+                } else if (testType === 'one-tailed-left') {
+                    isSignificant = fratio < fCritical;
+                }
+                
+                // Calculate ANOVA statistics
+                const totalN = stats1.n + stats2.n;
+                const grandMean = (stats1.sum + stats2.sum) / totalN;
+                
+                // Sum of Squares Between (SSB)
+                const ssBetween = stats1.n * Math.pow(stats1.mean - grandMean, 2) + 
+                                 stats2.n * Math.pow(stats2.mean - grandMean, 2);
+                
+                // Sum of Squares Within (SSW)
+                const ssWithin = (stats1.n - 1) * stats1.variance + 
+                               (stats2.n - 1) * stats2.variance;
+                
+                // Total Sum of Squares (SST)
+                const ssTotal = ssBetween + ssWithin;
+                
+                // Degrees of freedom
+                const dfBetween = 1; // For two groups
+                const dfWithin = (stats1.n - 1) + (stats2.n - 1);
+                const dfTotal = totalN - 1;
+                
+                // Mean Squares
+                const msBetween = ssBetween / dfBetween;
+                const msWithin = ssWithin / dfWithin;
+                
+                // F-statistic for ANOVA
+                const fAnova = msBetween / msWithin;
+                
+                return {
+                    fratio,
+                    fCritical,
+                    isSignificant,
+                    alpha,
+                    testType,
+                    numeratorVariance,
+                    denominatorVariance,
+                    numeratorDF,
+                    denominatorDF,
+                    numeratorLabel,
+                    denominatorLabel,
+                    stats1,
+                    stats2,
+                    anova: {
+                        ssBetween,
+                        ssWithin,
+                        ssTotal,
+                        dfBetween,
+                        dfWithin,
+                        dfTotal,
+                        msBetween,
+                        msWithin,
+                        fAnova
+                    }
+                };
+            }
+
+            function calculateFRatio() {
+                results = calculateFRatioFromData();
+                
+                if (!results) return;
+                
+                // Update results display
+                updateResults();
+                
+                // Update visualizations
+                updateVisualizations();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function updateResults() {
+                // Update main F-ratio result
+                const fratioFormatted = results.fratio.toFixed(4);
+                document.getElementById('fratioResult').textContent = fratioFormatted;
+                
+                // Update significance result
+                const significanceResult = document.getElementById('significanceResult');
+                significanceResult.className = 'fratio-significance ' + 
+                    (results.isSignificant ? 'significant' : 'not-significant');
+                
+                significanceResult.innerHTML = results.isSignificant ? 
+                    '<i class="fas fa-exclamation-circle"></i> ' +
+                    (currentLanguage === 'bn' ? 
+                        'উল্লেখযোগ্য: ভ্যারিয়েন্স অসমান' : 
+                        'Significant: Variances are unequal') :
+                    '<i class="fas fa-check-circle"></i> ' +
+                    (currentLanguage === 'bn' ? 
+                        'উল্লেখযোগ্য নয়: ভ্যারিয়েন্স সমান' : 
+                        'Not significant: Variances are equal');
+                
+                // Update F-ratio interpretation
+                const fratioInterpretation = document.getElementById('fratioInterpretation');
+                if (results.fratio > 1) {
+                    fratioInterpretation.innerHTML = currentLanguage === 'bn' ? 
+                        `F-রেশিও = ${results.fratio.toFixed(4)} > 1, ${results.numeratorLabel} এর ভ্যারিয়েন্স ${results.denominatorLabel} এর চেয়ে বেশি` :
+                        `F-ratio = ${results.fratio.toFixed(4)} > 1, variance of ${results.numeratorLabel} is greater than ${results.denominatorLabel}`;
+                } else {
+                    fratioInterpretation.innerHTML = currentLanguage === 'bn' ? 
+                        `F-রেশিও = ${results.fratio.toFixed(4)} < 1, ${results.denominatorLabel} এর ভ্যারিয়েন্স ${results.numeratorLabel} এর চেয়ে বেশি` :
+                        `F-ratio = ${results.fratio.toFixed(4)} < 1, variance of ${results.denominatorLabel} is greater than ${results.numeratorLabel}`;
+                }
+                
+                // Update dataset 1 summary stats
+                updateDatasetStats('dataset1Stats', results.stats1, 1);
+                updateDatasetStats('dataset2Stats', results.stats2, 2);
+                
+                // Update variance cards
+                updateVarianceCard('dataset1VarianceStats', results.stats1, 1);
+                updateVarianceCard('dataset2VarianceStats', results.stats2, 2);
+                
+                // Update F-distribution chart
+                updateFDistributionChart();
+                
+                // Update hypothesis testing
+                updateHypothesisTesting();
+                
+                // Update ANOVA table
+                updateANOVATable();
+            }
+
+            function updateDatasetStats(elementId, stats, datasetNumber) {
+                const element = document.getElementById(elementId);
+                
+                if (stats.n === 0) {
+                    element.innerHTML = `
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Sample Size" data-bন="স্যাম্পল সাইজ">স্যাম্পল সাইজ</div>
+                            <div class="stat-value">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Mean" data-bন="গড়">গড়</div>
+                            <div class="stat-value">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                            <div class="stat-value">--</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                element.innerHTML = `
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="n" data-bন="n">n</div>
+                        <div class="stat-value">${stats.n}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Mean" data-bন="গড়">গড়</div>
+                        <div class="stat-value">${stats.mean.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="stat-value">${stats.std.toFixed(2)}</div>
+                    </div>
+                `;
+            }
+
+            function updateVarianceCard(elementId, stats, datasetNumber) {
+                const element = document.getElementById(elementId);
+                
+                element.innerHTML = `
+                    <div class="variance-stat">
+                        <div class="variance-stat-label" data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                        <div class="variance-stat-value">${stats.variance.toFixed(4)}</div>
+                    </div>
+                    <div class="variance-stat">
+                        <div class="variance-stat-label" data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="variance-stat-value">${stats.std.toFixed(4)}</div>
+                    </div>
+                    <div class="variance-stat">
+                        <div class="variance-stat-label" data-en="Range" data-bন="রেঞ্জ">রেঞ্জ</div>
+                        <div class="variance-stat-value">${(stats.max - stats.min).toFixed(2)}</div>
+                    </div>
+                    <div class="variance-stat">
+                        <div class="variance-stat-label" data-en="df" data-bন="df">df</div>
+                        <div class="variance-stat-value">${stats.n - 1}</div>
+                    </div>
+                `;
+            }
+
+            function updateFDistributionChart() {
+                const chart = document.getElementById('fDistributionChart');
+                const fCriticalValueLabel = document.getElementById('fCriticalValueLabel');
+                const fMaxLabel = document.getElementById('fMaxLabel');
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                // Calculate dimensions
+                const width = chart.offsetWidth;
+                const height = 200;
+                
+                // Create chart visualization
+                const maxF = Math.max(results.fCritical * 3, results.fratio * 1.5);
+                const fCriticalPos = (results.fCritical / maxF) * width;
+                const fRatioPos = (results.fratio / maxF) * width;
+                
+                // Create critical region
+                const criticalRegion = document.createElement('div');
+                criticalRegion.className = 'f-critical-line';
+                criticalRegion.style.left = `${fCriticalPos}px`;
+                chart.appendChild(criticalRegion);
+                
+                // Create F-ratio line
+                const fRatioLine = document.createElement('div');
+                fRatioLine.className = 'f-ratio-line';
+                fRatioLine.style.left = `${fRatioPos}px`;
+                chart.appendChild(fRatioLine);
+                
+                // Add distribution curve (simplified)
+                for (let i = 0; i < width; i += 2) {
+                    const x = (i / width) * maxF;
+                    const y = fDistributionPDF(x, results.numeratorDF, results.denominatorDF);
+                    const barHeight = Math.min(y * 500, height - 20); // Scale for visibility
+                    
+                    const bar = document.createElement('div');
+                    bar.style.position = 'absolute';
+                    bar.style.left = `${i}px`;
+                    bar.style.bottom = '0';
+                    bar.style.width = '2px';
+                    bar.style.height = `${barHeight}px`;
+                    bar.style.background = x > results.fCritical ? 'rgba(244, 67, 54, 0.3)' : 'rgba(33, 150, 243, 0.3)';
+                    chart.appendChild(bar);
+                }
+                
+                // Update labels
+                fCriticalValueLabel.textContent = `F-critical (${results.fCritical.toFixed(2)})`;
+                fMaxLabel.textContent = maxF.toFixed(1);
+            }
+
+            function fDistributionPDF(x, df1, df2) {
+                // Simplified F-distribution PDF for visualization
+                if (x <= 0) return 0;
+                
+                const numerator = Math.pow(df1 * x, df1) * Math.pow(df2, df2);
+                const denominator = Math.pow(df1 * x + df2, df1 + df2);
+                const coefficient = Math.sqrt((Math.pow(df1 * x, df1) * Math.pow(df2, df2)) / 
+                                            (Math.pow(df1 * x + df2, df1 + df2))) * 
+                                  (1 / (x * Math.sqrt(df1 * df2)));
+                
+                return coefficient;
+            }
+
+            function updateHypothesisTesting() {
+                // Update hypothesis statements based on test type
+                const testType = results.testType;
+                let h0Text, h1Text;
+                
+                if (testType === 'two-tailed') {
+                    h0Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স সমান: σ₁² = σ₂²' : 
+                        'Variances are equal: σ₁² = σ₂²';
+                    h1Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স অসমান: σ₁² ≠ σ₂²' : 
+                        'Variances are not equal: σ₁² ≠ σ₂²';
+                } else if (testType === 'one-tailed-right') {
+                    h0Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স সমান বা কম: σ₁² ≤ σ₂²' : 
+                        'Variances are equal or less: σ₁² ≤ σ₂²';
+                    h1Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স বেশি: σ₁² > σ₂²' : 
+                        'Variances are greater: σ₁² > σ₂²';
+                } else {
+                    h0Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স সমান বা বেশি: σ₁² ≥ σ₂²' : 
+                        'Variances are equal or greater: σ₁² ≥ σ₂²';
+                    h1Text = currentLanguage === 'bn' ? 
+                        'ভ্যারিয়েন্স কম: σ₁² < σ₂²' : 
+                        'Variances are less: σ₁² < σ₂²';
+                }
+                
+                document.getElementById('nullHypothesis').innerHTML = h0Text;
+                document.getElementById('alternativeHypothesis').innerHTML = h1Text;
+                
+                // Update test decision
+                const testDecision = document.getElementById('testDecision');
+                const alphaPercent = (results.alpha * 100).toFixed(0);
+                
+                if (results.isSignificant) {
+                    testDecision.innerHTML = currentLanguage === 'bn' ? 
+                        `<strong>নাল হাইপোথিসিস প্রত্যাখ্যান করুন (p < ${results.alpha})</strong><br>
+                        α = ${results.alpha} লেভেলে, প্রমাণ আছে যে গ্রুপগুলোর ভ্যারিয়েন্স সমান নয়।` :
+                        `<strong>Reject the null hypothesis (p < ${results.alpha})</strong><br>
+                        At α = ${results.alpha} level, there is evidence that group variances are not equal.`;
+                } else {
+                    testDecision.innerHTML = currentLanguage === 'bn' ? 
+                        `<strong>নাল হাইপোথিসিস প্রত্যাখ্যান করতে ব্যর্থ (p > ${results.alpha})</strong><br>
+                        α = ${results.alpha} লেভেলে, গ্রুপগুলোর ভ্যারিয়েন্স সমান হওয়ার বিপক্ষে যথেষ্ট প্রমাণ নেই।` :
+                        `<strong>Fail to reject the null hypothesis (p > ${results.alpha})</strong><br>
+                        At α = ${results.alpha} level, there is not enough evidence against equal group variances.`;
+                }
+            }
+
+            function updateANOVATable() {
+                const anova = results.anova;
+                
+                // Update ANOVA table values
+                document.getElementById('ssBetween').textContent = anova.ssBetween.toFixed(2);
+                document.getElementById('ssWithin').textContent = anova.ssWithin.toFixed(2);
+                document.getElementById('ssTotal').textContent = anova.ssTotal.toFixed(2);
+                
+                document.getElementById('dfBetween').textContent = anova.dfBetween;
+                document.getElementById('dfWithin').textContent = anova.dfWithin;
+                document.getElementById('dfTotal').textContent = anova.dfTotal;
+                
+                document.getElementById('msBetween').textContent = anova.msBetween.toFixed(2);
+                document.getElementById('msWithin').textContent = anova.msWithin.toFixed(2);
+                document.getElementById('msTotal').textContent = (anova.ssTotal / anova.dfTotal).toFixed(2);
+                
+                document.getElementById('fBetween').textContent = anova.fAnova.toFixed(4);
+                document.getElementById('fWithin').textContent = '--';
+            }
+
+            function updateVisualizations() {
+                updateBoxPlots();
+                updateVarianceBarChart();
+            }
+
+            function updateBoxPlots() {
+                const stats1 = results.stats1;
+                const stats2 = results.stats2;
+                
+                // Calculate box plot values (simplified)
+                const box1 = document.querySelector('.box-plot-dataset1 .box');
+                const box2 = document.querySelector('.box-plot-dataset2 .box');
+                
+                // Set box heights based on variance
+                const maxVariance = Math.max(stats1.variance, stats2.variance);
+                const box1Height = 60 * (stats1.variance / maxVariance);
+                const box2Height = 60 * (stats2.variance / maxVariance);
+                
+                box1.style.height = `${box1Height}px`;
+                box2.style.height = `${box2Height}px`;
+            }
+
+            function updateVarianceBarChart() {
+                const chart = document.getElementById('varianceBarChart');
+                const stats1 = results.stats1;
+                const stats2 = results.stats2;
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                // Calculate bar heights
+                const maxVariance = Math.max(stats1.variance, stats2.variance);
+                const barHeight1 = (stats1.variance / maxVariance) * 180;
+                const barHeight2 = (stats2.variance / maxVariance) * 180;
+                
+                // Create bars
+                const bar1 = document.createElement('div');
+                bar1.style.width = '80px';
+                bar1.style.height = `${barHeight1}px`;
+                bar1.style.background = 'var(--dataset1-color)';
+                bar1.style.borderRadius = '4px 4px 0 0';
+                bar1.style.position = 'relative';
+                
+                const bar2 = document.createElement('div');
+                bar2.style.width = '80px';
+                bar2.style.height = `${barHeight2}px`;
+                bar2.style.background = 'var(--dataset2-color)';
+                bar2.style.borderRadius = '4px 4px 0 0';
+                bar2.style.position = 'relative';
+                
+                // Add value labels
+                const label1 = document.createElement('div');
+                label1.style.position = 'absolute';
+                label1.style.top = '-25px';
+                label1.style.left = '0';
+                label1.style.right = '0';
+                label1.style.textAlign = 'center';
+                label1.style.fontWeight = '600';
+                label1.style.color = 'var(--dark)';
+                label1.textContent = stats1.variance.toFixed(2);
+                
+                const label2 = document.createElement('div');
+                label2.style.position = 'absolute';
+                label2.style.top = '-25px';
+                label2.style.left = '0';
+                label2.style.right = '0';
+                label2.style.textAlign = 'center';
+                label2.style.fontWeight = '600';
+                label2.style.color = 'var(--dark)';
+                label2.textContent = stats2.variance.toFixed(2);
+                
+                bar1.appendChild(label1);
+                bar2.appendChild(label2);
+                
+                // Create bar containers
+                const barContainer1 = document.createElement('div');
+                barContainer1.style.display = 'flex';
+                barContainer1.style.flexDirection = 'column';
+                barContainer1.style.alignItems = 'center';
+                barContainer1.style.gap = '10px';
+                
+                const barContainer2 = document.createElement('div');
+                barContainer2.style.display = 'flex';
+                barContainer2.style.flexDirection = 'column';
+                barContainer2.style.alignItems = 'center';
+                barContainer2.style.gap = '10px';
+                
+                barContainer1.appendChild(bar1);
+                barContainer2.appendChild(bar2);
+                
+                // Add dataset labels
+                const labelText1 = document.createElement('div');
+                labelText1.textContent = currentLanguage === 'bn' ? 'ডেটাসেট ১' : 'Dataset 1';
+                labelText1.style.fontWeight = '600';
+                labelText1.style.color = 'var(--dataset1-color)';
+                
+                const labelText2 = document.createElement('div');
+                labelText2.textContent = currentLanguage === 'bn' ? 'ডেটাসেট ২' : 'Dataset 2';
+                labelText2.style.fontWeight = '600';
+                labelText2.style.color = 'var(--dataset2-color)';
+                
+                barContainer1.appendChild(labelText1);
+                barContainer2.appendChild(labelText2);
+                
+                // Add to chart
+                chart.appendChild(barContainer1);
+                chart.appendChild(barContainer2);
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                document.getElementById('dataset1Input').value = data.dataset1.join(', ');
+                document.getElementById('dataset2Input').value = data.dataset2.join(', ');
+                
+                calculateFRatio();
+            }
+
+            function clearCalculator() {
+                // Clear inputs
+                document.getElementById('dataset1Input').value = '';
+                document.getElementById('dataset2Input').value = '';
+                document.getElementById('df1Input').value = '';
+                document.getElementById('df2Input').value = '';
+                
+                // Reset results
+                resetResults();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function resetResults() {
+                // Clear result values
+                document.getElementById('fratioResult').textContent = '--';
+                
+                const significanceResult = document.getElementById('significanceResult');
+                significanceResult.className = 'fratio-significance';
+                significanceResult.innerHTML = '';
+                
+                document.getElementById('fratioInterpretation').innerHTML = currentLanguage === 'bn' ? 
+                    'F-রেশিও ব্যাখ্যা এখানে প্রদর্শিত হবে' :
+                    'F-ratio interpretation will appear here';
+                
+                // Clear dataset stats
+                document.getElementById('dataset1Stats').innerHTML = '';
+                document.getElementById('dataset2Stats').innerHTML = '';
+                
+                // Clear variance stats
+                document.getElementById('dataset1VarianceStats').innerHTML = '';
+                document.getElementById('dataset2VarianceStats').innerHTML = '';
+                
+                // Clear F-distribution chart
+                document.getElementById('fDistributionChart').innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: var(--gray);">
+                        <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>${currentLanguage === 'bn' ? 'বন্টন দেখতে F-রেশিও গণনা করুন' : 'Calculate F-ratio to see distribution'}</p>
+                    </div>
+                `;
+                
+                // Clear hypothesis testing
+                document.getElementById('nullHypothesis').innerHTML = currentLanguage === 'bn' ? 
+                    'ভ্যারিয়েন্স সমান: σ₁² = σ₂²' : 'Variances are equal: σ₁² = σ₂²';
+                document.getElementById('alternativeHypothesis').innerHTML = currentLanguage === 'bn' ? 
+                    'ভ্যারিয়েন্স অসমান: σ₁² ≠ σ₂²' : 'Variances are not equal: σ₁² ≠ σ₂²';
+                document.getElementById('testDecision').innerHTML = currentLanguage === 'bn' ? 
+                    'টেস্ট সিদ্ধান্ত দেখতে F-রেশিও গণনা করুন' : 'Calculate F-ratio to see test decision';
+                
+                // Clear ANOVA table
+                const anovaCells = ['ssBetween', 'ssWithin', 'ssTotal', 'dfBetween', 'dfWithin', 'dfTotal', 'msBetween', 'msWithin', 'fBetween'];
+                anovaCells.forEach(id => {
+                    document.getElementById(id).textContent = '--';
+                });
+                
+                // Clear visualizations
+                document.getElementById('boxPlotContainer').innerHTML = `
+                    <div class="box-plot box-plot-dataset1">
+                        <div class="whisker"></div>
+                        <div class="box">
+                            <div class="median-line"></div>
+                        </div>
+                        <div class="whisker"></div>
+                        <div style="margin-top: 0.5rem; font-weight: 600;">${currentLanguage === 'bn' ? 'ডেটাসেট ১' : 'Dataset 1'}</div>
+                    </div>
+                    <div class="box-plot box-plot-dataset2">
+                        <div class="whisker"></div>
+                        <div class="box">
+                            <div class="median-line"></div>
+                        </div>
+                        <div class="whisker"></div>
+                        <div style="margin-top: 0.5rem; font-weight: 600;">${currentLanguage === 'bn' ? 'ডেটাসেট ২' : 'Dataset 2'}</div>
+                    </div>
+                `;
+                
+                document.getElementById('varianceBarChart').innerHTML = `
+                    <div style="text-align: center; color: var(--gray); padding: 2rem;">
+                        <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>${currentLanguage === 'bn' ? 'ভ্যারিয়েন্স তুলনা দেখতে গণনা করুন' : 'Calculate to see variance comparison'}</p>
+                    </div>
+                `;
+                
+                // Reset data
+                dataset1 = [];
+                dataset2 = [];
+                results = null;
+            }
+
+            function updateDynamicContent() {
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

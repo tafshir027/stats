@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ভ্যারিয়েন্স ক্যালকুলেটর | গড় থেকে বিস্তার পরিমাপ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --sample-color: #6C63FF;
+            --population-color: #36D1DC;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --deviation-color: #FF9A3D;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--sample-color), var(--population-color), var(--deviation-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Variance Type Toggle */
+        .variance-type-toggle {
+            display: flex;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .variance-type-toggle {
+                flex-direction: column;
+            }
+        }
+
+        .variance-type-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 120px;
+        }
+
+        .variance-type-btn.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .variance-type-btn.sample {
+            color: var(--sample-color);
+        }
+
+        .variance-type-btn.population {
+            color: var(--population-color);
+        }
+
+        .variance-type-btn.both {
+            color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Results Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.sample::before { background: var(--sample-color); }
+        .result-card.population::before { background: var(--population-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.sample .result-icon { color: var(--sample-color); }
+        .result-card.population .result-icon { color: var(--population-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-unit {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-left: 0.25rem;
+        }
+
+        /* Standard Deviation Results */
+        .deviation-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .deviation-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .deviation-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid var(--deviation-color);
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Bar Chart Styling */
+        .bar-chart {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 1rem 0;
+            gap: 0.5rem;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .bar {
+            width: 80%;
+            background: var(--primary);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .bar-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        /* Scatter Plot Styling */
+        .scatter-plot {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .plot-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            transform: translate(-50%, 50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .plot-point:hover {
+            transform: translate(-50%, 50%) scale(1.5);
+            box-shadow: 0 0 10px rgba(255, 101, 132, 0.5);
+        }
+
+        .plot-mean-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--success);
+            opacity: 0.7;
+        }
+
+        .plot-std-dev {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--warning);
+            opacity: 0.3;
+        }
+
+        .plot-axis-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .plot-axis-label.x {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .plot-axis-label.y {
+            top: 50%;
+            left: -40px;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        /* Distribution Chart */
+        .distribution-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+        }
+
+        .distribution-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, var(--sample-color), var(--population-color));
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .distribution-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.mean { background: var(--success); }
+        .legend-color.sample { background: var(--sample-color); }
+        .legend-color.population { background: var(--population-color); }
+        .legend-color.std-dev { background: var(--warning); }
+        .legend-color.data-point { background: var(--accent); }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .sample-formula .formula-icon { background: var(--sample-color); }
+        .population-formula .formula-icon { background: var(--population-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Calculation Tables */
+        .calculation-tables {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        .data-table .formula-cell {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            background: var(--formula-bg);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* Formula Key */
+        .formula-key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .formula-key {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .key-item {
+                min-width: 100%;
+            }
+        }
+
+        .key-symbol {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 40px;
+        }
+
+        .key-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .calculation-tables,
+            .step-by-step {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .data-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="container">
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Variance Calculator" data-bn="ভ্যারিয়েন্স ক্যালকুলেটর">ভ্যারিয়েন্স ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate Sample and Population Variance with detailed formulas, step-by-step calculations, and visual data analysis" data-bn="স্যাম্পল এবং পপুলেশন ভ্যারিয়েন্স গণনা করুন বিস্তারিত সূত্র, ধাপে ধাপে গণনা, এবং ভিজ্যুয়াল ডেটা বিশ্লেষণের সাথে">
+                স্যাম্পল এবং পপুলেশন ভ্যারিয়েন্স গণনা করুন বিস্তারিত সূত্র, ধাপে ধাপে গণনা, এবং ভিজ্যুয়াল ডেটা বিশ্লেষণের সাথে
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- Variance Type Toggle -->
+                <div class="variance-type-toggle">
+                    <button class="variance-type-btn sample active" data-type="sample">
+                        <i class="fas fa-flask"></i>
+                        <span data-en="Sample Variance" data-bn="স্যাম্পল ভ্যারিয়েন্স">স্যাম্পল ভ্যারিয়েন্স</span>
+                    </button>
+                    <button class="variance-type-btn population" data-type="population">
+                        <i class="fas fa-users"></i>
+                        <span data-en="Population Variance" data-bn="পপুলেশন ভ্যারিয়েন্স">পপুলেশন ভ্যারিয়েন্স</span>
+                    </button>
+                    <button class="variance-type-btn both" data-type="both">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Both" data-bn="উভয়ই">উভয়ই</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="Enter data separated by commas, spaces, or new lines
+Example: 10, 20, 30, 40, 50
+or: 10 20 30 40 50
+or: 
+10
+20
+30
+40
+50" data-bn-placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50
+বা: 10 20 30 40 50
+বা: 
+10
+20
+30
+40
+50"></textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Variance" data-bn="ভ্যারিয়েন্স গণনা করুন">ভ্যারিয়েন্স গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bn="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Variance Results" data-bn="ভ্যারিয়েন্স ফলাফল">ভ্যারিয়েন্স ফলাফল</span>
+                </h2>
+                
+                <div class="results-grid">
+                    <!-- Sample Variance Result -->
+                    <div class="result-card sample">
+                        <div class="result-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="result-title" data-en="Sample Variance (s²)" data-bn="স্যাম্পল ভ্যারিয়েন্স (s²)">স্যাম্পল ভ্যারিয়েন্স (s²)</div>
+                        <div class="result-value" id="sampleVarianceResult">--</div>
+                        <div class="result-unit" data-en="units²" data-bn="একক²">একক²</div>
+                    </div>
+
+                    <!-- Population Variance Result -->
+                    <div class="result-card population">
+                        <div class="result-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="result-title" data-en="Population Variance (σ²)" data-bn="পপুলেশন ভ্যারিয়েন্স (σ²)">পপুলেশন ভ্যারিয়েন্স (σ²)</div>
+                        <div class="result-value" id="populationVarianceResult">--</div>
+                        <div class="result-unit" data-en="units²" data-bn="একক²">একক²</div>
+                    </div>
+                </div>
+
+                <!-- Standard Deviation Results -->
+                <div class="deviation-results">
+                    <div class="deviation-card">
+                        <div class="result-title" data-en="Sample Standard Deviation (s)" data-bn="স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s)">স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s)</div>
+                        <div class="result-value" id="sampleStdDevResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                    </div>
+                    <div class="deviation-card">
+                        <div class="result-title" data-en="Population Standard Deviation (σ)" data-bn="পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ)">পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ)</div>
+                        <div class="result-value" id="populationStdDevResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Points (n)" data-bn="ডেটা পয়েন্ট (n)">ডেটা পয়েন্ট (n)</div>
+                        <div class="stat-value" id="dataCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Mean (μ or x̄)" data-bn="গড় (μ বা x̄)">গড় (μ বা x̄)</div>
+                        <div class="stat-value" id="meanValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Sum of Squares (SS)" data-bn="স্কোয়ারের যোগফল (SS)">স্কোয়ারের যোগফল (SS)</div>
+                        <div class="stat-value" id="sumSquares">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Range" data-bn="ডেটা পরিসর">ডেটা পরিসর</div>
+                        <div class="stat-value" id="rangeValue">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bn="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Bar Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Data Distribution" data-bn="ডেটা বণ্টন">ডেটা বণ্টন</span>
+                    </h3>
+                    <div id="barChart" class="bar-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p data-en="Enter data to see bar chart" data-bn="ডেটা ইনপুট করে বার চার্ট দেখুন">ডেটা ইনপুট করে বার চার্ট দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="barChartLegend"></div>
+                </div>
+
+                <!-- Scatter Plot -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Scatter Plot with Mean" data-bn="গড় সহ স্ক্যাটার প্লট">গড় সহ স্ক্যাটার প্লট</span>
+                    </h3>
+                    <div id="scatterPlot" class="scatter-plot">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p data-en="Enter data to see scatter plot" data-bn="ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন">ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="scatterPlotLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Variance Formulas and Definitions" data-bn="ভ্যারিয়েন্স সূত্র এবং সংজ্ঞা">ভ্যারিয়েন্স সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <!-- Formula Key -->
+            <div class="formula-key">
+                <div class="key-item">
+                    <span class="key-symbol">σ²</span>
+                    <span class="key-label" data-en="Population Variance" data-bn="পপুলেশন ভ্যারিয়েন্স">পপুলেশন ভ্যারিয়েন্স</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">s²</span>
+                    <span class="key-label" data-en="Sample Variance" data-bn="স্যাম্পল ভ্যারিয়েন্স">স্যাম্পল ভ্যারিয়েন্স</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">μ</span>
+                    <span class="key-label" data-en="Population Mean" data-bn="পপুলেশন গড়">পপুলেশন গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">x̄</span>
+                    <span class="key-label" data-en="Sample Mean" data-bn="স্যাম্পল গড়">স্যাম্পল গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">N</span>
+                    <span class="key-label" data-en="Population Size" data-bn="পপুলেশন সাইজ">পপুলেশন সাইজ</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">n</span>
+                    <span class="key-label" data-en="Sample Size" data-bn="স্যাম্পল সাইজ">স্যাম্পল সাইজ</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">∑</span>
+                    <span class="key-label" data-en="Summation" data-bn="যোগফল">যোগফল</span>
+                </div>
+            </div>
+            
+            <div class="formula-cards">
+                <!-- Sample Variance Formula -->
+                <div class="formula-card sample-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Sample Variance" data-bn="স্যাম্পল ভ্যারিয়েন্স">স্যাম্পল ভ্যারিয়েন্স</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures spread in a sample (unbiased estimator)" data-bn="স্যাম্পলের মধ্যে বিস্তার পরিমাপ করে (অপক্ষপাতী অনুমান)">
+                            স্যাম্পলের মধ্যে বিস্তার পরিমাপ করে (অপক্ষপাতী অনুমান)
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="s² = Σ(xᵢ - x̄)² / (n - 1)" data-bn="s² = Σ(xᵢ - x̄)² / (n - 1)">s² = Σ(xᵢ - x̄)² / (n - 1)</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="xᵢ = Each value in sample" data-bn="xᵢ = স্যাম্পলের প্রতিটি মান">xᵢ = স্যাম্পলের প্রতিটি মান</li>
+                            <li data-en="x̄ = Sample mean" data-bn="x̄ = স্যাম্পল গড়">x̄ = স্যাম্পল গড়</li>
+                            <li data-en="n = Sample size" data-bn="n = স্যাম্পল সাইজ">n = স্যাম্পল সাইজ</li>
+                            <li data-en="Uses n-1 (Bessel's correction)" data-bn="n-1 ব্যবহার করে (বেসেলের সংশোধন)">n-1 ব্যবহার করে (বেসেলের সংশোধন)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Population Variance Formula -->
+                <div class="formula-card population-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Population Variance" data-bn="পপুলেশন ভ্যারিয়েন্স">পপুলেশন ভ্যারিয়েন্স</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures spread in entire population" data-bn="সম্পূর্ণ পপুলেশনের মধ্যে বিস্তার পরিমাপ করে">
+                            সম্পূর্ণ পপুলেশনের মধ্যে বিস্তার পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="σ² = Σ(xᵢ - μ)² / N" data-bn="σ² = Σ(xᵢ - μ)² / N">σ² = Σ(xᵢ - μ)² / N</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="xᵢ = Each value in population" data-bn="xᵢ = পপুলেশনের প্রতিটি মান">xᵢ = পপুলেশনের প্রতিটি মান</li>
+                            <li data-en="μ = Population mean" data-bn="μ = পপুলেশন গড়">μ = পপুলেশন গড়</li>
+                            <li data-en="N = Population size" data-bn="N = পপুলেশন সাইজ">N = পপুলেশন সাইজ</li>
+                            <li data-en="Uses N (all data points)" data-bn="N ব্যবহার করে (সমস্ত ডেটা পয়েন্ট)">N ব্যবহার করে (সমস্ত ডেটা পয়েন্ট)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Understanding Variance Section -->
+            <div class="step-details" style="margin-top: 2rem; background: #f0f7ff; border-left-color: var(--info);">
+                <h4 data-en="Understanding Variance" data-bn="ভ্যারিয়েন্স বুঝুন">ভ্যারিয়েন্স বুঝুন</h4>
+                <p data-en="Variance measures how far a set of numbers are spread out from their average value. A high variance indicates that the data points are very spread out, while a low variance indicates they are clustered closely around the mean." data-bn="ভ্যারিয়েন্স একটি সংখ্যার সেট তাদের গড় মান থেকে কতদূর ছড়িয়ে আছে তা পরিমাপ করে। উচ্চ ভ্যারিয়েন্স নির্দেশ করে যে ডেটা পয়েন্টগুলি খুব ছড়িয়ে ছিটিয়ে আছে, যখন নিম্ন ভ্যারিয়েন্স নির্দেশ করে যে তারা গড়ের কাছাকাছি দলে আছে।">
+                    ভ্যারিয়েন্স একটি সংখ্যার সেট তাদের গড় মান থেকে কতদূর ছড়িয়ে আছে তা পরিমাপ করে। উচ্চ ভ্যারিয়েন্স নির্দেশ করে যে ডেটা পয়েন্টগুলি খুব ছড়িয়ে ছিটিয়ে আছে, যখন নিম্ন ভ্যারিয়েন্স নির্দেশ করে যে তারা গড়ের কাছাকাছি দলে আছে।
+                </p>
+                <div class="formula-key" style="margin-top: 1rem; background: white;">
+                    <div class="key-item">
+                        <i class="fas fa-arrow-up" style="color: var(--accent);"></i>
+                        <span class="key-label" data-en="High Variance = More Spread" data-bn="উচ্চ ভ্যারিয়েন্স = বেশি বিস্তার">উচ্চ ভ্যারিয়েন্স = বেশি বিস্তার</span>
+                    </div>
+                    <div class="key-item">
+                        <i class="fas fa-arrow-down" style="color: var(--success);"></i>
+                        <span class="key-label" data-en="Low Variance = Less Spread" data-bn="নিম্ন ভ্যারিয়েন্স = কম বিস্তার">নিম্ন ভ্যারিয়েন্স = কম বিস্তার</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculation Tables -->
+        <div class="calculation-tables">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Calculation Tables" data-bn="বিস্তারিত গণনা টেবিল">বিস্তারিত গণনা টেবিল</span>
+            </h2>
+            
+            <div id="tablesContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" data-en="Enter data and click Calculate to see detailed variance tables" data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত ভ্যারিয়েন্স টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং বিস্তারিত ভ্যারিয়েন্স টেবিল দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Variance Calculation" data-bন="ধাপে ধাপে ভ্যারিয়েন্স গণনা">ধাপে ধাপে ভ্যারিয়েন্স গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter data and click Calculate to see step-by-step variance calculations" data-bন="ডেটা ইনপুট করুন এবং ধাপে ধাপে ভ্যারিয়েন্স গণনা দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং ধাপে ধাপে ভ্যারিয়েন্স গণনা দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="low-variance">
+                    <span data-en="Low Variance Data" data-bন="নিম্ন ভ্যারিয়েন্স ডেটা">নিম্ন ভ্যারিয়েন্স ডেটা</span>
+                    <span class="example-data">48, 50, 52, 49, 51</span>
+                </button>
+                <button class="example-btn" data-example="high-variance">
+                    <span data-en="High Variance Data" data-bন="উচ্চ ভ্যারিয়েন্স ডেটা">উচ্চ ভ্যারিয়েন্স ডেটা</span>
+                    <span class="example-data">10, 90, 20, 80, 30, 70</span>
+                </button>
+                <button class="example-btn" data-example="test-scores">
+                    <span data-en="Test Scores" data-bন="পরীক্ষার স্কোর">পরীক্ষার স্কোর</span>
+                    <span class="example-data">85, 90, 78, 92, 85, 88, 75, 95</span>
+                </button>
+                <button class="example-btn" data-example="temperatures">
+                    <span data-en="Temperature Data" data-bন="তাপমাত্রা ডেটা">তাপমাত্রা ডেটা</span>
+                    <span class="example-data">22, 24, 21, 25, 23, 24, 20, 26</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'low-variance': [48, 50, 52, 49, 51],
+                'high-variance': [10, 90, 20, 80, 30, 70],
+                'test-scores': [85, 90, 78, 92, 85, 88, 75, 95],
+                'temperatures': [22, 24, 21, 25, 23, 24, 20, 26]
+            };
+
+            // Chart data
+            let chartData = [];
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Variance Type Toggle
+                const varianceTypeBtns = document.querySelectorAll('.variance-type-btn');
+                varianceTypeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        varianceTypeBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateVariance);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateVariance();
+                    }
+                });
+
+                // Generate initial random data
+                generateRandomData();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    } else {
+                        element.placeholder = element.getAttribute('placeholder');
+                    }
+                });
+
+                // Update number formats if needed
+                updateNumberFormats();
+            }
+
+            function updateNumberFormats() {
+                // This function would convert number formats between languages
+                // For now, we'll keep the same format
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateVariance() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে কিছু ডেটা ইনপুট করুন' : 'Please enter some data');
+                    return;
+                }
+
+                const data = parseInputData(input);
+                
+                if (data.length < 2) {
+                    alert(currentLanguage === 'bn' ? 'ভ্যারিয়েন্স গণনার জন্য কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 'At least 2 numbers are required for variance calculation');
+                    return;
+                }
+
+                // Store chart data
+                chartData = [...data];
+                
+                // Get selected variance type
+                const selectedType = document.querySelector('.variance-type-btn.active').dataset.type;
+                
+                // Calculate statistics
+                const mean = calculateMean(data);
+                const sumSquares = calculateSumSquares(data, mean);
+                const sampleVariance = calculateSampleVariance(data, sumSquares);
+                const populationVariance = calculatePopulationVariance(data, sumSquares);
+                const sampleStdDev = Math.sqrt(sampleVariance);
+                const populationStdDev = Math.sqrt(populationVariance);
+                const sortedData = [...data].sort((a, b) => a - b);
+
+                // Update results
+                updateResults(data, mean, sumSquares, sampleVariance, populationVariance, sampleStdDev, populationStdDev, selectedType);
+                
+                // Update charts
+                updateCharts(data, mean, sampleStdDev, populationStdDev);
+                
+                // Update detailed tables
+                updateCalculationTables(data, mean, sumSquares, sampleVariance, populationVariance);
+                
+                // Update step-by-step calculations
+                updateStepByStep(data, mean, sumSquares, sampleVariance, populationVariance, selectedType);
+            }
+
+            function calculateMean(data) {
+                return data.reduce((a, b) => a + b, 0) / data.length;
+            }
+
+            function calculateSumSquares(data, mean) {
+                return data.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0);
+            }
+
+            function calculateSampleVariance(data, sumSquares) {
+                return sumSquares / (data.length - 1);
+            }
+
+            function calculatePopulationVariance(data, sumSquares) {
+                return sumSquares / data.length;
+            }
+
+            function updateResults(data, mean, sumSquares, sampleVariance, populationVariance, sampleStdDev, populationStdDev, selectedType) {
+                const max = Math.max(...data);
+                const min = Math.min(...data);
+                const range = max - min;
+                
+                // Update main results based on selected type
+                if (selectedType === 'sample' || selectedType === 'both') {
+                    document.getElementById('sampleVarianceResult').textContent = sampleVariance.toFixed(4);
+                    document.getElementById('sampleStdDevResult').textContent = sampleStdDev.toFixed(4);
+                }
+                
+                if (selectedType === 'population' || selectedType === 'both') {
+                    document.getElementById('populationVarianceResult').textContent = populationVariance.toFixed(4);
+                    document.getElementById('populationStdDevResult').textContent = populationStdDev.toFixed(4);
+                }
+                
+                // Hide/show based on selection
+                document.querySelector('.result-card.sample').style.display = 
+                    (selectedType === 'sample' || selectedType === 'both') ? 'block' : 'none';
+                document.querySelector('.result-card.population').style.display = 
+                    (selectedType === 'population' || selectedType === 'both') ? 'block' : 'none';
+
+                // Update statistics
+                document.getElementById('dataCount').textContent = data.length;
+                document.getElementById('meanValue').textContent = mean.toFixed(4);
+                document.getElementById('sumSquares').textContent = sumSquares.toFixed(4);
+                document.getElementById('rangeValue').textContent = range.toFixed(2);
+            }
+
+            function updateCharts(data, mean, sampleStdDev, populationStdDev) {
+                // Update Bar Chart
+                updateBarChart(data);
+                
+                // Update Scatter Plot
+                updateScatterPlot(data, mean, sampleStdDev);
+                
+                // Update Chart Legends
+                updateChartLegends(mean, sampleStdDev, populationStdDev);
+            }
+
+            function updateBarChart(data) {
+                const barChart = document.getElementById('barChart');
+                const sortedData = [...data].sort((a, b) => a - b);
+                const maxValue = Math.max(...data);
+                const minValue = Math.min(...data);
+                
+                // Clear previous chart
+                barChart.innerHTML = '';
+                
+                // Calculate frequency distribution
+                const frequency = {};
+                data.forEach(value => {
+                    frequency[value] = (frequency[value] || 0) + 1;
+                });
+                
+                // Get unique sorted values
+                const uniqueValues = Object.keys(frequency).map(Number).sort((a, b) => a - b);
+                
+                // Calculate bar height scale
+                const maxFrequency = Math.max(...Object.values(frequency));
+                const chartHeight = 250; // Fixed height from CSS
+                
+                // Create bars
+                uniqueValues.forEach((value, index) => {
+                    const freq = frequency[value];
+                    const barHeight = (freq / maxFrequency) * (chartHeight - 50);
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'bar-container';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = `${barHeight}px`;
+                    bar.style.background = index % 2 === 0 ? 'var(--sample-color)' : 'var(--population-color)';
+                    
+                    const barValue = document.createElement('div');
+                    barValue.className = 'bar-value';
+                    barValue.textContent = freq;
+                    
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'bar-label';
+                    barLabel.textContent = value.toFixed(2);
+                    
+                    bar.appendChild(barValue);
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(barLabel);
+                    barChart.appendChild(barContainer);
+                });
+                
+                // If no bars were created (single value)
+                if (uniqueValues.length === 0) {
+                    barChart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বার চার্ট দেখুন' : 'Enter data to see bar chart'}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            function updateScatterPlot(data, mean, sampleStdDev) {
+                const scatterPlot = document.getElementById('scatterPlot');
+                const sortedData = [...data].sort((a, b) => a - b);
+                
+                // Clear previous plot
+                scatterPlot.innerHTML = '';
+                
+                // Calculate plot dimensions
+                const plotWidth = scatterPlot.offsetWidth - 40;
+                const plotHeight = 210;
+                
+                // Add axes labels
+                const xLabel = document.createElement('div');
+                xLabel.className = 'plot-axis-label x';
+                xLabel.textContent = currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points';
+                scatterPlot.appendChild(xLabel);
+                
+                const yLabel = document.createElement('div');
+                yLabel.className = 'plot-axis-label y';
+                yLabel.textContent = currentLanguage === 'bn' ? 'মান' : 'Values';
+                scatterPlot.appendChild(yLabel);
+                
+                // Calculate value ranges for scaling
+                const maxValue = Math.max(...data);
+                const minValue = Math.min(...data);
+                const valueRange = maxValue - minValue;
+                
+                // Add mean line
+                const meanLine = document.createElement('div');
+                meanLine.className = 'plot-mean-line';
+                const meanY = plotHeight - ((mean - minValue) / valueRange * plotHeight);
+                meanLine.style.top = `${meanY}px`;
+                scatterPlot.appendChild(meanLine);
+                
+                // Add standard deviation bands
+                const stdDevPlus = document.createElement('div');
+                stdDevPlus.className = 'plot-std-dev';
+                const stdDevPlusY = plotHeight - ((mean + sampleStdDev - minValue) / valueRange * plotHeight);
+                stdDevPlus.style.top = `${stdDevPlusY}px`;
+                scatterPlot.appendChild(stdDevPlus);
+                
+                const stdDevMinus = document.createElement('div');
+                stdDevMinus.className = 'plot-std-dev';
+                const stdDevMinusY = plotHeight - ((mean - sampleStdDev - minValue) / valueRange * plotHeight);
+                stdDevMinus.style.top = `${stdDevMinusY}px`;
+                scatterPlot.appendChild(stdDevMinus);
+                
+                // Add data points
+                data.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'plot-point';
+                    
+                    // Calculate position
+                    const xPos = (index / (data.length - 1)) * plotWidth + 20;
+                    const yPos = plotHeight - ((value - minValue) / valueRange * plotHeight);
+                    
+                    point.style.left = `${xPos}px`;
+                    point.style.top = `${yPos}px`;
+                    
+                    // Add tooltip
+                    point.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${value.toFixed(2)}\n${currentLanguage === 'bn' ? 'গড় থেকে দূরত্ব' : 'Distance from mean'}: ${Math.abs(value - mean).toFixed(2)}`;
+                    
+                    scatterPlot.appendChild(point);
+                });
+                
+                // Add mean value label
+                const meanLabel = document.createElement('div');
+                meanLabel.className = 'plot-axis-label';
+                meanLabel.textContent = `Mean: ${mean.toFixed(2)}`;
+                meanLabel.style.top = `${meanY - 15}px`;
+                meanLabel.style.right = '5px';
+                meanLabel.style.color = 'var(--success)';
+                meanLabel.style.fontSize = '0.7rem';
+                scatterPlot.appendChild(meanLabel);
+            }
+
+            function updateChartLegends(mean, sampleStdDev, populationStdDev) {
+                const barChartLegend = document.getElementById('barChartLegend');
+                const scatterPlotLegend = document.getElementById('scatterPlotLegend');
+                
+                // Bar Chart Legend
+                barChartLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color sample"></div>
+                        <span data-en="Frequency of values" data-bn="মানের পুনরাবৃত্তি">মানের পুনরাবৃত্তি</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color population"></div>
+                        <span data-en="Alternate values" data-bn="বিকল্প মান">বিকল্প মান</span>
+                    </div>
+                `;
+                
+                // Scatter Plot Legend
+                scatterPlotLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color data-point"></div>
+                        <span data-en="Data Points" data-bn="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Mean Line" data-bn="গড় লাইন">গড় লাইন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color std-dev"></div>
+                        <span data-en="±1 Std Dev" data-bn="±১ স্ট্যান্ডার্ড ডেভিয়েশন">±১ স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                    </div>
+                `;
+                
+                // Update language for legends
+                updateDynamicContent();
+            }
+
+            function updateCalculationTables(data, mean, sumSquares, sampleVariance, populationVariance) {
+                const container = document.getElementById('tablesContainer');
+                
+                // Create deviation table
+                let deviationTableHTML = '';
+                data.forEach((value, index) => {
+                    const deviation = value - mean;
+                    const deviationSquared = Math.pow(deviation, 2);
+                    deviationTableHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${value.toFixed(4)}</td>
+                            <td>${mean.toFixed(4)}</td>
+                            <td>${deviation.toFixed(4)}</td>
+                            <td>${deviationSquared.toFixed(4)}</td>
+                        </tr>
+                    `;
+                });
+
+                // Add sum row
+                deviationTableHTML += `
+                    <tr class="highlight">
+                        <td colspan="4"><strong>${currentLanguage === 'bn' ? 'মোট' : 'Total'}</strong></td>
+                        <td><strong>${sumSquares.toFixed(4)}</strong></td>
+                    </tr>
+                `;
+
+                container.innerHTML = `
+                    <!-- Deviation Calculation Table -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Deviation Calculations" data-bn="ডেভিয়েশন গণনা">ডেভিয়েশন গণনা</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Index" data-bn="ক্রমিক">ক্রমিক</th>
+                                <th data-en="Value (xᵢ)" data-bn="মান (xᵢ)">মান (xᵢ)</th>
+                                <th data-en="Mean (x̄ or μ)" data-bn="গড় (x̄ বা μ)">গড় (x̄ বা μ)</th>
+                                <th data-en="Deviation (xᵢ - mean)" data-bn="ডেভিয়েশন (xᵢ - গড়)">ডেভিয়েশন (xᵢ - গড়)</th>
+                                <th data-en="Squared Deviation (xᵢ - mean)²" data-bn="স্কোয়ার্ড ডেভিয়েশন (xᵢ - গড়)²">স্কোয়ার্ড ডেভিয়েশন (xᵢ - গড়)²</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${deviationTableHTML}
+                        </tbody>
+                    </table>
+
+                    <!-- Variance Calculation Summary -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Variance Calculation Summary" data-bn="ভ্যারিয়েন্স গণনা সারসংক্ষেপ">ভ্যারিয়েন্স গণনা সারসংক্ষেপ</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Measure" data-bn="পরিমাপ">পরিমাপ</th>
+                                <th data-en="Formula" data-bn="সূত্র">সূত্র</th>
+                                <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td data-en="Sample Variance (s²)" data-bন="স্যাম্পল ভ্যারিয়েন্স (s²)">স্যাম্পল ভ্যারিয়েন্স (s²)</td>
+                                <td class="formula-cell">Σ(xᵢ - x̄)² / (n - 1)</td>
+                                <td>${sumSquares.toFixed(4)} ÷ (${data.length} - 1)</td>
+                                <td><strong>${sampleVariance.toFixed(4)}</strong></td>
+                            </tr>
+                            <tr>
+                                <td data-en="Population Variance (σ²)" data-bন="পপুলেশন ভ্যারিয়েন্স (σ²)">পপুলেশন ভ্যারিয়েন্স (σ²)</td>
+                                <td class="formula-cell">Σ(xᵢ - μ)² / N</td>
+                                <td>${sumSquares.toFixed(4)} ÷ ${data.length}</td>
+                                <td><strong>${populationVariance.toFixed(4)}</strong></td>
+                            </tr>
+                            <tr>
+                                <td data-en="Sample Std Dev (s)" data-bন="স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s)">স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s)</td>
+                                <td class="formula-cell">√(s²)</td>
+                                <td>√(${sampleVariance.toFixed(4)})</td>
+                                <td><strong>${Math.sqrt(sampleVariance).toFixed(4)}</strong></td>
+                            </tr>
+                            <tr>
+                                <td data-en="Population Std Dev (σ)" data-bন="পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ)">পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ)</td>
+                                <td class="formula-cell">√(σ²)</td>
+                                <td>√(${populationVariance.toFixed(4)})</td>
+                                <td><strong>${Math.sqrt(populationVariance).toFixed(4)}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateStepByStep(data, mean, sumSquares, sampleVariance, populationVariance, selectedType) {
+                const container = document.getElementById('stepsContainer');
+                const n = data.length;
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate the Mean" data-bn="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                            <p data-en="Find the average of all data points" data-bn="সমস্ত ডেটা পয়েন্টের গড় খুঁজুন">
+                                সমস্ত ডেটা পয়েন্টের গড় খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> 
+                                    ${selectedType === 'population' ? 'μ' : 'x̄'} = Σxᵢ / ${selectedType === 'population' ? 'N' : 'n'}
+                                </p>
+                                <div class="step-equation">
+                                    ${selectedType === 'population' ? 'μ' : 'x̄'} = (${data.join(' + ')}) ÷ ${n}
+                                </div>
+                                <p><strong data-en="Calculation:" data-bন="গণনা:">গণনা:</strong> ${data.reduce((a,b) => a+b, 0)} ÷ ${n}</p>
+                                <p><strong data-en="Result:" data-bন="ফলাফল:">ফলাফল:</strong> <strong>${mean.toFixed(4)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Deviations" data-bন="ধাপ ২: ডেভিয়েশন গণনা করুন">ধাপ ২: ডেভিয়েশন গণনা করুন</h4>
+                            <p data-en="Find how far each point is from the mean" data-bন="প্রতিটি বিন্দু গড় থেকে কত দূরে তা খুঁজুন">
+                                প্রতিটি বিন্দু গড় থেকে কত দূরে তা খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula for each point:" data-bন="প্রতিটি বিন্দুর সূত্র:">প্রতিটি বিন্দুর সূত্র:</strong> (xᵢ - ${selectedType === 'population' ? 'μ' : 'x̄'})</p>
+                                <p><strong data-en="Example calculations:" data-bন="উদাহরণ গণনা:">উদাহরণ গণনা:</strong></p>
+                                <ul>
+                                    ${data.slice(0, 3).map((value, i) => `
+                                        <li>Point ${i+1}: ${value} - ${mean.toFixed(4)} = ${(value - mean).toFixed(4)}</li>
+                                    `).join('')}
+                                    ${data.length > 3 ? `<li>... and ${data.length - 3} more points</li>` : ''}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Square the Deviations" data-bন="ধাপ ৩: ডেভিয়েশন স্কোয়ার করুন">ধাপ ৩: ডেভিয়েশন স্কোয়ার করুন</h4>
+                            <p data-en="Square each deviation to remove negative signs" data-bন="নেগেটিভ চিহ্ন সরাতে প্রতিটি ডেভিয়েশন স্কোয়ার করুন">
+                                নেগেটিভ চিহ্ন সরাতে প্রতিটি ডেভিয়েশন স্কোয়ার করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> (xᵢ - ${selectedType === 'population' ? 'μ' : 'x̄'})²</p>
+                                <p><strong data-en="Sum of Squared Deviations (SS):" data-bন="স্কোয়ার্ড ডেভিয়েশনের যোগফল (SS):">স্কোয়ার্ড ডেভিয়েশনের যোগফল (SS):</strong></p>
+                                <div class="step-equation">
+                                    SS = Σ(xᵢ - ${selectedType === 'population' ? 'μ' : 'x̄'})² = ${sumSquares.toFixed(4)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Variance" data-bন="ধাপ ৪: ভ্যারিয়েন্স গণনা করুন">ধাপ ৪: ভ্যারিয়েন্স গণনা করুন</h4>
+                            <p data-en="Divide sum of squares by appropriate denominator" data-bন="স্কোয়ারের যোগফলকে উপযুক্ত হর দ্বারা ভাগ করুন">
+                                স্কোয়ারের যোগফলকে উপযুক্ত হর দ্বারা ভাগ করুন
+                            </p>
+                            <div class="step-details">
+                                ${selectedType === 'sample' || selectedType === 'both' ? `
+                                    <p><strong data-en="Sample Variance (s²):" data-bন="স্যাম্পল ভ্যারিয়েন্স (s²):">স্যাম্পল ভ্যারিয়েন্স (s²):</strong></p>
+                                    <div class="step-equation">
+                                        s² = SS ÷ (n - 1) = ${sumSquares.toFixed(4)} ÷ (${n} - 1) = ${sampleVariance.toFixed(4)}
+                                    </div>
+                                ` : ''}
+                                
+                                ${selectedType === 'population' || selectedType === 'both' ? `
+                                    <p><strong data-en="Population Variance (σ²):" data-bন="পপুলেশন ভ্যারিয়েন্স (σ²):">পপুলেশন ভ্যারিয়েন্স (σ²):</strong></p>
+                                    <div class="step-equation">
+                                        σ² = SS ÷ N = ${sumSquares.toFixed(4)} ÷ ${n} = ${populationVariance.toFixed(4)}
+                                    </div>
+                                ` : ''}
+                                
+                                <p style="margin-top: 1rem;">
+                                    <i class="fas fa-info-circle" style="color: var(--info);"></i>
+                                    <span data-en="Note: Sample variance uses (n-1) denominator (Bessel's correction) for unbiased estimation" data-bন="দ্রষ্টব্য: স্যাম্পল ভ্যারিয়েন্স অপরিবর্তিত অনুমানের জন্য (n-1) হর ব্যবহার করে (বেসেলের সংশোধন)">
+                                        দ্রষ্টব্য: স্যাম্পল ভ্যারিয়েন্স অপরিবর্তিত অনুমানের জন্য (n-1) হর ব্যবহার করে (বেসেলের সংশোধন)
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Calculate Standard Deviation" data-bন="ধাপ ৫: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন">ধাপ ৫: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন</h4>
+                            <p data-en="Take square root of variance to get standard deviation" data-bন="ভ্যারিয়েন্সের বর্গমূল নিয়ে স্ট্যান্ডার্ড ডেভিয়েশন পান">
+                                ভ্যারিয়েন্সের বর্গমূল নিয়ে স্ট্যান্ডার্ড ডেভিয়েশন পান
+                            </p>
+                            <div class="step-details">
+                                ${selectedType === 'sample' || selectedType === 'both' ? `
+                                    <p><strong data-en="Sample Standard Deviation (s):" data-bন="স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s):">স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন (s):</strong></p>
+                                    <div class="step-equation">
+                                        s = √(s²) = √(${sampleVariance.toFixed(4)}) = ${Math.sqrt(sampleVariance).toFixed(4)}
+                                    </div>
+                                ` : ''}
+                                
+                                ${selectedType === 'population' || selectedType === 'both' ? `
+                                    <p><strong data-en="Population Standard Deviation (σ):" data-bন="পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ):">পপুলেশন স্ট্যান্ডার্ড ডেভিয়েশন (σ):</strong></p>
+                                    <div class="step-equation">
+                                        σ = √(σ²) = √(${populationVariance.toFixed(4)}) = ${Math.sqrt(populationVariance).toFixed(4)}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 5;
+                const data = [];
+                
+                for (let i = 0; i < count; i++) {
+                    data.push(Math.floor(Math.random() * 100) + 1);
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                calculateVariance();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('dataInput').value = examples[example].join(', ');
+                    calculateVariance();
+                }
+            }
+
+            function clearCalculator() {
+                document.getElementById('dataInput').value = '';
+                
+                // Clear results
+                document.getElementById('sampleVarianceResult').textContent = '--';
+                document.getElementById('populationVarianceResult').textContent = '--';
+                document.getElementById('sampleStdDevResult').textContent = '--';
+                document.getElementById('populationStdDevResult').textContent = '--';
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('meanValue').textContent = '--';
+                document.getElementById('sumSquares').textContent = '--';
+                document.getElementById('rangeValue').textContent = '--';
+                
+                // Show all result cards
+                document.querySelectorAll('.result-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                
+                // Reset variance type to sample
+                document.querySelectorAll('.variance-type-btn').forEach(btn => {
+                    if (btn.dataset.type === 'sample') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Clear charts
+                document.getElementById('barChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বার চার্ট দেখুন' : 'Enter data to see bar chart'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('scatterPlot').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-bullseye"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন' : 'Enter data to see scatter plot'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('barChartLegend').innerHTML = '';
+                document.getElementById('scatterPlotLegend').innerHTML = '';
+                
+                // Clear tables
+                document.getElementById('tablesContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" 
+                       data-en="Enter data and click Calculate to see detailed variance tables" 
+                       data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত ভ্যারিয়েন্স টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং বিস্তারিত ভ্যারিয়েন্স টেবিল দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see detailed variance tables'}
+                    </p>
+                `;
+                
+                // Clear steps
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter data and click Calculate to see step-by-step variance calculations" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে ভ্যারিয়েন্স গণনা দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং ধাপে ধাপে ভ্যারিয়েন্স গণনা দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see step-by-step variance calculations'}
+                    </p>
+                `;
+                
+                // Reset method buttons
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    if (btn.dataset.method === 'manual') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update dynamic content
+                updateDynamicContent();
+            }
+        });
+    </script>
+</body>
+</html>

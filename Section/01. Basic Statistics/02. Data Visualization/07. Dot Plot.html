@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ডট প্লট জেনারেটর | ডেটা ভিজ্যুয়ালাইজেশন টুল</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --dot-color: #5B86E5;
+            --frequency-color: #FF6584;
+            --highlight-color: #FF9A3D;
+            --grid-color: #e0e0e0;
+            --tooltip-bg: rgba(45, 55, 72, 0.9);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Toggle */
+        .language-toggle-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--dot-color), var(--frequency-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Plot Options */
+        .plot-options {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-group {
+            margin-bottom: 1rem;
+        }
+
+        .option-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .option-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Statistics Display */
+        .stats-display {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Plot Section */
+        .plot-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Plot Container */
+        .plot-container {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            min-height: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #dotPlot {
+            width: 100%;
+            height: 500px;
+            position: relative;
+        }
+
+        /* Dot Plot Elements */
+        .axis {
+            position: absolute;
+            background: var(--dark);
+        }
+
+        .x-axis {
+            left: 60px;
+            right: 40px;
+            bottom: 50px;
+            height: 2px;
+        }
+
+        .y-axis {
+            top: 40px;
+            bottom: 50px;
+            left: 60px;
+            width: 2px;
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 0.9rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .x-label {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .y-label {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .tick {
+            position: absolute;
+            background: var(--dark);
+        }
+
+        .x-tick {
+            width: 1px;
+            height: 6px;
+            bottom: 48px;
+        }
+
+        .y-tick {
+            width: 6px;
+            height: 1px;
+            left: 58px;
+        }
+
+        .tick-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .x-tick-label {
+            bottom: 30px;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .y-tick-label {
+            left: 45px;
+            transform: translateY(-50%);
+            text-align: right;
+            width: 40px;
+        }
+
+        /* Dot Elements */
+        .dot {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .dot:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .frequency-dot {
+            position: relative;
+        }
+
+        .frequency-dot::after {
+            content: attr(data-frequency);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--frequency-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .frequency-dot:hover::after {
+            opacity: 1;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: var(--grid-color);
+        }
+
+        .vertical-grid {
+            top: 40px;
+            bottom: 50px;
+            width: 1px;
+        }
+
+        .horizontal-grid {
+            left: 60px;
+            right: 40px;
+            height: 1px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--tooltip-bg);
+            color: white;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 100;
+            white-space: nowrap;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0 5px;
+            border-style: solid;
+            border-color: var(--tooltip-bg) transparent transparent transparent;
+        }
+
+        /* Plot Legend */
+        .plot-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.individual { background: var(--dot-color); }
+        .legend-dot.frequency { background: var(--frequency-color); }
+        .legend-dot.highlight { background: var(--highlight-color); }
+
+        /* Pattern Analysis Section */
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pattern-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pattern-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .pattern-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .pattern-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .pattern-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .pattern-stats {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .pattern-stat {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            color: var(--dark);
+        }
+
+        /* Export Section */
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .export-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .export-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--dark);
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Data Distribution Table */
+        .distribution-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .distribution-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .distribution-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .distribution-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .distribution-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .frequency-cell {
+            text-align: center;
+        }
+
+        .frequency-bar {
+            height: 8px;
+            background: var(--frequency-color);
+            border-radius: 4px;
+            margin-top: 0.25rem;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 500px;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-methods,
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .plot-container {
+                min-height: 400px;
+            }
+            
+            #dotPlot {
+                height: 350px;
+            }
+            
+            .patterns-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+            
+            .export-options {
+                flex-direction: column;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .export-section,
+            .controls {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .plot-section,
+            .analysis-section,
+            .distribution-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .plot-container {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Toggle -->
+        <div class="language-toggle-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Dot Plot Generator" data-bn="ডট প্লট জেনারেটর">ডট প্লট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create interactive dot plots for small dataset visualization with individual data points and frequency analysis" data-bn="ছোট ডেটাসেট ভিজ্যুয়ালাইজেশনের জন্য ইন্টারেক্টিভ ডট প্লট তৈরি করুন, ব্যক্তিগত ডেটা পয়েন্ট এবং ফ্রিকোয়েন্সি বিশ্লেষণ সহ">
+                ছোট ডেটাসেট ভিজ্যুয়ালাইজেশনের জন্য ইন্টারেক্টিভ ডট প্লট তৈরি করুন, ব্যক্তিগত ডেটা পয়েন্ট এবং ফ্রিকোয়েন্সি বিশ্লেষণ সহ
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input & Settings" data-bn="ডেটা ইনপুট ও সেটিংস">ডেটা ইনপুট ও সেটিংস</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Generate Data" data-bn="ডেটা জেনারেট করুন">ডেটা জেনারেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 3, 5, 7, 7, 8, 8, 8, 9, 10, 11, 12, 12
+অথবা: 3 5 7 7 8 8 8 9 10 11 12 12
+অথবা: 
+3
+5
+7
+7
+8
+8
+8
+9
+10
+11
+12
+12">3, 5, 7, 7, 8, 8, 8, 9, 10, 11, 12, 12</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Enter numbers separated by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করে ইনপুট করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করে ইনপুট করুন
+                        </span>
+                    </div>
+                </div>
+
+                <div class="plot-options">
+                    <h3 class="section-title" style="font-size: 1.2rem; border: none; margin-bottom: 1rem;">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Plot Settings" data-bn="প্লট সেটিংস">প্লট সেটিংস</span>
+                    </h3>
+                    
+                    <div class="options-grid">
+                        <div class="option-group">
+                            <label class="option-label" data-en="Dot Size" data-bn="ডট সাইজ">ডট সাইজ</label>
+                            <input type="range" id="dotSize" class="option-control" min="5" max="20" value="10">
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="option-label" data-en="Dot Color" data-bn="ডট রঙ">ডট রঙ</label>
+                            <div class="color-picker">
+                                <input type="color" id="dotColor" class="color-swatch" value="#5B86E5">
+                                <span id="dotColorValue" data-en="Blue" data-bn="নীল">নীল</span>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="option-label" data-en="Show Frequencies" data-bn="ফ্রিকোয়েন্সি দেখান">ফ্রিকোয়েন্সি দেখান</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showFrequencies" checked>
+                                <label for="showFrequencies" data-en="Display frequency counts" data-bn="ফ্রিকোয়েন্সি গণনা দেখান">ফ্রিকোয়েন্সি গণনা দেখান</label>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="option-label" data-en="Show Grid" data-bn="গ্রিড দেখান">গ্রিড দেখান</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showGrid" checked>
+                                <label for="showGrid" data-en="Display background grid" data-bn="ব্যাকগ্রাউন্ড গ্রিড দেখান">ব্যাকগ্রাউন্ড গ্রিড দেখান</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-display">
+                    <h3 class="section-title" style="font-size: 1.2rem; border: none; margin-bottom: 1rem;">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Dataset Statistics" data-bn="ডেটাসেট পরিসংখ্যান">ডেটাসেট পরিসংখ্যান</span>
+                    </h3>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Count" data-bn="গণনা">গণনা</div>
+                            <div class="stat-value" id="dataCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Mean" data-bn="গড়">গড়</div>
+                            <div class="stat-value" id="dataMean">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</div>
+                            <div class="stat-value" id="dataMedian">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-en="Mode" data-bn="মোড">মোড</div>
+                            <div class="stat-value" id="dataMode">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="generatePlotBtn">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Generate Plot" data-bn="প্লট জেনারেট করুন">প্লট জেনারেট করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Plot Section -->
+            <div class="plot-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-scatter"></i>
+                    <span data-en="Dot Plot Visualization" data-bn="ডট প্লট ভিজ্যুয়ালাইজেশন">ডট প্লট ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="plot-container">
+                    <div id="dotPlot">
+                        <!-- Plot will be generated here -->
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p data-en="Enter data and click Generate Plot" data-bn="ডেটা ইনপুট করুন এবং প্লট জেনারেট করুন ক্লিক করুন">
+                                ডেটা ইনপুট করুন এবং প্লট জেনারেট করুন ক্লিক করুন
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plot-legend" id="plotLegend">
+                    <!-- Legend will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern Analysis Section -->
+        <div class="analysis-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Distribution Pattern Analysis" data-bn="বন্টন প্যাটার্ন বিশ্লেষণ">বন্টন প্যাটার্ন বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="patterns-grid" id="patternsGrid">
+                <!-- Pattern analysis will be generated here -->
+                <div class="pattern-card">
+                    <div class="pattern-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="pattern-title" data-en="Data Distribution" data-bn="ডেটা বন্টন">ডেটা বন্টন</div>
+                    <div class="pattern-description" data-en="Visual analysis of data distribution patterns" data-bn="ডেটা বন্টন প্যাটার্নের ভিজ্যুয়াল বিশ্লেষণ">
+                        ডেটা বন্টন প্যাটার্নের ভিজ্যুয়াল বিশ্লেষণ
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Distribution Table -->
+        <div class="distribution-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Frequency Distribution Table" data-bn="ফ্রিকোয়েন্সি বন্টন টেবিল">ফ্রিকোয়েন্সি বন্টন টেবিল</span>
+            </h2>
+            
+            <table class="distribution-table" id="distributionTable">
+                <thead>
+                    <tr>
+                        <th data-en="Value" data-bn="মান">মান</th>
+                        <th data-en="Frequency" data-bn="ফ্রিকোয়েন্সি">ফ্রিকোয়েন্সি</th>
+                        <th data-en="Percentage" data-bn="শতকরা">শতকরা</th>
+                        <th data-en="Cumulative %" data-bn="ক্রমবর্ধমান %">ক্রমবর্ধমান %</th>
+                        <th data-en="Visual" data-bn="ভিজ্যুয়াল">ভিজ্যুয়াল</th>
+                    </tr>
+                </thead>
+                <tbody id="distributionTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);" 
+                            data-en="Enter data to see frequency distribution" 
+                            data-bn="ফ্রিকোয়েন্সি বন্টন দেখতে ডেটা ইনপুট করুন">
+                            ফ্রিকোয়েন্সি বন্টন দেখতে ডেটা ইনপুট করুন
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                <span data-en="Export Options" data-bn="এক্সপোর্ট অপশন">এক্সপোর্ট অপশন</span>
+            </h2>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportPNG">
+                    <i class="fas fa-image"></i>
+                    <span data-en="Export as PNG" data-bn="PNG হিসেবে এক্সপোর্ট">PNG হিসেবে এক্সপোর্ট</span>
+                </button>
+                <button class="export-btn" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-en="Export as PDF" data-bn="PDF হিসেবে এক্সপোর্ট">PDF হিসেবে এক্সপোর্ট</span>
+                </button>
+                <button class="export-btn" id="exportCSV">
+                    <i class="fas fa-file-csv"></i>
+                    <span data-en="Export Data (CSV)" data-bn="ডেটা এক্সপোর্ট (CSV)">ডেটা এক্সপোর্ট (CSV)</span>
+                </button>
+                <button class="export-btn" id="copyData">
+                    <i class="fas fa-copy"></i>
+                    <span data-en="Copy Data" data-bn="ডেটা কপি করুন">ডেটা কপি করুন</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Examples Section -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bn="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="simple-dist">
+                    <span data-en="Simple Distribution" data-bn="সাধারণ বন্টন">সাধারণ বন্টন</span>
+                    <span class="example-data">3, 5, 7, 7, 8, 8, 8, 9, 10, 11, 12, 12</span>
+                </button>
+                <button class="example-btn" data-example="test-scores">
+                    <span data-en="Test Scores" data-bn="পরীক্ষার স্কোর">পরীক্ষার স্কোর</span>
+                    <span class="example-data">85, 90, 92, 92, 95, 95, 95, 98, 100, 100, 100, 100</span>
+                </button>
+                <button class="example-btn" data-example="small-dataset">
+                    <span data-en="Small Dataset" data-bন="ছোট ডেটাসেট">ছোট ডেটাসেট</span>
+                    <span class="example-data">1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5</span>
+                </button>
+                <button class="example-btn" data-example="uniform-dist">
+                    <span data-en="Uniform Distribution" data-bন="ইউনিফর্ম ডিস্ট্রিবিউশন">ইউনিফর্ম ডিস্ট্রিবিউশন</span>
+                    <span class="example-data">2, 3, 4, 5, 6, 7, 8, 9, 10, 11</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div class="tooltip" id="dotTooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'simple-dist': [3, 5, 7, 7, 8, 8, 8, 9, 10, 11, 12, 12],
+                'test-scores': [85, 90, 92, 92, 95, 95, 95, 98, 100, 100, 100, 100],
+                'small-dataset': [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5],
+                'uniform-dist': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            };
+
+            // Initialize
+            initDotPlotGenerator();
+
+            function initDotPlotGenerator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Plot Settings
+                const dotSize = document.getElementById('dotSize');
+                const dotColor = document.getElementById('dotColor');
+                const showFrequencies = document.getElementById('showFrequencies');
+                const showGrid = document.getElementById('showGrid');
+
+                // Update dot color value display
+                dotColor.addEventListener('input', function() {
+                    updateDotColorDisplay(this.value);
+                });
+
+                // Add event listeners for settings changes
+                dotSize.addEventListener('input', updatePlotSettings);
+                showFrequencies.addEventListener('change', updatePlotSettings);
+                showGrid.addEventListener('change', updatePlotSettings);
+
+                // Generate Plot Button
+                document.getElementById('generatePlotBtn').addEventListener('click', generateDotPlot);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Export Buttons
+                document.getElementById('exportPNG').addEventListener('click', exportAsPNG);
+                document.getElementById('exportPDF').addEventListener('click', exportAsPDF);
+                document.getElementById('exportCSV').addEventListener('click', exportAsCSV);
+                document.getElementById('copyData').addEventListener('click', copyDataToClipboard);
+
+                // Enter key support for data input
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        generateDotPlot();
+                    }
+                });
+
+                // Initialize with default data
+                setTimeout(() => {
+                    generateDotPlot();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function updateDotColorDisplay(color) {
+                const colorValue = document.getElementById('dotColorValue');
+                const colorNames = {
+                    '#5B86E5': currentLanguage === 'bn' ? 'নীল' : 'Blue',
+                    '#FF6584': currentLanguage === 'bn' ? 'গোলাপি' : 'Pink',
+                    '#36D1DC': currentLanguage === 'bn' ? 'সবুজ' : 'Green',
+                    '#FF9A3D': currentLanguage === 'bn' ? 'কমলা' : 'Orange',
+                    '#6C63FF': currentLanguage === 'bn' ? 'বেগুনি' : 'Purple'
+                };
+                
+                colorValue.textContent = colorNames[color.toUpperCase()] || 
+                    (currentLanguage === 'bn' ? 'কাস্টম' : 'Custom');
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateStatistics(data) {
+                if (data.length === 0) return {};
+                
+                // Sort data
+                const sorted = [...data].sort((a, b) => a - b);
+                const n = sorted.length;
+                
+                // Calculate mean
+                const sum = sorted.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                // Calculate median
+                let median;
+                if (n % 2 === 0) {
+                    median = (sorted[n/2 - 1] + sorted[n/2]) / 2;
+                } else {
+                    median = sorted[Math.floor(n/2)];
+                }
+                
+                // Calculate mode
+                const frequencyMap = {};
+                sorted.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                
+                let maxFreq = 0;
+                let modes = [];
+                for (const [num, freq] of Object.entries(frequencyMap)) {
+                    if (freq > maxFreq) {
+                        maxFreq = freq;
+                        modes = [parseFloat(num)];
+                    } else if (freq === maxFreq) {
+                        modes.push(parseFloat(num));
+                    }
+                }
+                
+                const mode = modes.length > 3 ? modes.slice(0, 3) : modes;
+                
+                return {
+                    count: n,
+                    mean: mean.toFixed(2),
+                    median: median.toFixed(2),
+                    mode: Array.isArray(mode) ? mode.map(m => m.toFixed(2)).join(', ') : mode.toFixed(2),
+                    sorted: sorted
+                };
+            }
+
+            function generateDotPlot() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে কিছু ডেটা ইনপুট করুন' : 'Please enter some data');
+                    return;
+                }
+
+                const data = parseInputData(input);
+                
+                if (data.length === 0) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে বৈধ সংখ্যা ইনপুট করুন' : 'Please enter valid numbers');
+                    return;
+                }
+
+                // Calculate statistics
+                const stats = calculateStatistics(data);
+                
+                // Update statistics display
+                document.getElementById('dataCount').textContent = stats.count;
+                document.getElementById('dataMean').textContent = stats.mean;
+                document.getElementById('dataMedian').textContent = stats.median;
+                document.getElementById('dataMode').textContent = stats.mode;
+                
+                // Generate the dot plot
+                createDotPlotVisualization(data);
+                
+                // Update frequency distribution table
+                updateFrequencyDistributionTable(data);
+                
+                // Update pattern analysis
+                updatePatternAnalysis(data);
+                
+                // Update legend
+                updatePlotLegend(data);
+            }
+
+            function createDotPlotVisualization(data) {
+                const plotContainer = document.getElementById('dotPlot');
+                const dotSize = parseInt(document.getElementById('dotSize').value);
+                const dotColor = document.getElementById('dotColor').value;
+                const showFrequencies = document.getElementById('showFrequencies').checked;
+                const showGrid = document.getElementById('showGrid').checked;
+                
+                // Clear previous plot
+                plotContainer.innerHTML = '';
+                
+                if (data.length === 0) {
+                    plotContainer.innerHTML = `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>${currentLanguage === 'bn' ? 
+                                'ডেটা ইনপুট করুন এবং প্লট জেনারেট করুন ক্লিক করুন' : 
+                                'Enter data and click Generate Plot'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create frequency map
+                const frequencyMap = {};
+                data.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                
+                // Get unique values
+                const uniqueValues = Object.keys(frequencyMap).map(Number).sort((a, b) => a - b);
+                const maxFrequency = Math.max(...Object.values(frequencyMap));
+                
+                // Plot dimensions
+                const plotWidth = plotContainer.clientWidth;
+                const plotHeight = plotContainer.clientHeight;
+                const margin = { top: 40, right: 40, bottom: 50, left: 60 };
+                const plotWidthInner = plotWidth - margin.left - margin.right;
+                const plotHeightInner = plotHeight - margin.top - margin.bottom;
+                
+                // Create axes
+                // X-axis
+                const xAxis = document.createElement('div');
+                xAxis.className = 'axis x-axis';
+                xAxis.style.left = `${margin.left}px`;
+                xAxis.style.right = `${margin.right}px`;
+                xAxis.style.bottom = `${margin.bottom}px`;
+                plotContainer.appendChild(xAxis);
+                
+                // Y-axis
+                const yAxis = document.createElement('div');
+                yAxis.className = 'axis y-axis';
+                yAxis.style.left = `${margin.left}px`;
+                yAxis.style.top = `${margin.top}px`;
+                yAxis.style.bottom = `${margin.bottom}px`;
+                plotContainer.appendChild(yAxis);
+                
+                // Axis labels
+                const xLabel = document.createElement('div');
+                xLabel.className = 'axis-label x-label';
+                xLabel.textContent = currentLanguage === 'bn' ? 'মান (Value)' : 'Value';
+                plotContainer.appendChild(xLabel);
+                
+                const yLabel = document.createElement('div');
+                yLabel.className = 'axis-label y-label';
+                yLabel.textContent = currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি (Frequency)' : 'Frequency';
+                plotContainer.appendChild(yLabel);
+                
+                // Create grid if enabled
+                if (showGrid) {
+                    // Vertical grid lines (for each unique value)
+                    uniqueValues.forEach((value, index) => {
+                        const xPos = margin.left + (index / (uniqueValues.length - 1 || 1)) * plotWidthInner;
+                        
+                        const gridLine = document.createElement('div');
+                        gridLine.className = 'grid-line vertical-grid';
+                        gridLine.style.left = `${xPos}px`;
+                        gridLine.style.top = `${margin.top}px`;
+                        gridLine.style.bottom = `${margin.bottom}px`;
+                        plotContainer.appendChild(gridLine);
+                    });
+                    
+                    // Horizontal grid lines (for frequency values)
+                    for (let i = 0; i <= maxFrequency; i++) {
+                        const yPos = margin.bottom + (plotHeightInner * (1 - i / maxFrequency));
+                        
+                        const gridLine = document.createElement('div');
+                        gridLine.className = 'grid-line horizontal-grid';
+                        gridLine.style.left = `${margin.left}px`;
+                        gridLine.style.right = `${margin.right}px`;
+                        gridLine.style.top = `${yPos}px`;
+                        plotContainer.appendChild(gridLine);
+                    }
+                }
+                
+                // Create x-axis ticks and labels
+                uniqueValues.forEach((value, index) => {
+                    const xPos = margin.left + (index / (uniqueValues.length - 1 || 1)) * plotWidthInner;
+                    
+                    // Tick mark
+                    const tick = document.createElement('div');
+                    tick.className = 'tick x-tick';
+                    tick.style.left = `${xPos}px`;
+                    plotContainer.appendChild(tick);
+                    
+                    // Tick label
+                    const tickLabel = document.createElement('div');
+                    tickLabel.className = 'tick-label x-tick-label';
+                    tickLabel.textContent = value;
+                    tickLabel.style.left = `${xPos}px`;
+                    plotContainer.appendChild(tickLabel);
+                });
+                
+                // Create y-axis ticks and labels
+                for (let i = 0; i <= maxFrequency; i++) {
+                    const yPos = margin.bottom + (plotHeightInner * (1 - i / maxFrequency));
+                    
+                    // Tick mark
+                    const tick = document.createElement('div');
+                    tick.className = 'tick y-tick';
+                    tick.style.top = `${yPos}px`;
+                    plotContainer.appendChild(tick);
+                    
+                    // Tick label
+                    if (i > 0) {
+                        const tickLabel = document.createElement('div');
+                        tickLabel.className = 'tick-label y-tick-label';
+                        tickLabel.textContent = i;
+                        tickLabel.style.top = `${yPos}px`;
+                        plotContainer.appendChild(tickLabel);
+                    }
+                }
+                
+                // Create dots for each value
+                uniqueValues.forEach((value, valueIndex) => {
+                    const frequency = frequencyMap[value];
+                    const xPos = margin.left + (valueIndex / (uniqueValues.length - 1 || 1)) * plotWidthInner;
+                    
+                    // Create frequency dots (stacked vertically)
+                    for (let i = 0; i < frequency; i++) {
+                        const yPos = margin.bottom + (plotHeightInner * (1 - i / (maxFrequency - 0.5)));
+                        
+                        const dot = document.createElement('div');
+                        dot.className = 'dot frequency-dot';
+                        dot.style.width = `${dotSize}px`;
+                        dot.style.height = `${dotSize}px`;
+                        dot.style.left = `${xPos - dotSize/2}px`;
+                        dot.style.top = `${yPos - dotSize/2}px`;
+                        dot.style.background = dotColor;
+                        dot.dataset.frequency = frequency;
+                        dot.dataset.value = value;
+                        dot.dataset.index = i + 1;
+                        
+                        // Add tooltip on hover
+                        dot.addEventListener('mouseenter', function(e) {
+                            const tooltip = document.getElementById('dotTooltip');
+                            tooltip.innerHTML = `
+                                <strong>${currentLanguage === 'bn' ? 'মান:' : 'Value:'}</strong> ${value}<br>
+                                <strong>${currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি:' : 'Frequency:'}</strong> ${frequency}<br>
+                                <strong>${currentLanguage === 'bn' ? 'অবস্থান:' : 'Position:'}</strong> ${i + 1}/${frequency}
+                            `;
+                            tooltip.style.display = 'block';
+                            tooltip.style.left = `${e.pageX + 10}px`;
+                            tooltip.style.top = `${e.pageY - 40}px`;
+                        });
+                        
+                        dot.addEventListener('mousemove', function(e) {
+                            const tooltip = document.getElementById('dotTooltip');
+                            tooltip.style.left = `${e.pageX + 10}px`;
+                            tooltip.style.top = `${e.pageY - 40}px`;
+                        });
+                        
+                        dot.addEventListener('mouseleave', function() {
+                            const tooltip = document.getElementById('dotTooltip');
+                            tooltip.style.display = 'none';
+                        });
+                        
+                        plotContainer.appendChild(dot);
+                    }
+                    
+                    // Add frequency label above the dots
+                    if (showFrequencies && frequency > 1) {
+                        const freqLabel = document.createElement('div');
+                        freqLabel.className = 'frequency-label';
+                        freqLabel.textContent = frequency;
+                        freqLabel.style.position = 'absolute';
+                        freqLabel.style.left = `${xPos}px`;
+                        freqLabel.style.top = `${margin.bottom + plotHeightInner * (1 - frequency/(maxFrequency - 0.5)) - 30}px`;
+                        freqLabel.style.transform = 'translateX(-50%)';
+                        freqLabel.style.background = 'var(--frequency-color)';
+                        freqLabel.style.color = 'white';
+                        freqLabel.style.padding = '2px 6px';
+                        freqLabel.style.borderRadius = '4px';
+                        freqLabel.style.fontSize = '0.8rem';
+                        freqLabel.style.fontWeight = '600';
+                        plotContainer.appendChild(freqLabel);
+                    }
+                });
+            }
+
+            function updateFrequencyDistributionTable(data) {
+                const tableBody = document.getElementById('distributionTableBody');
+                
+                if (data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);">
+                                ${currentLanguage === 'bn' ? 
+                                    'ফ্রিকোয়েন্সি বন্টন দেখতে ডেটা ইনপুট করুন' : 
+                                    'Enter data to see frequency distribution'}
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Create frequency map
+                const frequencyMap = {};
+                data.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                
+                // Get unique values sorted
+                const uniqueValues = Object.keys(frequencyMap).map(Number).sort((a, b) => a - b);
+                const total = data.length;
+                
+                // Calculate cumulative frequency
+                let cumulativeFrequency = 0;
+                let cumulativePercentage = 0;
+                
+                tableBody.innerHTML = '';
+                
+                uniqueValues.forEach(value => {
+                    const frequency = frequencyMap[value];
+                    const percentage = ((frequency / total) * 100).toFixed(1);
+                    
+                    cumulativeFrequency += frequency;
+                    cumulativePercentage += parseFloat(percentage);
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${value}</td>
+                        <td class="frequency-cell">${frequency}</td>
+                        <td class="frequency-cell">${percentage}%</td>
+                        <td class="frequency-cell">${cumulativePercentage.toFixed(1)}%</td>
+                        <td>
+                            <div class="frequency-bar" style="width: ${percentage}%"></div>
+                        </td>
+                    `;
+                    
+                    // Highlight mode value
+                    const maxFreq = Math.max(...Object.values(frequencyMap));
+                    if (frequency === maxFreq) {
+                        row.style.background = 'rgba(255, 101, 132, 0.1)';
+                        row.style.fontWeight = '600';
+                    }
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function updatePatternAnalysis(data) {
+                const patternsGrid = document.getElementById('patternsGrid');
+                
+                if (data.length === 0) {
+                    patternsGrid.innerHTML = `
+                        <div class="pattern-card">
+                            <div class="pattern-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="pattern-title">${currentLanguage === 'bn' ? 'ডেটা বন্টন' : 'Data Distribution'}</div>
+                            <div class="pattern-description">
+                                ${currentLanguage === 'bn' ? 
+                                    'ডেটা বন্টন প্যাটার্নের ভিজ্যুয়াল বিশ্লেষণ' : 
+                                    'Visual analysis of data distribution patterns'}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const stats = calculateStatistics(data);
+                const sortedData = stats.sorted;
+                const n = data.length;
+                
+                // Analyze patterns
+                const uniqueValues = [...new Set(sortedData)].sort((a, b) => a - b);
+                const frequencyMap = {};
+                sortedData.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                
+                const frequencies = Object.values(frequencyMap);
+                const maxFrequency = Math.max(...frequencies);
+                const minFrequency = Math.min(...frequencies);
+                const range = sortedData[n - 1] - sortedData[0];
+                
+                // Determine distribution type
+                let distributionType = currentLanguage === 'bn' ? 'বিভিন্ন ধরনের' : 'Varied';
+                let distributionIcon = 'fas fa-chart-bar';
+                
+                if (uniqueValues.length === 1) {
+                    distributionType = currentLanguage === 'bn' ? 'সব মান একই' : 'All Same';
+                    distributionIcon = 'fas fa-equals';
+                } else if (maxFrequency <= 2 && uniqueValues.length > 5) {
+                    distributionType = currentLanguage === 'bn' ? 'ইউনিফর্ম বন্টন' : 'Uniform Distribution';
+                    distributionIcon = 'fas fa-chart-line';
+                } else if (maxFrequency > n * 0.3) {
+                    distributionType = currentLanguage === 'bn' ? 'কেন্দ্রীভূত' : 'Concentrated';
+                    distributionIcon = 'fas fa-bullseye';
+                } else if (frequencies.filter(f => f > 2).length > uniqueValues.length * 0.5) {
+                    distributionType = currentLanguage === 'bn' ? 'ক্লাস্টারড' : 'Clustered';
+                    distributionIcon = 'fas fa-object-group';
+                }
+                
+                // Calculate skewness
+                const mean = parseFloat(stats.mean);
+                const median = parseFloat(stats.median);
+                const mode = stats.mode.split(', ')[0];
+                let skewness = currentLanguage === 'bn' ? 'সমমিতিক' : 'Symmetric';
+                let skewnessIcon = 'fas fa-balance-scale';
+                
+                if (mean > median && mean > mode) {
+                    skewness = currentLanguage === 'bn' ? 'ডান দিকে স্কিউড' : 'Right Skewed';
+                    skewnessIcon = 'fas fa-arrow-right';
+                } else if (mean < median && mean < mode) {
+                    skewness = currentLanguage === 'bn' ? 'বাম দিকে স্কিউড' : 'Left Skewed';
+                    skewnessIcon = 'fas fa-arrow-left';
+                }
+                
+                // Calculate variability
+                const variance = sortedData.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                const stdDev = Math.sqrt(variance).toFixed(2);
+                const cv = ((stdDev / mean) * 100).toFixed(1);
+                
+                let variability = currentLanguage === 'bn' ? 'মধ্যবর্তী' : 'Moderate';
+                let variabilityIcon = 'fas fa-chart-area';
+                
+                if (cv < 15) {
+                    variability = currentLanguage === 'bn' ? 'নিম্ন পরিবর্তনশীলতা' : 'Low Variability';
+                    variabilityIcon = 'fas fa-compress';
+                } else if (cv > 40) {
+                    variability = currentLanguage === 'bn' ? 'উচ্চ পরিবর্তনশীলতা' : 'High Variability';
+                    variabilityIcon = 'fas fa-expand';
+                }
+                
+                // Update patterns grid
+                patternsGrid.innerHTML = `
+                    <div class="pattern-card">
+                        <div class="pattern-icon">
+                            <i class="${distributionIcon}"></i>
+                        </div>
+                        <div class="pattern-title" data-en="Distribution Type" data-bn="বন্টন প্রকার">বন্টন প্রকার</div>
+                        <div class="pattern-description">${distributionType}</div>
+                        <div class="pattern-stats">
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'অনন্য মান:' : 'Unique Values:'}</strong> ${uniqueValues.length}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'সর্বাধিক ফ্রিকোয়েন্সি:' : 'Max Frequency:'}</strong> ${maxFrequency}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'রেঞ্জ:' : 'Range:'}</strong> ${range.toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-card">
+                        <div class="pattern-icon">
+                            <i class="${skewnessIcon}"></i>
+                        </div>
+                        <div class="pattern-title" data-en="Skewness Analysis" data-bন="স্কিউনেস বিশ্লেষণ">স্কিউনেস বিশ্লেষণ</div>
+                        <div class="pattern-description">${skewness}</div>
+                        <div class="pattern-stats">
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'গড়:' : 'Mean:'}</strong> ${stats.mean}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'মিডিয়ান:' : 'Median:'}</strong> ${stats.median}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'মোড:' : 'Mode:'}</strong> ${stats.mode}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-card">
+                        <div class="pattern-icon">
+                            <i class="${variabilityIcon}"></i>
+                        </div>
+                        <div class="pattern-title" data-en="Variability" data-bn="পরিবর্তনশীলতা">পরিবর্তনশীলতা</div>
+                        <div class="pattern-description">${variability}</div>
+                        <div class="pattern-stats">
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন:' : 'Std Deviation:'}</strong> ${stdDev}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'ভ্যারিয়েন্স:' : 'Variance:'}</strong> ${variance.toFixed(2)}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'CV:' : 'CV:'}</strong> ${cv}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-card">
+                        <div class="pattern-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="pattern-title" data-en="Data Summary" data-bn="ডেটা সারসংক্ষেপ">ডেটা সারসংক্ষেপ</div>
+                        <div class="pattern-description" data-en="Key statistics overview" data-bন="মূল পরিসংখ্যান সারসংক্ষেপ">মূল পরিসংখ্যান সারসংক্ষেপ</div>
+                        <div class="pattern-stats">
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'মোট মান:' : 'Total Values:'}</strong> ${n}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'সর্বনিম্ন:' : 'Minimum:'}</strong> ${sortedData[0].toFixed(2)}
+                            </div>
+                            <div class="pattern-stat">
+                                <strong>${currentLanguage === 'bn' ? 'সর্বোচ্চ:' : 'Maximum:'}</strong> ${sortedData[n-1].toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updatePlotLegend(data) {
+                const legendContainer = document.getElementById('plotLegend');
+                const dotColor = document.getElementById('dotColor').value;
+                const showFrequencies = document.getElementById('showFrequencies').checked;
+                
+                if (data.length === 0) {
+                    legendContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Create frequency map
+                const frequencyMap = {};
+                data.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                const maxFrequency = Math.max(...Object.values(frequencyMap));
+                
+                legendContainer.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-dot individual" style="background: ${dotColor}"></div>
+                        <span data-en="Individual Data Point" data-bn="ব্যক্তিগত ডেটা পয়েন্ট">ব্যক্তিগত ডেটা পয়েন্ট</span>
+                    </div>
+                    ${showFrequencies ? `
+                    <div class="legend-item">
+                        <div class="legend-dot frequency"></div>
+                        <span data-en="Frequency Display (${maxFrequency})" data-bন="ফ্রিকোয়েন্সি ডিসপ্লে (${maxFrequency})">ফ্রিকোয়েন্সি ডিসপ্লে (${maxFrequency})</span>
+                    </div>
+                    ` : ''}
+                    <div class="legend-item">
+                        <div class="legend-dot highlight"></div>
+                        <span data-en="Most Frequent Value" data-bন="সর্বাধিক বারবার আসা মান">সর্বাধিক বারবার আসা মান</span>
+                    </div>
+                    <div class="legend-item">
+                        <div style="width: 20px; height: 2px; background: var(--dark);"></div>
+                        <span data-en="Axis & Grid" data-bন="অক্ষ ও গ্রিড">অক্ষ ও গ্রিড</span>
+                    </div>
+                `;
+                
+                // Update language for legend
+                updateDynamicContent();
+            }
+
+            function updatePlotSettings() {
+                // Re-generate plot with new settings
+                const input = document.getElementById('dataInput').value.trim();
+                if (input) {
+                    generateDotPlot();
+                }
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 5;
+                const min = 1;
+                const max = 20;
+                const data = [];
+                
+                for (let i = 0; i < count; i++) {
+                    data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+                }
+                
+                // Add some duplicates for frequency visualization
+                const uniqueValues = [...new Set(data)];
+                uniqueValues.forEach(value => {
+                    const duplicateCount = Math.floor(Math.random() * 3);
+                    for (let j = 0; j < duplicateCount; j++) {
+                        data.push(value);
+                    }
+                });
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                generateDotPlot();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('dataInput').value = examples[example].join(', ');
+                    generateDotPlot();
+                }
+            }
+
+            function exportAsPNG() {
+                alert(currentLanguage === 'bn' ? 
+                    'PNG এক্সপোর্ট ফিচারটি শীঘ্রই আসছে!' : 
+                    'PNG export feature coming soon!');
+            }
+
+            function exportAsPDF() {
+                alert(currentLanguage === 'bn' ? 
+                    'PDF এক্সপোর্ট ফিচারটি শীঘ্রই আসছে!' : 
+                    'PDF export feature coming soon!');
+            }
+
+            function exportAsCSV() {
+                const input = document.getElementById('dataInput').value.trim();
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 
+                        'এক্সপোর্ট করার জন্য ডেটা ইনপুট করুন' : 
+                        'Enter data to export');
+                    return;
+                }
+                
+                const data = parseInputData(input);
+                if (data.length === 0) return;
+                
+                // Create frequency map
+                const frequencyMap = {};
+                data.forEach(num => {
+                    frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+                });
+                
+                // Create CSV content
+                let csvContent = currentLanguage === 'bn' ? 
+                    'মান,ফ্রিকোয়েন্সি,শতকরা\n' : 
+                    'Value,Frequency,Percentage\n';
+                
+                const uniqueValues = Object.keys(frequencyMap).map(Number).sort((a, b) => a - b);
+                const total = data.length;
+                
+                uniqueValues.forEach(value => {
+                    const frequency = frequencyMap[value];
+                    const percentage = ((frequency / total) * 100).toFixed(2);
+                    csvContent += `${value},${frequency},${percentage}%\n`;
+                });
+                
+                // Download CSV file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'dot_plot_data.csv');
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function copyDataToClipboard() {
+                const input = document.getElementById('dataInput');
+                input.select();
+                document.execCommand('copy');
+                
+                // Show success message
+                const originalText = document.getElementById('copyData').querySelector('span').textContent;
+                const successText = currentLanguage === 'bn' ? 'ডেটা কপি করা হয়েছে!' : 'Data copied!';
+                
+                const copyBtn = document.getElementById('copyData');
+                const span = copyBtn.querySelector('span');
+                span.textContent = successText;
+                
+                setTimeout(() => {
+                    span.textContent = originalText;
+                }, 2000);
+            }
+
+            function clearAll() {
+                document.getElementById('dataInput').value = '';
+                
+                // Clear statistics
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('dataMean').textContent = '0';
+                document.getElementById('dataMedian').textContent = '0';
+                document.getElementById('dataMode').textContent = '0';
+                
+                // Clear plot
+                const plotContainer = document.getElementById('dotPlot');
+                plotContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং প্লট জেনারেট করুন ক্লিক করুন' : 
+                            'Enter data and click Generate Plot'}</p>
+                    </div>
+                `;
+                
+                // Clear distribution table
+                document.getElementById('distributionTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);">
+                            ${currentLanguage === 'bn' ? 
+                                'ফ্রিকোয়েন্সি বন্টন দেখতে ডেটা ইনপুট করুন' : 
+                                'Enter data to see frequency distribution'}
+                        </td>
+                    </tr>
+                `;
+                
+                // Clear pattern analysis
+                document.getElementById('patternsGrid').innerHTML = `
+                    <div class="pattern-card">
+                        <div class="pattern-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="pattern-title">${currentLanguage === 'bn' ? 'ডেটা বন্টন' : 'Data Distribution'}</div>
+                        <div class="pattern-description">
+                            ${currentLanguage === 'bn' ? 
+                                'ডেটা বন্টন প্যাটার্নের ভিজ্যুয়াল বিশ্লেষণ' : 
+                                'Visual analysis of data distribution patterns'}
+                        </div>
+                    </div>
+                `;
+                
+                // Clear legend
+                document.getElementById('plotLegend').innerHTML = '';
+                
+                // Hide tooltip
+                document.getElementById('dotTooltip').style.display = 'none';
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

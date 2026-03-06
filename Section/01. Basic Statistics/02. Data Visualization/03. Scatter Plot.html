@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>স্ক্যাটার প্লট জেনারেটর | ডেটা ভিজ্যুয়ালাইজেশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --scatter-color: #6C63FF;
+            --trendline-color: #FF6584;
+            --correlation-positive: #36D1DC;
+            --correlation-negative: #FF9A3D;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--scatter-color), var(--trendline-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input Areas */
+        .data-input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Chart Controls */
+        .chart-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .chart-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control-select, .control-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .color-option {
+            width: 100%;
+            height: 40px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.05);
+        }
+
+        .color-option.active {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #scatterChart {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+
+        /* Correlation Analysis */
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .correlation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .correlation-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .correlation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .correlation-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .correlation-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correlation-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .strength-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .strength-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Detailed Statistics */
+        .statistics-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .stats-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .stats-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        /* Formula Section */
+        .formula-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            background: var(--primary);
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+        }
+
+        /* Export Options */
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Example Datasets */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Chart Canvas Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .input-section, 
+            .chart-section,
+            .analysis-section,
+            .statistics-section,
+            .formula-section,
+            .export-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-grid,
+            .export-options {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .chart-section,
+            .analysis-section,
+            .statistics-section,
+            .formula-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Scatter Plot Generator" data-bn="স্ক্যাটার প্লট জেনারেটর">স্ক্যাটার প্লট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create scatter plots to visualize relationships between variables with correlation analysis and trend lines" data-bn="কোরিলেশন অ্যানালাইসিস এবং ট্রেন্ড লাইন সহ ভেরিয়েবলগুলির মধ্যে সম্পর্ক ভিজ্যুয়ালাইজ করতে স্ক্যাটার প্লট তৈরি করুন">
+                কোরিলেশন অ্যানালাইসিস এবং ট্রেন্ড লাইন সহ ভেরিয়েবলগুলির মধ্যে সম্পর্ক ভিজ্যুয়ালাইজ করতে স্ক্যাটার প্লট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- X-Axis Data -->
+                <div class="data-input-group">
+                    <label class="input-label">
+                        <i class="fas fa-x"></i>
+                        <span data-en="X-Axis Values" data-bn="X-অক্ষের মান">X-অক্ষের মান</span>
+                    </label>
+                    <textarea id="xData" class="data-input" placeholder="X মানগুলো কমা বা স্পেস দ্বারা আলাদা করুন
+উদাহরণ: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10">10, 15, 20, 25, 30, 35, 40, 45, 50, 55</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Independent variable values" data-bn="স্বাধীন ভেরিয়েবলের মান">স্বাধীন ভেরিয়েবলের মান</span>
+                    </div>
+                </div>
+
+                <!-- Y-Axis Data -->
+                <div class="data-input-group">
+                    <label class="input-label">
+                        <i class="fas fa-y"></i>
+                        <span data-en="Y-Axis Values" data-bn="Y-অক্ষের মান">Y-অক্ষের মান</span>
+                    </label>
+                    <textarea id="yData" class="data-input" placeholder="Y মানগুলো কমা বা স্পেস দ্বারা আলাদা করুন
+উদাহরণ: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20">20, 25, 30, 35, 40, 45, 50, 55, 60, 65</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Dependent variable values" data-bn="নির্ভরশীল ভেরিয়েবলের মান">নির্ভরশীল ভেরিয়েবলের মান</span>
+                    </div>
+                </div>
+
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <div class="control-group">
+                        <label class="control-label" data-en="Marker Style" data-bn="মার্কার স্টাইল">মার্কার স্টাইল</label>
+                        <select id="markerStyle" class="control-select">
+                            <option value="circle" data-en="Circle" data-bn="বৃত্ত">বৃত্ত</option>
+                            <option value="square" data-en="Square" data-bn="বর্গ">বর্গ</option>
+                            <option value="triangle" data-en="Triangle" data-bn="ত্রিভুজ">ত্রিভুজ</option>
+                            <option value="cross" data-en="Cross" data-bn="ক্রস">ক্রস</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Marker Size" data-bn="মার্কার সাইজ">মার্কার সাইজ</label>
+                        <input type="range" id="markerSize" class="control-input" min="5" max="20" value="10">
+                        <span class="input-hint" id="sizeValue">10px</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Marker Color" data-bn="মার্কার কালার">মার্কার কালার</label>
+                        <div class="color-picker-group">
+                            <div class="color-option active" style="background: #6C63FF;" data-color="#6C63FF"></div>
+                            <div class="color-option" style="background: #FF6584;" data-color="#FF6584"></div>
+                            <div class="color-option" style="background: #36D1DC;" data-color="#36D1DC"></div>
+                            <div class="color-option" style="background: #5B86E5;" data-color="#5B86E5"></div>
+                            <div class="color-option" style="background: #FF9A3D;" data-color="#FF9A3D"></div>
+                            <div class="color-option" style="background: #2D3748;" data-color="#2D3748"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Trend Line" data-bn="ট্রেন্ড লাইন">ট্রেন্ড লাইন</label>
+                        <select id="trendLine" class="control-select">
+                            <option value="none" data-en="None" data-bn="না">না</option>
+                            <option value="linear" data-en="Linear" data-bn="লিনিয়ার">লিনিয়ার</option>
+                            <option value="polynomial" data-en="Polynomial" data-bn="পলিনোমিয়াল">পলিনোমিয়াল</option>
+                            <option value="exponential" data-en="Exponential" data-bn="এক্সপোনেনশিয়াল">এক্সপোনেনশিয়াল</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Chart Titles -->
+                <div class="data-input-group">
+                    <label class="input-label">
+                        <i class="fas fa-heading"></i>
+                        <span data-en="Chart Titles" data-bn="চার্ট টাইটেল">চার্ট টাইটেল</span>
+                    </label>
+                    <input type="text" id="chartTitle" class="data-input" style="min-height: auto;" 
+                           placeholder="চার্টের শিরোনাম" value="স্ক্যাটার প্লট">
+                    <input type="text" id="xAxisLabel" class="data-input" style="min-height: auto; margin-top: 0.5rem;" 
+                           placeholder="X-অক্ষ লেবেল" value="X ভেরিয়েবল">
+                    <input type="text" id="yAxisLabel" class="data-input" style="min-height: auto; margin-top: 0.5rem;" 
+                           placeholder="Y-অক্ষ লেবেল" value="Y ভেরিয়েবল">
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Generate Plot" data-bn="প্লট তৈরি করুন">প্লট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-scatter"></i>
+                    <span data-en="Scatter Plot" data-bn="স্ক্যাটার প্লট">স্ক্যাটার প্লট</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="scatterChart"></canvas>
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-scatter"></i>
+                        <p data-en="Enter data and click Generate to create scatter plot" data-bn="ডেটা ইনপুট করুন এবং স্ক্যাটার প্লট তৈরি করতে জেনারেট ক্লিক করুন">
+                            ডেটা ইনপুট করুন এবং স্ক্যাটার প্লট তৈরি করতে জেনারেট ক্লিক করুন
+                        </p>
+                    </div>
+                </div>
+
+                <div class="chart-legend" id="chartLegend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--scatter-color);"></div>
+                        <span data-en="Data Points" data-bn="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--trendline-color);"></div>
+                        <span data-en="Trend Line" data-bn="ট্রেন্ড লাইন">ট্রেন্ড লাইন</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Correlation Analysis -->
+        <div class="analysis-section">
+            <h2 class="section-title">
+                <i class="fas fa-project-diagram"></i>
+                <span data-en="Correlation Analysis" data-bn="কোরিলেশন বিশ্লেষণ">কোরিলেশন বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="correlation-grid" id="correlationGrid">
+                <!-- Correlation analysis will be added here -->
+            </div>
+        </div>
+
+        <!-- Detailed Statistics -->
+        <div class="statistics-section">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="Detailed Statistics" data-bn="বিস্তারিত পরিসংখ্যান">বিস্তারিত পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid">
+                <div>
+                    <h3 style="margin-bottom: 1rem; color: var(--dark);" data-en="X Variable Statistics" data-bn="X ভেরিয়েবল পরিসংখ্যান">X ভেরিয়েবল পরিসংখ্যান</h3>
+                    <table class="stats-table" id="xStatsTable">
+                        <!-- X stats will be added here -->
+                    </table>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 1rem; color: var(--dark);" data-en="Y Variable Statistics" data-bn="Y ভেরিয়েবল পরিসংখ্যান">Y ভেরিয়েবল পরিসংখ্যান</h3>
+                    <table class="stats-table" id="yStatsTable">
+                        <!-- Y stats will be added here -->
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="formula-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Methods" data-bn="সূত্র এবং পদ্ধতি">সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Correlation Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Pearson Correlation" data-bn="পিয়ারসন কোরিলেশন">পিয়ারসন কোরিলেশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures linear relationship between X and Y" data-bn="X এবং Y এর মধ্যে লিনিয়ার সম্পর্ক পরিমাপ করে">
+                            X এবং Y এর মধ্যে লিনিয়ার সম্পর্ক পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            r = Σ[(xᵢ - x̄)(yᵢ - ȳ)] / √[Σ(xᵢ - x̄)² Σ(yᵢ - ȳ)²]
+                        </div>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li><strong>r = 1:</strong> <span data-en="Perfect positive correlation" data-bn="পারফেক্ট পজিটিভ কোরিলেশন">পারফেক্ট পজিটিভ কোরিলেশন</span></li>
+                            <li><strong>r = -1:</strong> <span data-en="Perfect negative correlation" data-bn="পারফেক্ট নেগেটিভ কোরিলেশন">পারফেক্ট নেগেটিভ কোরিলেশন</span></li>
+                            <li><strong>r = 0:</strong> <span data-en="No linear correlation" data-bn="কোনো লিনিয়ার কোরিলেশন নেই">কোনো লিনিয়ার কোরিলেশন নেই</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Linear Regression Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Linear Regression" data-bn="লিনিয়ার রিগ্রেশন">লিনিয়ার রিগ্রেশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Finds best-fit line: y = mx + b" data-bn="সর্বোত্তম-ফিট লাইন খুঁজে বের করে: y = mx + b">
+                            সর্বোত্তম-ফিট লাইন খুঁজে বের করে: y = mx + b
+                        </p>
+                        <div class="formula-equation">
+                            m = Σ[(xᵢ - x̄)(yᵢ - ȳ)] / Σ(xᵢ - x̄)²<br>
+                            b = ȳ - m x̄
+                        </div>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li><strong>m:</strong> <span data-en="Slope (rate of change)" data-bn="ঢাল (পরিবর্তনের হার)">ঢাল (পরিবর্তনের হার)</span></li>
+                            <li><strong>b:</strong> <span data-en="Y-intercept" data-bn="Y-ইন্টারসেপ্ট">Y-ইন্টারসেপ্ট</span></li>
+                            <li><strong>R²:</strong> <span data-en="Coefficient of determination" data-bn="নির্ধারণ সহগ">নির্ধারণ সহগ</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Covariance Formula -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Covariance" data-bn="কোভ্যারিয়েন্স">কোভ্যারিয়েন্স</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures how two variables change together" data-bn="দুটি ভেরিয়েবল কীভাবে একসাথে পরিবর্তিত হয় তা পরিমাপ করে">
+                            দুটি ভেরিয়েবল কীভাবে একসাথে পরিবর্তিত হয় তা পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            cov(X,Y) = Σ[(xᵢ - x̄)(yᵢ - ȳ)] / (n-1)
+                        </div>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li><strong>Positive:</strong> <span data-en="Variables increase together" data-bন="ভেরিয়েবল একসাথে বৃদ্ধি পায়">ভেরিয়েবল একসাথে বৃদ্ধি পায়</span></li>
+                            <li><strong>Negative:</strong> <span data-en="One increases, other decreases" data-bন="একটি বৃদ্ধি পেলে অন্যটি হ্রাস পায়">একটি বৃদ্ধি পেলে অন্যটি হ্রাস পায়</span></li>
+                            <li><strong>Zero:</strong> <span data-en="No linear relationship" data-bন="কোনো লিনিয়ার সম্পর্ক নেই">কোনো লিনিয়ার সম্পর্ক নেই</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="analysis-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="perfect-positive">
+                    <div class="example-title" data-en="Perfect Positive" data-bন="পারফেক্ট পজিটিভ">পারফেক্ট পজিটিভ</div>
+                    <div class="example-description" data-en="r = 1.00" data-bন="r = ১.০০">r = ১.০০</div>
+                </button>
+                <button class="example-btn" data-example="perfect-negative">
+                    <div class="example-title" data-en="Perfect Negative" data-bন="পারফেক্ট নেগেটিভ">পারফেক্ট নেগেটিভ</div>
+                    <div class="example-description" data-en="r = -1.00" data-bন="r = -১.০০">r = -১.০০</div>
+                </button>
+                <button class="example-btn" data-example="strong-positive">
+                    <div class="example-title" data-en="Strong Positive" data-bন="শক্তিশালী পজিটিভ">শক্তিশালী পজিটিভ</div>
+                    <div class="example-description" data-en="r = 0.85" data-bন="r = ০.৮৫">r = ০.৮৫</div>
+                </button>
+                <button class="example-btn" data-example="weak-negative">
+                    <div class="example-title" data-en="Weak Negative" data-bন="দুর্বল নেগেটিভ">দুর্বল নেগেটিভ</div>
+                    <div class="example-description" data-en="r = -0.35" data-bন="r = -০.৩৫">r = -০.৩৫</div>
+                </button>
+                <button class="example-btn" data-example="no-correlation">
+                    <div class="example-title" data-en="No Correlation" data-bন="কোনো কোরিলেশন নেই">কোনো কোরিলেশন নেই</div>
+                    <div class="example-description" data-en="r ≈ 0.00" data-bন="r ≈ ০.০০">r ≈ ০.০০</div>
+                </button>
+                <button class="example-btn" data-example="real-world">
+                    <div class="example-title" data-en="Real World Data" data-bন="রিয়েল ওয়ার্ল্ড ডেটা">রিয়েল ওয়ার্ল্ড ডেটা</div>
+                    <div class="example-description" data-en="Study vs Grades" data-bন="স্টাডি vs গ্রেড">স্টাডি vs গ্রেড</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                <span data-en="Export Options" data-bন="এক্সপোর্ট অপশন">এক্সপোর্ট অপশন</span>
+            </h2>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportPNG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as PNG" data-bন="PNG হিসেবে ডাউনলোড">PNG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportJPG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as JPG" data-bন="JPG হিসেবে ডাউনলোড">JPG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-en="Download as PDF" data-bন="PDF হিসেবে ডাউনলোড">PDF হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportData">
+                    <i class="fas fa-file-csv"></i>
+                    <span data-en="Export Data (CSV)" data-bন="ডেটা এক্সপোর্ট (CSV)">ডেটা এক্সপোর্ট (CSV)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="chartTooltip"></div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Chart.js
+            let scatterChart = null;
+            let currentLanguage = 'bn';
+            let markerColor = '#6C63FF';
+            
+            // Example datasets
+            const examples = {
+                'perfect-positive': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+                },
+                'perfect-negative': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
+                },
+                'strong-positive': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [2, 5, 5, 7, 9, 11, 12, 14, 16, 19]
+                },
+                'weak-negative': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [15, 18, 16, 14, 12, 10, 13, 11, 9, 8]
+                },
+                'no-correlation': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [5, 12, 8, 15, 7, 18, 9, 14, 6, 17]
+                },
+                'real-world': {
+                    x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                    y: [55, 60, 65, 70, 75, 80, 85, 90, 92, 95]
+                }
+            };
+
+            // Initialize the application
+            initScatterPlotGenerator();
+
+            function initScatterPlotGenerator() {
+                // Language Toggle
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input Methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Marker Size Slider
+                const markerSize = document.getElementById('markerSize');
+                const sizeValue = document.getElementById('sizeValue');
+                
+                markerSize.addEventListener('input', function() {
+                    sizeValue.textContent = this.value + 'px';
+                });
+
+                // Color Picker
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        markerColor = this.dataset.color;
+                        
+                        if (scatterChart) {
+                            scatterChart.data.datasets[0].backgroundColor = markerColor;
+                            scatterChart.update();
+                        }
+                    });
+                });
+
+                // Generate Button
+                document.getElementById('generateBtn').addEventListener('click', generateScatterPlot);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Export Buttons
+                document.getElementById('exportPNG').addEventListener('click', () => exportChart('png'));
+                document.getElementById('exportJPG').addEventListener('click', () => exportChart('jpg'));
+                document.getElementById('exportPDF').addEventListener('click', exportPDF);
+                document.getElementById('exportData').addEventListener('click', exportCSV);
+
+                // Set Bengali as default language
+                setLanguage('bn');
+
+                // Generate initial plot with default data
+                setTimeout(() => {
+                    generateScatterPlot();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else if (element.tagName === 'TEXTAREA') {
+                                // Keep textarea content but update placeholder
+                                const currentPlaceholder = element.getAttribute('placeholder');
+                                if (currentPlaceholder && currentPlaceholder.includes('মানগুলো')) {
+                                    element.placeholder = text;
+                                }
+                            }
+                        } else if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update chart if exists
+                if (scatterChart) {
+                    updateChartLanguage();
+                }
+            }
+
+            function parseData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function generateScatterPlot() {
+                const xData = parseData(document.getElementById('xData').value);
+                const yData = parseData(document.getElementById('yData').value);
+                
+                if (xData.length === 0 || yData.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে X এবং Y উভয় অক্ষের জন্য ডেটা ইনপুট করুন' : 
+                        'Please enter data for both X and Y axes');
+                    return;
+                }
+                
+                if (xData.length !== yData.length) {
+                    alert(currentLanguage === 'bn' ? 
+                        'X এবং Y মানগুলোর সংখ্যা সমান হতে হবে' : 
+                        'Number of X and Y values must be equal');
+                    return;
+                }
+                
+                if (xData.length < 2) {
+                    alert(currentLanguage === 'bn' ? 
+                        'স্ক্যাটার প্লটের জন্য কমপক্ষে ২টি ডেটা পয়েন্ট প্রয়োজন' : 
+                        'At least 2 data points required for scatter plot');
+                    return;
+                }
+
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                // Get chart settings
+                const markerStyle = document.getElementById('markerStyle').value;
+                const markerSize = parseInt(document.getElementById('markerSize').value);
+                const trendLine = document.getElementById('trendLine').value;
+                const chartTitle = document.getElementById('chartTitle').value || 'Scatter Plot';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'X Variable';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Y Variable';
+                
+                // Calculate statistics and correlation
+                const stats = calculateStatistics(xData, yData);
+                const trendData = calculateTrendLine(xData, yData, trendLine);
+                
+                // Create or update chart
+                createChart(xData, yData, markerStyle, markerSize, trendData, 
+                          chartTitle, xAxisLabel, yAxisLabel, stats);
+                
+                // Update correlation analysis
+                updateCorrelationAnalysis(stats);
+                
+                // Update statistics tables
+                updateStatisticsTables(stats);
+            }
+
+            function calculateStatistics(xData, yData) {
+                const n = xData.length;
+                
+                // Basic statistics for X
+                const xMean = xData.reduce((a, b) => a + b, 0) / n;
+                const xMin = Math.min(...xData);
+                const xMax = Math.max(...xData);
+                const xRange = xMax - xMin;
+                const xVariance = xData.reduce((sum, val) => sum + Math.pow(val - xMean, 2), 0) / (n - 1);
+                const xStdDev = Math.sqrt(xVariance);
+                
+                // Basic statistics for Y
+                const yMean = yData.reduce((a, b) => a + b, 0) / n;
+                const yMin = Math.min(...yData);
+                const yMax = Math.max(...yData);
+                const yRange = yMax - yMin;
+                const yVariance = yData.reduce((sum, val) => sum + Math.pow(val - yMean, 2), 0) / (n - 1);
+                const yStdDev = Math.sqrt(yVariance);
+                
+                // Calculate covariance and correlation
+                let covariance = 0;
+                for (let i = 0; i < n; i++) {
+                    covariance += (xData[i] - xMean) * (yData[i] - yMean);
+                }
+                covariance /= (n - 1);
+                
+                const correlation = covariance / (xStdDev * yStdDev);
+                const determination = Math.pow(correlation, 2);
+                
+                // Calculate linear regression
+                let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                for (let i = 0; i < n; i++) {
+                    sumX += xData[i];
+                    sumY += yData[i];
+                    sumXY += xData[i] * yData[i];
+                    sumX2 += Math.pow(xData[i], 2);
+                }
+                
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - Math.pow(sumX, 2));
+                const intercept = (sumY - slope * sumX) / n;
+                
+                return {
+                    x: { mean: xMean, min: xMin, max: xMax, range: xRange, variance: xVariance, stdDev: xStdDev },
+                    y: { mean: yMean, min: yMin, max: yMax, range: yRange, variance: yVariance, stdDev: yStdDev },
+                    correlation: correlation,
+                    covariance: covariance,
+                    determination: determination,
+                    regression: { slope: slope, intercept: intercept },
+                    n: n
+                };
+            }
+
+            function calculateTrendLine(xData, yData, type) {
+                const n = xData.length;
+                const xMin = Math.min(...xData);
+                const xMax = Math.max(...xData);
+                
+                let trendPoints = [];
+                
+                switch(type) {
+                    case 'linear':
+                        const stats = calculateStatistics(xData, yData);
+                        const m = stats.regression.slope;
+                        const b = stats.regression.intercept;
+                        
+                        trendPoints = [
+                            { x: xMin, y: m * xMin + b },
+                            { x: xMax, y: m * xMax + b }
+                        ];
+                        break;
+                        
+                    case 'polynomial':
+                        // Simple quadratic trend for demonstration
+                        for (let i = 0; i < n; i++) {
+                            const x = xData[i];
+                            trendPoints.push({
+                                x: x,
+                                y: 0.1 * Math.pow(x, 2) + 0.5 * x + 10
+                            });
+                        }
+                        trendPoints.sort((a, b) => a.x - b.x);
+                        break;
+                        
+                    case 'exponential':
+                        for (let i = 0; i < n; i++) {
+                            const x = xData[i];
+                            trendPoints.push({
+                                x: x,
+                                y: 10 * Math.exp(0.1 * x)
+                            });
+                        }
+                        trendPoints.sort((a, b) => a.x - b.x);
+                        break;
+                }
+                
+                return trendPoints;
+            }
+
+            function createChart(xData, yData, markerStyle, markerSize, trendData, 
+                               chartTitle, xAxisLabel, yAxisLabel, stats) {
+                const ctx = document.getElementById('scatterChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (scatterChart) {
+                    scatterChart.destroy();
+                }
+                
+                // Prepare data points
+                const dataPoints = xData.map((x, i) => ({ x: x, y: yData[i] }));
+                
+                // Create datasets
+                const datasets = [
+                    {
+                        label: currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points',
+                        data: dataPoints,
+                        backgroundColor: markerColor,
+                        borderColor: markerColor,
+                        borderWidth: 1,
+                        pointRadius: markerSize,
+                        pointStyle: markerStyle,
+                        showLine: false
+                    }
+                ];
+                
+                // Add trend line if selected
+                if (trendData.length > 0) {
+                    datasets.push({
+                        label: currentLanguage === 'bn' ? 'ট্রেন্ড লাইন' : 'Trend Line',
+                        data: trendData,
+                        backgroundColor: 'transparent',
+                        borderColor: '#FF6584',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: false
+                    });
+                }
+                
+                // Create chart
+                scatterChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `(${context.parsed.x}, ${context.parsed.y})`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xAxisLabel,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yAxisLabel,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Add title manually
+                Chart.register({
+                    id: 'customTitle',
+                    afterDraw: (chart) => {
+                        const { ctx, chartArea: { top } } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 16px Poppins';
+                        ctx.fillStyle = '#2D3748';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(chartTitle, chart.width / 2, top - 20);
+                        ctx.restore();
+                    }
+                });
+                
+                scatterChart.update();
+            }
+
+            function updateChartLanguage() {
+                if (!scatterChart) return;
+                
+                // Update chart labels
+                scatterChart.data.datasets[0].label = currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points';
+                if (scatterChart.data.datasets.length > 1) {
+                    scatterChart.data.datasets[1].label = currentLanguage === 'bn' ? 'ট্রেন্ড লাইন' : 'Trend Line';
+                }
+                
+                scatterChart.options.scales.x.title.text = document.getElementById('xAxisLabel').value || 
+                    (currentLanguage === 'bn' ? 'X ভেরিয়েবল' : 'X Variable');
+                scatterChart.options.scales.y.title.text = document.getElementById('yAxisLabel').value || 
+                    (currentLanguage === 'bn' ? 'Y ভেরিয়েবল' : 'Y Variable');
+                
+                scatterChart.update();
+            }
+
+            function updateCorrelationAnalysis(stats) {
+                const correlation = stats.correlation;
+                const determination = stats.determination;
+                const covariance = stats.covariance;
+                
+                let strength = '';
+                let strengthColor = '';
+                let description = '';
+                
+                if (Math.abs(correlation) >= 0.8) {
+                    strength = currentLanguage === 'bn' ? 'খুব শক্তিশালী' : 'Very Strong';
+                    strengthColor = 'var(--correlation-positive)';
+                } else if (Math.abs(correlation) >= 0.6) {
+                    strength = currentLanguage === 'bn' ? 'শক্তিশালী' : 'Strong';
+                    strengthColor = 'var(--correlation-positive)';
+                } else if (Math.abs(correlation) >= 0.4) {
+                    strength = currentLanguage === 'bn' ? 'মধ্যম' : 'Moderate';
+                    strengthColor = 'var(--warning)';
+                } else if (Math.abs(correlation) >= 0.2) {
+                    strength = currentLanguage === 'bn' ? 'দুর্বল' : 'Weak';
+                    strengthColor = 'var(--warning)';
+                } else {
+                    strength = currentLanguage === 'bn' ? 'খুব দুর্বল' : 'Very Weak';
+                    strengthColor = 'var(--gray)';
+                }
+                
+                if (correlation > 0) {
+                    description = currentLanguage === 'bn' ? 'পজিটিভ সম্পর্ক' : 'Positive Relationship';
+                } else if (correlation < 0) {
+                    description = currentLanguage === 'bn' ? 'নেগেটিভ সম্পর্ক' : 'Negative Relationship';
+                } else {
+                    description = currentLanguage === 'bn' ? 'কোনো লিনিয়ার সম্পর্ক নেই' : 'No Linear Relationship';
+                }
+                
+                document.getElementById('correlationGrid').innerHTML = `
+                    <div class="correlation-card">
+                        <div class="correlation-value" style="color: ${correlation > 0 ? 'var(--correlation-positive)' : 
+                                                                      correlation < 0 ? 'var(--correlation-negative)' : 'var(--gray)'}">
+                            ${correlation.toFixed(3)}
+                        </div>
+                        <div class="correlation-label" data-en="Correlation (r)" data-bn="কোরিলেশন (r)">কোরিলেশন (r)</div>
+                        <div class="strength-indicator">
+                            <div class="strength-dot" style="background: ${strengthColor}"></div>
+                            <span>${strength} ${description}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="correlation-card">
+                        <div class="correlation-value" style="color: var(--primary);">
+                            ${determination.toFixed(3)}
+                        </div>
+                        <div class="correlation-label" data-en="R-squared (R²)" data-bn="আর-স্কোয়ার্ড (R²)">আর-স্কোয়ার্ড (R²)</div>
+                        <div class="strength-indicator">
+                            <div class="strength-dot" style="background: var(--primary)"></div>
+                            <span data-en="Variance explained" data-bn="ব্যাখ্যাকৃত ভ্যারিয়েন্স">ব্যাখ্যাকৃত ভ্যারিয়েন্স</span>
+                        </div>
+                    </div>
+                    
+                    <div class="correlation-card">
+                        <div class="correlation-value" style="color: ${covariance > 0 ? 'var(--correlation-positive)' : 
+                                                                      covariance < 0 ? 'var(--correlation-negative)' : 'var(--gray)'}">
+                            ${covariance.toFixed(2)}
+                        </div>
+                        <div class="correlation-label" data-en="Covariance" data-bn="কোভ্যারিয়েন্স">কোভ্যারিয়েন্স</div>
+                        <div class="strength-indicator">
+                            <div class="strength-dot" style="background: ${covariance > 0 ? 'var(--correlation-positive)' : 
+                                                                         covariance < 0 ? 'var(--correlation-negative)' : 'var(--gray)'}"></div>
+                            <span>${covariance > 0 ? (currentLanguage === 'bn' ? 'সম্পর্কিত বৃদ্ধি' : 'Related Increase') : 
+                                  covariance < 0 ? (currentLanguage === 'bn' ? 'বিপরীত সম্পর্ক' : 'Inverse Relationship') : 
+                                  (currentLanguage === 'bn' ? 'কোনো সম্পর্ক নেই' : 'No Relationship')}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="correlation-card">
+                        <div class="correlation-value" style="color: var(--info);">
+                            ${stats.regression.slope.toFixed(3)}
+                        </div>
+                        <div class="correlation-label" data-en="Regression Slope" data-bn="রিগ্রেশন ঢাল">রিগ্রেশন ঢাল</div>
+                        <div class="strength-indicator">
+                            <div class="strength-dot" style="background: var(--info)"></div>
+                            <span data-en="Rate of change" data-bn="পরিবর্তনের হার">পরিবর্তনের হার</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateStatisticsTables(stats) {
+                // X Statistics Table
+                document.getElementById('xStatsTable').innerHTML = `
+                    <tr>
+                        <td data-en="Mean (Average)" data-bn="গড় (অ্যাভারেজ)">গড় (অ্যাভারেজ)</td>
+                        <td><strong>${stats.x.mean.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Minimum" data-bn="সর্বনিম্ন">সর্বনিম্ন</td>
+                        <td><strong>${stats.x.min.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Maximum" data-bn="সর্বোচ্চ">সর্বোচ্চ</td>
+                        <td><strong>${stats.x.max.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Range" data-bn="রেঞ্জ">রেঞ্জ</td>
+                        <td><strong>${stats.x.range.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Standard Deviation" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</td>
+                        <td><strong>${stats.x.stdDev.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Variance" data-bn="ভ্যারিয়েন্স">ভ্যারিয়েন্স</td>
+                        <td><strong>${stats.x.variance.toFixed(2)}</strong></td>
+                    </tr>
+                `;
+                
+                // Y Statistics Table
+                document.getElementById('yStatsTable').innerHTML = `
+                    <tr>
+                        <td data-en="Mean (Average)" data-bn="গড় (অ্যাভারেজ)">গড় (অ্যাভারেজ)</td>
+                        <td><strong>${stats.y.mean.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Minimum" data-bn="সর্বনিম্ন">সর্বনিম্ন</td>
+                        <td><strong>${stats.y.min.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Maximum" data-bn="সর্বোচ্চ">সর্বোচ্চ</td>
+                        <td><strong>${stats.y.max.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Range" data-bn="রেঞ্জ">রেঞ্জ</td>
+                        <td><strong>${stats.y.range.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Standard Deviation" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</td>
+                        <td><strong>${stats.y.stdDev.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr>
+                        <td data-en="Variance" data-bn="ভ্যারিয়েন্স">ভ্যারিয়েন্স</td>
+                        <td><strong>${stats.y.variance.toFixed(2)}</strong></td>
+                    </tr>
+                `;
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 5;
+                const xData = [];
+                const yData = [];
+                
+                // Generate correlated data
+                const baseX = Array.from({length: count}, (_, i) => i + 1);
+                const noise = () => (Math.random() - 0.5) * 10;
+                
+                baseX.forEach(x => {
+                    xData.push(x + noise());
+                    yData.push(x * 2 + noise());
+                });
+                
+                document.getElementById('xData').value = xData.map(n => n.toFixed(2)).join(', ');
+                document.getElementById('yData').value = yData.map(n => n.toFixed(2)).join(', ');
+                generateScatterPlot();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('xData').value = examples[example].x.join(', ');
+                    document.getElementById('yData').value = examples[example].y.join(', ');
+                    
+                    // Update titles based on example
+                    const titles = {
+                        'perfect-positive': { title: 'Perfect Positive Correlation', x: 'X Variable', y: 'Y Variable' },
+                        'perfect-negative': { title: 'Perfect Negative Correlation', x: 'X Variable', y: 'Y Variable' },
+                        'strong-positive': { title: 'Strong Positive Correlation', x: 'X Variable', y: 'Y Variable' },
+                        'weak-negative': { title: 'Weak Negative Correlation', x: 'X Variable', y: 'Y Variable' },
+                        'no-correlation': { title: 'No Correlation', x: 'X Variable', y: 'Y Variable' },
+                        'real-world': { title: 'Study Hours vs Exam Scores', x: 'Study Hours', y: 'Exam Score (%)' }
+                    };
+                    
+                    const titleData = titles[example];
+                    document.getElementById('chartTitle').value = currentLanguage === 'bn' ? 
+                        (example === 'real-world' ? 'স্টাডি ঘন্টা vs পরীক্ষার স্কোর' : titleData.title) : 
+                        titleData.title;
+                    document.getElementById('xAxisLabel').value = currentLanguage === 'bn' ? 
+                        (example === 'real-world' ? 'স্টাডি ঘন্টা' : 'X ভেরিয়েবল') : 
+                        titleData.x;
+                    document.getElementById('yAxisLabel').value = currentLanguage === 'bn' ? 
+                        (example === 'real-world' ? 'পরীক্ষার স্কোর (%)' : 'Y ভেরিয়েবল') : 
+                        titleData.y;
+                    
+                    generateScatterPlot();
+                }
+            }
+
+            function exportChart(format) {
+                if (!scatterChart) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি স্ক্যাটার প্লট তৈরি করুন' : 
+                        'Please generate a scatter plot first');
+                    return;
+                }
+                
+                const link = document.createElement('a');
+                link.download = `scatter-plot.${format}`;
+                link.href = scatterChart.toBase64Image();
+                link.click();
+            }
+
+            function exportPDF() {
+                alert(currentLanguage === 'bn' ? 
+                    'PDF এক্সপোর্ট সেটআপ প্রয়োজন' : 
+                    'PDF export requires additional setup');
+            }
+
+            function exportCSV() {
+                const xData = parseData(document.getElementById('xData').value);
+                const yData = parseData(document.getElementById('yData').value);
+                
+                if (xData.length === 0 || yData.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রথমে ডেটা ইনপুট করুন' : 
+                        'Please enter data first');
+                    return;
+                }
+                
+                let csv = 'X,Y\n';
+                for (let i = 0; i < xData.length; i++) {
+                    csv += `${xData[i]},${yData[i]}\n`;
+                }
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.download = 'scatter-plot-data.csv';
+                link.href = window.URL.createObjectURL(blob);
+                link.click();
+            }
+
+            function clearAll() {
+                document.getElementById('xData').value = '';
+                document.getElementById('yData').value = '';
+                document.getElementById('chartTitle').value = 'স্ক্যাটার প্লট';
+                document.getElementById('xAxisLabel').value = 'X ভেরিয়েবল';
+                document.getElementById('yAxisLabel').value = 'Y ভেরিয়েবল';
+                
+                // Reset to default color
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                document.querySelector('.color-option[data-color="#6C63FF"]').classList.add('active');
+                markerColor = '#6C63FF';
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Clear correlation analysis
+                document.getElementById('correlationGrid').innerHTML = '';
+                
+                // Clear statistics tables
+                document.getElementById('xStatsTable').innerHTML = '';
+                document.getElementById('yStatsTable').innerHTML = '';
+                
+                // Destroy chart
+                if (scatterChart) {
+                    scatterChart.destroy();
+                    scatterChart = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

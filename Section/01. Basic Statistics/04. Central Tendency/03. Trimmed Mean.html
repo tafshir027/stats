@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ট্রিমড মিন ক্যালকুলেটর | Trimmed Mean Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #9C27B0;
+            --secondary: #7B1FA2;
+            --accent: #FF9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --trimmed-color: #9C27B0;
+            --original-color: #2196F3;
+            --outlier-color: #F44336;
+            --kept-color: #4CAF50;
+            --step-color: #FF9800;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f9f0ff 0%, #f3e5f5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--info), var(--danger));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .data-input-container {
+            position: relative;
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            line-height: 1.8;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .data-input-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Trimming Configuration */
+        .trimming-config {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .trimming-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .trimming-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .trim-method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .trim-method-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .trim-method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .trim-method-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light-gray);
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .trim-method-btn.active .trim-method-icon {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Trimming Slider */
+        .trimming-slider-container {
+            margin: 1.5rem 0;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .trim-percentage {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+        }
+
+        .slider-container {
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .trim-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--kept-color), var(--warning), var(--danger));
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .trim-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Outlier Detection */
+        .outlier-detection {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .outlier-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .outlier-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .outlier-btn.active {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* Data Preview */
+        .data-preview {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .data-point {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 20px;
+            border: 2px solid;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .data-point.original {
+            border-color: var(--original-color);
+            color: var(--original-color);
+        }
+
+        .data-point.trimmed {
+            border-color: var(--trimmed-color);
+            color: var(--trimmed-color);
+        }
+
+        .data-point.outlier {
+            border-color: var(--outlier-color);
+            color: var(--outlier-color);
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .data-point.kept {
+            border-color: var(--kept-color);
+            color: var(--kept-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .data-point:hover {
+            transform: scale(1.05);
+        }
+
+        .data-point-index {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-right: 0.3rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Main Result Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card.original {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 2px solid var(--original-color);
+        }
+
+        .result-card.trimmed {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border: 2px solid var(--trimmed-color);
+        }
+
+        .result-label {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .result-details {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Trimming Summary */
+        .trimming-summary {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .trimming-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .trimming-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .breakdown-item {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .breakdown-count {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .breakdown-count.original {
+            color: var(--original-color);
+        }
+
+        .breakdown-count.trimmed {
+            color: var(--outlier-color);
+        }
+
+        .breakdown-count.kept {
+            color: var(--kept-color);
+        }
+
+        /* Data Comparison */
+        .data-comparison {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .comparison-chart {
+            height: 200px;
+            position: relative;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .comparison-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .comparison-bar.original {
+            background: var(--original-color);
+        }
+
+        .comparison-bar.trimmed {
+            background: var(--trimmed-color);
+        }
+
+        .mean-line {
+            position: absolute;
+            height: 3px;
+            width: 100%;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .mean-line.original {
+            background: var(--original-color);
+        }
+
+        .mean-line.trimmed {
+            background: var(--trimmed-color);
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Box Plot */
+        .box-plot-container {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+        }
+
+        .box-plot {
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            right: 50px;
+            height: 40px;
+            background: rgba(33, 150, 243, 0.1);
+            border: 2px solid var(--original-color);
+            border-radius: 4px;
+            transform: translateY(-50%);
+        }
+
+        .box-whisker {
+            position: absolute;
+            width: 1px;
+            background: var(--dark);
+            height: 10px;
+        }
+
+        .box-outlier {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--outlier-color);
+            transform: translate(-50%, -50%);
+        }
+
+        .box-mean {
+            position: absolute;
+            width: 2px;
+            height: 50px;
+            background: var(--trimmed-color);
+            transform: translateX(-50%);
+            top: calc(50% - 25px);
+        }
+
+        /* Step-by-Step Calculation Section */
+        .calculation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--step-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--step-color);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        /* Example Datasets */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .example-stats {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.original { background: var(--original-color); }
+        .legend-color.trimmed { background: var(--trimmed-color); }
+        .legend-color.outlier { background: var(--outlier-color); }
+        .legend-color.kept { background: var(--kept-color); }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .calculation-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Trimmed Mean Calculator" data-bn="ট্রিমড মিন ক্যালকুলেটর">ট্রিমড মিন ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate mean after removing extreme values - Robust central tendency measure" data-bn="চরম মান অপসারণের পর গড় গণনা করুন - শক্তিশালী কেন্দ্রীয় প্রবণতা পরিমাপ">
+                চরম মান অপসারণের পর গড় গণনা করুন - শক্তিশালী কেন্দ্রীয় প্রবণতা পরিমাপ
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Data & Trimming Configuration" data-bn="ডেটা ও ট্রিমিং কনফিগারেশন">ডেটা ও ট্রিমিং কনফিগারেশন</span>
+                </h2>
+                
+                <!-- Data Input Area -->
+                <div class="data-input-area">
+                    <div class="data-input-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-database"></i>
+                            <span data-en="Enter Data Points" data-bn="ডেটা পয়েন্ট ইনপুট করুন">ডেটা পয়েন্ট ইনপুট করুন</span>
+                        </h3>
+                        <span id="dataCount" style="color: var(--gray); font-weight: 600;">0 values</span>
+                    </div>
+                    
+                    <div class="data-input-container">
+                        <textarea class="data-input" id="dataInput" placeholder="Enter numbers separated by commas, spaces, or new lines
+Example with outliers: 10, 12, 15, 18, 20, 22, 25, 28, 30, 100" 
+data-bn-placeholder="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইনে আলাদা করুন
+আউটলায়ার সহ উদাহরণ: 10, 12, 15, 18, 20, 22, 25, 28, 30, 100"></textarea>
+                    </div>
+                    
+                    <div class="data-input-hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Include outliers to see how trimmed mean handles them" data-bn="ট্রিমড মিন কীভাবে আউটলায়ার পরিচালনা করে দেখতে আউটলায়ার অন্তর্ভুক্ত করুন">
+                            ট্রিমড মিন কীভাবে আউটলায়ার পরিচালনা করে দেখতে আউটলায়ার অন্তর্ভুক্ত করুন
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Trimming Configuration -->
+                <div class="trimming-config">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-cut"></i>
+                        <span data-en="Trimming Method" data-bn="ট্রিমিং পদ্ধতি">ট্রিমিং পদ্ধতি</span>
+                    </h3>
+                    
+                    <div class="trimming-methods">
+                        <button class="trim-method-btn active" data-method="percentage">
+                            <div class="trim-method-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div>
+                                <div data-en="Percentage Trimming" data-bn="শতাংশ ট্রিমিং">শতাংশ ট্রিমিং</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7;" data-en="Remove percentage from both ends" data-bn="উভয় প্রান্ত থেকে শতাংশ অপসারণ">
+                                    উভয় প্রান্ত থেকে শতাংশ অপসারণ
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button class="trim-method-btn" data-method="count">
+                            <div class="trim-method-icon">
+                                <i class="fas fa-sort-numeric-down"></i>
+                            </div>
+                            <div>
+                                <div data-en="Count-Based Trimming" data-bn="গণনা-ভিত্তিক ট্রিমিং">গণনা-ভিত্তিক ট্রিমিং</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7;" data-en="Remove specific number from each end" data-bn="প্রতিটি প্রান্ত থেকে নির্দিষ্ট সংখ্যা অপসারণ">
+                                    প্রতিটি প্রান্ত থেকে নির্দিষ্ট সংখ্যা অপসারণ
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Trimming Slider -->
+                    <div class="trimming-slider-container">
+                        <div class="slider-header">
+                            <span data-en="Trimming Percentage" data-bn="ট্রিমিং শতাংশ">ট্রিমিং শতাংশ</span>
+                            <span class="trim-percentage" id="trimPercentage">10%</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <input type="range" min="0" max="49" value="10" class="trim-slider" id="trimSlider">
+                            <div class="slider-labels">
+                                <span data-en="No Trimming" data-bn="ট্রিমিং নেই">ট্রিমিং নেই</span>
+                                <span data-en="Moderate" data-bন="মাঝারি">মাঝারি</span>
+                                <span data-en="Heavy Trimming" data-bn="ভারী ট্রিমিং">ভারী ট্রিমিং</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Count-Based Trimming (Hidden by default) -->
+                    <div class="trimming-count-container" id="countContainer" style="display: none;">
+                        <div class="slider-header">
+                            <span data-en="Values to Trim from Each End" data-bn="প্রতিটি প্রান্ত থেকে অপসারণ করার মান">প্রতিটি প্রান্ত থেকে অপসারণ করার মান</span>
+                            <span class="trim-percentage" id="trimCount">1</span>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <input type="range" min="0" max="10" value="1" class="trim-slider" id="countSlider">
+                            <div class="slider-labels">
+                                <span>0</span>
+                                <span>5</span>
+                                <span>10</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Outlier Detection -->
+                    <div class="outlier-detection">
+                        <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span data-en="Outlier Detection" data-bn="আউটলায়ার শনাক্তকরণ">আউটলায়ার শনাক্তকরণ</span>
+                        </h4>
+                        
+                        <div class="outlier-methods">
+                            <button class="outlier-btn active" data-method="iqr">
+                                <i class="fas fa-chart-box"></i>
+                                <span data-en="IQR Method" data-bn="IQR পদ্ধতি">IQR পদ্ধতি</span>
+                            </button>
+                            <button class="outlier-btn" data-method="zscore">
+                                <i class="fas fa-sigma"></i>
+                                <span data-en="Z-Score" data-bn="Z-স্কোর">Z-স্কোর</span>
+                            </button>
+                            <button class="outlier-btn" data-method="percentile">
+                                <i class="fas fa-chart-pie"></i>
+                                <span data-en="Percentile" data-bn="পার্সেন্টাইল">পার্সেন্টাইল</span>
+                            </button>
+                            <button class="outlier-btn" data-method="none">
+                                <i class="fas fa-ban"></i>
+                                <span data-en="None" data-bn="কোনটিই নয়">কোনটিই নয়</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Preview -->
+                <div class="data-preview">
+                    <div class="preview-header">
+                        <span data-en="Data Preview" data-bn="ডেটা প্রিভিউ">ডেটা প্রিভিউ</span>
+                        <span id="validCount" style="color: var(--success); font-weight: 600;">0 valid</span>
+                    </div>
+                    <div class="preview-items" id="dataPreview">
+                        <!-- Data points will appear here -->
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Trimmed Mean" data-bn="ট্রিমড মিন গণনা করুন">ট্রিমড মিন গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Results Comparison" data-bn="ফলাফল তুলনা">ফলাফল তুলনা</span>
+                </h2>
+                
+                <!-- Main Results -->
+                <div class="results-grid">
+                    <div class="result-card original">
+                        <div class="result-label" data-en="Original Mean" data-bn="অরিজিনাল মিন">অরিজিনাল মিন</div>
+                        <div class="result-value" id="originalMean">--</div>
+                        <div class="result-details" id="originalDetails">
+                            <span data-en="All data points included" data-bn="সব ডেটা পয়েন্ট অন্তর্ভুক্ত">সব ডেটা পয়েন্ট অন্তর্ভুক্ত</span>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card trimmed">
+                        <div class="result-label" data-en="Trimmed Mean" data-bn="ট্রিমড মিন">ট্রিমড মিন</div>
+                        <div class="result-value" id="trimmedMean">--</div>
+                        <div class="result-details" id="trimmedDetails">
+                            <span data-en="Extreme values removed" data-bn="চরম মান অপসারিত">চরম মান অপসারিত</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Difference" data-bন="পার্থক্য">পার্থক্য</div>
+                        <div class="stat-value" id="differenceResult">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Reduction (%)" data-bn="হ্রাস (%)">হ্রাস (%)</div>
+                        <div class="stat-value" id="reductionResult">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Data Points Trimmed" data-bn="ট্রিমড ডেটা পয়েন্ট">ট্রিমড ডেটা পয়েন্ট</div>
+                        <div class="stat-value" id="trimmedCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" data-en="Outliers Detected" data-bn="শনাক্তকৃত আউটলায়ার">শনাক্তকৃত আউটলায়ার</div>
+                        <div class="stat-value" id="outlierCount">0</div>
+                    </div>
+                </div>
+                
+                <!-- Trimming Summary -->
+                <div class="trimming-summary">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-chart-pie"></i>
+                        <span data-en="Trimming Breakdown" data-bন="ট্রিমিং ব্রেকডাউন">ট্রিমিং ব্রেকডাউন</span>
+                    </h3>
+                    
+                    <div class="trimming-breakdown">
+                        <div class="breakdown-item">
+                            <div class="breakdown-count original" id="totalCount">0</div>
+                            <div class="stat-label" data-en="Total Data Points" data-bn="মোট ডেটা পয়েন্ট">মোট ডেটা পয়েন্ট</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="breakdown-count trimmed" id="removedCount">0</div>
+                            <div class="stat-label" data-en="Values Removed" data-bn="অপসারিত মান">অপসারিত মান</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="breakdown-count kept" id="keptCount">0</div>
+                            <div class="stat-label" data-en="Values Kept" data-bn="রক্ষিত মান">রক্ষিত মান</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Comparison Chart -->
+                <div class="data-comparison">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Mean Comparison" data-bn="গড় তুলনা">গড় তুলনা</span>
+                    </h3>
+                    
+                    <div class="comparison-chart" id="comparisonChart">
+                        <!-- Chart will be generated here -->
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color original"></div>
+                            <span data-en="Original Mean" data-bন="অরিজিনাল মিন">অরিজিনাল মিন</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color trimmed"></div>
+                            <span data-en="Trimmed Mean" data-bn="ট্রিমড মিন">ট্রিমড মিন</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interpretation Guide -->
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #f3e5f5; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Interpretation" data-bn="ব্যাখ্যা">ব্যাখ্যা</span>
+                    </h4>
+                    <p id="interpretationText" style="color: var(--gray); line-height: 1.6;" 
+                       data-en="Trimmed mean is more robust to outliers than regular mean. A large difference suggests outliers are affecting the regular mean."
+                       data-bn="ট্রিমড মিন নিয়মিত গড়ের চেয়ে আউটলায়ারের প্রতি বেশি শক্তিশালী। একটি বড় পার্থক্য ইঙ্গিত দেয় যে আউটলায়ার নিয়মিত গড়কে প্রভাবিত করছে।">
+                        ট্রিমড মিন নিয়মিত গড়ের চেয়ে আউটলায়ারের প্রতি বেশি শক্তিশালী। একটি বড় পার্থক্য ইঙ্গিত দেয় যে আউটলায়ার নিয়মিত গড়কে প্রভাবিত করছে।
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bn="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Box Plot with Outliers -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-box"></i>
+                        <span data-en="Box Plot with Outliers" data-bn="আউটলায়ার সহ বক্স প্লট">আউটলায়ার সহ বক্স প্লট</span>
+                    </h3>
+                    <div id="boxPlot" class="box-plot-container">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-box"></i>
+                            <p data-en="Enter data to see box plot" data-bন="ডেটা ইনপুট করে বক্স প্লট দেখুন">ডেটা ইনপুট করে বক্স প্লট দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="legend" id="boxPlotLegend"></div>
+                </div>
+
+                <!-- Trimmed vs Original Distribution -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-filter"></i>
+                        <span data-en="Before & After Trimming" data-bন="ট্রিমিং আগে ও পরে">ট্রিমিং আগে ও পরে</span>
+                    </h3>
+                    <div id="trimmingDistribution" class="box-plot-container">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-filter"></i>
+                            <p data-en="Calculate to see distribution comparison" data-bন="বন্টন তুলনা দেখতে গণনা করুন">বন্টন তুলনা দেখতে গণনা করুন</p>
+                        </div>
+                    </div>
+                    <div class="legend" id="distributionLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation Section -->
+        <div class="calculation-section">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bন="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <div class="steps-container" id="calculationSteps">
+                    <!-- Steps will be generated here -->
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" 
+                       data-en="Enter data and calculate to see step-by-step calculation" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bn="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="outliers">
+                    <div class="example-title" data-en="With Outliers" data-bn="আউটলায়ার সহ">আউটলায়ার সহ</div>
+                    <div class="example-data">10, 12, 15, 18, 20, 22, 25, 28, 30, 100</div>
+                    <div class="example-stats" data-en="Shows outlier effect" data-bn="আউটলায়ার প্রভাব দেখায়">আউটলায়ার প্রভাব দেখায়</div>
+                </button>
+                <button class="example-btn" data-example="symmetric">
+                    <div class="example-title" data-en="Symmetric Data" data-bন="সিমেট্রিক ডেটা">সিমেট্রিক ডেটা</div>
+                    <div class="example-data">10, 15, 20, 25, 30, 35, 40, 45, 50</div>
+                    <div class="example-stats" data-en="Little trimming effect" data-bন="অল্প ট্রিমিং প্রভাব">অল্প ট্রিমিং প্রভাব</div>
+                </button>
+                <button class="example-btn" data-example="skewed">
+                    <div class="example-title" data-en="Skewed Right" data-bন="ডানদিকে স্কিউড">ডানদিকে স্কিউড</div>
+                    <div class="example-data">10, 12, 14, 16, 18, 20, 25, 30, 40, 60</div>
+                    <div class="example-stats" data-en="Right skew effect" data-bন="ডান স্কিউ প্রভাব">ডান স্কিউ প্রভাব</div>
+                </button>
+                <button class="example-btn" data-example="test-scores">
+                    <div class="example-title" data-en="Test Scores" data-bn="পরীক্ষার নম্বর">পরীক্ষার নম্বর</div>
+                    <div class="example-data">45, 55, 65, 72, 78, 82, 85, 88, 92, 95, 98, 100</div>
+                    <div class="example-stats" data-en="Real-world example" data-bn="বাস্তব জীবনের উদাহরণ">বাস্তব জীবনের উদাহরণ</div>
+                </button>
+                <button class="example-btn" data-example="income">
+                    <div class="example-title" data-en="Income Data" data-bন="আয়ের ডেটা">আয়ের ডেটা</div>
+                    <div class="example-data">25000, 32000, 38000, 42000, 48000, 55000, 62000, 75000, 120000</div>
+                    <div class="example-stats" data-en="Income distribution" data-bন="আয়ের বন্টন">আয়ের বন্টন</div>
+                </button>
+                <button class="example-btn" data-example="random">
+                    <div class="example-title" data-en="Random Outliers" data-bন="র‍্যান্ডম আউটলায়ার">র‍্যান্ডম আউটলায়ার</div>
+                    <div class="example-data">15, 18, 20, 22, 24, 26, 28, 30, 32, 35, 80</div>
+                    <div class="example-stats" data-en="Single outlier effect" data-bন="একক আউটলায়ার প্রভাব">একক আউটলায়ার প্রভাব</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'outliers': {
+                    data: [10, 12, 15, 18, 20, 22, 25, 28, 30, 100],
+                    description: 'Shows how trimmed mean handles outliers'
+                },
+                'symmetric': {
+                    data: [10, 15, 20, 25, 30, 35, 40, 45, 50],
+                    description: 'Symmetric data with little trimming effect'
+                },
+                'skewed': {
+                    data: [10, 12, 14, 16, 18, 20, 25, 30, 40, 60],
+                    description: 'Right-skewed data shows trimming effect'
+                },
+                'test-scores': {
+                    data: [45, 55, 65, 72, 78, 82, 85, 88, 92, 95, 98, 100],
+                    description: 'Real-world test scores with potential outliers'
+                },
+                'income': {
+                    data: [25000, 32000, 38000, 42000, 48000, 55000, 62000, 75000, 120000],
+                    description: 'Income data showing high-income outliers'
+                },
+                'random': {
+                    data: [15, 18, 20, 22, 24, 26, 28, 30, 32, 35, 80],
+                    description: 'Single high outlier in otherwise consistent data'
+                }
+            };
+
+            // Configuration
+            let trimmingMethod = 'percentage';
+            let trimPercentage = 10;
+            let trimCount = 1;
+            let outlierMethod = 'iqr';
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Trimming Method Toggle
+                const methodBtns = document.querySelectorAll('.trim-method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        trimmingMethod = this.dataset.method;
+                        
+                        if (trimmingMethod === 'percentage') {
+                            document.getElementById('countContainer').style.display = 'none';
+                            document.querySelector('.trimming-slider-container').style.display = 'block';
+                        } else {
+                            document.getElementById('countContainer').style.display = 'block';
+                            document.querySelector('.trimming-slider-container').style.display = 'none';
+                        }
+                    });
+                });
+
+                // Outlier Method Toggle
+                const outlierBtns = document.querySelectorAll('.outlier-btn');
+                outlierBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        outlierBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        outlierMethod = this.dataset.method;
+                    });
+                });
+
+                // Trim Percentage Slider
+                const trimSlider = document.getElementById('trimSlider');
+                const trimPercentageDisplay = document.getElementById('trimPercentage');
+                
+                trimSlider.addEventListener('input', function() {
+                    trimPercentage = parseInt(this.value);
+                    trimPercentageDisplay.textContent = `${trimPercentage}%`;
+                    updateDataPreview();
+                });
+
+                // Trim Count Slider
+                const countSlider = document.getElementById('countSlider');
+                const trimCountDisplay = document.getElementById('trimCount');
+                
+                countSlider.addEventListener('input', function() {
+                    trimCount = parseInt(this.value);
+                    trimCountDisplay.textContent = trimCount;
+                    updateDataPreview();
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateTrimmedMean);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Real-time data input preview
+                document.getElementById('dataInput').addEventListener('input', updateDataPreview);
+
+                // Load initial example
+                loadExampleData('outliers');
+                calculateTrimmedMean();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function parseDataInput() {
+                const input = document.getElementById('dataInput').value.trim();
+                if (!input) return [];
+
+                // Split by commas, spaces, or new lines
+                const tokens = input.split(/[,\s\n]+/);
+                
+                // Parse numbers
+                return tokens.map(token => {
+                    const num = parseFloat(token);
+                    return isNaN(num) ? null : num;
+                }).filter(num => num !== null);
+            }
+
+            function updateDataPreview() {
+                const data = parseDataInput();
+                const preview = document.getElementById('dataPreview');
+                const dataCount = document.getElementById('dataCount');
+                const validCount = document.getElementById('validCount');
+                
+                preview.innerHTML = '';
+                
+                if (data.length === 0) {
+                    const placeholder = document.createElement('div');
+                    placeholder.style.color = 'var(--gray)';
+                    placeholder.style.textAlign = 'center';
+                    placeholder.style.padding = '1rem';
+                    placeholder.textContent = currentLanguage === 'bn' ? 
+                        'ডেটা ইনপুট করুন' : 'Enter data';
+                    preview.appendChild(placeholder);
+                } else {
+                    // Sort data for preview
+                    const sortedData = [...data].sort((a, b) => a - b);
+                    
+                    // Calculate trimmed data for preview
+                    const { trimmedData, keptData } = calculateTrimmedData(sortedData);
+                    
+                    // Show all data points with classification
+                    sortedData.forEach((value, index) => {
+                        const point = document.createElement('div');
+                        
+                        if (trimmedData.includes(value)) {
+                            point.className = 'data-point outlier';
+                            point.title = currentLanguage === 'bn' ? 
+                                `অপসারিত মান: ${value}` : `Removed value: ${value}`;
+                        } else if (keptData.includes(value)) {
+                            point.className = 'data-point kept';
+                            point.title = currentLanguage === 'bn' ? 
+                                `রক্ষিত মান: ${value}` : `Kept value: ${value}`;
+                        }
+                        
+                        point.innerHTML = `
+                            <span class="data-point-index">${index + 1}</span>
+                            <span class="data-point-value">${formatNumber(value)}</span>
+                        `;
+                        preview.appendChild(point);
+                    });
+                }
+                
+                // Update counts
+                dataCount.textContent = currentLanguage === 'bn' ? 
+                    `${data.length} টি মান` : 
+                    `${data.length} values`;
+                
+                validCount.textContent = currentLanguage === 'bn' ? 
+                    `${data.length} টি ভ্যালিড` : 
+                    `${data.length} valid`;
+            }
+
+            function formatNumber(num) {
+                if (Number.isInteger(num)) {
+                    return num.toString();
+                }
+                
+                const absNum = Math.abs(num);
+                if (absNum >= 1000 || absNum < 0.001) {
+                    return num.toExponential(2);
+                } else if (absNum < 1) {
+                    return num.toFixed(3);
+                } else {
+                    return num.toFixed(2);
+                }
+            }
+
+            function calculateTrimmedData(data) {
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                let trimCountActual;
+                
+                if (trimmingMethod === 'percentage') {
+                    const k = Math.floor(n * trimPercentage / 100);
+                    trimCountActual = k;
+                } else {
+                    trimCountActual = trimCount;
+                }
+                
+                // Ensure we don't trim too much
+                trimCountActual = Math.min(trimCountActual, Math.floor((n - 1) / 2));
+                
+                // Calculate which data points to keep
+                const keptData = sortedData.slice(trimCountActual, n - trimCountActual);
+                const trimmedData = [
+                    ...sortedData.slice(0, trimCountActual),
+                    ...sortedData.slice(n - trimCountActual)
+                ];
+                
+                return {
+                    originalData: sortedData,
+                    trimmedData,
+                    keptData,
+                    trimCount: trimCountActual
+                };
+            }
+
+            function detectOutliers(data) {
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                switch (outlierMethod) {
+                    case 'iqr':
+                        return detectOutliersIQR(sortedData);
+                    case 'zscore':
+                        return detectOutliersZScore(sortedData);
+                    case 'percentile':
+                        return detectOutliersPercentile(sortedData);
+                    default:
+                        return { outliers: [], nonOutliers: sortedData };
+                }
+            }
+
+            function detectOutliersIQR(data) {
+                const n = data.length;
+                const q1 = calculatePercentile(data, 25);
+                const q3 = calculatePercentile(data, 75);
+                const iqr = q3 - q1;
+                const lowerBound = q1 - 1.5 * iqr;
+                const upperBound = q3 + 1.5 * iqr;
+                
+                const outliers = data.filter(x => x < lowerBound || x > upperBound);
+                const nonOutliers = data.filter(x => x >= lowerBound && x <= upperBound);
+                
+                return { outliers, nonOutliers, q1, q3, iqr, lowerBound, upperBound };
+            }
+
+            function detectOutliersZScore(data) {
+                const mean = data.reduce((a, b) => a + b, 0) / data.length;
+                const std = Math.sqrt(data.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / data.length);
+                
+                const outliers = data.filter(x => Math.abs((x - mean) / std) > 2);
+                const nonOutliers = data.filter(x => Math.abs((x - mean) / std) <= 2);
+                
+                return { outliers, nonOutliers, mean, std };
+            }
+
+            function detectOutliersPercentile(data) {
+                const lowerPercentile = calculatePercentile(data, 5);
+                const upperPercentile = calculatePercentile(data, 95);
+                
+                const outliers = data.filter(x => x < lowerPercentile || x > upperPercentile);
+                const nonOutliers = data.filter(x => x >= lowerPercentile && x <= upperPercentile);
+                
+                return { outliers, nonOutliers, lowerPercentile, upperPercentile };
+            }
+
+            function calculatePercentile(data, percentile) {
+                const sortedData = [...data].sort((a, b) => a - b);
+                const index = (percentile / 100) * (sortedData.length - 1);
+                const lowerIndex = Math.floor(index);
+                const upperIndex = Math.ceil(index);
+                
+                if (lowerIndex === upperIndex) {
+                    return sortedData[lowerIndex];
+                }
+                
+                const weight = index - lowerIndex;
+                return sortedData[lowerIndex] * (1 - weight) + sortedData[upperIndex] * weight;
+            }
+
+            function calculateMean(data) {
+                if (data.length === 0) return 0;
+                return data.reduce((a, b) => a + b, 0) / data.length;
+            }
+
+            function calculateTrimmedMean() {
+                const data = parseDataInput();
+                
+                if (data.length < 3) {
+                    showError(currentLanguage === 'bn' ? 
+                        'ট্রিমড মিন গণনার জন্য কমপক্ষে ৩টি মান প্রয়োজন' : 
+                        'At least 3 values are required for trimmed mean calculation');
+                    return;
+                }
+                
+                // Calculate original mean
+                const originalMean = calculateMean(data);
+                
+                // Calculate trimmed data
+                const { originalData, trimmedData, keptData, trimCount } = calculateTrimmedData(data);
+                
+                // Calculate trimmed mean
+                const trimmedMean = calculateMean(keptData);
+                
+                // Detect outliers
+                const outlierResult = detectOutliers(data);
+                
+                // Update results
+                updateResults(originalMean, trimmedMean, data.length, trimmedData.length, keptData.length, outlierResult.outliers.length);
+                
+                // Update visualizations
+                updateVisualizations(data, originalMean, trimmedMean, keptData, trimmedData, outlierResult);
+                
+                // Update step-by-step calculation
+                updateStepByStep(data, originalMean, trimmedMean, keptData, trimmedData, trimCount, outlierResult);
+            }
+
+            function updateResults(originalMean, trimmedMean, totalCount, removedCount, keptCount, outlierCount) {
+                // Update main results
+                document.getElementById('originalMean').textContent = formatNumber(originalMean);
+                document.getElementById('trimmedMean').textContent = formatNumber(trimmedMean);
+                
+                // Update result details
+                document.getElementById('originalDetails').textContent = currentLanguage === 'bn' ? 
+                    `${totalCount} টি মানের গড়` : 
+                    `Mean of ${totalCount} values`;
+                
+                document.getElementById('trimmedDetails').textContent = currentLanguage === 'bn' ? 
+                    `${keptCount} টি মানের গড় (${removedCount} টি অপসারিত)` : 
+                    `Mean of ${keptCount} values (${removedCount} removed)`;
+                
+                // Update statistics
+                const difference = trimmedMean - originalMean;
+                const reduction = originalMean !== 0 ? Math.abs(difference / originalMean * 100) : 0;
+                
+                document.getElementById('differenceResult').textContent = formatNumber(difference);
+                document.getElementById('reductionResult').textContent = formatNumber(reduction) + '%';
+                document.getElementById('trimmedCount').textContent = removedCount;
+                document.getElementById('outlierCount').textContent = outlierCount;
+                
+                // Update breakdown
+                document.getElementById('totalCount').textContent = totalCount;
+                document.getElementById('removedCount').textContent = removedCount;
+                document.getElementById('keptCount').textContent = keptCount;
+                
+                // Update interpretation
+                updateInterpretation(originalMean, trimmedMean, difference, reduction, outlierCount);
+                
+                // Update comparison chart
+                updateComparisonChart(originalMean, trimmedMean);
+            }
+
+            function updateInterpretation(originalMean, trimmedMean, difference, reduction, outlierCount) {
+                const interpretation = document.getElementById('interpretationText');
+                
+                let interpretationText = '';
+                
+                if (currentLanguage === 'bn') {
+                    if (Math.abs(reduction) > 10) {
+                        interpretationText = `ট্রিমড মিন নিয়মিত গড় থেকে ${formatNumber(Math.abs(reduction))}% ${difference > 0 ? 'বেশি' : 'কম'}। `;
+                        interpretationText += `এটি নির্দেশ করে যে ${outlierCount} টি আউটলায়ার/চরম মান নিয়মিত গড়কে ${difference > 0 ? 'বাড়িয়ে' : 'কমিয়ে'} দিচ্ছে। `;
+                        interpretationText += `ট্রিমড মিন আরও শক্তিশালী কেন্দ্রীয় প্রবণতা উপস্থাপন করে।`;
+                    } else {
+                        interpretationText = `ট্রিমড মিন নিয়মিত গড়ের খুব কাছাকাছি (${formatNumber(Math.abs(reduction))}% পার্থক্য)। `;
+                        interpretationText += `এটি নির্দেশ করে যে ডেটা তুলনামূলকভাবে সুষম এবং আউটলায়ার/চরম মানের প্রভাব কম।`;
+                    }
+                } else {
+                    if (Math.abs(reduction) > 10) {
+                        interpretationText = `Trimmed mean is ${formatNumber(Math.abs(reduction))}% ${difference > 0 ? 'higher' : 'lower'} than the regular mean. `;
+                        interpretationText += `This indicates that ${outlierCount} outliers/extreme values are ${difference > 0 ? 'inflating' : 'deflating'} the regular mean. `;
+                        interpretationText += `The trimmed mean represents a more robust central tendency.`;
+                    } else {
+                        interpretationText = `Trimmed mean is very close to regular mean (${formatNumber(Math.abs(reduction))}% difference). `;
+                        interpretationText += `This indicates the data is relatively symmetric with minimal outlier/extreme value influence.`;
+                    }
+                }
+                
+                interpretation.textContent = interpretationText;
+            }
+
+            function updateComparisonChart(originalMean, trimmedMean) {
+                const chart = document.getElementById('comparisonChart');
+                chart.innerHTML = '';
+                
+                const maxValue = Math.max(originalMean, trimmedMean) * 1.2;
+                const height = 150;
+                
+                // Original mean bar
+                const originalBar = document.createElement('div');
+                originalBar.className = 'comparison-bar original';
+                originalBar.style.height = `${(originalMean / maxValue) * 100}%`;
+                originalBar.title = currentLanguage === 'bn' ? 
+                    `অরিজিনাল মিন: ${formatNumber(originalMean)}` : 
+                    `Original Mean: ${formatNumber(originalMean)}`;
+                chart.appendChild(originalBar);
+                
+                // Trimmed mean bar
+                const trimmedBar = document.createElement('div');
+                trimmedBar.className = 'comparison-bar trimmed';
+                trimmedBar.style.height = `${(trimmedMean / maxValue) * 100}%`;
+                trimmedBar.title = currentLanguage === 'bn' ? 
+                    `ট্রিমড মিন: ${formatNumber(trimmedMean)}` : 
+                    `Trimmed Mean: ${formatNumber(trimmedMean)}`;
+                chart.appendChild(trimmedBar);
+            }
+
+            function updateVisualizations(data, originalMean, trimmedMean, keptData, trimmedData, outlierResult) {
+                updateBoxPlot(data, originalMean, trimmedMean, outlierResult);
+                updateDistributionChart(data, keptData, trimmedData);
+            }
+
+            function updateBoxPlot(data, originalMean, trimmedMean, outlierResult) {
+                const boxPlot = document.getElementById('boxPlot');
+                boxPlot.innerHTML = '';
+                
+                if (data.length < 2) return;
+                
+                const sortedData = [...data].sort((a, b) => a - b);
+                const min = sortedData[0];
+                const max = sortedData[sortedData.length - 1];
+                const q1 = calculatePercentile(sortedData, 25);
+                const median = calculatePercentile(sortedData, 50);
+                const q3 = calculatePercentile(sortedData, 75);
+                
+                const range = max - min;
+                const width = boxPlot.offsetWidth - 100;
+                const height = 200;
+                
+                // Create box
+                const box = document.createElement('div');
+                box.className = 'box-plot';
+                
+                const boxLeft = ((q1 - min) / range) * width + 50;
+                const boxWidth = ((q3 - q1) / range) * width;
+                
+                box.style.left = `${boxLeft}px`;
+                box.style.width = `${boxWidth}px`;
+                box.style.top = `${height/2 - 20}px`;
+                
+                boxPlot.appendChild(box);
+                
+                // Add whiskers
+                const lowerWhisker = document.createElement('div');
+                lowerWhisker.className = 'box-whisker';
+                lowerWhisker.style.left = `${((sortedData.find(x => x >= min) - min) / range) * width + 50}px`;
+                lowerWhisker.style.top = `${height/2 - 15}px`;
+                boxPlot.appendChild(lowerWhisker);
+                
+                const upperWhisker = document.createElement('div');
+                upperWhisker.className = 'box-whisker';
+                upperWhisker.style.left = `${((sortedData.findLast(x => x <= max) - min) / range) * width + 50}px`;
+                upperWhisker.style.top = `${height/2 - 15}px`;
+                boxPlot.appendChild(upperWhisker);
+                
+                // Add median line
+                const medianLine = document.createElement('div');
+                medianLine.style.position = 'absolute';
+                medianLine.style.height = '40px';
+                medianLine.style.width = '2px';
+                medianLine.style.background = 'var(--dark)';
+                medianLine.style.left = `${((median - min) / range) * width + 50}px`;
+                medianLine.style.top = `${height/2 - 20}px`;
+                boxPlot.appendChild(medianLine);
+                
+                // Add outliers
+                if (outlierResult.outliers && outlierResult.outliers.length > 0) {
+                    outlierResult.outliers.forEach(outlier => {
+                        const outlierPoint = document.createElement('div');
+                        outlierPoint.className = 'box-outlier';
+                        outlierPoint.style.left = `${((outlier - min) / range) * width + 50}px`;
+                        outlierPoint.style.top = `${height/2}px`;
+                        outlierPoint.title = `Outlier: ${formatNumber(outlier)}`;
+                        boxPlot.appendChild(outlierPoint);
+                    });
+                }
+                
+                // Add mean lines
+                const originalMeanLine = document.createElement('div');
+                originalMeanLine.className = 'box-mean';
+                originalMeanLine.style.background = 'var(--original-color)';
+                originalMeanLine.style.left = `${((originalMean - min) / range) * width + 50}px`;
+                originalMeanLine.style.top = `${height/2 - 25}px`;
+                boxPlot.appendChild(originalMeanLine);
+                
+                const trimmedMeanLine = document.createElement('div');
+                trimmedMeanLine.className = 'box-mean';
+                trimmedMeanLine.style.background = 'var(--trimmed-color)';
+                trimmedMeanLine.style.left = `${((trimmedMean - min) / range) * width + 50}px`;
+                trimmedMeanLine.style.top = `${height/2 - 25}px`;
+                boxPlot.appendChild(trimmedMeanLine);
+                
+                // Update legend
+                const legend = document.getElementById('boxPlotLegend');
+                legend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color original"></div>
+                        <span data-en="Original Mean" data-bn="অরিজিনাল মিন">অরিজিনাল মিন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color trimmed"></div>
+                        <span data-en="Trimmed Mean" data-bন="ট্রিমড মিন">ট্রিমড মিন</span>
+                    </div>
+                    ${outlierResult.outliers.length > 0 ? `
+                    <div class="legend-item">
+                        <div class="legend-color outlier"></div>
+                        <span data-en="Outliers" data-bন="আউটলায়ার">আউটলায়ার</span>
+                    </div>
+                    ` : ''}
+                `;
+            }
+
+            function updateDistributionChart(data, keptData, trimmedData) {
+                const distribution = document.getElementById('trimmingDistribution');
+                distribution.innerHTML = '';
+                
+                if (data.length < 2) return;
+                
+                // Create before/after visualization
+                const sortedData = [...data].sort((a, b) => a - b);
+                const min = sortedData[0];
+                const max = sortedData[sortedData.length - 1];
+                const range = max - min;
+                const width = distribution.offsetWidth - 100;
+                const height = 180;
+                
+                // Create before distribution (all points)
+                const beforeTitle = document.createElement('div');
+                beforeTitle.style.position = 'absolute';
+                beforeTitle.style.top = '20px';
+                beforeTitle.style.left = '20px';
+                beforeTitle.style.fontSize = '0.9rem';
+                beforeTitle.style.fontWeight = '600';
+                beforeTitle.textContent = currentLanguage === 'bn' ? 'ট্রিমিং আগে' : 'Before Trimming';
+                distribution.appendChild(beforeTitle);
+                
+                sortedData.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.style.position = 'absolute';
+                    point.style.width = '6px';
+                    point.style.height = '6px';
+                    point.style.borderRadius = '50%';
+                    point.style.background = trimmedData.includes(value) ? 'var(--outlier-color)' : 'var(--original-color)';
+                    point.style.left = `${((value - min) / range) * width + 50}px`;
+                    point.style.top = `${40 + (index % 3) * 15}px`;
+                    point.title = `${formatNumber(value)}`;
+                    distribution.appendChild(point);
+                });
+                
+                // Create after distribution (kept points)
+                const afterTitle = document.createElement('div');
+                afterTitle.style.position = 'absolute';
+                afterTitle.style.top = '100px';
+                afterTitle.style.left = '20px';
+                afterTitle.style.fontSize = '0.9rem';
+                afterTitle.style.fontWeight = '600';
+                afterTitle.textContent = currentLanguage === 'bn' ? 'ট্রিমিং পরে' : 'After Trimming';
+                distribution.appendChild(afterTitle);
+                
+                keptData.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.style.position = 'absolute';
+                    point.style.width = '8px';
+                    point.style.height = '8px';
+                    point.style.borderRadius = '50%';
+                    point.style.background = 'var(--kept-color)';
+                    point.style.left = `${((value - min) / range) * width + 50}px`;
+                    point.style.top = `${120 + (index % 3) * 15}px`;
+                    point.title = `${formatNumber(value)}`;
+                    distribution.appendChild(point);
+                });
+                
+                // Update legend
+                const legend = document.getElementById('distributionLegend');
+                legend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color kept"></div>
+                        <span data-en="Kept Values" data-bন="রক্ষিত মান">রক্ষিত মান</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color outlier"></div>
+                        <span data-en="Trimmed Values" data-bন="অপসারিত মান">অপসারিত মান</span>
+                    </div>
+                `;
+            }
+
+            function updateStepByStep(data, originalMean, trimmedMean, keptData, trimmedData, trimCount, outlierResult) {
+                const stepsContainer = document.getElementById('calculationSteps');
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                let stepsHTML = '';
+                
+                // Step 1: Original Data
+                stepsHTML += `
+                    <div class="step">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Original Data" data-bn="ধাপ ১: অরিজিনাল ডেটা">ধাপ ১: অরিজিনাল ডেটা</h4>
+                            <p data-en="Start with the original dataset" data-bn="অরিজিনাল ডেটাসেট দিয়ে শুরু করুন">অরিজিনাল ডেটাসেট দিয়ে শুরু করুন</p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Index" data-bন="সূচক">সূচক</th>
+                                            <th data-en="Value" data-bn="মান">মান</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                
+                sortedData.forEach((value, index) => {
+                    stepsHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${formatNumber(value)}</td>
+                        </tr>
+                    `;
+                });
+                
+                stepsHTML += `
+                                    </tbody>
+                                </table>
+                                <p><strong data-en="Original Mean Calculation:" data-bন="অরিজিনাল মিন গণনা:">অরিজিনাল মিন গণনা:</strong></p>
+                                <div class="step-equation">
+                                    x̄_original = Σx / n = ${formatNumber(sortedData.reduce((a, b) => a + b, 0))} / ${n} = ${formatNumber(originalMean)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Step 2: Sorting and Trimming
+                stepsHTML += `
+                    <div class="step">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Sorting and Trimming" data-bন="ধাপ ২: সর্টিং এবং ট্রিমিং">ধাপ ২: সর্টিং এবং ট্রিমিং</h4>
+                            <p data-en="Sort data and remove extreme values" data-bন="ডেটা সর্ট করুন এবং চরম মান অপসারণ করুন">ডেটা সর্ট করুন এবং চরম মান অপসারণ করুন</p>
+                            <div class="step-details">
+                                <p><strong data-en="Sorted Data:" data-bন="সর্টেড ডেটা:">সর্টেড ডেটা:</strong></p>
+                                <p>${sortedData.map(v => formatNumber(v)).join(', ')}</p>
+                                <p><strong data-en="Trimming Method:" data-bন="ট্রিমিং পদ্ধতি:">ট্রিমিং পদ্ধতি:</strong></p>
+                                <p>${currentLanguage === 'bn' ? 
+                                    `${trimmingMethod === 'percentage' ? `${trimPercentage}% ট্রিমিং` : `${trimCount} মান ট্রিমিং`}` :
+                                    `${trimmingMethod === 'percentage' ? `${trimPercentage}% trimming` : `${trimCount} values trimming`}`}</p>
+                                <p><strong data-en="Trimmed Values:" data-bন="অপসারিত মান:">অপসারিত মান:</strong></p>
+                                <p style="color: var(--outlier-color);">${trimmedData.map(v => formatNumber(v)).join(', ')}</p>
+                                <p><strong data-en="Kept Values:" data-bন="রক্ষিত মান:">রক্ষিত মান:</strong></p>
+                                <p style="color: var(--kept-color);">${keptData.map(v => formatNumber(v)).join(', ')}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Step 3: Trimmed Mean Calculation
+                stepsHTML += `
+                    <div class="step">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Trimmed Mean Calculation" data-bন="ধাপ ৩: ট্রিমড মিন গণনা">ধাপ ৩: ট্রিমড মিন গণনা</h4>
+                            <p data-en="Calculate mean of remaining values" data-bন="অবশিষ্ট মানের গড় গণনা করুন">অবশিষ্ট মানের গড় গণনা করুন</p>
+                            <div class="step-details">
+                                <div class="step-equation">
+                                    x̄_trimmed = Σx_kept / n_kept
+                                </div>
+                                <div class="step-equation">
+                                    = ${formatNumber(keptData.reduce((a, b) => a + b, 0))} / ${keptData.length} = ${formatNumber(trimmedMean)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Step 4: Comparison and Analysis
+                stepsHTML += `
+                    <div class="step">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Comparison and Analysis" data-bন="ধাপ ৪: তুলনা এবং বিশ্লেষণ">ধাপ ৪: তুলনা এবং বিশ্লেষণ</h4>
+                            <p data-en="Compare original and trimmed means" data-bন="অরিজিনাল এবং ট্রিমড মিন তুলনা করুন">অরিজিনাল এবং ট্রিমড মিন তুলনা করুন</p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Metric" data-bন="মেট্রিক">মেট্রিক</th>
+                                            <th data-en="Value" data-bন="মান">মান</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td data-en="Original Mean" data-bন="অরিজিনাল মিন">অরিজিনাল মিন</td>
+                                            <td>${formatNumber(originalMean)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td data-en="Trimmed Mean" data-bন="ট্রিমড মিন">ট্রিমড মিন</td>
+                                            <td>${formatNumber(trimmedMean)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td data-en="Difference" data-bন="পার্থক্য">পার্থক্য</td>
+                                            <td>${formatNumber(trimmedMean - originalMean)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td data-en="Reduction" data-bন="হ্রাস">হ্রাস</td>
+                                            <td>${formatNumber(Math.abs((trimmedMean - originalMean) / originalMean * 100))}%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p><strong data-en="Outlier Detection:" data-bন="আউটলায়ার শনাক্তকরণ:">আউটলায়ার শনাক্তকরণ:</strong></p>
+                                <p>${currentLanguage === 'bn' ? 
+                                    `${outlierResult.outliers.length} টি আউটলায়ার শনাক্ত করা হয়েছে` :
+                                    `${outlierResult.outliers.length} outliers detected`}</p>
+                                ${outlierResult.outliers.length > 0 ? `
+                                <p>${outlierResult.outliers.map(v => formatNumber(v)).join(', ')}</p>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                stepsContainer.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                document.getElementById('dataInput').value = data.data.join(', ');
+                updateDataPreview();
+                calculateTrimmedMean();
+            }
+
+            function clearCalculator() {
+                document.getElementById('dataInput').value = '';
+                updateDataPreview();
+                
+                // Reset all results
+                document.getElementById('originalMean').textContent = '--';
+                document.getElementById('trimmedMean').textContent = '--';
+                document.getElementById('originalDetails').textContent = currentLanguage === 'bn' ? 
+                    'সব ডেটা পয়েন্ট অন্তর্ভুক্ত' : 'All data points included';
+                document.getElementById('trimmedDetails').textContent = currentLanguage === 'bn' ? 
+                    'চরম মান অপসারিত' : 'Extreme values removed';
+                document.getElementById('differenceResult').textContent = '--';
+                document.getElementById('reductionResult').textContent = '--';
+                document.getElementById('trimmedCount').textContent = '0';
+                document.getElementById('outlierCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                document.getElementById('removedCount').textContent = '0';
+                document.getElementById('keptCount').textContent = '0';
+                
+                // Clear visualizations
+                document.getElementById('comparisonChart').innerHTML = '';
+                document.getElementById('boxPlot').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-box"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বক্স প্লট দেখুন' : 'Enter data to see box plot'}</p>
+                    </div>
+                `;
+                document.getElementById('trimmingDistribution').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-filter"></i>
+                        <p>${currentLanguage === 'bn' ? 'বন্টন তুলনা দেখতে গণনা করুন' : 'Calculate to see distribution comparison'}</p>
+                    </div>
+                `;
+                document.getElementById('boxPlotLegend').innerHTML = '';
+                document.getElementById('distributionLegend').innerHTML = '';
+                
+                // Clear steps
+                document.getElementById('calculationSteps').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" 
+                       data-en="Enter data and calculate to see step-by-step calculation" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন
+                    </p>
+                `;
+                
+                // Update interpretation
+                document.getElementById('interpretationText').textContent = currentLanguage === 'bn' ? 
+                    'ট্রিমড মিন নিয়মিত গড়ের চেয়ে আউটলায়ারের প্রতি বেশি শক্তিশালী। একটি বড় পার্থক্য ইঙ্গিত দেয় যে আউটলায়ার নিয়মিত গড়কে প্রভাবিত করছে।' :
+                    'Trimmed mean is more robust to outliers than regular mean. A large difference suggests outliers are affecting the regular mean.';
+                
+                updateDynamicContent();
+            }
+
+            function showError(message) {
+                // Simple error display
+                alert(message);
+            }
+        });
+    </script>
+</body>
+</html>

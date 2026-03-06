@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mean/Median/Mode Calculator | Basic Statistics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --mean-color: #6C63FF;
+            --median-color: #36D1DC;
+            --mode-color: #FF6584;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--mean-color), var(--median-color), var(--mode-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Results Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.mean::before { background: var(--mean-color); }
+        .result-card.median::before { background: var(--median-color); }
+        .result-card.mode::before { background: var(--mode-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.mean .result-icon { color: var(--mean-color); }
+        .result-card.median .result-icon { color: var(--median-color); }
+        .result-card.mode .result-icon { color: var(--mode-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Bar Chart Styling */
+        .bar-chart {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 1rem 0;
+            gap: 0.5rem;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            max-width: 60px;
+        }
+
+        .bar {
+            width: 80%;
+            background: var(--primary);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .bar-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .mean-formula .formula-icon { background: var(--mean-color); }
+        .median-formula .formula-icon { background: var(--median-color); }
+        .mode-formula .formula-icon { background: var(--mode-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Calculation Tables */
+        .calculation-tables {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        .data-table .formula-cell {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            background: var(--formula-bg);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.mean { background: var(--mean-color); }
+        .legend-color.median { background: var(--median-color); }
+        .legend-color.mode { background: var(--mode-color); }
+        .legend-color.data { background: var(--primary); }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .calculation-tables,
+            .step-by-step {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .data-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="container">
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Mean/Median/Mode Calculator" data-bn="মিন/মিডিয়ান/মোড ক্যালকুলেটর">মিন/মিডিয়ান/মোড ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Interactive calculator with detailed formulas, step-by-step calculations, tables, and visual charts for Mean, Median, and Mode" data-bn="পাটিগণিতীয় গড়, মিডিয়ান, এবং মোডের জন্য বিস্তারিত সূত্র, ধাপে ধাপে গণনা, টেবিল, এবং ভিজ্যুয়াল চার্ট সহ ইন্টারেক্টিভ ক্যালকুলেটর">
+                পাটিগণিতীয় গড়, মিডিয়ান, এবং মোডের জন্য বিস্তারিত সূত্র, ধাপে ধাপে গণনা, টেবিল, এবং ভিজ্যুয়াল চার্ট সহ ইন্টারেক্টিভ ক্যালকুলেটর
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="Enter data separated by commas, spaces, or new lines
+Example: 10, 20, 30, 40, 50
+or: 10 20 30 40 50
+or: 
+10
+20
+30
+40
+50" data-bn-placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50
+বা: 10 20 30 40 50
+বা: 
+10
+20
+30
+40
+50">85, 90, 78, 92, 85, 88, 92, 85</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate" data-bn="গণনা করুন">গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bn="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Calculation Results" data-bn="গণনার ফলাফল">গণনার ফলাফল</span>
+                </h2>
+                
+                <div class="results-grid">
+                    <!-- Mean Result -->
+                    <div class="result-card mean">
+                        <div class="result-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="result-title" data-en="Arithmetic Mean" data-bn="পাটিগণিতীয় গড়">পাটিগণিতীয় গড়</div>
+                        <div class="result-value" id="meanResult">--</div>
+                    </div>
+
+                    <!-- Median Result -->
+                    <div class="result-card median">
+                        <div class="result-icon">
+                            <i class="fas fa-sort-amount-up"></i>
+                        </div>
+                        <div class="result-title" data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</div>
+                        <div class="result-value" id="medianResult">--</div>
+                    </div>
+
+                    <!-- Mode Result -->
+                    <div class="result-card mode">
+                        <div class="result-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="result-title" data-en="Mode" data-bn="মোড">মোড</div>
+                        <div class="result-value" id="modeResult">--</div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Points" data-bn="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                        <div class="stat-value" id="dataCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Maximum" data-bn="সর্বোচ্চ মান">সর্বোচ্চ মান</div>
+                        <div class="stat-value" id="maxValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Minimum" data-bn="সর্বনিম্ন মান">সর্বনিম্ন মান</div>
+                        <div class="stat-value" id="minValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Range" data-bn="পরিসর">পরিসর</div>
+                        <div class="stat-value" id="rangeValue">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Data Visualization" data-bn="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Data Distribution Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Data Distribution" data-bn="ডেটা বণ্টন">ডেটা বণ্টন</span>
+                    </h3>
+                    <div id="dataDistributionChart" class="bar-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p data-en="Enter data to see distribution chart" data-bn="ডেটা ইনপুট করে বণ্টন চার্ট দেখুন">
+                                ডেটা ইনপুট করে বণ্টন চার্ট দেখুন
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="distributionChartLegend"></div>
+                </div>
+
+                <!-- Mean/Median Comparison Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Mean vs Median" data-bn="গড় বনাম মিডিয়ান">গড় বনাম মিডিয়ান</span>
+                    </h3>
+                    <div id="meanMedianChart" class="bar-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-balance-scale"></i>
+                            <p data-en="Enter data to see mean/median comparison" data-bn="ডেটা ইনপুট করে গড়/মিডিয়ান তুলনা দেখুন">
+                                ডেটা ইনপুট করে গড়/মিডিয়ান তুলনা দেখুন
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="meanMedianChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Definitions" data-bn="সূত্র এবং সংজ্ঞা">সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Mean Formula -->
+                <div class="formula-card mean-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Arithmetic Mean" data-bn="পাটিগণিতীয় গড়">পাটিগণিতীয় গড়</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="The average of all numbers in the dataset" data-bn="ডেটাসেটের সমস্ত সংখ্যার গড়">
+                            ডেটাসেটের সমস্ত সংখ্যার গড়
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="Mean = Σx / n" data-bn="গড় = Σx / n">গড় = Σx / n</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Σx = Sum of all values" data-bn="Σx = সমস্ত মানের যোগফল">Σx = সমস্ত মানের যোগফল</li>
+                            <li data-en="n = Number of values" data-bn="n = মানের সংখ্যা">n = মানের সংখ্যা</li>
+                            <li data-en="Add all numbers, then divide by count" data-bn="সমস্ত সংখ্যা যোগ করুন, তারপর সংখ্যা দ্বারা ভাগ করুন">
+                                সমস্ত সংখ্যা যোগ করুন, তারপর সংখ্যা দ্বারা ভাগ করুন
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Median Formula -->
+                <div class="formula-card median-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-sort-amount-up"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="The middle value when data is sorted" data-bn="ডেটা সাজানো হলে মধ্যবর্তী মান">
+                            ডেটা সাজানো হলে মধ্যবর্তী মান
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="Middle value of sorted data" data-bn="সাজানো ডেটার মধ্যবর্তী মান">সাজানো ডেটার মধ্যবর্তী মান</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Sort data in ascending order" data-bn="ডেটা ঊর্ধ্বক্রমে সাজান">ডেটা ঊর্ধ্বক্রমে সাজান</li>
+                            <li data-en="If odd count: middle value" data-bn="বিজোড় সংখ্যা: মধ্যবর্তী মান">বিজোড় সংখ্যা: মধ্যবর্তী মান</li>
+                            <li data-en="If even count: average of two middle values" data-bn="জোড় সংখ্যা: দুই মধ্যবর্তী মানের গড়">
+                                জোড় সংখ্যা: দুই মধ্যবর্তী মানের গড়
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Mode Formula -->
+                <div class="formula-card mode-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Mode" data-bn="মোড">মোড</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="The most frequently occurring value" data-bn="সবচেয়ে বেশি বার সংঘটিত মান">
+                            সবচেয়ে বেশি বার সংঘটিত মান
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="Value with highest frequency" data-bn="সর্বোচ্চ ফ্রিকোয়েন্সি সহ মান">সর্বোচ্চ ফ্রিকোয়েন্সি সহ মান</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Count frequency of each value" data-bn="প্রতি মানের ফ্রিকোয়েন্সি গণনা করুন">প্রতি মানের ফ্রিকোয়েন্সি গণনা করুন</li>
+                            <li data-en="Find value with maximum frequency" data-bn="সর্বাধিক ফ্রিকোয়েন্সি সহ মান খুঁজুন">সর্বাধিক ফ্রিকোয়েন্সি সহ মান খুঁজুন</li>
+                            <li data-en="Can have multiple modes or no mode" data-bn="একাধিক মোড বা কোন মোড নাও থাকতে পারে">
+                                একাধিক মোড বা কোন মোড নাও থাকতে পারে
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculation Tables -->
+        <div class="calculation-tables">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Calculation Tables" data-bn="বিস্তারিত গণনা টেবিল">বিস্তারিত গণনা টেবিল</span>
+            </h2>
+            
+            <div id="tablesContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" data-en="Enter data and click Calculate to see detailed tables" data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bn="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter data and click Calculate to see step-by-step calculations" data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bn="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="simple">
+                    <span data-en="Simple Example" data-bn="সাধারণ উদাহরণ">সাধারণ উদাহরণ</span>
+                    <span class="example-data">10, 20, 30, 40, 50</span>
+                </button>
+                <button class="example-btn" data-example="grades">
+                    <span data-en="Student Grades" data-bn="ছাত্র গ্রেড">ছাত্র গ্রেড</span>
+                    <span class="example-data">85, 90, 78, 92, 85, 88, 92, 85</span>
+                </button>
+                <button class="example-btn" data-example="prices">
+                    <span data-en="Product Prices" data-bn="পণ্যের দাম">পণ্যের দাম</span>
+                    <span class="example-data">150, 200, 175, 300, 250, 200, 225</span>
+                </button>
+                <button class="example-btn" data-example="temperatures">
+                    <span data-en="Temperature Data" data-bn="তাপমাত্রা ডেটা">তাপমাত্রা ডেটা</span>
+                    <span class="example-data">22, 24, 21, 25, 23, 24, 24, 22</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                simple: [10, 20, 30, 40, 50],
+                grades: [85, 90, 78, 92, 85, 88, 92, 85],
+                prices: [150, 200, 175, 300, 250, 200, 225],
+                temperatures: [22, 24, 21, 25, 23, 24, 24, 22]
+            };
+
+            // Chart data
+            let chartData = [];
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateStatistics);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateStatistics();
+                    }
+                });
+
+                // Calculate with initial data
+                setTimeout(() => {
+                    calculateStatistics();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    } else {
+                        element.placeholder = element.getAttribute('placeholder');
+                    }
+                });
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateStatistics() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে কিছু ডেটা ইনপুট করুন' : 'Please enter some data');
+                    return;
+                }
+
+                const data = parseInputData(input);
+                
+                if (data.length === 0) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে বৈধ সংখ্যা ইনপুট করুন' : 'Please enter valid numbers');
+                    return;
+                }
+
+                // Store chart data
+                chartData = [...data];
+                
+                // Calculate statistics
+                const mean = calculateMean(data);
+                const median = calculateMedian(data);
+                const mode = calculateMode(data);
+                const frequency = getFrequency(data);
+                const sortedData = [...data].sort((a, b) => a - b);
+
+                // Update results
+                updateResults(data, mean, median, mode);
+                
+                // Update charts
+                updateCharts(data, mean, median, mode, frequency);
+                
+                // Update detailed tables
+                updateCalculationTables(data, frequency, sortedData, mean, median, mode);
+                
+                // Update step-by-step calculations
+                updateStepByStep(data, frequency, sortedData, mean, median, mode);
+            }
+
+            function calculateMean(data) {
+                const sum = data.reduce((a, b) => a + b, 0);
+                return sum / data.length;
+            }
+
+            function calculateMedian(data) {
+                const sorted = [...data].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                
+                if (sorted.length % 2 === 0) {
+                    return (sorted[mid - 1] + sorted[mid]) / 2;
+                } else {
+                    return sorted[mid];
+                }
+            }
+
+            function calculateMode(data) {
+                const frequency = getFrequency(data);
+                const maxFreq = Math.max(...Object.values(frequency));
+                
+                if (maxFreq === 1) {
+                    return [];
+                }
+                
+                return Object.entries(frequency)
+                    .filter(([_, freq]) => freq === maxFreq)
+                    .map(([num, _]) => parseFloat(num));
+            }
+
+            function getFrequency(data) {
+                const frequency = {};
+                data.forEach(num => {
+                    frequency[num] = (frequency[num] || 0) + 1;
+                });
+                return frequency;
+            }
+
+            function updateResults(data, mean, median, mode) {
+                // Update main results
+                document.getElementById('meanResult').textContent = mean.toFixed(2);
+                document.getElementById('medianResult').textContent = median.toFixed(2);
+                document.getElementById('modeResult').textContent = 
+                    mode.length === 0 ? 
+                    (currentLanguage === 'bn' ? 'কোন মোড নেই' : 'No mode') : 
+                    mode.join(', ');
+
+                // Update statistics
+                document.getElementById('dataCount').textContent = data.length;
+                
+                const max = Math.max(...data);
+                const min = Math.min(...data);
+                const range = max - min;
+                
+                document.getElementById('maxValue').textContent = max.toFixed(2);
+                document.getElementById('minValue').textContent = min.toFixed(2);
+                document.getElementById('rangeValue').textContent = range.toFixed(2);
+            }
+
+            function updateCharts(data, mean, median, mode, frequency) {
+                // Update Data Distribution Chart
+                updateDataDistributionChart(data, frequency, mode);
+                
+                // Update Mean vs Median Chart
+                updateMeanMedianChart(data, mean, median);
+                
+                // Update Chart Legends
+                updateChartLegends(mean, median, mode);
+            }
+
+            function updateDataDistributionChart(data, frequency, mode) {
+                const distributionChart = document.getElementById('dataDistributionChart');
+                
+                // Clear previous chart
+                distributionChart.innerHTML = '';
+                
+                // Get unique sorted values
+                const uniqueValues = [...new Set(data)].sort((a, b) => a - b);
+                
+                if (uniqueValues.length === 0) {
+                    distributionChart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বণ্টন চার্ট দেখুন' : 'Enter data to see distribution chart'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Calculate frequency for each unique value
+                const frequencies = uniqueValues.map(value => {
+                    return data.filter(x => x === value).length;
+                });
+                
+                // Calculate bar height scale
+                const maxFrequency = Math.max(...frequencies);
+                const chartHeight = 250;
+                
+                // Create bars
+                uniqueValues.forEach((value, index) => {
+                    const freq = frequencies[index];
+                    const barHeight = (freq / maxFrequency) * (chartHeight - 50);
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'bar-container';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = `${barHeight}px`;
+                    
+                    // Color based on mode
+                    const isMode = mode.includes(value);
+                    bar.style.background = isMode ? 'var(--mode-color)' : 
+                                        index % 2 === 0 ? 'var(--mean-color)' : 'var(--median-color)';
+                    
+                    const barValue = document.createElement('div');
+                    barValue.className = 'bar-value';
+                    barValue.textContent = freq;
+                    
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'bar-label';
+                    barLabel.textContent = value.toFixed(2);
+                    
+                    bar.appendChild(barValue);
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(barLabel);
+                    distributionChart.appendChild(barContainer);
+                });
+            }
+
+            function updateMeanMedianChart(data, mean, median) {
+                const meanMedianChart = document.getElementById('meanMedianChart');
+                
+                // Clear previous chart
+                meanMedianChart.innerHTML = '';
+                
+                const chartHeight = 250;
+                const maxValue = Math.max(...data, mean, median);
+                const minValue = Math.min(...data, mean, median);
+                const valueRange = maxValue - minValue || 1;
+                
+                // Scale values for chart (avoid division by zero)
+                const scaleMean = ((mean - minValue) / valueRange) * (chartHeight - 50);
+                const scaleMedian = ((median - minValue) / valueRange) * (chartHeight - 50);
+                
+                // Create Mean bar
+                const meanContainer = document.createElement('div');
+                meanContainer.className = 'bar-container';
+                meanContainer.style.flex = '1';
+                
+                const meanBar = document.createElement('div');
+                meanBar.className = 'bar';
+                meanBar.style.height = `${Math.max(scaleMean, 10)}px`;
+                meanBar.style.background = 'var(--mean-color)';
+                
+                const meanValue = document.createElement('div');
+                meanValue.className = 'bar-value';
+                meanValue.textContent = mean.toFixed(2);
+                
+                const meanLabel = document.createElement('div');
+                meanLabel.className = 'bar-label';
+                meanLabel.textContent = currentLanguage === 'bn' ? 'গড়' : 'Mean';
+                meanLabel.style.fontWeight = '600';
+                
+                meanBar.appendChild(meanValue);
+                meanContainer.appendChild(meanBar);
+                meanContainer.appendChild(meanLabel);
+                meanMedianChart.appendChild(meanContainer);
+                
+                // Create Median bar
+                const medianContainer = document.createElement('div');
+                medianContainer.className = 'bar-container';
+                medianContainer.style.flex = '1';
+                
+                const medianBar = document.createElement('div');
+                medianBar.className = 'bar';
+                medianBar.style.height = `${Math.max(scaleMedian, 10)}px`;
+                medianBar.style.background = 'var(--median-color)';
+                
+                const medianValue = document.createElement('div');
+                medianValue.className = 'bar-value';
+                medianValue.textContent = median.toFixed(2);
+                
+                const medianLabel = document.createElement('div');
+                medianLabel.className = 'bar-label';
+                medianLabel.textContent = currentLanguage === 'bn' ? 'মিডিয়ান' : 'Median';
+                medianLabel.style.fontWeight = '600';
+                
+                medianBar.appendChild(medianValue);
+                medianContainer.appendChild(medianBar);
+                medianContainer.appendChild(medianLabel);
+                meanMedianChart.appendChild(medianContainer);
+            }
+
+            function updateChartLegends(mean, median, mode) {
+                const distributionLegend = document.getElementById('distributionChartLegend');
+                const meanMedianLegend = document.getElementById('meanMedianChartLegend');
+                
+                // Distribution Chart Legend
+                distributionLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Data Values" data-bn="ডেটা মান">ডেটা মান</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color mode"></div>
+                        <span data-en="Mode Values" data-bn="মোড মান">মোড মান</span>
+                    </div>
+                `;
+                
+                // Mean vs Median Chart Legend
+                meanMedianLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Mean (${mean.toFixed(2)})" data-bn="গড় (${mean.toFixed(2)})">গড় (${mean.toFixed(2)})</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color median"></div>
+                        <span data-en="Median (${median.toFixed(2)})" data-bn="মিডিয়ান (${median.toFixed(2)})">মিডিয়ান (${median.toFixed(2)})</span>
+                    </div>
+                `;
+                
+                // Update language for legends
+                updateDynamicContent();
+            }
+
+            function updateCalculationTables(data, frequency, sortedData, mean, median, mode) {
+                const container = document.getElementById('tablesContainer');
+                const maxFreq = Math.max(...Object.values(frequency));
+                
+                // Create tables
+                container.innerHTML = `
+                    <!-- Data Table -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Input Data" data-bn="ইনপুট ডেটা">ইনপুট ডেটা</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Index" data-bn="ক্রমিক">ক্রমিক</th>
+                                    <th data-en="Value" data-bn="মান">মান</th>
+                                    <th data-en="Sorted Position" data-bn="সাজানো অবস্থান">সাজানো অবস্থান</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map((value, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${value}</td>
+                                        <td>${sortedData.indexOf(value) + 1}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Frequency Distribution Table -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Frequency Distribution" data-bn="ফ্রিকোয়েন্সি বণ্টন">ফ্রিকোয়েন্সি বণ্টন</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Value" data-bn="মান">মান</th>
+                                    <th data-en="Frequency" data-bn="পুনরাবৃত্তি">পুনরাবৃত্তি</th>
+                                    <th data-en="Percentage" data-bন="শতকরা">শতকরা</th>
+                                    <th data-en="Cumulative Frequency" data-bন="ক্রমবর্ধমান ফ্রিকোয়েন্সি">ক্রমবর্ধমান ফ্রিকোয়েন্সি</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(frequency)
+                                    .sort(([a], [b]) => a - b)
+                                    .map(([value, freq], index, arr) => {
+                                        const percentage = ((freq / data.length) * 100).toFixed(2);
+                                        const cumulative = arr.slice(0, index + 1).reduce((sum, [_, f]) => sum + f, 0);
+                                        const isMode = freq === maxFreq && freq > 1;
+                                        return `
+                                            <tr ${isMode ? 'class="highlight"' : ''}>
+                                                <td>${value}</td>
+                                                <td>${freq}</td>
+                                                <td>${percentage}%</td>
+                                                <td>${cumulative}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Calculation Summary Table -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Calculation Summary" data-bন="গণনা সারসংক্ষেপ">গণনা সারসংক্ষেপ</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Measure" data-bন="পরিমাপ">পরিমাপ</th>
+                                    <th data-en="Formula" data-bন="সূত্র">সূত্র</th>
+                                    <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                    <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-en="Mean" data-bন="গড়">গড়</td>
+                                    <td class="formula-cell">Σx / n</td>
+                                    <td>${data.reduce((a, b) => a + b, 0)} ÷ ${data.length}</td>
+                                    <td><strong>${mean.toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Median" data-bন="মিডিয়ান">মিডিয়ান</td>
+                                    <td class="formula-cell">
+                                        ${data.length % 2 === 0 ? 
+                                            (currentLanguage === 'bn' ? '(মধ্যবর্তী ২ মানের গড়)' : '(Avg of middle 2 values)') : 
+                                            (currentLanguage === 'bn' ? 'মধ্যবর্তী মান' : 'Middle value')}
+                                    </td>
+                                    <td>${data.length % 2 === 0 ? 
+                                        `(${sortedData[data.length/2 - 1]} + ${sortedData[data.length/2]}) ÷ 2` : 
+                                        sortedData[Math.floor(data.length/2)]}</td>
+                                    <td><strong>${median.toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Mode" data-bন="মোড">মোড</td>
+                                    <td class="formula-cell" data-en="Max frequency value" data-bন="সর্বাধিক পুনরাবৃত্তি মান">সর্বাধিক পুনরাবৃত্তি মান</td>
+                                    <td>${Object.entries(frequency)
+                                        .filter(([_, freq]) => freq === maxFreq)
+                                        .map(([value, freq]) => `${value} (${freq} বার)`).join(', ')}</td>
+                                    <td><strong>${mode.length === 0 ? 
+                                        (currentLanguage === 'bn' ? 'কোন মোড নেই' : 'No mode') : 
+                                        mode.join(', ')}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateStepByStep(data, frequency, sortedData, mean, median, mode) {
+                const container = document.getElementById('stepsContainer');
+                const maxFreq = Math.max(...Object.values(frequency));
+                const sum = data.reduce((a, b) => a + b, 0);
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Data Preparation" data-bন="ধাপ ১: ডেটা প্রস্তুতি">ধাপ ১: ডেটা প্রস্তুতি</h4>
+                            <p data-en="Organize and understand the input data" data-bন="ইনপুট ডেটা সংগঠিত করুন এবং বুঝুন">
+                                ইনপুট ডেটা সংগঠিত করুন এবং বুঝুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Input Data:" data-bন="ইনপুট ডেটা:">ইনপুট ডেটা:</strong> ${data.join(', ')}</p>
+                                <p><strong data-en="Number of values (n):" data-bন="মানের সংখ্যা (n):">মানের সংখ্যা (n):</strong> ${data.length}</p>
+                                <p><strong data-en="Sum of all values (Σx):" data-bন="সমস্ত মানের যোগফল (Σx):">সমস্ত মানের যোগফল (Σx):</strong> ${sum}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Mean" data-bন="ধাপ ২: গড় গণনা করুন">ধাপ ২: গড় গণনা করুন</h4>
+                            <p data-en="Apply the mean formula: Σx / n" data-bন="গড় সূত্র প্রয়োগ করুন: Σx / n">
+                                গড় সূত্র প্রয়োগ করুন: Σx / n
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> Mean = Σx ÷ n</p>
+                                <p><strong data-en="Calculation:" data-bন="গণনা:">গণনা:</strong> ${sum} ÷ ${data.length}</p>
+                                <p><strong data-en="Result:" data-bন="ফলাফল:">ফলাফল:</strong> <strong>${mean.toFixed(2)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Median" data-bন="ধাপ ৩: মিডিয়ান গণনা করুন">ধাপ ৩: মিডিয়ান গণনা করুন</h4>
+                            <p data-en="Sort data and find the middle value" data-bন="ডেটা সাজান এবং মধ্যবর্তী মান খুঁজুন">
+                                ডেটা সাজান এবং মধ্যবর্তী মান খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Sorted Data:" data-bন="সাজানো ডেটা:">সাজানো ডেটা:</strong> ${sortedData.join(', ')}</p>
+                                <p><strong data-en="${data.length % 2 === 0 ? 'Even number of values:' : 'Odd number of values:'}" 
+                                       data-bন="${data.length % 2 === 0 ? 'মানের সংখ্যা জোড়:' : 'মানের সংখ্যা বিজোড়:'}">
+                                    ${data.length % 2 === 0 ? 'মানের সংখ্যা জোড়:' : 'মানের সংখ্যা বিজোড়:'}
+                                </strong></p>
+                                <p><strong data-en="Median Position:" data-bন="মিডিয়ান অবস্থান:">মিডিয়ান অবস্থান:</strong> 
+                                    ${data.length % 2 === 0 ? 
+                                        `${data.length/2}th and ${data.length/2 + 1}th values` : 
+                                        `${Math.floor(data.length/2) + 1}th value`}
+                                </p>
+                                <p><strong data-en="Calculation:" data-bন="গণনা:">গণনা:</strong> 
+                                    ${data.length % 2 === 0 ? 
+                                        `(${sortedData[data.length/2 - 1]} + ${sortedData[data.length/2]}) ÷ 2 = ${median.toFixed(2)}` : 
+                                        sortedData[Math.floor(data.length/2)]}
+                                </p>
+                                <p><strong data-en="Result:" data-bন="ফলাফল:">ফলাফল:</strong> <strong>${median.toFixed(2)}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Identify Mode" data-bন="ধাপ ৪: মোড শনাক্ত করুন">ধাপ ৪: মোড শনাক্ত করুন</h4>
+                            <p data-en="Find the most frequently occurring value" data-bন="সবচেয়ে বেশি বার সংঘটিত মান খুঁজুন">
+                                সবচেয়ে বেশি বার সংঘটিত মান খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Frequency Count:" data-bন="পুনরাবৃত্তি গণনা:">পুনরাবৃত্তি গণনা:</strong></p>
+                                <ul>
+                                    ${Object.entries(frequency)
+                                        .map(([value, freq]) => 
+                                            `<li>${value}: ${freq} ${currentLanguage === 'bn' ? 'বার' : 'times'}</li>`
+                                        ).join('')}
+                                </ul>
+                                <p><strong data-en="Maximum Frequency:" data-bন="সর্বাধিক পুনরাবৃত্তি:">সর্বাধিক পুনরাবৃত্তি:</strong> ${maxFreq}</p>
+                                <p><strong data-en="Mode Values:" data-bন="মোড মান:">মোড মান:</strong> 
+                                    ${Object.entries(frequency)
+                                        .filter(([_, freq]) => freq === maxFreq)
+                                        .map(([value, freq]) => `${value} (${freq} ${currentLanguage === 'bn' ? 'বার' : 'times'})`)
+                                        .join(', ')}
+                                </p>
+                                <p><strong data-en="Result:" data-bন="ফলাফল:">ফলাফল:</strong> 
+                                    <strong>${mode.length === 0 ? 
+                                        (currentLanguage === 'bn' ? 'কোন মোড নেই' : 'No mode') : 
+                                        mode.join(', ')}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 5;
+                const data = [];
+                
+                for (let i = 0; i < count; i++) {
+                    data.push(Math.floor(Math.random() * 100) + 1);
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                calculateStatistics();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('dataInput').value = examples[example].join(', ');
+                    calculateStatistics();
+                }
+            }
+
+            function clearCalculator() {
+                document.getElementById('dataInput').value = '';
+                
+                // Clear results
+                document.getElementById('meanResult').textContent = '--';
+                document.getElementById('medianResult').textContent = '--';
+                document.getElementById('modeResult').textContent = '--';
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('maxValue').textContent = '--';
+                document.getElementById('minValue').textContent = '--';
+                document.getElementById('rangeValue').textContent = '--';
+                
+                // Clear charts
+                document.getElementById('dataDistributionChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বণ্টন চার্ট দেখুন' : 'Enter data to see distribution chart'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('meanMedianChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে গড়/মিডিয়ান তুলনা দেখুন' : 'Enter data to see mean/median comparison'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('distributionChartLegend').innerHTML = '';
+                document.getElementById('meanMedianChartLegend').innerHTML = '';
+                
+                // Clear tables
+                document.getElementById('tablesContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" 
+                       data-en="Enter data and click Calculate to see detailed tables" 
+                       data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see detailed tables'}
+                    </p>
+                `;
+                
+                // Clear steps
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter data and click Calculate to see step-by-step calculations" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see step-by-step calculations'}
+                    </p>
+                `;
+                
+                // Reset method buttons
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    if (btn.dataset.method === 'manual') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update dynamic content
+                updateDynamicContent();
+            }
+        });
+    </script>
+</body>
+</html>

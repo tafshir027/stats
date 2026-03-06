@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন (CV) ক্যালকুলেটর | আপেক্ষিক পরিবর্তনশীলতা</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #5D7A9E;
+            --secondary: #4A6285;
+            --accent: #FF9A76;
+            --success: #6BCF8E;
+            --info: #4A9DC9;
+            --warning: #FFD166;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --cv-color: #5D7A9E;
+            --stability-color: #6BCF8E;
+            --variability-color: #FF9A76;
+            --comparison-color: #4A9DC9;
+            --unitless-color: #FFD166;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8faff 0%, #f2f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(93, 122, 158, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--cv-color), var(--stability-color), var(--variability-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(93, 122, 158, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Multiple Datasets */
+        .datasets-section {
+            margin: 1.5rem 0;
+        }
+
+        .datasets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .add-dataset-btn {
+            padding: 0.5rem 1rem;
+            background: var(--info);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-dataset-btn:hover {
+            background: #3a7ca5;
+            transform: translateY(-2px);
+        }
+
+        .datasets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .dataset-item {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+        }
+
+        .dataset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dataset-name {
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dataset-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dataset-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray);
+            transition: color 0.3s ease;
+        }
+
+        .dataset-action-btn:hover {
+            color: var(--accent);
+        }
+
+        .dataset-input textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        /* CV Type Selection */
+        .cv-type-selection {
+            margin: 1.5rem 0;
+        }
+
+        .cv-type-toggle {
+            display: flex;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .cv-type-toggle {
+                flex-direction: column;
+            }
+        }
+
+        .cv-type-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 120px;
+        }
+
+        .cv-type-btn.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .cv-type-btn.sample {
+            color: var(--cv-color);
+        }
+
+        .cv-type-btn.population {
+            color: var(--info);
+        }
+
+        .cv-type-btn.both {
+            color: var(--primary);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(93, 122, 158, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* CV Result Cards */
+        .cv-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .cv-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .cv-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .cv-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .cv-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .cv-card.sample::before { background: var(--cv-color); }
+        .cv-card.population::before { background: var(--info); }
+
+        .cv-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cv-card.sample .cv-icon { color: var(--cv-color); }
+        .cv-card.population .cv-icon { color: var(--info); }
+
+        .cv-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .cv-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .cv-percent {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-left: 0.25rem;
+        }
+
+        .cv-interpretation {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            line-height: 1.4;
+        }
+
+        /* Stability Indicator */
+        .stability-indicator {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6f4ff 100%);
+            border-radius: 10px;
+            border: 2px solid #cfe8ff;
+        }
+
+        .stability-meter {
+            height: 20px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stability-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--stability-color), var(--warning), var(--variability-color));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .stability-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Unitless Comparison */
+        .unitless-comparison {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fff9f0 0%, #fff4e6 100%);
+            border-radius: 10px;
+            border: 2px solid #ffeccc;
+        }
+
+        .comparison-list {
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.3s ease;
+        }
+
+        .comparison-item:hover {
+            background: var(--light-gray);
+        }
+
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+
+        .dataset-name-compare {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .dataset-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .cv-compare {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cv-value-compare {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .cv-percent-compare {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* CV Comparison Chart */
+        .cv-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+
+        .cv-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            max-width: 80px;
+            min-width: 40px;
+        }
+
+        .cv-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .cv-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .cv-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Mean vs Std Dev Chart */
+        .mean-std-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .data-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cv-color);
+            transform: translate(-50%, 50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .data-point:hover {
+            transform: translate(-50%, 50%) scale(2);
+            box-shadow: 0 0 10px rgba(93, 122, 158, 0.5);
+        }
+
+        .mean-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--success);
+            opacity: 0.7;
+        }
+
+        .std-dev-band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            background: rgba(255, 154, 118, 0.1);
+            border-top: 1px dashed var(--accent);
+            border-bottom: 1px dashed var(--accent);
+        }
+
+        .cv-ratio-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--comparison-color);
+            opacity: 0.5;
+            border-style: dotted;
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.mean { background: var(--success); }
+        .legend-color.std-dev { background: var(--accent); }
+        .legend-color.cv { background: var(--cv-color); }
+        .legend-color.dataset-1 { background: #5D7A9E; }
+        .legend-color.dataset-2 { background: #FF9A76; }
+        .legend-color.dataset-3 { background: #6BCF8E; }
+        .legend-color.dataset-4 { background: #FFD166; }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .cv-formula .formula-icon { background: var(--cv-color); }
+        .comparison-formula .formula-icon { background: var(--comparison-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* CV Calculation Steps */
+        .cv-steps {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 500px;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .step-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Comparison Table */
+        .comparison-table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .comparison-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .comparison-table .cv-cell {
+            text-align: center;
+            font-weight: 600;
+            border-left: 3px solid var(--border);
+        }
+
+        .cv-low {
+            color: var(--stability-color);
+        }
+
+        .cv-medium {
+            color: var(--warning);
+        }
+
+        .cv-high {
+            color: var(--variability-color);
+        }
+
+        /* Applications Section */
+        .applications-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .application-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .application-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .application-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* CV Interpretation Guide */
+        .interpretation-guide {
+            background: linear-gradient(135deg, #f8fff0 0%, #f2ffe6 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--success);
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .guide-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .guide-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .guide-value.low { color: var(--stability-color); }
+        .guide-value.medium { color: var(--warning); }
+        .guide-value.high { color: var(--variability-color); }
+        .guide-value.very-high { color: var(--accent); }
+
+        /* Formula Key */
+        .formula-key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .formula-key {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .key-item {
+                min-width: 100%;
+            }
+        }
+
+        .key-symbol {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 40px;
+        }
+
+        .key-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .applications-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .comparison-table-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .step-table,
+            .comparison-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Coefficient of Variation (CV) Calculator" data-bn="কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন (CV) ক্যালকুলেটর">কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন (CV) ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate relative variability as percentage - dimensionless comparison of dispersion across different datasets" data-bn="শতকরা হিসাবে আপেক্ষিক পরিবর্তনশীলতা গণনা করুন - বিভিন্ন ডেটাসেট জুড়ে বিস্তারের এককহীন তুলনা">
+                শতকরা হিসাবে আপেক্ষিক পরিবর্তনশীলতা গণনা করুন - বিভিন্ন ডেটাসেট জুড়ে বিস্তারের এককহীন তুলনা
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="single">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Single Dataset" data-bn="একক ডেটাসেট">একক ডেটাসেট</span>
+                    </button>
+                    <button class="method-btn" data-method="multiple">
+                        <i class="fas fa-layer-group"></i>
+                        <span data-en="Multiple Datasets" data-bn="একাধিক ডেটাসেট">একাধিক ডেটাসেট</span>
+                    </button>
+                    <button class="method-btn" data-method="compare">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Compare Units" data-bn="একক তুলনা">একক তুলনা</span>
+                    </button>
+                </div>
+
+                <!-- Single Dataset Input -->
+                <div class="data-input" id="singleDatasetInput">
+                    <textarea id="dataInput" placeholder="Enter data separated by commas, spaces, or new lines
+Example: 10, 20, 30, 40, 50
+or: 10 20 30 40 50
+or: 
+10
+20
+30
+40
+50" data-bn-placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50
+বা: 10 20 30 40 50
+বা: 
+10
+20
+30
+40
+50"></textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Multiple Datasets -->
+                <div class="datasets-section" id="multipleDatasetsInput" style="display: none;">
+                    <div class="datasets-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Multiple Datasets for Comparison" data-bn="তুলনার জন্য একাধিক ডেটাসেট">তুলনার জন্য একাধিক ডেটাসেট</span>
+                        </h3>
+                        <button class="add-dataset-btn" id="addDatasetBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Dataset" data-bn="ডেটাসেট যোগ করুন">ডেটাসেট যোগ করুন</span>
+                        </button>
+                    </div>
+                    <div class="datasets-list" id="datasetsList">
+                        <!-- Dataset 1 -->
+                        <div class="dataset-item">
+                            <div class="dataset-header">
+                                <div class="dataset-name">
+                                    <i class="fas fa-chart-bar" style="color: var(--cv-color);"></i>
+                                    <span>Dataset 1</span>
+                                </div>
+                                <div class="dataset-actions">
+                                    <button class="dataset-action-btn rename-dataset" title="Rename">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="dataset-action-btn remove-dataset" title="Remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dataset-input">
+                                <textarea placeholder="Enter data for this dataset..." data-bn-placeholder="এই ডেটাসেটের জন্য ডেটা ইনপুট করুন..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CV Type Selection -->
+                <div class="cv-type-selection">
+                    <h3 style="color: var(--dark); margin-bottom: 0.8rem;">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="CV Calculation Type" data-bn="CV গণনার ধরন">CV গণনার ধরন</span>
+                    </h3>
+                    <div class="cv-type-toggle">
+                        <button class="cv-type-btn sample active" data-type="sample">
+                            <i class="fas fa-flask"></i>
+                            <span data-en="Sample CV" data-bn="স্যাম্পল CV">স্যাম্পল CV</span>
+                        </button>
+                        <button class="cv-type-btn population" data-type="population">
+                            <i class="fas fa-users"></i>
+                            <span data-en="Population CV" data-bন="পপুলেশন CV">পপুলেশন CV</span>
+                        </button>
+                        <button class="cv-type-btn both" data-type="both">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span data-en="Both" data-bন="উভয়">উভয়</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate CV" data-bন="CV গণনা করুন">CV গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="CV Results" data-bন="CV ফলাফল">CV ফলাফল</span>
+                </h2>
+                
+                <!-- CV Results Cards -->
+                <div class="cv-results">
+                    <!-- Sample CV -->
+                    <div class="cv-card sample">
+                        <div class="cv-icon">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="cv-title" data-en="Sample CV" data-bন="স্যাম্পল CV">স্যাম্পল CV</div>
+                        <div class="cv-value" id="sampleCVResult">--</div>
+                        <div class="cv-percent">%</div>
+                        <div class="cv-interpretation" id="sampleCVInterpretation" data-en="Relative variability of sample" data-bন="স্যাম্পলের আপেক্ষিক পরিবর্তনশীলতা">
+                            স্যাম্পলের আপেক্ষিক পরিবর্তনশীলতা
+                        </div>
+                    </div>
+
+                    <!-- Population CV -->
+                    <div class="cv-card population">
+                        <div class="cv-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="cv-title" data-en="Population CV" data-bন="পপুলেশন CV">পপুলেশন CV</div>
+                        <div class="cv-value" id="populationCVResult">--</div>
+                        <div class="cv-percent">%</div>
+                        <div class="cv-interpretation" id="populationCVInterpretation" data-en="Relative variability of population" data-bন="পপুলেশনের আপেক্ষিক পরিবর্তনশীলতা">
+                            পপুলেশনের আপেক্ষিক পরিবর্তনশীলতা
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stability Indicator -->
+                <div class="stability-indicator">
+                    <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-shield-alt"></i>
+                        <span data-en="Stability Indicator" data-bন="স্থিতিশীলতা নির্দেশক">স্থিতিশীলতা নির্দেশক</span>
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 0.5rem;" 
+                       data-en="How stable is your data relative to its mean?" 
+                       data-bন="গড়ের সাপেক্ষে আপনার ডেটা কতটা স্থিতিশীল?">
+                        গড়ের সাপেক্ষে আপনার ডেটা কতটা স্থিতিশীল?
+                    </p>
+                    <div class="stability-meter">
+                        <div class="stability-fill" id="stabilityFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="stability-labels">
+                        <span data-en="Very Stable" data-bন="অত্যন্ত স্থিতিশীল">অত্যন্ত স্থিতিশীল</span>
+                        <span data-en="Moderate" data-bন="মাঝারি">মাঝারি</span>
+                        <span data-en="Highly Variable" data-bন="অত্যন্ত পরিবর্তনশীল">অত্যন্ত পরিবর্তনশীল</span>
+                    </div>
+                    <p id="stabilityText" style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--dark); font-weight: 500;">
+                        <span data-en="Calculating stability..." data-bন="স্থিতিশীলতা গণনা করা হচ্ছে...">স্থিতিশীলতা গণনা করা হচ্ছে...</span>
+                    </p>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Points (n)" data-bন="ডেটা পয়েন্ট (n)">ডেটা পয়েন্ট (n)</div>
+                        <div class="stat-value" id="dataCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</div>
+                        <div class="stat-value" id="meanValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Std Dev (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</div>
+                        <div class="stat-value" id="stdDevValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Std Error" data-bন="স্ট্যান্ডার্ড এরর">স্ট্যান্ডার্ড এরর</div>
+                        <div class="stat-value" id="stdErrorValue">--</div>
+                    </div>
+                </div>
+
+                <!-- CV Interpretation Guide -->
+                <div class="interpretation-guide">
+                    <h4 style="color: var(--dark); margin-bottom: 1rem;" data-en="CV Interpretation Guide" data-bন="CV ব্যাখ্যা গাইড">
+                        CV ব্যাখ্যা গাইড
+                    </h4>
+                    <div class="guide-grid">
+                        <div class="guide-item">
+                            <div class="guide-value low">CV < 15%</div>
+                            <div data-en="Low Variability" data-bন="নিম্ন পরিবর্তনশীলতা">নিম্ন পরিবর্তনশীলতা</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value medium">15-30%</div>
+                            <div data-en="Moderate Variability" data-bন="মাঝারি পরিবর্তনশীলতা">মাঝারি পরিবর্তনশীলতা</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value high">30-50%</div>
+                            <div data-en="High Variability" data-bন="উচ্চ পরিবর্তনশীলতা">উচ্চ পরিবর্তনশীলতা</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value very-high">CV > 50%</div>
+                            <div data-en="Very High Variability" data-bন="অত্যন্ত উচ্চ পরিবর্তনশীলতা">অত্যন্ত উচ্চ পরিবর্তনশীলতা</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unitless Comparison Results -->
+                <div class="unitless-comparison" id="unitlessComparison" style="display: none;">
+                    <h4 style="color: var(--unitless-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Unitless Comparison Results" data-bন="এককহীন তুলনা ফলাফল">এককহীন তুলনা ফলাফল</span>
+                    </h4>
+                    <div class="comparison-list" id="comparisonList">
+                        <p style="color: var(--gray); text-align: center; padding: 1rem;">
+                            <span data-en="Add multiple datasets to compare" data-bন="তুলনা করতে একাধিক ডেটাসেট যোগ করুন">তুলনা করতে একাধিক ডেটাসেট যোগ করুন</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bন="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- CV Comparison Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="CV Comparison" data-bন="CV তুলনা">CV তুলনা</span>
+                    </h3>
+                    <div id="cvChart" class="cv-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-balance-scale"></i>
+                            <p data-en="Enter data to see CV comparison" data-bন="CV তুলনা দেখতে ডেটা ইনপুট করুন">CV তুলনা দেখতে ডেটা ইনপুট করুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="cvChartLegend"></div>
+                </div>
+
+                <!-- Mean vs Std Dev Visualization -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Mean vs Standard Deviation" data-bন="গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন">গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                    </h3>
+                    <div id="meanStdChart" class="mean-std-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p data-en="Enter data to see mean vs std dev" data-bন="গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন দেখতে ডেটা ইনপুট করুন">গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন দেখতে ডেটা ইনপুট করুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="meanStdChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="CV Formulas and Methods" data-bন="CV সূত্র এবং পদ্ধতি">CV সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <!-- Formula Key -->
+            <div class="formula-key">
+                <div class="key-item">
+                    <span class="key-symbol">CV</span>
+                    <span class="key-label" data-en="Coefficient of Variation" data-bন="কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন">কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">σ</span>
+                    <span class="key-label" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">μ</span>
+                    <span class="key-label" data-en="Population Mean" data-bন="পপুলেশন গড়">পপুলেশন গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">s</span>
+                    <span class="key-label" data-en="Sample Std Dev" data-bন="স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন">স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">x̄</span>
+                    <span class="key-label" data-en="Sample Mean" data-bন="স্যাম্পল গড়">স্যাম্পল গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">× ১০০%</span>
+                    <span class="key-label" data-en="Percentage" data-bন="শতকরা">শতকরা</span>
+                </div>
+            </div>
+            
+            <div class="formula-cards">
+                <!-- CV Formula -->
+                <div class="formula-card cv-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Coefficient of Variation Formula" data-bন="কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন সূত্র">কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন সূত্র</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures relative variability as percentage of mean" data-bন="গড়ের শতকরা হিসাবে আপেক্ষিক পরিবর্তনশীলতা পরিমাপ করে">
+                            গড়ের শতকরা হিসাবে আপেক্ষিক পরিবর্তনশীলতা পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="CV = (σ / μ) × 100%" data-bন="CV = (σ / μ) × ১০০%">CV = (σ / μ) × ১০০%</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="σ = Standard deviation" data-bন="σ = স্ট্যান্ডার্ড ডেভিয়েশন">σ = স্ট্যান্ডার্ড ডেভিয়েশন</li>
+                            <li data-en="μ = Mean of population" data-bন="μ = পপুলেশনের গড়">μ = পপুলেশনের গড়</li>
+                            <li data-en="For sample: CV = (s / x̄) × 100%" data-bন="স্যাম্পলের জন্য: CV = (s / x̄) × ১০০%">স্যাম্পলের জন্য: CV = (s / x̄) × ১০০%</li>
+                            <li data-en="Result is percentage" data-bন="ফলাফল শতকরায়">ফলাফল শতকরায়</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Comparison Formula -->
+                <div class="formula-card comparison-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Unitless Comparison" data-bন="এককহীন তুলনা">এককহীন তুলনা</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Compare variability across different units and scales" data-bন="বিভিন্ন একক এবং স্কেল জুড়ে পরিবর্তনশীলতা তুলনা করুন">
+                            বিভিন্ন একক এবং স্কেল জুড়ে পরিবর্তনশীলতা তুলনা করুন
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="Relative CV = CV₁ / CV₂" data-bন="আপেক্ষিক CV = CV₁ / CV₂">আপেক্ষিক CV = CV₁ / CV₂</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Compare datasets with different units" data-bন="বিভিন্ন একক সহ ডেটাসেট তুলনা করুন">বিভিন্ন একক সহ ডেটাসেট তুলনা করুন</li>
+                            <li data-en="Compare datasets with different scales" data-bন="বিভিন্ন স্কেল সহ ডেটাসেট তুলনা করুন">বিভিন্ন স্কেল সহ ডেটাসেট তুলনা করুন</li>
+                            <li data-en="Normalizes for mean differences" data-bন="গড় পার্থক্যের জন্য স্বাভাবিক করে">গড় পার্থক্যের জন্য স্বাভাবিক করে</li>
+                            <li data-en="Used in quality control and finance" data-bন="কোয়ালিটি কন্ট্রোল এবং ফিনান্সে ব্যবহৃত">কোয়ালিটি কন্ট্রোল এবং ফিনান্সে ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CV Calculation Steps -->
+            <div class="cv-steps">
+                <h3 class="section-title" style="font-size: 1.3rem;">
+                    <i class="fas fa-list-ol"></i>
+                    <span data-en="Step-by-Step CV Calculation" data-bন="ধাপে ধাপে CV গণনা">ধাপে ধাপে CV গণনা</span>
+                </h3>
+                
+                <div id="cvStepsContainer">
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="cvStepsPlaceholder" 
+                       data-en="Enter data and calculate to see CV calculation steps" 
+                       data-bন="ডেটা ইনপুট করুন এবং CV গণনার ধাপগুলো দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং CV গণনার ধাপগুলো দেখতে গণনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="CV Comparison Across Datasets" data-bন="ডেটাসেট জুড়ে CV তুলনা">ডেটাসেট জুড়ে CV তুলনা</span>
+            </h2>
+            
+            <div id="comparisonTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="comparisonTablePlaceholder" 
+                   data-en="Add multiple datasets to see comparison table" 
+                   data-bন="তুলনা টেবিল দেখতে একাধিক ডেটাসেট যোগ করুন">
+                    তুলনা টেবিল দেখতে একাধিক ডেটাসেট যোগ করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-rocket"></i>
+                <span data-en="Practical Applications of CV" data-bন="CV এর ব্যবহারিক প্রয়োগ">CV এর ব্যবহারিক প্রয়োগ</span>
+            </h2>
+            
+            <div class="applications-grid">
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Quality Control" data-bন="কোয়ালিটি কন্ট্রোল">কোয়ালিটি কন্ট্রোল</h3>
+                    <p class="application-desc" data-en="Compare process variability across different production lines" data-bন="বিভিন্ন উৎপাদন লাইন জুড়ে প্রক্রিয়া পরিবর্তনশীলতা তুলনা করুন">
+                        বিভিন্ন উৎপাদন লাইন জুড়ে প্রক্রিয়া পরিবর্তনশীলতা তুলনা করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Financial Analysis" data-bন="আর্থিক বিশ্লেষণ">আর্থিক বিশ্লেষণ</h3>
+                    <p class="application-desc" data-en="Compare risk-adjusted returns across different investments" data-bন="বিভিন্ন বিনিয়োগ জুড়ে ঝুঁকি-সমন্বিত রিটার্ন তুলনা করুন">
+                        বিভিন্ন বিনিয়োগ জুড়ে ঝুঁকি-সমন্বিত রিটার্ন তুলনা করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Medical Research" data-bন="মেডিকেল গবেষণা">মেডিকেল গবেষণা</h3>
+                    <p class="application-desc" data-en="Compare biological variability across different measurement methods" data-bন="বিভিন্ন পরিমাপ পদ্ধতি জুড়ে জৈবিক পরিবর্তনশীলতা তুলনা করুন">
+                        বিভিন্ন পরিমাপ পদ্ধতি জুড়ে জৈবিক পরিবর্তনশীলতা তুলনা করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Educational Assessment" data-bন="শিক্ষামূলক মূল্যায়ন">শিক্ষামূলক মূল্যায়ন</h3>
+                    <p class="application-desc" data-en="Compare test score variability across different schools or subjects" data-bন="বিভিন্ন স্কুল বা বিষয় জুড়ে টেস্ট স্কোর পরিবর্তনশীলতা তুলনা করুন">
+                        বিভিন্ন স্কুল বা বিষয় জুড়ে টেস্ট স্কোর পরিবর্তনশীলতা তুলনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="stable">
+                    <span data-en="Stable Process" data-bন="স্থিতিশীল প্রক্রিয়া">স্থিতিশীল প্রক্রিয়া</span>
+                    <span class="example-data">CV < 10%: Precision manufacturing</span>
+                </button>
+                <button class="example-btn" data-example="moderate">
+                    <span data-en="Moderate Variability" data-bন="মাঝারি পরিবর্তনশীলতা">মাঝারি পরিবর্তনশীলতা</span>
+                    <span class="example-data">CV 20-30%: Biological measurements</span>
+                </button>
+                <button class="example-btn" data-example="high-var">
+                    <span data-en="High Variability" data-bন="উচ্চ পরিবর্তনশীলতা">উচ্চ পরিবর্তনশীলতা</span>
+                    <span class="example-data">CV > 50%: Financial returns</span>
+                </button>
+                <button class="example-btn" data-example="unit-compare">
+                    <span data-en="Unit Comparison" data-bন="একক তুলনা">একক তুলনা</span>
+                    <span class="example-data">Compare cm vs inches, kg vs lbs</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'stable': {
+                    data: [49.8, 50.1, 50.0, 49.9, 50.2, 50.1, 49.8, 50.0, 50.1, 49.9],
+                    description: 'স্থিতিশীল উৎপাদন প্রক্রিয়া (CV < 10%)'
+                },
+                'moderate': {
+                    data: [65, 72, 68, 75, 70, 78, 82, 69, 74, 71],
+                    description: 'মাঝারি জৈবিক পরিবর্তনশীলতা (CV 20-30%)'
+                },
+                'high-var': {
+                    data: [100, 150, 80, 200, 120, 250, 90, 300, 110, 180],
+                    description: 'উচ্চ আর্থিক রিটার্ন পরিবর্তনশীলতা (CV > 50%)'
+                },
+                'unit-compare': {
+                    datasets: [
+                        { name: 'Height (cm)', data: [165, 170, 175, 180, 185, 172, 168, 178, 182, 175] },
+                        { name: 'Weight (kg)', data: [65, 70, 75, 80, 85, 68, 72, 78, 82, 74] }
+                    ],
+                    description: 'বিভিন্ন এককে ডেটা তুলনা'
+                }
+            };
+
+            // Store data
+            let currentMethod = 'single';
+            let datasets = [];
+            let cvType = 'sample';
+            let datasetColors = ['#5D7A9E', '#FF9A76', '#6BCF8E', '#FFD166', '#4A9DC9', '#9B5DE5'];
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentMethod = this.dataset.method;
+                        
+                        // Show/hide appropriate input sections
+                        const singleInput = document.getElementById('singleDatasetInput');
+                        const multipleInput = document.getElementById('multipleDatasetsInput');
+                        
+                        if (currentMethod === 'single') {
+                            singleInput.style.display = 'block';
+                            multipleInput.style.display = 'none';
+                            document.getElementById('unitlessComparison').style.display = 'none';
+                        } else {
+                            singleInput.style.display = 'none';
+                            multipleInput.style.display = 'block';
+                            if (currentMethod === 'compare') {
+                                document.getElementById('unitlessComparison').style.display = 'block';
+                            }
+                        }
+                    });
+                });
+
+                // CV Type Selection
+                const cvTypeBtns = document.querySelectorAll('.cv-type-btn');
+                cvTypeBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        cvTypeBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        cvType = this.dataset.type;
+                    });
+                });
+
+                // Add Dataset Button
+                document.getElementById('addDatasetBtn').addEventListener('click', addDataset);
+
+                // Dataset Actions
+                document.addEventListener('click', function(e) {
+                    // Remove dataset
+                    if (e.target.closest('.remove-dataset')) {
+                        const datasetItem = e.target.closest('.dataset-item');
+                        if (datasetItem && document.querySelectorAll('.dataset-item').length > 1) {
+                            datasetItem.remove();
+                            updateDatasetNames();
+                        }
+                    }
+                    
+                    // Rename dataset
+                    if (e.target.closest('.rename-dataset')) {
+                        const datasetName = e.target.closest('.dataset-header').querySelector('.dataset-name span');
+                        const newName = prompt(
+                            currentLanguage === 'bn' ? 'ডেটাসেটের নতুন নাম দিন:' : 'Enter new dataset name:',
+                            datasetName.textContent
+                        );
+                        if (newName && newName.trim()) {
+                            datasetName.textContent = newName.trim();
+                        }
+                    }
+                });
+
+                // Calculate Button - ফিক্সড ইভেন্ট লিসেনার
+                document.getElementById('calculateBtn').addEventListener('click', function() {
+                    calculateCV();
+                });
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Initialize with first dataset
+                addDataset();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function addDataset() {
+                const datasetsList = document.getElementById('datasetsList');
+                const datasetCount = datasetsList.querySelectorAll('.dataset-item').length;
+                const colorIndex = datasetCount % datasetColors.length;
+                
+                const datasetItem = document.createElement('div');
+                datasetItem.className = 'dataset-item';
+                datasetItem.innerHTML = `
+                    <div class="dataset-header">
+                        <div class="dataset-name">
+                            <i class="fas fa-chart-bar" style="color: ${datasetColors[colorIndex]}"></i>
+                            <span>Dataset ${datasetCount + 1}</span>
+                        </div>
+                        <div class="dataset-actions">
+                            <button class="dataset-action-btn rename-dataset" title="${currentLanguage === 'bn' ? 'নাম পরিবর্তন করুন' : 'Rename'}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="dataset-action-btn remove-dataset" title="${currentLanguage === 'bn' ? 'অপসারণ করুন' : 'Remove'}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dataset-input">
+                        <textarea placeholder="${currentLanguage === 'bn' ? 'এই ডেটাসেটের জন্য ডেটা ইনপুট করুন...' : 'Enter data for this dataset...'}"></textarea>
+                    </div>
+                `;
+                
+                datasetsList.appendChild(datasetItem);
+            }
+
+            function updateDatasetNames() {
+                const datasetItems = document.querySelectorAll('.dataset-item');
+                datasetItems.forEach((item, index) => {
+                    const nameSpan = item.querySelector('.dataset-name span');
+                    nameSpan.textContent = `Dataset ${index + 1}`;
+                });
+            }
+
+            // ডেটা পার্সিং ফাংশন - ফিক্সড
+            function parseDataset(text) {
+                if (!text || !text.trim()) return [];
+                
+                // কমা, স্পেস, নতুন লাইন, ট্যাব দ্বারা আলাদা করা
+                const cleanedText = text.trim();
+                const numbers = cleanedText.split(/[,\s\n\t]+/);
+                
+                return numbers
+                    .map(item => {
+                        // সংখ্যায় কনভার্ট করার আগে স্পেস এবং খালি স্ট্রিং রিমুভ
+                        const trimmed = item.trim();
+                        if (trimmed === '') return NaN;
+                        return parseFloat(trimmed);
+                    })
+                    .filter(item => !isNaN(item));
+            }
+
+            // গড় গণনা - ফিক্সড
+            function calculateMean(data) {
+                if (!Array.isArray(data) || data.length === 0) return 0;
+                const sum = data.reduce((a, b) => a + b, 0);
+                return sum / data.length;
+            }
+
+            // স্ট্যান্ডার্ড ডেভিয়েশন গণনা - ফিক্সড
+            function calculateStandardDeviation(data, isSample = true) {
+                if (!Array.isArray(data) || data.length < 2) return 0;
+                
+                const mean = calculateMean(data);
+                const squaredDiffs = data.map(value => Math.pow(value - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / 
+                                (isSample ? data.length - 1 : data.length);
+                
+                return Math.sqrt(variance);
+            }
+
+            // CV গণনা - ফিক্সড
+            function calculateCV(data, isSample = true) {
+                if (!Array.isArray(data) || data.length === 0) return 0;
+                
+                const mean = calculateMean(data);
+                if (mean === 0) return 0; // গড় শূন্য হলে CV শূন্য রিটার্ন
+                
+                const stdDev = calculateStandardDeviation(data, isSample);
+                return (stdDev / mean) * 100;
+            }
+
+            function calculateStandardError(data) {
+                if (!Array.isArray(data) || data.length === 0) return 0;
+                
+                const stdDev = calculateStandardDeviation(data, true);
+                return stdDev / Math.sqrt(data.length);
+            }
+
+            function getStabilityLevel(cv) {
+                if (cv < 10) return {
+                    level: 'very-low',
+                    text: {
+                        en: 'Excellent stability',
+                        bn: 'চমৎকার স্থিতিশীলতা'
+                    },
+                    score: 95
+                };
+                else if (cv < 15) return {
+                    level: 'low',
+                    text: {
+                        en: 'Good stability',
+                        bn: 'ভাল স্থিতিশীলতা'
+                    },
+                    score: 85
+                };
+                else if (cv < 20) return {
+                    level: 'moderate-low',
+                    text: {
+                        en: 'Acceptable stability',
+                        bn: 'গ্রহণযোগ্য স্থিতিশীলতা'
+                    },
+                    score: 75
+                };
+                else if (cv < 30) return {
+                    level: 'moderate',
+                    text: {
+                        en: 'Moderate variability',
+                        bn: 'মাঝারি পরিবর্তনশীলতা'
+                    },
+                    score: 60
+                };
+                else if (cv < 40) return {
+                    level: 'moderate-high',
+                    text: {
+                        en: 'High variability',
+                        bn: 'উচ্চ পরিবর্তনশীলতা'
+                    },
+                    score: 40
+                };
+                else if (cv < 50) return {
+                    level: 'high',
+                    text: {
+                        en: 'Very high variability',
+                        bn: 'অত্যন্ত উচ্চ পরিবর্তনশীলতা'
+                    },
+                    score: 25
+                };
+                else return {
+                    level: 'very-high',
+                    text: {
+                        en: 'Extreme variability',
+                        bn: 'চরম পরিবর্তনশীলতা'
+                    },
+                    score: 10
+                };
+            }
+
+            function getCVInterpretation(cv) {
+                if (cv < 10) {
+                    return {
+                        en: 'Excellent stability - very consistent data',
+                        bn: 'চমৎকার স্থিতিশীলতা - অত্যন্ত সামঞ্জস্যপূর্ণ ডেটা'
+                    };
+                } else if (cv < 15) {
+                    return {
+                        en: 'Good stability - consistent data',
+                        bn: 'ভাল স্থিতিশীলতা - সামঞ্জস্যপূর্ণ ডেটা'
+                    };
+                } else if (cv < 20) {
+                    return {
+                        en: 'Acceptable stability - moderate consistency',
+                        bn: 'গ্রহণযোগ্য স্থিতিশীলতা - মাঝারি সামঞ্জস্য'
+                    };
+                } else if (cv < 30) {
+                    return {
+                        en: 'Moderate variability - typical for biological data',
+                        bn: 'মাঝারি পরিবর্তনশীলতা - জৈবিক ডেটার জন্য সাধারণ'
+                    };
+                } else if (cv < 40) {
+                    return {
+                        en: 'High variability - consider investigating causes',
+                        bn: 'উচ্চ পরিবর্তনশীলতা - কারণ অনুসন্ধান বিবচনা করুন'
+                    };
+                } else if (cv < 50) {
+                    return {
+                        en: 'Very high variability - process may need improvement',
+                        bn: 'অত্যন্ত উচ্চ পরিবর্তনশীলতা - প্রক্রিয়ার উন্নতি প্রয়োজন হতে পারে'
+                    };
+                } else {
+                    return {
+                        en: 'Extreme variability - data may be unreliable',
+                        bn: 'চরম পরিবর্তনশীলতা - ডেটা অবিশ্বস্ত হতে পারে'
+                    };
+                }
+            }
+
+            // CV ক্যালকুলেশন - ফিক্সড
+            function calculateCV() {
+                console.log("CV ক্যালকুলেশন শুরু...");
+                
+                // ডেটাসেট ক্লিয়ার
+                datasets = [];
+                
+                if (currentMethod === 'single') {
+                    console.log("একক ডেটাসেট মোড");
+                    
+                    // সিঙ্গেল ডেটাসেট পার্স করা
+                    const inputText = document.getElementById('dataInput').value;
+                    console.log("ইনপুট টেক্সট:", inputText);
+                    
+                    const data = parseDataset(inputText);
+                    console.log("পার্স করা ডেটা:", data);
+                    
+                    if (data.length < 2) {
+                        alert(currentLanguage === 'bn' ? 
+                            'CV গণনার জন্য কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 
+                            'At least 2 numbers are required for CV calculation');
+                        return;
+                    }
+                    
+                    datasets.push({
+                        name: 'Dataset 1',
+                        data: data,
+                        color: datasetColors[0]
+                    });
+                } else {
+                    console.log("একাধিক ডেটাসেট মোড");
+                    
+                    // মাল্টিপল ডেটাসেট পার্স করা
+                    const datasetItems = document.querySelectorAll('.dataset-item');
+                    console.log("ডেটাসেট আইটেম সংখ্যা:", datasetItems.length);
+                    
+                    let hasValidData = false;
+                    
+                    datasetItems.forEach((item, index) => {
+                        const name = item.querySelector('.dataset-name span').textContent;
+                        const input = item.querySelector('textarea');
+                        const data = parseDataset(input.value);
+                        
+                        console.log(`ডেটাসেট ${index + 1}:`, data);
+                        
+                        if (data.length >= 2) {
+                            datasets.push({
+                                name: name,
+                                data: data,
+                                color: datasetColors[index % datasetColors.length]
+                            });
+                            hasValidData = true;
+                        }
+                    });
+                    
+                    if (!hasValidData) {
+                        alert(currentLanguage === 'bn' ? 
+                            'কমপক্ষে একটি ডেটাসেটে ২টি সংখ্যা প্রয়োজন' : 
+                            'At least one dataset needs 2 numbers');
+                        return;
+                    }
+                }
+                
+                // প্রতিটি ডেটাসেটের জন্য পরিসংখ্যান গণনা
+                datasets.forEach(dataset => {
+                    console.log(`ডেটাসেট "${dataset.name}" এর গণনা:`);
+                    
+                    dataset.mean = calculateMean(dataset.data);
+                    dataset.stdDevSample = calculateStandardDeviation(dataset.data, true);
+                    dataset.stdDevPopulation = calculateStandardDeviation(dataset.data, false);
+                    dataset.cvSample = calculateCV(dataset.data, true);
+                    dataset.cvPopulation = calculateCV(dataset.data, false);
+                    dataset.stdError = calculateStandardError(dataset.data);
+                    dataset.stability = getStabilityLevel(dataset.cvSample);
+                    
+                    console.log("গড়:", dataset.mean);
+                    console.log("স্যাম্পল স্ট্যান্ডার্ড ডেভিয়েশন:", dataset.stdDevSample);
+                    console.log("স্যাম্পল CV:", dataset.cvSample);
+                    console.log("পপুলেশন CV:", dataset.cvPopulation);
+                });
+                
+                // ফলাফল আপডেট
+                updateResults();
+                
+                // ভিজ্যুয়ালাইজেশন আপডেট
+                updateCharts();
+                
+                // বিস্তারিত গণনা আপডেট
+                updateDetailedCalculations();
+                
+                // তুলনা টেবিল আপডেট (যদি একাধিক ডেটাসেট থাকে)
+                if (datasets.length > 1) {
+                    updateComparisonTable();
+                }
+                
+                console.log("CV ক্যালকুলেশন সম্পূর্ণ!");
+            }
+
+            function updateResults() {
+                const primaryDataset = datasets[0];
+                
+                // CV টাইপ সিলেকশন অনুযায়ী আপডেট
+                if (cvType === 'sample' || cvType === 'both') {
+                    document.getElementById('sampleCVResult').textContent = primaryDataset.cvSample.toFixed(2);
+                    document.getElementById('sampleCVResult').parentElement.style.display = 'block';
+                    
+                    const sampleInterpretation = getCVInterpretation(primaryDataset.cvSample);
+                    document.getElementById('sampleCVInterpretation').textContent = 
+                        currentLanguage === 'bn' ? sampleInterpretation.bn : sampleInterpretation.en;
+                } else {
+                    document.getElementById('sampleCVResult').parentElement.style.display = 'none';
+                }
+                
+                if (cvType === 'population' || cvType === 'both') {
+                    document.getElementById('populationCVResult').textContent = primaryDataset.cvPopulation.toFixed(2);
+                    document.getElementById('populationCVResult').parentElement.style.display = 'block';
+                    
+                    const populationInterpretation = getCVInterpretation(primaryDataset.cvPopulation);
+                    document.getElementById('populationCVInterpretation').textContent = 
+                        currentLanguage === 'bn' ? populationInterpretation.bn : populationInterpretation.en;
+                } else {
+                    document.getElementById('populationCVResult').parentElement.style.display = 'none';
+                }
+                
+                // পরিসংখ্যান সারসংক্ষেপ আপডেট
+                document.getElementById('dataCount').textContent = primaryDataset.data.length;
+                document.getElementById('meanValue').textContent = primaryDataset.mean.toFixed(4);
+                document.getElementById('stdDevValue').textContent = primaryDataset.stdDevSample.toFixed(4);
+                document.getElementById('stdErrorValue').textContent = primaryDataset.stdError.toFixed(4);
+                
+                // স্থিতিশীলতা নির্দেশক আপডেট
+                const stability = primaryDataset.stability;
+                document.getElementById('stabilityFill').style.width = `${stability.score}%`;
+                document.getElementById('stabilityText').textContent = 
+                    currentLanguage === 'bn' ? stability.text.bn : stability.text.en;
+                
+                // এককহীন তুলনা আপডেট (যদি একাধিক ডেটাসেট থাকে)
+                if (datasets.length > 1) {
+                    updateUnitlessComparison();
+                }
+            }
+
+            function updateUnitlessComparison() {
+                const comparisonList = document.getElementById('comparisonList');
+                const unitlessComparison = document.getElementById('unitlessComparison');
+                
+                unitlessComparison.style.display = 'block';
+                
+                // পূর্ববর্তী লিস্ট ক্লিয়ার
+                comparisonList.innerHTML = '';
+                
+                // CV অনুযায়ী ডেটাসেট সর্ট (আরোহী ক্রমে)
+                const sortedDatasets = [...datasets].sort((a, b) => a.cvSample - b.cvSample);
+                
+                // তুলনা আইটেম যোগ
+                sortedDatasets.forEach((dataset, index) => {
+                    const comparisonItem = document.createElement('div');
+                    comparisonItem.className = 'comparison-item';
+                    
+                    const rank = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    
+                    comparisonItem.innerHTML = `
+                        <div class="dataset-name-compare">
+                            <div class="dataset-color" style="background: ${dataset.color};"></div>
+                            <span>${rank} ${dataset.name}</span>
+                        </div>
+                        <div class="cv-compare">
+                            <span class="cv-value-compare">${dataset.cvSample.toFixed(2)}</span>
+                            <span class="cv-percent-compare">%</span>
+                        </div>
+                    `;
+                    
+                    comparisonList.appendChild(comparisonItem);
+                });
+            }
+
+            function updateCharts() {
+                updateCVChart();
+                updateMeanStdChart();
+                updateChartLegends();
+            }
+
+            function updateCVChart() {
+                const chart = document.getElementById('cvChart');
+                
+                // পূর্ববর্তী চার্ট ক্লিয়ার
+                chart.innerHTML = '';
+                
+                // স্কেলিং এর জন্য সর্বোচ্চ CV খুঁজা
+                const maxCV = Math.max(...datasets.map(d => d.cvSample));
+                const chartHeight = 200;
+                
+                // প্রতিটি ডেটাসেটের জন্য বার তৈরি
+                datasets.forEach((dataset, index) => {
+                    const barHeight = (dataset.cvSample / maxCV) * chartHeight;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.style.display = 'flex';
+                    barContainer.style.flexDirection = 'column';
+                    barContainer.style.alignItems = 'center';
+                    barContainer.style.gap = '10px';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'cv-bar';
+                    bar.style.height = `${barHeight}px`;
+                    bar.style.background = dataset.color;
+                    bar.title = `${dataset.name}: ${dataset.cvSample.toFixed(2)}%`;
+                    
+                    const barValue = document.createElement('div');
+                    barValue.className = 'cv-bar-value';
+                    barValue.textContent = `${dataset.cvSample.toFixed(1)}%`;
+                    
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'cv-bar-label';
+                    barLabel.textContent = dataset.name.length > 10 ? 
+                        dataset.name.substring(0, 8) + '...' : dataset.name;
+                    
+                    barContainer.appendChild(barValue);
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(barLabel);
+                    chart.appendChild(barContainer);
+                });
+            }
+
+            function updateMeanStdChart() {
+                const chart = document.getElementById('meanStdChart');
+                const dataset = datasets[0]; // প্রাইমারি ডেটাসেট
+                
+                // পূর্ববর্তী চার্ট ক্লিয়ার
+                chart.innerHTML = '';
+                
+                if (!dataset || !dataset.data || dataset.data.length === 0) {
+                    chart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p>${currentLanguage === 'bn' ? 'গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন দেখতে ডেটা ইনপুট করুন' : 'Enter data to see mean vs std dev'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // প্লট ডাইমেনশন ক্যালকুলেশন
+                const plotWidth = chart.offsetWidth - 40;
+                const plotHeight = 210;
+                
+                // ডেটা রেঞ্জ খুঁজা
+                const data = dataset.data;
+                const minVal = Math.min(...data);
+                const maxVal = Math.max(...data);
+                const range = maxVal - minVal || 1; // শূন্য হলে 1 ব্যবহার
+                
+                // অ্যাক্সেস লেবেল যোগ
+                const xLabel = document.createElement('div');
+                xLabel.className = 'plot-axis-label x';
+                xLabel.textContent = currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points';
+                chart.appendChild(xLabel);
+                
+                const yLabel = document.createElement('div');
+                yLabel.className = 'plot-axis-label y';
+                yLabel.textContent = currentLanguage === 'bn' ? 'মান' : 'Values';
+                chart.appendChild(yLabel);
+                
+                // গড় লাইন যোগ
+                const meanLine = document.createElement('div');
+                meanLine.className = 'mean-line';
+                const meanY = plotHeight - ((dataset.mean - minVal) / range * plotHeight);
+                meanLine.style.top = `${meanY}px`;
+                chart.appendChild(meanLine);
+                
+                // স্ট্যান্ডার্ড ডেভিয়েশন ব্যান্ড যোগ
+                const stdBand = document.createElement('div');
+                stdBand.className = 'std-dev-band';
+                const upperY = plotHeight - ((dataset.mean + dataset.stdDevSample - minVal) / range * plotHeight);
+                const lowerY = plotHeight - ((dataset.mean - dataset.stdDevSample - minVal) / range * plotHeight);
+                stdBand.style.top = `${Math.min(upperY, lowerY)}px`;
+                stdBand.style.height = `${Math.abs(upperY - lowerY)}px`;
+                chart.appendChild(stdBand);
+                
+                // CV রেশিও লাইন যোগ (বিভিন্ন CV লেভেলের জন্য)
+                const cvLevels = [10, 20, 30, 40, 50];
+                cvLevels.forEach(cv => {
+                    if (cv > dataset.cvSample) return;
+                    
+                    const cvLine = document.createElement('div');
+                    cvLine.className = 'cv-ratio-line';
+                    
+                    const stdDevAtCV = (cv / 100) * dataset.mean;
+                    const upperCVY = plotHeight - ((dataset.mean + stdDevAtCV - minVal) / range * plotHeight);
+                    
+                    cvLine.style.top = `${upperCVY}px`;
+                    cvLine.style.opacity = 0.8 - (cv / 100);
+                    chart.appendChild(cvLine);
+                    
+                    // CV লাইনের জন্য লেবেল যোগ
+                    if (cv === 10 || cv === 30 || cv === 50) {
+                        const cvLabel = document.createElement('div');
+                        cvLabel.className = 'plot-axis-label';
+                        cvLabel.textContent = `${cv}% CV`;
+                        cvLabel.style.top = `${upperCVY - 15}px`;
+                        cvLabel.style.right = '5px';
+                        cvLabel.style.color = 'var(--comparison-color)';
+                        cvLabel.style.fontSize = '0.7rem';
+                        chart.appendChild(cvLabel);
+                    }
+                });
+                
+                // ডেটা পয়েন্ট যোগ
+                data.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'data-point';
+                    
+                    // পজিশন ক্যালকুলেশন
+                    const xPos = (index / (data.length - 1)) * plotWidth + 20;
+                    const yPos = plotHeight - ((value - minVal) / range * plotHeight);
+                    
+                    point.style.left = `${xPos}px`;
+                    point.style.top = `${yPos}px`;
+                    
+                    // টুলটিপ যোগ
+                    const deviation = value - dataset.mean;
+                    const zScore = dataset.stdDevSample !== 0 ? deviation / dataset.stdDevSample : 0;
+                    
+                    point.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${value.toFixed(2)}\n` +
+                                 `${currentLanguage === 'bn' ? 'গড় থেকে বিচ্যুতি' : 'Deviation from mean'}: ${deviation.toFixed(2)}\n` +
+                                 `${currentLanguage === 'bn' ? 'Z-স্কোর' : 'Z-score'}: ${zScore.toFixed(2)}`;
+                    
+                    chart.appendChild(point);
+                });
+                
+                // গড় মান লেবেল যোগ
+                const meanLabel = document.createElement('div');
+                meanLabel.className = 'plot-axis-label';
+                meanLabel.textContent = `Mean: ${dataset.mean.toFixed(2)}`;
+                meanLabel.style.top = `${meanY - 15}px`;
+                meanLabel.style.right = '5px';
+                meanLabel.style.color = 'var(--success)';
+                meanLabel.style.fontSize = '0.7rem';
+                chart.appendChild(meanLabel);
+                
+                // স্ট্যান্ডার্ড ডেভিয়েশন লেবেল যোগ
+                const stdLabel = document.createElement('div');
+                stdLabel.className = 'plot-axis-label';
+                stdLabel.textContent = `± Std Dev`;
+                stdLabel.style.top = `${(upperY + lowerY) / 2}px`;
+                stdLabel.style.right = '5px';
+                stdLabel.style.color = 'var(--accent)';
+                stdLabel.style.fontSize = '0.7rem';
+                chart.appendChild(stdLabel);
+            }
+
+            function updateChartLegends() {
+                const cvChartLegend = document.getElementById('cvChartLegend');
+                const meanStdChartLegend = document.getElementById('meanStdChartLegend');
+                
+                // CV চার্ট লেজেন্ড
+                cvChartLegend.innerHTML = '';
+                datasets.forEach((dataset, index) => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background: ${dataset.color};"></div>
+                        <span>${dataset.name}: ${dataset.cvSample.toFixed(2)}% CV</span>
+                    `;
+                    cvChartLegend.appendChild(legendItem);
+                });
+                
+                // Mean vs Std Dev চার্ট লেজেন্ড
+                meanStdChartLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Mean" data-bন="গড়">গড়</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color std-dev"></div>
+                        <span data-en="±1 Std Dev" data-bন="±১ স্ট্যান্ডার্ড ডেভিয়েশন">±১ স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color cv"></div>
+                        <span>CV Lines (10%, 30%, 50%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="data-point" style="display: inline-block; margin-right: 0.5rem;"></div>
+                        <span data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                    </div>
+                `;
+                
+                // ডাইনামিক কনটেন্ট আপডেট
+                updateDynamicContent();
+            }
+
+            function updateDetailedCalculations() {
+                updateCVSteps();
+            }
+
+            function updateCVSteps() {
+                const container = document.getElementById('cvStepsContainer');
+                const dataset = datasets[0]; // প্রাইমারি ডেটাসেট
+                
+                if (!dataset) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'ডেটা ইনপুট করুন এবং CV গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                                'Enter data and calculate to see CV calculation steps'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const data = dataset.data;
+                const n = data.length;
+                
+                let stepsHTML = '';
+                
+                stepsHTML += `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate the Mean" data-bন="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                            <p data-en="Find the average of all data points" data-bন="সমস্ত ডেটা পয়েন্টের গড় খুঁজুন">
+                                সমস্ত ডেটা পয়েন্টের গড় খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> ${cvType === 'sample' ? 'x̄' : 'μ'} = Σxᵢ / n</p>
+                                <div class="step-equation">
+                                    ${cvType === 'sample' ? 'x̄' : 'μ'} = (${data.slice(0, 3).map(x => x.toFixed(2)).join(' + ')}${data.length > 3 ? ' + ...' : ''}) ÷ ${n}
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> ${dataset.mean.toFixed(4)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Standard Deviation" data-bন="ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন">ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন গণনা করুন</h4>
+                            <p data-en="Find the dispersion of data around the mean" data-bন="গড়ের চারপাশে ডেটার বিস্তার খুঁজুন">
+                                গড়ের চারপাশে ডেটার বিস্তার খুঁজুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> ${cvType === 'sample' ? 's' : 'σ'} = √[Σ(xᵢ - ${cvType === 'sample' ? 'x̄' : 'μ'})² / ${cvType === 'sample' ? '(n-1)' : 'n'}]</p>
+                                <div class="step-equation">
+                                    ${cvType === 'sample' ? 's' : 'σ'} = ${dataset.stdDevSample.toFixed(4)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Coefficient of Variation" data-bন="ধাপ ৩: কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন গণনা করুন">ধাপ ৩: কো-এফিশিয়েন্ট অফ ভ্যারিয়েশন গণনা করুন</h4>
+                            <p data-en="Divide standard deviation by mean and multiply by 100%" data-bন="স্ট্যান্ডার্ড ডেভিয়েশনকে গড় দ্বারা ভাগ করুন এবং ১০০% দ্বারা গুণ করুন">
+                                স্ট্যান্ডার্ড ডেভিয়েশনকে গড় দ্বারা ভাগ করুন এবং ১০০% দ্বারা গুণ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> CV = (${cvType === 'sample' ? 's' : 'σ'} / ${cvType === 'sample' ? 'x̄' : 'μ'}) × 100%</p>
+                                <div class="step-equation">
+                                    CV = (${cvType === 'sample' ? dataset.stdDevSample.toFixed(4) : dataset.stdDevPopulation.toFixed(4)} ÷ ${dataset.mean.toFixed(4)}) × 100%
+                                </div>
+                                <div class="step-equation" style="font-size: 1.5rem; color: var(--cv-color);">
+                                    <strong>CV = ${cvType === 'sample' ? dataset.cvSample.toFixed(2) : dataset.cvPopulation.toFixed(2)}%</strong>
+                                </div>
+                                <p style="margin-top: 1rem; padding: 0.8rem; background: var(--light-gray); border-radius: 6px; border-left: 4px solid var(--success);">
+                                    <i class="fas fa-lightbulb" style="color: var(--warning);"></i>
+                                    <strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        getCVInterpretation(cvType === 'sample' ? dataset.cvSample : dataset.cvPopulation).bn :
+                                        getCVInterpretation(cvType === 'sample' ? dataset.cvSample : dataset.cvPopulation).en}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function updateComparisonTable() {
+                const container = document.getElementById('comparisonTableContainer');
+                
+                let tableHTML = `
+                    <div class="comparison-table-container">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Dataset" data-bন="ডেটাসেট">ডেটাসেট</th>
+                                    <th data-en="Size (n)" data-bন="সাইজ (n)">সাইজ (n)</th>
+                                    <th data-en="Mean" data-bন="গড়">গড়</th>
+                                    <th data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</th>
+                                    <th data-en="CV (%)" data-bন="CV (%)">CV (%)</th>
+                                    <th data-en="Stability Level" data-bন="স্থিতিশীলতা স্তর">স্থিতিশীলতা স্তর</th>
+                                    <th data-en="Relative Variability" data-bন="আপেক্ষিক পরিবর্তনশীলতা">আপেক্ষিক পরিবর্তনশীলতা</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // তুলনার জন্য সর্বনিম্ন CV খুঁজা
+                const minCV = Math.min(...datasets.map(d => d.cvSample));
+                
+                datasets.forEach(dataset => {
+                    const cv = dataset.cvSample;
+                    const cvClass = cv < 15 ? 'cv-low' : cv < 30 ? 'cv-medium' : 'cv-high';
+                    const relativeCV = (cv / minCV).toFixed(2);
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${dataset.color};"></div>
+                                    <span>${dataset.name}</span>
+                                </div>
+                            </td>
+                            <td>${dataset.data.length}</td>
+                            <td>${dataset.mean.toFixed(2)}</td>
+                            <td>${dataset.stdDevSample.toFixed(2)}</td>
+                            <td class="cv-cell ${cvClass}">${cv.toFixed(2)}%</td>
+                            <td>${dataset.stability.text[currentLanguage === 'bn' ? 'bn' : 'en']}</td>
+                            <td>${relativeCV}× ${cv === minCV ? '(Most Stable)' : ''}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // বর্তমান ভাষা অনুযায়ী সব ডাইনামিক কনটেন্ট আপডেট
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                if (example === 'unit-compare') {
+                    // মাল্টিপল ডেটাসেট মোডে স্যুইচ
+                    document.querySelector('.method-btn[data-method="multiple"]').click();
+                    
+                    // বিদ্যমান ডেটাসেট ক্লিয়ার
+                    const datasetsList = document.getElementById('datasetsList');
+                    datasetsList.innerHTML = '';
+                    
+                    // উদাহরণ ডেটাসেট যোগ
+                    data.datasets.forEach((dataset, index) => {
+                        addDataset();
+                        const datasetItem = datasetsList.querySelectorAll('.dataset-item')[index];
+                        const nameSpan = datasetItem.querySelector('.dataset-name span');
+                        const textarea = datasetItem.querySelector('textarea');
+                        
+                        nameSpan.textContent = dataset.name;
+                        textarea.value = dataset.data.join(', ');
+                    });
+                } else {
+                    // সিঙ্গেল ডেটাসেট মোডে স্যুইচ
+                    document.querySelector('.method-btn[data-method="single"]').click();
+                    document.getElementById('dataInput').value = data.data.join(', ');
+                }
+                
+                // CV গণনা
+                setTimeout(() => calculateCV(), 100);
+            }
+
+            function clearCalculator() {
+                // সিঙ্গেল ডেটাসেট ইনপুট ক্লিয়ার
+                document.getElementById('dataInput').value = '';
+                
+                // মাল্টিপল ডেটাসেট ক্লিয়ার
+                const datasetsList = document.getElementById('datasetsList');
+                datasetsList.innerHTML = '';
+                addDataset(); // একটি খালি ডেটাসেট যোগ
+                
+                // সিঙ্গেল ডেটাসেট মোডে রিসেট
+                document.querySelector('.method-btn[data-method="single"]').click();
+                
+                // CV টাইপ রিসেট
+                document.querySelectorAll('.cv-type-btn').forEach(btn => {
+                    if (btn.dataset.type === 'sample') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                cvType = 'sample';
+                
+                // ফলাফল রিসেট
+                resetResults();
+                
+                // ডাইনামিক কনটেন্ট আপডেট
+                updateDynamicContent();
+            }
+
+            function resetResults() {
+                // ফলাফল মান ক্লিয়ার
+                document.getElementById('sampleCVResult').textContent = '--';
+                document.getElementById('populationCVResult').textContent = '--';
+                
+                // পরিসংখ্যান ক্লিয়ার
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('meanValue').textContent = '--';
+                document.getElementById('stdDevValue').textContent = '--';
+                document.getElementById('stdErrorValue').textContent = '--';
+                
+                // সব CV কার্ড দেখাও
+                document.querySelectorAll('.cv-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                
+                // ব্যাখ্যা রিসেট
+                document.getElementById('sampleCVInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 'স্যাম্পলের আপেক্ষিক পরিবর্তনশীলতা' : 'Relative variability of sample';
+                document.getElementById('populationCVInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 'পপুলেশনের আপেক্ষিক পরিবর্তনশীলতা' : 'Relative variability of population';
+                
+                // স্থিতিশীলতা নির্দেশক রিসেট
+                document.getElementById('stabilityFill').style.width = '0%';
+                document.getElementById('stabilityText').textContent = 
+                    currentLanguage === 'bn' ? 'স্থিতিশীলতা গণনা করা হচ্ছে...' : 'Calculating stability...';
+                
+                // এককহীন তুলনা লুকাও
+                document.getElementById('unitlessComparison').style.display = 'none';
+                
+                // চার্ট ক্লিয়ার
+                document.getElementById('cvChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>${currentLanguage === 'bn' ? 'CV তুলনা দেখতে ডেটা ইনপুট করুন' : 'Enter data to see CV comparison'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('meanStdChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-bullseye"></i>
+                        <p>${currentLanguage === 'bn' ? 'গড় বনাম স্ট্যান্ডার্ড ডেভিয়েশন দেখতে ডেটা ইনপুট করুন' : 'Enter data to see mean vs std dev'}</p>
+                    </div>
+                `;
+                
+                // লেজেন্ড ক্লিয়ার
+                document.getElementById('cvChartLegend').innerHTML = '';
+                document.getElementById('meanStdChartLegend').innerHTML = '';
+                
+                // বিস্তারিত সেকশন ক্লিয়ার
+                document.getElementById('cvStepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং CV গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                            'Enter data and calculate to see CV calculation steps'}
+                    </p>
+                `;
+                
+                document.getElementById('comparisonTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'তুলনা টেবিল দেখতে একাধিক ডেটাসেট যোগ করুন' : 
+                            'Add multiple datasets to see comparison table'}
+                    </p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

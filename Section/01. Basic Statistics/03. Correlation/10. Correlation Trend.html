@@ -1,0 +1,3640 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কোরিলেশন ট্রেন্ড এনালাইজার | ডাইনামিক সম্পর্ক বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.0.0/dist/chartjs-chart-matrix.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --rolling-correlation: #6C63FF;
+            --breakpoint-color: #FF4757;
+            --window-color: #36D1DC;
+            --baseline-color: #FF9A3D;
+            --threshold-color: #5B86E5;
+            --strong-correlation: #36D1DC;
+            --weak-correlation: #718096;
+            --negative-correlation: #FF6584;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--rolling-correlation), var(--breakpoint-color), var(--window-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Time Series Input */
+        .time-series-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .time-series-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .time-series-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .time-series-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-series-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        /* Analysis Settings */
+        .analysis-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-settings {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Window Size Slider */
+        .window-slider-container {
+            margin-top: 0.5rem;
+        }
+
+        .window-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--window-color), var(--rolling-correlation));
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .window-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .window-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .current-window {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Breakpoint Settings */
+        .breakpoint-settings {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--breakpoint-color);
+        }
+
+        .breakpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .breakpoint-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Hint */
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-hint i {
+            color: var(--info);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Trend Results Cards */
+        .trend-results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .trend-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.avg-correlation::before { background: var(--rolling-correlation); }
+        .result-card.trend-direction::before { background: var(--success); }
+        .result-card.breakpoints::before { background: var(--breakpoint-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.avg-correlation .result-icon { color: var(--rolling-correlation); }
+        .result-card.trend-direction .result-icon { color: var(--success); }
+        .result-card.breakpoints .result-icon { color: var(--breakpoint-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Trend Analysis */
+        .trend-analysis {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--rolling-correlation);
+        }
+
+        .analysis-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analysis-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .trend-strength {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+
+        .strength-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .analysis-text {
+            flex: 2;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Breakpoint Analysis */
+        .breakpoint-analysis {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--breakpoint-color);
+        }
+
+        .breakpoints-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .breakpoints-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .breakpoint-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .breakpoint-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .breakpoint-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Rolling Statistics */
+        .rolling-statistics {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--window-color);
+        }
+
+        .statistics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .statistics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .statistics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .statistic-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .statistic-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Rolling Correlation Table */
+        .rolling-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .rolling-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .rolling-table th {
+            background: var(--table-header);
+            padding: 0.8rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+
+        .rolling-table td {
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+        }
+
+        .rolling-table tr:hover td {
+            background: var(--light-gray);
+        }
+
+        .rolling-table .window-cell {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .rolling-table .correlation-cell {
+            font-weight: 600;
+        }
+
+        .rolling-table .breakpoint-row {
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .rolling-table .breakpoint-row td {
+            border-color: var(--breakpoint-color);
+            font-weight: 700;
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Chart Tabs */
+        .chart-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-tab {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+        }
+
+        .chart-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .chart-tab:hover:not(.active) {
+            color: var(--dark);
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-color.rolling { background: var(--rolling-correlation); }
+        .legend-color.breakpoint { background: var(--breakpoint-color); }
+        .legend-color.window { 
+            background: var(--window-color);
+            height: 3px;
+            margin: 0 2px;
+        }
+        .legend-color.baseline { 
+            background: var(--baseline-color);
+            border: 1px solid var(--border);
+        }
+        .legend-color.threshold { 
+            background: var(--threshold-color);
+            border: 1px solid var(--border);
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Correlation Change Guide */
+        .change-guide {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .guide-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .guide-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .guide-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .guide-indicator.increasing { background: var(--strong-correlation); }
+        .guide-indicator.decreasing { background: var(--negative-correlation); }
+        .guide-indicator.stable { background: var(--weak-correlation); }
+        .guide-indicator.break { background: var(--breakpoint-color); }
+        .guide-indicator.significant { 
+            background: linear-gradient(45deg, var(--primary), var(--success));
+        }
+
+        .guide-description {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .chart-placeholder p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-placeholder .hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .rolling-formula .formula-icon { background: var(--rolling-correlation); }
+        .breakpoint-formula .formula-icon { background: var(--breakpoint-color); }
+        .trend-formula .formula-icon { background: var(--success); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Time Windows Analysis */
+        .windows-section {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .windows-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .window-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .window-period {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .window-correlation {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .window-change {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Time Series Table with Windows */
+        .window-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .window-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .window-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .window-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .window-table .window-marker {
+            background: rgba(54, 209, 220, 0.1);
+            border-left: 3px solid var(--window-color);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Animation for Breakpoint Highlight */
+        @keyframes breakpointPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
+        .breakpoint-pulse {
+            animation: breakpointPulse 2s ease-in-out;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .chart-info,
+            .chart-tabs {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .step-by-step,
+            .visualization-section,
+            .windows-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .window-table,
+            .rolling-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+            
+            .chart-box {
+                height: 400px;
+            }
+        }
+        .chartjs-matrix {
+            max-width: 100%;
+        }
+        
+        .highlight {
+            background-color: rgba(108, 99, 255, 0.1);
+            border-left: 3px solid var(--primary);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+        
+        .error-message {
+            background-color: rgba(255, 71, 87, 0.1);
+            border-left: 3px solid var(--danger);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            color: var(--danger);
+            display: none;
+        }
+        
+        .success-message {
+            background-color: rgba(54, 209, 220, 0.1);
+            border-left: 3px solid var(--success);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            color: var(--success);
+            display: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(108, 99, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Correlation Trend Analyzer" data-bn="কোরিলেশন ট্রেন্ড এনালাইজার">কোরিলেশন ট্রেন্ড এনালাইজার</h1>
+            <p class="subtitle" data-en="Analyze how correlations change over time or conditions with rolling correlations, breakpoint detection, and time-varying relationship analysis" data-bn="রোলিং কোরিলেশন, ব্রেকপয়েন্ট ডিটেকশন, এবং টাইম-ভেরিয়িং সম্পর্ক বিশ্লেষণ সহ সময় বা শর্তের সাথে কোরিলেশন কীভাবে পরিবর্তিত হয় তা বিশ্লেষণ করুন">
+                রোলিং কোরিলেশন, ব্রেকপয়েন্ট ডিটেকশন, এবং টাইম-ভেরিয়িং সম্পর্ক বিশ্লেষণ সহ সময় বা শর্তের সাথে কোরিলেশন কীভাবে পরিবর্তিত হয় তা বিশ্লেষণ করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Time Series Input" data-bn="টাইম সিরিজ ইনপুট">টাইম সিরিজ ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="generate">
+                        <i class="fas fa-cogs"></i>
+                        <span data-en="Generate" data-bn="জেনারেট করুন">জেনারেট করুন</span>
+                    </button>
+                </div>
+
+                <div class="time-series-inputs">
+                    <div class="time-series-input">
+                        <label class="time-series-label">
+                            <i class="fas fa-chart-line"></i>
+                            <span data-en="Time Series X(t)" data-bn="টাইম সিরিজ X(t)">টাইম সিরিজ X(t)</span>
+                            <span class="ts-name">(X)</span>
+                        </label>
+                        <textarea id="dataX" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 12, 15, 13, 16, 18, 20, 19, 22, 24, 23, 26, 28, 27, 30, 32, 31, 34, 36, 35, 38, 40, 39, 42">50, 52, 55, 53, 56, 58, 60, 59, 62, 64, 63, 66, 68, 67, 70, 72, 71, 74, 76, 75, 78, 80, 79, 82, 84, 83, 86, 88, 87, 90</textarea>
+                    </div>
+                    <div class="time-series-input">
+                        <label class="time-series-label">
+                            <i class="fas fa-chart-bar"></i>
+                            <span data-en="Time Series Y(t)" data-bn="টাইম সিরিজ Y(t)">টাইম সিরিজ Y(t)</span>
+                            <span class="ts-name">(Y)</span>
+                        </label>
+                        <textarea id="dataY" class="data-input" placeholder="ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 20, 22, 25, 23, 26, 28, 30, 29, 32, 34, 33, 36, 38, 37, 40, 42, 41, 44, 46, 45, 48, 50, 49, 52">30, 32, 35, 33, 36, 38, 40, 39, 42, 44, 43, 46, 48, 47, 50, 52, 51, 54, 56, 55, 58, 60, 59, 62, 64, 63, 66, 68, 67, 70</textarea>
+                    </div>
+                </div>
+                
+                <div class="analysis-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-sliders-h"></i>
+                            <span data-en="Window Size" data-bn="উইন্ডো সাইজ">উইন্ডো সাইজ</span>
+                        </label>
+                        <div class="window-slider-container">
+                            <input type="range" id="windowSizeSlider" class="window-slider" min="5" max="20" value="10">
+                            <div class="window-display">
+                                <span>5</span>
+                                <span class="current-window" id="currentWindow">10</span>
+                                <span>20</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-step-forward"></i>
+                            <span data-en="Step Size" data-bn="স্টেপ সাইজ">স্টেপ সাইজ</span>
+                        </label>
+                        <select id="stepSize" class="setting-input">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="breakpoint-settings">
+                    <div class="setting-label">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="Breakpoint Detection Settings" data-bn="ব্রেকপয়েন্ট ডিটেকশন সেটিংস">ব্রেকপয়েন্ট ডিটেকশন সেটিংস</span>
+                    </div>
+                    <div class="breakpoint-grid">
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i class="fas fa-bolt"></i>
+                                <span data-en="Change Threshold" data-bn="পরিবর্তন থ্রেশহোল্ড">পরিবর্তন থ্রেশহোল্ড</span>
+                            </label>
+                            <input type="number" id="changeThreshold" class="setting-input" value="0.3" step="0.1" min="0.1" max="1.0">
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i class="fas fa-filter"></i>
+                                <span data-en="Smoothing Factor" data-bn="স্মুথিং ফ্যাক্টর">স্মুথিং ফ্যাক্টর</span>
+                            </label>
+                            <input type="number" id="smoothingFactor" class="setting-input" value="0.3" step="0.1" min="0" max="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-hint">
+                    <i class="fas fa-info-circle"></i>
+                    <span data-en="Enter two time series. Rolling correlation computes correlation over moving windows. Breakpoints identify significant changes in correlation structure." data-bn="দুটি টাইম সিরিজ ইনপুট করুন। রোলিং কোরিলেশন মুভিং উইন্ডোতে কোরিলেশন গণনা করে। ব্রেকপয়েন্ট কোরিলেশন স্ট্রাকচারে উল্লেখযোগ্য পরিবর্তন চিহ্নিত করে।">
+                        দুটি টাইম সিরিজ ইনপুট করুন। রোলিং কোরিলেশন মুভিং উইন্ডোতে কোরিলেশন গণনা করে। ব্রেকপয়েন্ট কোরিলেশন স্ট্রাকচারে উল্লেখযোগ্য পরিবর্তন চিহ্নিত করে।
+                    </span>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Analyze Trend" data-bn="ট্রেন্ড বিশ্লেষণ করুন">ট্রেন্ড বিশ্লেষণ করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bn="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+                
+                <!-- Error and Success Messages -->
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Trend Analysis Results" data-bn="ট্রেন্ড বিশ্লেষণ ফলাফল">ট্রেন্ড বিশ্লেষণ ফলাফল</span>
+                </h2>
+                
+                <div class="trend-results">
+                    <!-- Average Correlation -->
+                    <div class="result-card avg-correlation">
+                        <div class="result-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="result-title" data-en="Avg Correlation" data-bn="গড় কোরিলেশন">গড় কোরিলেশন</div>
+                        <div class="result-value" id="avgCorrelationResult">--</div>
+                        <div class="result-description" data-en="Across all windows" data-bn="সকল উইন্ডো জুড়ে">সকল উইন্ডো জুড়ে</div>
+                    </div>
+
+                    <!-- Trend Direction -->
+                    <div class="result-card trend-direction">
+                        <div class="result-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="result-title" data-en="Trend Direction" data-bn="ট্রেন্ড দিক">ট্রেন্ড দিক</div>
+                        <div class="result-value" id="trendDirectionResult">--</div>
+                        <div class="result-description" data-en="Correlation trend" data-bn="কোরিলেশন ট্রেন্ড">কোরিলেশন ট্রেন্ড</div>
+                    </div>
+
+                    <!-- Breakpoints -->
+                    <div class="result-card breakpoints">
+                        <div class="result-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="result-title" data-en="Breakpoints" data-bn="ব্রেকপয়েন্ট">ব্রেকপয়েন্ট</div>
+                        <div class="result-value" id="breakpointsResult">--</div>
+                        <div class="result-description" data-en="Significant changes" data-bn="উল্লেখযোগ্য পরিবর্তন">উল্লেখযোগ্য পরিবর্তন</div>
+                    </div>
+                </div>
+
+                <!-- Trend Analysis -->
+                <div class="trend-analysis">
+                    <div class="analysis-title">
+                        <i class="fas fa-comment-alt"></i>
+                        <span data-en="Correlation Trend Analysis" data-bn="কোরিলেশন ট্রেন্ড বিশ্লেষণ">কোরিলেশন ট্রেন্ড বিশ্লেষণ</span>
+                    </div>
+                    <div class="analysis-content">
+                        <div class="trend-strength">
+                            <div class="strength-value" id="trendStrength">--</div>
+                            <div class="strength-label" data-en="Trend Strength" data-bn="ট্রেন্ড শক্তি">ট্রেন্ড শক্তি</div>
+                        </div>
+                        <div class="analysis-text" id="trendAnalysisText" data-en="Enter time series to analyze correlation trend" data-bn="কোরিলেশন ট্রেন্ড বিশ্লেষণের জন্য টাইম সিরিজ ইনপুট করুন">
+                            কোরিলেশন ট্রেন্ড বিশ্লেষণের জন্য টাইম সিরিজ ইনপুট করুন
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Breakpoint Analysis -->
+                <div class="breakpoint-analysis">
+                    <div class="analysis-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="Structural Break Analysis" data-bn="স্ট্রাকচারাল ব্রেক বিশ্লেষণ">স্ট্রাকচারাল ব্রেক বিশ্লেষণ</span>
+                    </div>
+                    <div class="breakpoints-grid">
+                        <div class="breakpoint-item">
+                            <div class="breakpoint-label" data-en="First Break" data-bn="প্রথম ব্রেক">প্রথম ব্রেক</div>
+                            <div class="breakpoint-value" id="firstBreak">--</div>
+                        </div>
+                        <div class="breakpoint-item">
+                            <div class="breakpoint-label" data-en="Last Break" data-bn="শেষ ব্রেক">শেষ ব্রেক</div>
+                            <div class="breakpoint-value" id="lastBreak">--</div>
+                        </div>
+                        <div class="breakpoint-item">
+                            <div class="breakpoint-label" data-en="Max Change" data-bn="সর্বোচ্চ পরিবর্তন">সর্বোচ্চ পরিবর্তন</div>
+                            <div class="breakpoint-value" id="maxChange">--</div>
+                        </div>
+                        <div class="breakpoint-item">
+                            <div class="breakpoint-label" data-en="Avg Duration" data-bn="গড় সময়কাল">গড় সময়কাল</div>
+                            <div class="breakpoint-value" id="avgDuration">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rolling Statistics -->
+                <div class="rolling-statistics">
+                    <div class="analysis-title">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Rolling Correlation Statistics" data-bn="রোলিং কোরিলেশন পরিসংখ্যান">রোলিং কোরিলেশন পরিসংখ্যান</span>
+                    </div>
+                    <div class="statistics-grid">
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Windows" data-bn="উইন্ডো">উইন্ডো</div>
+                            <div class="statistic-value" id="windowsCount">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Min Correlation" data-bn="সর্বনিম্ন কোরিলেশন">সর্বনিম্ন কোরিলেশন</div>
+                            <div class="statistic-value" id="minCorrelation">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Max Correlation" data-bn="সর্বোচ্চ কোরিলেশন">সর্বোচ্চ কোরিলেশন</div>
+                            <div class="statistic-value" id="maxCorrelation">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Correlation Range" data-bn="কোরিলেশন রেঞ্জ">কোরিলেশন রেঞ্জ</div>
+                            <div class="statistic-value" id="correlationRange">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Std Dev" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                            <div class="statistic-value" id="correlationStdDev">--</div>
+                        </div>
+                        <div class="statistic-item">
+                            <div class="statistic-label" data-en="Volatility" data-bn="ভোলাটিলিটি">ভোলাটিলিটি</div>
+                            <div class="statistic-value" id="correlationVolatility">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rolling Correlation Table -->
+                <div class="rolling-statistics">
+                    <div class="analysis-title">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Rolling Correlation Windows" data-bn="রোলিং কোরিলেশন উইন্ডো">রোলিং কোরিলেশন উইন্ডো</span>
+                    </div>
+                    <div class="rolling-table-container" id="rollingTableContainer">
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" id="rollingPlaceholder" data-en="Enter time series to see rolling correlations" data-bn="রোলিং কোরিলেশন দেখতে টাইম সিরিজ ইনপুট করুন">
+                            রোলিং কোরিলেশন দেখতে টাইম সিরিজ ইনপুট করুন
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="visualization-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Correlation Trend Visualization" data-bn="কোরিলেশন ট্রেন্ড ভিজ্যুয়ালাইজেশন">কোরিলেশন ট্রেন্ড ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="rolling">
+                    <i class="fas fa-wave-square"></i>
+                    <span data-en="Rolling Correlation" data-bn="রোলিং কোরিলেশন">রোলিং কোরিলেশন</span>
+                </button>
+                <button class="chart-tab" data-chart="breakpoints">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span data-en="Breakpoints" data-bn="ব্রেকপয়েন্ট">ব্রেকপয়েন্ট</span>
+                </button>
+                <button class="chart-tab" data-chart="timeseries">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Time Series" data-bn="টাইম সিরিজ">টাইম সিরিজ</span>
+                </button>
+                <button class="chart-tab" data-chart="heatmap">
+                    <i class="fas fa-th-large"></i>
+                    <span data-en="Correlation Heatmap" data-bn="কোরিলেশন হিটম্যাপ">কোরিলেশন হিটম্যাপ</span>
+                </button>
+                <button class="chart-tab" data-chart="scatter">
+                    <i class="fas fa-chart-scatter"></i>
+                    <span data-en="Scatter by Window" data-bn="উইন্ডো অনুযায়ী স্ক্যাটার">উইন্ডো অনুযায়ী স্ক্যাটার</span>
+                </button>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-box">
+                    <div id="plotPlaceholder" class="chart-placeholder">
+                        <i class="fas fa-wave-square"></i>
+                        <p data-en="No data to visualize" data-bn="ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই">ভিজ্যুয়ালাইজ করার জন্য কোন ডেটা নেই</p>
+                        <p class="hint" data-en="Enter time series data and analyze trend to see visualizations" data-bn="ভিজ্যুয়ালাইজেশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং ট্রেন্ড বিশ্লেষণ করুন">
+                            ভিজ্যুয়ালাইজেশন দেখতে টাইম সিরিজ ডেটা ইনপুট করুন এবং ট্রেন্ড বিশ্লেষণ করুন
+                        </p>
+                    </div>
+                    <canvas id="rollingCanvas" style="display: none;"></canvas>
+                    <canvas id="breakpointsCanvas" style="display: none;"></canvas>
+                    <canvas id="timeSeriesCanvas" style="display: none;"></canvas>
+                    <canvas id="heatmapCanvas" style="display: none;"></canvas>
+                    <canvas id="scatterCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="chart-info">
+                    <div class="chart-legend">
+                        <div class="legend-title">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Chart Legend" data-bn="চার্ট লেজেন্ড">চার্ট লেজেন্ড</span>
+                        </div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color rolling"></div>
+                                <div class="legend-text" data-en="Rolling Correlation" data-bn="রোলিং কোরিলেশন">রোলিং কোরিলেশন</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color breakpoint"></div>
+                                <div class="legend-text" data-en="Breakpoint" data-bn="ব্রেকপয়েন্ট">ব্রেকপয়েন্ট</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color window"></div>
+                                <div class="legend-text" data-en="Window Average" data-bn="উইন্ডো গড়">উইন্ডো গড়</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color baseline"></div>
+                                <div class="legend-text" data-en="Baseline Correlation" data-bn="বেসলাইন কোরিলেশন">বেসলাইন কোরিলেশন</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color threshold"></div>
+                                <div class="legend-text" data-en="Change Threshold" data-bn="পরিবর্তন থ্রেশহোল্ড">পরিবর্তন থ্রেশহোল্ড</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="change-guide">
+                        <div class="guide-title">
+                            <i class="fas fa-book"></i>
+                            <span data-en="Correlation Change Guide" data-bn="কোরিলেশন পরিবর্তন নির্দেশিকা">কোরিলেশন পরিবর্তন নির্দেশিকা</span>
+                        </div>
+                        <div class="guide-items">
+                            <div class="guide-item">
+                                <div class="guide-indicator increasing"></div>
+                                <div class="guide-description" data-en="Increasing Correlation: Relationship strengthening" data-bn="বর্ধমান কোরিলেশন: সম্পর্ক শক্তিশালী হচ্ছে">বর্ধমান কোরিলেশন: সম্পর্ক শক্তিশালী হচ্ছে</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator decreasing"></div>
+                                <div class="guide-description" data-en="Decreasing Correlation: Relationship weakening" data-bn="হ্রাসমান কোরিলেশন: সম্পর্ক দুর্বল হচ্ছে">হ্রাসমান কোরিলেশন: সম্পর্ক দুর্বল হচ্ছে</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator stable"></div>
+                                <div class="guide-description" data-en="Stable Correlation: Consistent relationship" data-bn="স্থিতিশীল কোরিলেশন: স্থির সম্পর্ক">স্থিতিশীল কোরিলেশন: স্থির সম্পর্ক</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator break"></div>
+                                <div class="guide-description" data-en="Structural Break: Relationship regime change" data-bn="স্ট্রাকচারাল ব্রেক: সম্পর্ক রেজিম পরিবর্তন">স্ট্রাকচারাল ব্রেক: সম্পর্ক রেজিম পরিবর্তন</div>
+                            </div>
+                            <div class="guide-item">
+                                <div class="guide-indicator significant"></div>
+                                <div class="guide-description" data-en="Significant Change: Beyond threshold" data-bn="উল্লেখযোগ্য পরিবর্তন: থ্রেশহোল্ডের বাইরে">উল্লেখযোগ্য পরিবর্তন: থ্রেশহোল্ডের বাইরে</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Windows Analysis -->
+        <div class="windows-section">
+            <h2 class="section-title" style="border-bottom: none;">
+                <i class="fas fa-window-restore"></i>
+                <span data-en="Time Window Analysis" data-bn="সময় উইন্ডো বিশ্লেষণ">সময় উইন্ডো বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="windows-grid" id="windowsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem; grid-column: 1 / -1;" id="windowsPlaceholder" data-en="Enter time series to see window analysis" data-bn="উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                    উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Methods" data-bn="সূত্র এবং পদ্ধতি">সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Rolling Correlation Formula -->
+                <div class="formula-card rolling-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Rolling Correlation" data-bn="রোলিং কোরিলেশন">রোলিং কোরিলেশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Computes correlation over moving time windows" data-bn="মুভিং সময় উইন্ডোতে কোরিলেশন গণনা করে">
+                            মুভিং সময় উইন্ডোতে কোরিলেশন গণনা করে
+                        </p>
+                        <div class="formula-equation">
+                            r(t) = Corr[X(s), Y(s)]<br>
+                            s ∈ [t-w+1, t]
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="w: Window size (number of periods)" data-bn="w: উইন্ডো সাইজ (পিরিয়ড সংখ্যা)">w: উইন্ডো সাইজ (পিরিয়ড সংখ্যা)</li>
+                            <li data-en="t: End point of current window" data-bn="t: বর্তমান উইন্ডোর শেষ বিন্দু">t: বর্তমান উইন্ডোর শেষ বিন্দু</li>
+                            <li data-en="Step size: How much window moves each time" data-bn="স্টেপ সাইজ: উইন্ডো প্রতিবার কতটা সরানো হয়">স্টেপ সাইজ: উইন্ডো প্রতিবার কতটা সরানো হয়</li>
+                            <li data-en="Overlapping windows for smooth results" data-bn="মসৃণ ফলাফলের জন্য ওভারল্যাপিং উইন্ডো">মসৃণ ফলাফলের জন্য ওভারল্যাপিং উইন্ডো</li>
+                            <li data-en="Shows how correlation evolves over time" data-bn="সময়ের সাথে কোরিলেশন কীভাবে বিকশিত হয় তা দেখায়">সময়ের সাথে কোরিলেশন কীভাবে বিকশিত হয় তা দেখায়</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Breakpoint Detection Formula -->
+                <div class="formula-card breakpoint-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Breakpoint Detection" data-bn="ব্রেকপয়েন্ট ডিটেকশন">ব্রেকপয়েন্ট ডিটেকশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Identifies significant changes in correlation structure" data-bn="কোরিলেশন স্ট্রাকচারে উল্লেখযোগ্য পরিবর্তন চিহ্নিত করে">
+                            কোরিলেশন স্ট্রাকচারে উল্লেখযোগ্য পরিবর্তন চিহ্নিত করে
+                        </p>
+                        <div class="formula-equation">
+                            Δr = |r(t) - r(t-1)|<br>
+                            Break if Δr > τ
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Δr: Absolute change in correlation" data-bn="Δr: কোরিলেশনে পরম পরিবর্তন">Δr: কোরিলেশনে পরম পরিবর্তন</li>
+                            <li data-en="τ: Change threshold" data-bn="τ: পরিবর্তন থ্রেশহোল্ড">τ: পরিবর্তন থ্রেশহোল্ড</li>
+                            <li data-en="α: Smoothing factor for noise reduction" data-bn="α: নয়েজ রিডাকশনের জন্য স্মুথিং ফ্যাক্টর">α: নয়েজ রিডাকশনের জন্য স্মুথিং ফ্যাক্টর</li>
+                            <li data-en="CUSUM test for sequential change detection" data-bn="সিকোয়েনশিয়াল পরিবর্তন ডিটেকশনের জন্য CUSUM টেস্ট">সিকোয়েনশিয়াল পরিবর্তন ডিটেকশনের জন্য CUSUM টেস্ট</li>
+                            <li data-en="Identifies regime changes in relationships" data-bn="সম্পর্কে রেজিম পরিবর্তন চিহ্নিত করে">সম্পর্কে রেজিম পরিবর্তন চিহ্নিত করে</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Trend Analysis Formula -->
+                <div class="formula-card trend-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Trend Analysis" data-bn="ট্রেন্ড বিশ্লেষণ">ট্রেন্ড বিশ্লেষণ</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Analyzes direction and strength of correlation changes" data-bn="কোরিলেশন পরিবর্তনের দিক এবং শক্তি বিশ্লেষণ করে">
+                            কোরিলেশন পরিবর্তনের দিক এবং শক্তি বিশ্লেষণ করে
+                        </p>
+                        <div class="formula-equation">
+                            β = Cov[t, r(t)] / Var[t]<br>
+                            R² = (β × SD[t] / SD[r])²
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="β: Trend slope (change per period)" data-bn="β: ট্রেন্ড ঢাল (প্রতি পিরিয়ড পরিবর্তন)">β: ট্রেন্ড ঢাল (প্রতি পিরিয়ড পরিবর্তন)</li>
+                            <li data-en="R²: Trend strength (0 to 1)" data-bn="R²: ট্রেন্ড শক্তি (০ থেকে ১)">R²: ট্রেন্ড শক্তি (০ থেকে ১)</li>
+                            <li data-en="Positive β: Correlation increasing" data-bn="পজিটিভ β: কোরিলেশন বাড়ছে">পজিটিভ β: কোরিলেশন বাড়ছে</li>
+                            <li data-en="Negative β: Correlation decreasing" data-bn="নেগেটিভ β: কোরিলেশন কমছে">নেগেটিভ β: কোরিলেশন কমছে</li>
+                            <li data-en="Used for forecasting relationship dynamics" data-bn="সম্পর্ক ডায়নামিক্স পূর্বাভাসের জন্য ব্যবহৃত">সম্পর্ক ডায়নামিক্স পূর্বাভাসের জন্য ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Windows Table -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Window Analysis" data-bn="বিস্তারিত উইন্ডো বিশ্লেষণ">বিস্তারিত উইন্ডো বিশ্লেষণ</span>
+            </h2>
+            
+            <div id="windowTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="windowTablePlaceholder" data-en="Enter time series to see detailed window analysis" data-bn="বিস্তারিত উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                    বিস্তারিত উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Analysis" data-bn="ধাপে ধাপে বিশ্লেষণ">ধাপে ধাপে বিশ্লেষণ</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter time series to see step-by-step analysis" data-bn="ধাপে ধাপে বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                    ধাপে ধাপে বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Correlation Patterns" data-bn="উদাহরণ কোরিলেশন প্যাটার্ন">উদাহরণ কোরিলেশন প্যাটার্ন</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load different correlation patterns:" data-bn="বিভিন্ন কোরিলেশন প্যাটার্ন লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                বিভিন্ন কোরিলেশন প্যাটার্ন লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="increasing-trend">
+                    <div class="example-title" data-en="Increasing Trend" data-bn="বর্ধমান ট্রেন্ড">বর্ধমান ট্রেন্ড</div>
+                    <div class="example-description" data-en="Correlation strengthens over time" data-bn="সময়ের সাথে কোরিলেশন শক্তিশালী হয়">সময়ের সাথে কোরিলেশন শক্তিশালী হয়</div>
+                </button>
+                <button class="example-btn" data-example="decreasing-trend">
+                    <div class="example-title" data-en="Decreasing Trend" data-bn="হ্রাসমান ট্রেন্ড">হ্রাসমান ট্রেন্ড</div>
+                    <div class="example-description" data-en="Correlation weakens over time" data-bn="সময়ের সাথে কোরিলেশন দুর্বল হয়">সময়ের সাথে কোরিলেশন দুর্বল হয়</div>
+                </button>
+                <button class="example-btn" data-example="regime-change">
+                    <div class="example-title" data-en="Regime Change" data-bn="রেজিম পরিবর্তন">রেজিম পরিবর্তন</div>
+                    <div class="example-description" data-en="Sudden structural break" data-bn="হঠাৎ স্ট্রাকচারাল ব্রেক">হঠাৎ স্ট্রাকচারাল ব্রেক</div>
+                </button>
+                <button class="example-btn" data-example="seasonal-correlation">
+                    <div class="example-title" data-en="Seasonal Correlation" data-bn="সিজনাল কোরিলেশন">সিজনাল কোরিলেশন</div>
+                    <div class="example-description" data-en="Cyclical correlation pattern" data-bn="চক্রীয় কোরিলেশন প্যাটার্ন">চক্রীয় কোরিলেশন প্যাটার্ন</div>
+                </button>
+                <button class="example-btn" data-example="volatile-correlation">
+                    <div class="example-title" data-en="Volatile Correlation" data-bn="ভোলাটাইল কোরিলেশন">ভোলাটাইল কোরিলেশন</div>
+                    <div class="example-description" data-en="High correlation variability" data-bn="উচ্চ কোরিলেশন ভেরিয়েবিলিটি">উচ্চ কোরিলেশন ভেরিয়েবিলিটি</div>
+                </button>
+                <button class="example-btn" data-example="stable-correlation">
+                    <div class="example-title" data-en="Stable Correlation" data-bn="স্থিতিশীল কোরিলেশন">স্থিতিশীল কোরিলেশন</div>
+                    <div class="example-description" data-en="Constant correlation over time" data-bn="সময়ের সাথে স্থির কোরিলেশন">সময়ের সাথে স্থির কোরিলেশন</div>
+                </button>
+                <button class="example-btn" data-example="multiple-breaks">
+                    <div class="example-title" data-en="Multiple Breaks" data-bn="একাধিক ব্রেক">একাধিক ব্রেক</div>
+                    <div class="example-description" data-en="Several structural changes" data-bn="কয়েকটি স্ট্রাকচারাল পরিবর্তন">কয়েকটি স্ট্রাকচারাল পরিবর্তন</div>
+                </button>
+                <button class="example-btn" data-example="correlation-reversal">
+                    <div class="example-title" data-en="Correlation Reversal" data-bn="কোরিলেশন বিপরীত">কোরিলেশন বিপরীত</div>
+                    <div class="example-description" data-en="Positive to negative correlation" data-bn="পজিটিভ থেকে নেগেটিভ কোরিলেশন">পজিটিভ থেকে নেগেটিভ কোরিলেশন</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            
+            // Current state
+            let currentDataX = [];
+            let currentDataY = [];
+            let currentWindowSize = 10;
+            let currentStepSize = 5;
+            let currentThreshold = 0.3;
+            let currentSmoothing = 0.3;
+            let currentCharts = {
+                rolling: null,
+                breakpoints: null,
+                timeSeries: null,
+                heatmap: null,
+                scatter: null
+            };
+            let currentActiveChart = 'rolling';
+            let rollingCorrelations = [];
+            let breakpoints = [];
+
+            // Example Correlation Patterns
+            const examples = {
+                'increasing-trend': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => {
+                        const trend = 30 + i * 0.7;
+                        const noise = (Math.random() - 0.5) * 5;
+                        return trend + noise * (1 - i/50); // Decreasing noise
+                    }),
+                    description: 'Increasing correlation trend'
+                },
+                'decreasing-trend': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => {
+                        const trend = 30 + i * 0.3;
+                        const noise = (Math.random() - 0.5) * 5;
+                        return trend + noise * (0.2 + i/50); // Increasing noise
+                    }),
+                    description: 'Decreasing correlation trend'
+                },
+                'regime-change': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => {
+                        if (i < 25) {
+                            // First regime: Strong correlation
+                            return 30 + 0.8 * (50 + i * 0.5) + (Math.random() - 0.5) * 3;
+                        } else {
+                            // Second regime: Weak correlation
+                            return 50 + 0.2 * (50 + i * 0.5) + (Math.random() - 0.5) * 10;
+                        }
+                    }),
+                    description: 'Structural break at midpoint'
+                },
+                'seasonal-correlation': {
+                    x: Array.from({length: 50}, (_, i) => 50 + Math.sin(i * Math.PI / 6) * 10 + (Math.random() - 0.5) * 3),
+                    y: Array.from({length: 50}, (_, i) => {
+                        const phase = Math.PI / 3; // 60 degree phase shift
+                        return 30 + Math.sin(i * Math.PI / 6 + phase) * 8 + (Math.random() - 0.5) * 4;
+                    }),
+                    description: 'Seasonal correlation pattern'
+                },
+                'volatile-correlation': {
+                    x: Array.from({length: 50}, (_, i) => 50 + (Math.random() - 0.5) * 10),
+                    y: Array.from({length: 50}, (_, i) => {
+                        const correlation = 0.3 + 0.4 * Math.sin(i * Math.PI / 8); // Varying correlation
+                        return 30 + correlation * (50 + (Math.random() - 0.5) * 10) + (Math.random() - 0.5) * 8;
+                    }),
+                    description: 'Volatile correlation over time'
+                },
+                'stable-correlation': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => 30 + 0.6 * (50 + i * 0.5) + (Math.random() - 0.5) * 5),
+                    description: 'Stable correlation over time'
+                },
+                'multiple-breaks': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => {
+                        if (i < 15) {
+                            return 30 + 0.8 * (50 + i * 0.5) + (Math.random() - 0.5) * 3;
+                        } else if (i < 30) {
+                            return 40 + 0.3 * (50 + i * 0.5) + (Math.random() - 0.5) * 8;
+                        } else if (i < 40) {
+                            return 50 + 0.7 * (50 + i * 0.5) + (Math.random() - 0.5) * 4;
+                        } else {
+                            return 35 + 0.2 * (50 + i * 0.5) + (Math.random() - 0.5) * 10;
+                        }
+                    }),
+                    description: 'Multiple structural breaks'
+                },
+                'correlation-reversal': {
+                    x: Array.from({length: 50}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5),
+                    y: Array.from({length: 50}, (_, i) => {
+                        if (i < 25) {
+                            // Positive correlation
+                            return 30 + 0.7 * (50 + i * 0.5) + (Math.random() - 0.5) * 4;
+                        } else {
+                            // Negative correlation
+                            return 70 - 0.5 * (50 + i * 0.5) + (Math.random() - 0.5) * 4;
+                        }
+                    }),
+                    description: 'Correlation reversal from positive to negative'
+                }
+            };
+
+            // Initialize
+            initAnalyzer();
+
+            function initAnalyzer() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomTimeSeries();
+                        } else if (this.dataset.method === 'generate') {
+                            generateTrendTimeSeries();
+                        }
+                    });
+                });
+
+                // Window Size Slider
+                const windowSlider = document.getElementById('windowSizeSlider');
+                const currentWindowDisplay = document.getElementById('currentWindow');
+                
+                windowSlider.addEventListener('input', function() {
+                    currentWindowSize = parseInt(this.value);
+                    currentWindowDisplay.textContent = currentWindowSize;
+                });
+
+                // Step Size Selection
+                document.getElementById('stepSize').addEventListener('change', function() {
+                    currentStepSize = parseInt(this.value);
+                });
+
+                // Breakpoint Settings
+                document.getElementById('changeThreshold').addEventListener('input', function() {
+                    currentThreshold = parseFloat(this.value);
+                });
+
+                document.getElementById('smoothingFactor').addEventListener('input', function() {
+                    currentSmoothing = parseFloat(this.value);
+                });
+
+                // Chart Tabs
+                const chartTabs = document.querySelectorAll('.chart-tab');
+                chartTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        chartTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        currentActiveChart = this.dataset.chart;
+                        
+                        // Show the selected chart
+                        updateChartVisibility();
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', analyzeTrend);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAnalyzer);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Enter key support
+                document.getElementById('dataX').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        analyzeTrend();
+                    }
+                });
+                
+                document.getElementById('dataY').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        analyzeTrend();
+                    }
+                });
+
+                // Load default example
+                setTimeout(() => {
+                    loadExample('regime-change');
+                    analyzeTrend();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function analyzeTrend() {
+                const inputX = document.getElementById('dataX').value;
+                const inputY = document.getElementById('dataY').value;
+                
+                const dataX = parseInputData(inputX);
+                const dataY = parseInputData(inputY);
+                
+                if (dataX.length === 0 || dataY.length === 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'দয়া করে X(t) এবং Y(t) উভয় টাইম সিরিজের জন্য ডেটা ইনপুট করুন' : 
+                        'Please enter data for both X(t) and Y(t) time series');
+                    return;
+                }
+                
+                if (dataX.length !== dataY.length) {
+                    showError(currentLanguage === 'bn' ? 
+                        'X(t) এবং Y(t) টাইম সিরিজে সমান সংখ্যক মান থাকতে হবে' : 
+                        'X(t) and Y(t) time series must have the same number of values');
+                    return;
+                }
+                
+                if (dataX.length < currentWindowSize * 2) {
+                    showError(currentLanguage === 'bn' ? 
+                        `রোলিং কোরিলেশনের জন্য কমপক্ষে ${currentWindowSize * 2}টি ডেটা পয়েন্ট প্রয়োজন` : 
+                        `At least ${currentWindowSize * 2} data points are required for rolling correlation`);
+                    return;
+                }
+                
+                currentDataX = dataX;
+                currentDataY = dataY;
+                
+                // Calculate rolling correlations
+                const analysis = calculateRollingCorrelation(dataX, dataY);
+                
+                // Detect breakpoints
+                breakpoints = detectBreakpoints(analysis.rollingCorrelations, currentThreshold, currentSmoothing);
+                
+                // Calculate trend statistics
+                const stats = calculateTrendStatistics(analysis, breakpoints);
+                
+                // Update results
+                updateResults(stats);
+                
+                // Update rolling table
+                updateRollingTable(analysis, breakpoints);
+                
+                // Update windows analysis
+                updateWindowsAnalysis(analysis);
+                
+                // Update visualizations
+                updateVisualizations(dataX, dataY, analysis, breakpoints, stats);
+                
+                // Update window table
+                updateWindowTable(analysis);
+                
+                // Update step-by-step analysis
+                updateStepByStep(dataX, dataY, analysis, breakpoints, stats);
+                
+                // Show success message
+                showSuccess(currentLanguage === 'bn' ? 
+                    'ট্রেন্ড বিশ্লেষণ সফলভাবে সম্পন্ন হয়েছে!' : 
+                    'Trend analysis completed successfully!');
+            }
+
+            function calculateRollingCorrelation(x, y) {
+                const n = x.length;
+                const windowSize = currentWindowSize;
+                const stepSize = currentStepSize;
+                
+                const rollingCorrelations = [];
+                const windowStarts = [];
+                const windowEnds = [];
+                const windowCenters = [];
+                
+                // Calculate correlation for each window
+                for (let start = 0; start <= n - windowSize; start += stepSize) {
+                    const end = start + windowSize;
+                    
+                    // Extract window data
+                    const windowX = x.slice(start, end);
+                    const windowY = y.slice(start, end);
+                    
+                    // Calculate correlation for this window
+                    const correlation = calculatePearsonCorrelation(windowX, windowY);
+                    
+                    rollingCorrelations.push(correlation);
+                    windowStarts.push(start);
+                    windowEnds.push(end);
+                    windowCenters.push(start + Math.floor(windowSize / 2));
+                }
+                
+                // Calculate overall correlation
+                const overallCorrelation = calculatePearsonCorrelation(x, y);
+                
+                // Calculate trend statistics
+                const timeIndices = windowCenters.map((_, i) => i);
+                const trendSlope = calculateLinearTrend(timeIndices, rollingCorrelations);
+                
+                return {
+                    rollingCorrelations,
+                    windowStarts,
+                    windowEnds,
+                    windowCenters,
+                    overallCorrelation,
+                    trendSlope,
+                    n,
+                    windowSize,
+                    stepSize
+                };
+            }
+
+            function calculatePearsonCorrelation(x, y) {
+                const n = x.length;
+                if (n < 2) return 0;
+                
+                // Calculate means
+                const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Calculate standard deviations
+                const stdX = Math.sqrt(x.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0) / n);
+                const stdY = Math.sqrt(y.reduce((sum, val) => sum + Math.pow(val - meanY, 2), 0) / n);
+                
+                if (stdX === 0 || stdY === 0) return 0;
+                
+                // Calculate covariance
+                let covariance = 0;
+                for (let i = 0; i < n; i++) {
+                    covariance += (x[i] - meanX) * (y[i] - meanY);
+                }
+                covariance /= n;
+                
+                // Calculate Pearson's r
+                return covariance / (stdX * stdY);
+            }
+
+            function calculateLinearTrend(x, y) {
+                const n = x.length;
+                if (n < 2) return 0;
+                
+                // Calculate means
+                const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Calculate slope (beta)
+                let numerator = 0;
+                let denominator = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    numerator += (x[i] - meanX) * (y[i] - meanY);
+                    denominator += Math.pow(x[i] - meanX, 2);
+                }
+                
+                return denominator !== 0 ? numerator / denominator : 0;
+            }
+
+            function detectBreakpoints(correlations, threshold, smoothing) {
+                if (correlations.length < 2) return [];
+                
+                // Apply smoothing if needed
+                let smoothed = correlations;
+                if (smoothing > 0) {
+                    smoothed = applyExponentialSmoothing(correlations, smoothing);
+                }
+                
+                // Detect significant changes
+                const breakpoints = [];
+                for (let i = 1; i < smoothed.length; i++) {
+                    const change = Math.abs(smoothed[i] - smoothed[i-1]);
+                    if (change > threshold) {
+                        breakpoints.push({
+                            index: i,
+                            change: change,
+                            from: smoothed[i-1],
+                            to: smoothed[i],
+                            direction: smoothed[i] > smoothed[i-1] ? 'increasing' : 'decreasing'
+                        });
+                    }
+                }
+                
+                return breakpoints;
+            }
+
+            function applyExponentialSmoothing(data, alpha) {
+                if (data.length === 0) return [];
+                
+                const smoothed = [data[0]];
+                for (let i = 1; i < data.length; i++) {
+                    smoothed.push(alpha * data[i] + (1 - alpha) * smoothed[i-1]);
+                }
+                
+                return smoothed;
+            }
+
+            function calculateTrendStatistics(analysis, breakpoints) {
+                const correlations = analysis.rollingCorrelations;
+                const n = correlations.length;
+                
+                // Basic statistics
+                const sum = correlations.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                const variance = correlations.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                const stdDev = Math.sqrt(variance);
+                
+                // Min and max
+                const min = Math.min(...correlations);
+                const max = Math.max(...correlations);
+                const range = max - min;
+                
+                // Trend analysis
+                const timeIndices = correlations.map((_, i) => i);
+                const trendSlope = calculateLinearTrend(timeIndices, correlations);
+                
+                // Calculate R² for trend
+                const predicted = timeIndices.map(t => mean + trendSlope * (t - (n-1)/2));
+                const ssResidual = correlations.reduce((sum, val, i) => sum + Math.pow(val - predicted[i], 2), 0);
+                const ssTotal = correlations.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0);
+                const rSquared = ssTotal > 0 ? 1 - (ssResidual / ssTotal) : 0;
+                
+                // Determine trend direction
+                let trendDirection = 'Stable';
+                let trendStrength = 'Weak';
+                
+                if (Math.abs(trendSlope) > 0.01) {
+                    trendDirection = trendSlope > 0 ? 'Increasing' : 'Decreasing';
+                    trendStrength = rSquared > 0.5 ? 'Strong' : (rSquared > 0.2 ? 'Moderate' : 'Weak');
+                }
+                
+                // Breakpoint statistics
+                const breakpointCount = breakpoints.length;
+                const firstBreak = breakpoints.length > 0 ? breakpoints[0].index : null;
+                const lastBreak = breakpoints.length > 0 ? breakpoints[breakpoints.length - 1].index : null;
+                const maxChange = breakpoints.length > 0 ? Math.max(...breakpoints.map(b => b.change)) : 0;
+                const avgDuration = breakpoints.length > 1 ? 
+                    (lastBreak - firstBreak) / (breakpoints.length - 1) : 0;
+                
+                // Volatility (average absolute change)
+                let volatility = 0;
+                for (let i = 1; i < correlations.length; i++) {
+                    volatility += Math.abs(correlations[i] - correlations[i-1]);
+                }
+                volatility /= (correlations.length - 1);
+                
+                return {
+                    mean,
+                    stdDev,
+                    min,
+                    max,
+                    range,
+                    trendSlope,
+                    rSquared,
+                    trendDirection,
+                    trendStrength,
+                    breakpointCount,
+                    firstBreak,
+                    lastBreak,
+                    maxChange,
+                    avgDuration,
+                    volatility,
+                    windows: n
+                };
+            }
+
+            function updateResults(stats) {
+                // Update main results
+                document.getElementById('avgCorrelationResult').textContent = stats.mean.toFixed(4);
+                document.getElementById('trendDirectionResult').textContent = stats.trendDirection;
+                document.getElementById('breakpointsResult').textContent = stats.breakpointCount;
+                
+                // Update trend analysis
+                document.getElementById('trendStrength').textContent = stats.trendStrength;
+                
+                const trendText = currentLanguage === 'bn' ? 
+                    `কোরিলেশন ${stats.trendDirection.toLowerCase()} প্রবণতা দেখাচ্ছে (ঢাল: ${stats.trendSlope.toFixed(4)}, শক্তি: ${stats.rSquared.toFixed(2)})` :
+                    `Correlation shows ${stats.trendDirection.toLowerCase()} trend (slope: ${stats.trendSlope.toFixed(4)}, strength: ${stats.rSquared.toFixed(2)})`;
+                
+                if (stats.breakpointCount > 0) {
+                    const breakText = currentLanguage === 'bn' ?
+                        ` ${stats.breakpointCount}টি স্ট্রাকচারাল ব্রেক শনাক্ত করা হয়েছে।` :
+                        ` ${stats.breakpointCount} structural breaks detected.`;
+                    document.getElementById('trendAnalysisText').textContent = trendText + breakText;
+                } else {
+                    document.getElementById('trendAnalysisText').textContent = trendText;
+                }
+                
+                // Update breakpoint analysis
+                document.getElementById('firstBreak').textContent = stats.firstBreak !== null ? stats.firstBreak : '--';
+                document.getElementById('lastBreak').textContent = stats.lastBreak !== null ? stats.lastBreak : '--';
+                document.getElementById('maxChange').textContent = stats.maxChange.toFixed(4);
+                document.getElementById('avgDuration').textContent = stats.avgDuration.toFixed(1);
+                
+                // Update rolling statistics
+                document.getElementById('windowsCount').textContent = stats.windows;
+                document.getElementById('minCorrelation').textContent = stats.min.toFixed(4);
+                document.getElementById('maxCorrelation').textContent = stats.max.toFixed(4);
+                document.getElementById('correlationRange').textContent = stats.range.toFixed(4);
+                document.getElementById('correlationStdDev').textContent = stats.stdDev.toFixed(4);
+                document.getElementById('correlationVolatility').textContent = stats.volatility.toFixed(4);
+                
+                // Color code trend direction
+                const trendElement = document.getElementById('trendDirectionResult');
+                if (stats.trendDirection === 'Increasing') {
+                    trendElement.style.color = 'var(--strong-correlation)';
+                } else if (stats.trendDirection === 'Decreasing') {
+                    trendElement.style.color = 'var(--negative-correlation)';
+                } else {
+                    trendElement.style.color = 'var(--weak-correlation)';
+                }
+                
+                // Highlight breakpoints count
+                const breakpointsElement = document.getElementById('breakpointsResult');
+                if (stats.breakpointCount > 0) {
+                    breakpointsElement.style.color = 'var(--breakpoint-color)';
+                    breakpointsElement.classList.remove('breakpoint-pulse');
+                    void breakpointsElement.offsetWidth; // Trigger reflow
+                    breakpointsElement.classList.add('breakpoint-pulse');
+                } else {
+                    breakpointsElement.style.color = 'var(--gray)';
+                }
+            }
+
+            function updateRollingTable(analysis, breakpoints) {
+                const container = document.getElementById('rollingTableContainer');
+                const correlations = analysis.rollingCorrelations;
+                const starts = analysis.windowStarts;
+                const ends = analysis.windowEnds;
+                
+                let tableHTML = `
+                    <table class="rolling-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Window" data-bn="উইন্ডো">উইন্ডো</th>
+                                <th data-en="Start" data-bn="শুরু">শুরু</th>
+                                <th data-en="End" data-bn="শেষ">শেষ</th>
+                                <th data-en="Center" data-bn="কেন্দ্র">কেন্দ্র</th>
+                                <th data-en="Correlation" data-bn="কোরিলেশন">কোরিলেশন</th>
+                                <th data-en="Change" data-bn="পরিবর্তন">পরিবর্তন</th>
+                                <th data-en="Breakpoint" data-bn="ব্রেকপয়েন্ট">ব্রেকপয়েন্ট</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                for (let i = 0; i < correlations.length; i++) {
+                    const isBreakpoint = breakpoints.some(bp => bp.index === i);
+                    const change = i > 0 ? (correlations[i] - correlations[i-1]).toFixed(4) : '--';
+                    const breakpointText = isBreakpoint ? 
+                        (currentLanguage === 'bn' ? 'হ্যাঁ' : 'Yes') : 
+                        (currentLanguage === 'bn' ? 'না' : 'No');
+                    
+                    tableHTML += `
+                        <tr ${isBreakpoint ? 'class="breakpoint-row"' : ''}>
+                            <td class="window-cell">${i + 1}</td>
+                            <td>${starts[i] + 1}</td>
+                            <td>${ends[i]}</td>
+                            <td>${starts[i] + Math.floor(analysis.windowSize / 2) + 1}</td>
+                            <td class="correlation-cell" style="color: ${getCorrelationColor(correlations[i])}">
+                                ${correlations[i].toFixed(4)}
+                            </td>
+                            <td>${change}</td>
+                            <td>${breakpointText}</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function getCorrelationColor(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.7) {
+                    return r > 0 ? 'var(--strong-correlation)' : 'var(--negative-correlation)';
+                } else if (absR >= 0.3) {
+                    return r > 0 ? 'rgba(54, 209, 220, 0.8)' : 'rgba(255, 101, 132, 0.8)';
+                } else {
+                    return 'var(--weak-correlation)';
+                }
+            }
+
+            function updateWindowsAnalysis(analysis) {
+                const container = document.getElementById('windowsContainer');
+                const correlations = analysis.rollingCorrelations;
+                const n = correlations.length;
+                
+                if (n === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem; grid-column: 1 / -1;">
+                            ${currentLanguage === 'bn' ? 'উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন' : 'Enter time series to see window analysis'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                // Group windows into categories
+                const quartileSize = Math.floor(n / 4);
+                const windows = [];
+                
+                // First quartile
+                if (quartileSize > 0) {
+                    const firstQuartile = correlations.slice(0, quartileSize);
+                    const avg = firstQuartile.reduce((a, b) => a + b, 0) / firstQuartile.length;
+                    windows.push({
+                        period: currentLanguage === 'bn' ? 'প্রথম চতুর্থাংশ' : 'First Quartile',
+                        correlation: avg.toFixed(4),
+                        change: '--'
+                    });
+                }
+                
+                // Middle half
+                if (n > 2) {
+                    const middleStart = quartileSize;
+                    const middleEnd = n - quartileSize;
+                    const middle = correlations.slice(middleStart, middleEnd);
+                    if (middle.length > 0) {
+                        const avg = middle.reduce((a, b) => a + b, 0) / middle.length;
+                        windows.push({
+                            period: currentLanguage === 'bn' ? 'মধ্যম অংশ' : 'Middle Half',
+                            correlation: avg.toFixed(4),
+                            change: '--'
+                        });
+                    }
+                }
+                
+                // Last quartile
+                if (quartileSize > 0) {
+                    const lastQuartile = correlations.slice(-quartileSize);
+                    const avg = lastQuartile.reduce((a, b) => a + b, 0) / lastQuartile.length;
+                    windows.push({
+                        period: currentLanguage === 'bn' ? 'শেষ চতুর্থাংশ' : 'Last Quartile',
+                        correlation: avg.toFixed(4),
+                        change: '--'
+                    });
+                }
+                
+                // Overall
+                windows.push({
+                    period: currentLanguage === 'bn' ? 'সর্বমোট' : 'Overall',
+                    correlation: analysis.overallCorrelation.toFixed(4),
+                    change: '--'
+                });
+                
+                // Calculate changes
+                for (let i = 1; i < windows.length - 1; i++) {
+                    const change = (parseFloat(windows[i].correlation) - parseFloat(windows[i-1].correlation)).toFixed(4);
+                    windows[i].change = change;
+                }
+                
+                let windowsHTML = '';
+                windows.forEach((window, index) => {
+                    const changeColor = window.change.startsWith('-') ? 
+                        'var(--negative-correlation)' : 
+                        (parseFloat(window.change) > 0 ? 'var(--strong-correlation)' : 'var(--gray)');
+                    
+                    windowsHTML += `
+                        <div class="window-card">
+                            <div class="window-period">${window.period}</div>
+                            <div class="window-correlation">${window.correlation}</div>
+                            <div class="window-change" style="color: ${changeColor}">
+                                ${window.change !== '--' ? `Change: ${window.change}` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = windowsHTML;
+            }
+
+            function updateVisualizations(x, y, analysis, breakpoints, stats) {
+                // Hide placeholder
+                document.getElementById('plotPlaceholder').style.display = 'none';
+                
+                // Update rolling correlation chart
+                updateRollingChart(analysis, breakpoints, stats);
+                
+                // Update breakpoints chart
+                updateBreakpointsChart(analysis, breakpoints);
+                
+                // Update time series chart
+                updateTimeSeriesChart(x, y, analysis);
+                
+                // Update heatmap chart
+                updateHeatmapChart(x, y, analysis);
+                
+                // Update scatter chart
+                updateScatterChart(x, y, analysis);
+                
+                // Show the active chart
+                updateChartVisibility();
+            }
+
+            function updateRollingChart(analysis, breakpoints, stats) {
+                const canvas = document.getElementById('rollingCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.rolling) {
+                    currentCharts.rolling.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const centers = analysis.windowCenters;
+                const correlations = analysis.rollingCorrelations;
+                const smoothed = applyExponentialSmoothing(correlations, currentSmoothing);
+                
+                // Create breakpoint data
+                const breakpointData = breakpoints.map(bp => ({
+                    x: centers[bp.index],
+                    y: correlations[bp.index]
+                }));
+                
+                // Create rolling chart
+                currentCharts.rolling = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: centers,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'রোলিং কোরিলেশন' : 'Rolling Correlation',
+                                data: correlations,
+                                borderColor: 'var(--rolling-correlation)',
+                                backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                fill: true,
+                                tension: 0.1
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'স্মুথড' : 'Smoothed',
+                                data: smoothed,
+                                borderColor: 'var(--window-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1.5,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false,
+                                tension: 0.3
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ব্রেকপয়েন্ট' : 'Breakpoints',
+                                data: breakpointData.map(p => ({ x: p.x, y: p.y })),
+                                borderColor: 'var(--breakpoint-color)',
+                                backgroundColor: 'var(--breakpoint-color)',
+                                borderWidth: 3,
+                                pointRadius: 6,
+                                pointHoverRadius: 8,
+                                showLine: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'গড়' : 'Mean',
+                                data: centers.map(() => stats.mean),
+                                borderColor: 'var(--baseline-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                borderDash: [3, 3],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ট্রেন্ড লাইন' : 'Trend Line',
+                                data: centers.map((c, i) => {
+                                    const timeIndex = i - centers.length / 2;
+                                    return stats.mean + stats.trendSlope * timeIndex;
+                                }),
+                                borderColor: 'var(--success)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 0 || context.datasetIndex === 1) {
+                                            return `${context.dataset.label}: ${context.parsed.y.toFixed(4)}`;
+                                        }
+                                        return context.dataset.label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সময় (উইন্ডো কেন্দ্র)' : 'Time (Window Center)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'কোরিলেশন' : 'Correlation',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                min: -1,
+                                max: 1,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateBreakpointsChart(analysis, breakpoints) {
+                const canvas = document.getElementById('breakpointsCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.breakpoints) {
+                    currentCharts.breakpoints.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const centers = analysis.windowCenters;
+                const correlations = analysis.rollingCorrelations;
+                
+                // Calculate changes
+                const changes = [];
+                for (let i = 1; i < correlations.length; i++) {
+                    changes.push(Math.abs(correlations[i] - correlations[i-1]));
+                }
+                
+                // Create breakpoints chart
+                currentCharts.breakpoints = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: centers.slice(1),
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'পরিবর্তনের মাত্রা' : 'Change Magnitude',
+                                data: changes,
+                                backgroundColor: changes.map((change, i) => 
+                                    breakpoints.some(bp => bp.index === i + 1) ? 
+                                    'var(--breakpoint-color)' : 'var(--threshold-color)'),
+                                borderColor: '#ffffff',
+                                borderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'থ্রেশহোল্ড' : 'Threshold',
+                                data: changes.map(() => currentThreshold),
+                                borderColor: 'var(--baseline-color)',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                showLine: true,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 0) {
+                                            const isBreakpoint = breakpoints.some(bp => bp.index === context.dataIndex + 1);
+                                            const breakpointText = isBreakpoint ? 
+                                                (currentLanguage === 'bn' ? ' (ব্রেকপয়েন্ট)' : ' (Breakpoint)') : '';
+                                            return `Change: ${context.parsed.y.toFixed(4)}${breakpointText}`;
+                                        }
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(4)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সময় (উইন্ডো ট্রানজিশন)' : 'Time (Window Transition)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'পরিবর্তন মাত্রা' : 'Change Magnitude',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateTimeSeriesChart(x, y, analysis) {
+                const canvas = document.getElementById('timeSeriesCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.timeSeries) {
+                    currentCharts.timeSeries.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data
+                const timePoints = x.map((_, i) => i + 1);
+                
+                // Create time series chart
+                currentCharts.timeSeries = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timePoints,
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'টাইম সিরিজ X(t)' : 'Time Series X(t)',
+                                data: x,
+                                borderColor: 'var(--primary)',
+                                backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 2,
+                                pointHoverRadius: 4,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'টাইম সিরিজ Y(t)' : 'Time Series Y(t)',
+                                data: y,
+                                borderColor: 'var(--success)',
+                                backgroundColor: 'rgba(54, 209, 220, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 2,
+                                pointHoverRadius: 4,
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সময় (t)' : 'Time (t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateHeatmapChart(x, y, analysis) {
+                const canvas = document.getElementById('heatmapCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.heatmap) {
+                    currentCharts.heatmap.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // For heatmap, we'll create a simple scatter plot of X vs Y
+                // with color coding based on local correlation
+                const scatterData = x.map((xi, i) => ({
+                    x: xi,
+                    y: y[i],
+                    correlation: calculateLocalCorrelation(x, y, i, analysis.windowSize)
+                }));
+                
+                // Create scatter heatmap
+                currentCharts.heatmap = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'X vs Y (রঙ: স্থানীয় কোরিলেশন)' : 'X vs Y (Color: Local Correlation)',
+                            data: scatterData.map(p => ({ x: p.x, y: p.y })),
+                            backgroundColor: scatterData.map(p => getHeatmapColor(p.correlation)),
+                            borderColor: '#ffffff',
+                            borderWidth: 1,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const index = context.dataIndex;
+                                        return [
+                                            `X: ${x[index].toFixed(2)}`,
+                                            `Y: ${y[index].toFixed(2)}`,
+                                            currentLanguage === 'bn' ? 
+                                                `স্থানীয় কোরিলেশন: ${scatterData[index].correlation.toFixed(4)}` :
+                                                `Local correlation: ${scatterData[index].correlation.toFixed(4)}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'X(t)' : 'X(t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'Y(t)' : 'Y(t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function calculateLocalCorrelation(x, y, index, windowSize) {
+                const start = Math.max(0, index - Math.floor(windowSize / 2));
+                const end = Math.min(x.length, start + windowSize);
+                const windowX = x.slice(start, end);
+                const windowY = y.slice(start, end);
+                return calculatePearsonCorrelation(windowX, windowY);
+            }
+
+            function getHeatmapColor(value) {
+                // Red for negative, white for zero, blue for positive
+                if (value < 0) {
+                    const intensity = Math.min(1, Math.abs(value));
+                    return `rgba(255, ${Math.round(100 + 155 * (1 - intensity))}, ${Math.round(100 + 155 * (1 - intensity))}, 0.8)`;
+                } else {
+                    const intensity = Math.min(1, Math.abs(value));
+                    return `rgba(${Math.round(100 + 155 * (1 - intensity))}, ${Math.round(100 + 155 * (1 - intensity))}, 255, 0.8)`;
+                }
+            }
+
+            function updateScatterChart(x, y, analysis) {
+                const canvas = document.getElementById('scatterCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Destroy previous chart
+                if (currentCharts.scatter) {
+                    currentCharts.scatter.destroy();
+                }
+                
+                // Set canvas dimensions
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Prepare data for different windows
+                const windows = [];
+                const windowIndices = [
+                    0,
+                    Math.floor(analysis.rollingCorrelations.length / 4),
+                    Math.floor(analysis.rollingCorrelations.length / 2),
+                    Math.floor(3 * analysis.rollingCorrelations.length / 4),
+                    analysis.rollingCorrelations.length - 1
+                ];
+                
+                windowIndices.forEach((index, i) => {
+                    if (index < analysis.windowStarts.length) {
+                        const start = analysis.windowStarts[index];
+                        const end = analysis.windowEnds[index];
+                        const windowX = x.slice(start, end);
+                        const windowY = y.slice(start, end);
+                        
+                        windows.push({
+                            label: currentLanguage === 'bn' ? `উইন্ডো ${i + 1}` : `Window ${i + 1}`,
+                            data: windowX.map((xi, j) => ({ x: xi, y: windowY[j] })),
+                            correlation: analysis.rollingCorrelations[index],
+                            color: getWindowColor(i)
+                        });
+                    }
+                });
+                
+                // Create scatter chart
+                currentCharts.scatter = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: windows.map(window => ({
+                            label: `${window.label} (r=${window.correlation.toFixed(2)})`,
+                            data: window.data,
+                            backgroundColor: window.color,
+                            borderColor: '#ffffff',
+                            borderWidth: 1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `X: ${context.parsed.x.toFixed(2)}, Y: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'X(t)' : 'X(t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'Y(t)' : 'Y(t)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function getWindowColor(index) {
+                const colors = [
+                    'rgba(108, 99, 255, 0.7)',    // Purple
+                    'rgba(54, 209, 220, 0.7)',    // Teal
+                    'rgba(255, 154, 61, 0.7)',    // Orange
+                    'rgba(91, 134, 229, 0.7)',    // Blue
+                    'rgba(255, 101, 132, 0.7)'    // Pink
+                ];
+                return colors[index % colors.length];
+            }
+
+            function updateChartVisibility() {
+                // Hide all canvases
+                document.getElementById('rollingCanvas').style.display = 'none';
+                document.getElementById('breakpointsCanvas').style.display = 'none';
+                document.getElementById('timeSeriesCanvas').style.display = 'none';
+                document.getElementById('heatmapCanvas').style.display = 'none';
+                document.getElementById('scatterCanvas').style.display = 'none';
+                
+                // Show active chart
+                if (currentActiveChart === 'rolling') {
+                    document.getElementById('rollingCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'breakpoints') {
+                    document.getElementById('breakpointsCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'timeseries') {
+                    document.getElementById('timeSeriesCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'heatmap') {
+                    document.getElementById('heatmapCanvas').style.display = 'block';
+                } else if (currentActiveChart === 'scatter') {
+                    document.getElementById('scatterCanvas').style.display = 'block';
+                }
+            }
+
+            function updateWindowTable(analysis) {
+                const container = document.getElementById('windowTableContainer');
+                const correlations = analysis.rollingCorrelations;
+                const starts = analysis.windowStarts;
+                const ends = analysis.windowEnds;
+                const n = Math.min(correlations.length, 10); // Show first 10 windows
+                
+                let tableHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="window-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Window" data-bn="উইন্ডো">উইন্ডো</th>
+                                    <th data-en="Time Period" data-bn="সময়কাল">সময়কাল</th>
+                                    <th data-en="Data Points" data-bn="ডেটা পয়েন্ট">ডেটা পয়েন্ট</th>
+                                    <th data-en="Correlation" data-bn="কোরিলেশন">কোরিলেশন</th>
+                                    <th data-en="Strength" data-bn="শক্তি">শক্তি</th>
+                                    <th data-en="Trend vs Prev" data-bn="পূর্ববর্তী বনাম ট্রেন্ড">পূর্ববর্তী বনাম ট্রেন্ড</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                for (let i = 0; i < n; i++) {
+                    const correlation = correlations[i];
+                    const start = starts[i] + 1;
+                    const end = ends[i];
+                    const size = end - start + 1;
+                    const strength = getCorrelationStrength(correlation);
+                    const prevCorrelation = i > 0 ? correlations[i-1] : null;
+                    const trend = prevCorrelation !== null ? 
+                        (correlation > prevCorrelation ? '↑' : (correlation < prevCorrelation ? '↓' : '→')) : '--';
+                    
+                    tableHTML += `
+                        <tr ${i % 2 === 0 ? 'class="window-marker"' : ''}>
+                            <td>${i + 1}</td>
+                            <td>${start} - ${end}</td>
+                            <td>${size}</td>
+                            <td style="color: ${getCorrelationColor(correlation)}; font-weight: 600;">
+                                ${correlation.toFixed(4)}
+                            </td>
+                            <td>${strength}</td>
+                            <td>${trend}</td>
+                        </tr>
+                    `;
+                }
+                
+                tableHTML += `
+                                <tr style="background: var(--light-gray); font-weight: 600;">
+                                    <td colspan="3" data-en="Summary" data-bn="সারাংশ">সারাংশ</td>
+                                    <td>${analysis.overallCorrelation.toFixed(4)}</td>
+                                    <td>${getCorrelationStrength(analysis.overallCorrelation)}</td>
+                                    <td>Trend: ${analysis.trendSlope > 0 ? '↑' : (analysis.trendSlope < 0 ? '↓' : '→')}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            function getCorrelationStrength(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.7) {
+                    return currentLanguage === 'bn' ? 'শক্তিশালী' : 'Strong';
+                } else if (absR >= 0.3) {
+                    return currentLanguage === 'bn' ? 'মাঝারি' : 'Moderate';
+                } else if (absR > 0.1) {
+                    return currentLanguage === 'bn' ? 'দুর্বল' : 'Weak';
+                } else {
+                    return currentLanguage === 'bn' ? 'নগণ্য' : 'Negligible';
+                }
+            }
+
+            function updateStepByStep(x, y, analysis, breakpoints, stats) {
+                const container = document.getElementById('stepsContainer');
+                const n = x.length;
+                const windowSize = analysis.windowSize;
+                const stepSize = analysis.stepSize;
+                const windows = analysis.rollingCorrelations.length;
+                
+                // Example calculation for first window
+                const firstWindowX = x.slice(0, windowSize);
+                const firstWindowY = y.slice(0, windowSize);
+                const firstCorrelation = analysis.rollingCorrelations[0];
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Define Rolling Windows" data-bn="ধাপ ১: রোলিং উইন্ডো সংজ্ঞায়িত করুন">ধাপ ১: রোলিং উইন্ডো সংজ্ঞায়িত করুন</h4>
+                            <p data-en="Divide time series into overlapping windows" data-bn="টাইম সিরিজকে ওভারল্যাপিং উইন্ডোতে বিভক্ত করুন">
+                                টাইম সিরিজকে ওভারল্যাপিং উইন্ডোতে বিভক্ত করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Settings:" data-bn="সেটিংস:">সেটিংস:</strong></p>
+                                <p>Window Size: ${windowSize} periods</p>
+                                <p>Step Size: ${stepSize} periods</p>
+                                <p>Total Windows: ${windows}</p>
+                                <p><strong data-en="First Window (1-${windowSize}):" data-bn="প্রথম উইন্ডো (১-${windowSize}):">প্রথম উইন্ডো (১-${windowSize}):</strong></p>
+                                <p>X: [${firstWindowX.slice(0, 3).map(v => v.toFixed(1)).join(', ')}${firstWindowX.length > 3 ? ', ...' : ''}]</p>
+                                <p>Y: [${firstWindowY.slice(0, 3).map(v => v.toFixed(1)).join(', ')}${firstWindowY.length > 3 ? ', ...' : ''}]</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Window Correlations" data-bn="ধাপ ২: উইন্ডো কোরিলেশন গণনা করুন">ধাপ ২: উইন্ডো কোরিলেশন গণনা করুন</h4>
+                            <p data-en="Compute Pearson correlation for each window" data-bn="প্রতিটি উইন্ডোর জন্য পিয়ারসন কোরিলেশন গণনা করুন">
+                                প্রতিটি উইন্ডোর জন্য পিয়ারসন কোরিলেশন গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    r(window) = Cov(X,Y) / (σₓ × σᵧ)
+                                </p>
+                                <p><strong data-en="First Window Correlation:" data-bn="প্রথম উইন্ডো কোরিলেশন:">প্রথম উইন্ডো কোরিলেশন:</strong></p>
+                                <p>r₁ = <strong>${firstCorrelation.toFixed(4)}</strong></p>
+                                <p><strong data-en="Correlation Range:" data-bn="কোরিলেশন রেঞ্জ:">কোরিলেশন রেঞ্জ:</strong></p>
+                                <p>Min: ${stats.min.toFixed(4)}, Max: ${stats.max.toFixed(4)}, Range: ${stats.range.toFixed(4)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Detect Structural Breaks" data-bn="ধাপ ৩: স্ট্রাকচারাল ব্রেক শনাক্ত করুন">ধাপ ৩: স্ট্রাকচারাল ব্রেক শনাক্ত করুন</h4>
+                            <p data-en="Identify significant changes in correlation" data-bn="কোরিলেশনে উল্লেখযোগ্য পরিবর্তন শনাক্ত করুন">
+                                কোরিলেশনে উল্লেখযোগ্য পরিবর্তন শনাক্ত করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    Break if |r(t) - r(t-1)| > τ<br>
+                                    τ = ${currentThreshold} (Threshold)
+                                </p>
+                                <p><strong data-en="Breakpoint Detection:" data-bn="ব্রেকপয়েন্ট ডিটেকশন:">ব্রেকপয়েন্ট ডিটেকশন:</strong></p>
+                                <p>Total Breakpoints: ${breakpoints.length}</p>
+                                ${breakpoints.length > 0 ? `
+                                    <p>First Break: Window ${breakpoints[0].index} (Change: ${breakpoints[0].change.toFixed(4)})</p>
+                                    <p>Largest Change: ${stats.maxChange.toFixed(4)} at Window ${breakpoints.reduce((max, bp) => bp.change > max.change ? bp : max, breakpoints[0]).index}</p>
+                                ` : '<p>No significant structural breaks detected</p>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Analyze Correlation Trend" data-bn="ধাপ ৪: কোরিলেশন ট্রেন্ড বিশ্লেষণ করুন">ধাপ ৪: কোরিলেশন ট্রেন্ড বিশ্লেষণ করুন</h4>
+                            <p data-en="Examine how correlation changes over time" data-bn="সময়ের সাথে কোরিলেশন কীভাবে পরিবর্তিত হয় তা পরীক্ষা করুন">
+                                সময়ের সাথে কোরিলেশন কীভাবে পরিবর্তিত হয় তা পরীক্ষা করুন
+                            </p>
+                            <div class="step-details">
+                                <p class="step-equation">
+                                    β = Cov[t, r(t)] / Var[t]<br>
+                                    R² = (β × SD[t] / SD[r])²
+                                </p>
+                                <p><strong data-en="Trend Analysis:" data-bn="ট্রেন্ড বিশ্লেষণ:">ট্রেন্ড বিশ্লেষণ:</strong></p>
+                                <p>Trend Slope (β): ${stats.trendSlope.toFixed(4)}</p>
+                                <p>Trend Strength (R²): ${stats.rSquared.toFixed(4)}</p>
+                                <p>Trend Direction: ${stats.trendDirection}</p>
+                                <p>Trend Strength: ${stats.trendStrength}</p>
+                                <p>Average Correlation: ${stats.mean.toFixed(4)} ± ${stats.stdDev.toFixed(4)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Interpret Results" data-bn="ধাপ ৫: ফলাফল ব্যাখ্যা করুন">ধাপ ৫: ফলাফল ব্যাখ্যা করুন</h4>
+                            <p data-en="Draw conclusions about time-varying relationship" data-bন="সময়-ভেরিয়িং সম্পর্ক সম্পর্কে সিদ্ধান্ত নিন">
+                                সময়-ভেরিয়িং সম্পর্ক সম্পর্কে সিদ্ধান্ত নিন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Key Findings:" data-bন="প্রধান ফলাফল:">প্রধান ফলাফল:</strong></p>
+                                <p>1. Overall Relationship: ${getCorrelationStrength(analysis.overallCorrelation)} ${analysis.overallCorrelation > 0 ? 'positive' : 'negative'} correlation (r = ${analysis.overallCorrelation.toFixed(4)})</p>
+                                <p>2. Trend Pattern: Correlation is ${stats.trendDirection.toLowerCase()} over time</p>
+                                <p>3. Stability: ${stats.breakpointCount === 0 ? 'Stable relationship' : `${stats.breakpointCount} structural break(s) detected`}</p>
+                                <p>4. Volatility: Correlation changes by ${stats.volatility.toFixed(4)} on average between windows</p>
+                                <p>5. Range: Correlation varies from ${stats.min.toFixed(4)} to ${stats.max.toFixed(4)}</p>
+                                <p><strong data-en="Practical Implications:" data-bন="ব্যবহারিক প্রভাব:">ব্যবহারিক প্রভাব:</strong></p>
+                                <p>${getPracticalImplication(stats, analysis.overallCorrelation)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function getPracticalImplication(stats, overallCorrelation) {
+                if (currentLanguage === 'bn') {
+                    if (stats.breakpointCount > 0) {
+                        return 'সম্পর্ক সময়ের সাথে পরিবর্তিত হয়েছে, একাধিক কোরিলেশন রেজিম বিদ্যমান। পূর্বাভাস দেওয়ার সময় এই রেজিম পরিবর্তনগুলি বিবেচনা করুন।';
+                    } else if (Math.abs(stats.trendSlope) > 0.01) {
+                        if (stats.trendSlope > 0) {
+                            return 'সময়ের সাথে সম্পর্ক শক্তিশালী হচ্ছে, যা নির্দেশ করে যে ভেরিয়েবলগুলি আরও ঘনিষ্ঠভাবে সংযুক্ত হয়ে উঠছে।';
+                        } else {
+                            return 'সময়ের সাথে সম্পর্ক দুর্বল হচ্ছে, যা নির্দেশ করে যে ভেরিয়েবলগুলির মধ্যে সংযোগ কমে যাচ্ছে।';
+                        }
+                    } else {
+                        return 'সম্পর্ক সময়ের সাথে তুলনামূলকভাবে স্থিতিশীল, একটি সামঞ্জস্যপূর্ণ মাত্রার সংযোগ নির্দেশ করে।';
+                    }
+                } else {
+                    if (stats.breakpointCount > 0) {
+                        return 'The relationship has changed over time with multiple correlation regimes. Consider these regime changes when making forecasts.';
+                    } else if (Math.abs(stats.trendSlope) > 0.01) {
+                        if (stats.trendSlope > 0) {
+                            return 'Relationship is strengthening over time, indicating variables are becoming more closely connected.';
+                        } else {
+                            return 'Relationship is weakening over time, indicating diminishing connection between variables.';
+                        }
+                    } else {
+                        return 'Relationship is relatively stable over time, indicating a consistent level of connection.';
+                    }
+                }
+            }
+
+            function generateRandomTimeSeries() {
+                const n = 50;
+                const x = Array.from({length: n}, () => 50 + (Math.random() - 0.5) * 20);
+                const y = Array.from({length: n}, (_, i) => {
+                    const correlation = 0.3 + 0.4 * Math.sin(i * Math.PI / 12);
+                    return 30 + correlation * (50 + (Math.random() - 0.5) * 10) + (Math.random() - 0.5) * 8;
+                });
+                
+                document.getElementById('dataX').value = x.map(v => v.toFixed(2)).join(', ');
+                document.getElementById('dataY').value = y.map(v => v.toFixed(2)).join(', ');
+            }
+
+            function generateTrendTimeSeries() {
+                const n = 50;
+                const trendType = Math.floor(Math.random() * 3);
+                
+                let x, y;
+                
+                switch(trendType) {
+                    case 0: // Increasing trend
+                        x = Array.from({length: n}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5);
+                        y = Array.from({length: n}, (_, i) => {
+                            const noiseReduction = 1 - (i / n) * 0.7;
+                            return 30 + 0.5 * (50 + i * 0.5) + (Math.random() - 0.5) * 5 * noiseReduction;
+                        });
+                        break;
+                    case 1: // Decreasing trend
+                        x = Array.from({length: n}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5);
+                        y = Array.from({length: n}, (_, i) => {
+                            const noiseIncrease = 0.3 + (i / n) * 0.7;
+                            return 30 + 0.5 * (50 + i * 0.5) + (Math.random() - 0.5) * 5 * noiseIncrease;
+                        });
+                        break;
+                    case 2: // Regime change
+                        x = Array.from({length: n}, (_, i) => 50 + i * 0.5 + (Math.random() - 0.5) * 5);
+                        const breakPoint = Math.floor(n / 2);
+                        y = Array.from({length: n}, (_, i) => {
+                            if (i < breakPoint) {
+                                return 30 + 0.8 * (50 + i * 0.5) + (Math.random() - 0.5) * 3;
+                            } else {
+                                return 40 + 0.2 * (50 + i * 0.5) + (Math.random() - 0.5) * 8;
+                            }
+                        });
+                        break;
+                }
+                
+                document.getElementById('dataX').value = x.map(v => v.toFixed(2)).join(', ');
+                document.getElementById('dataY').value = y.map(v => v.toFixed(2)).join(', ');
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    document.getElementById('dataX').value = example.x.map(v => v.toFixed(2)).join(', ');
+                    document.getElementById('dataY').value = example.y.map(v => v.toFixed(2)).join(', ');
+                    
+                    showSuccess(currentLanguage === 'bn' ? 
+                        `${exampleId} উদাহরণ লোড করা হয়েছে` : 
+                        `${exampleId} example loaded`);
+                }
+            }
+
+            function clearAnalyzer() {
+                document.getElementById('dataX').value = '';
+                document.getElementById('dataY').value = '';
+                
+                // Reset settings
+                document.getElementById('windowSizeSlider').value = 10;
+                document.getElementById('currentWindow').textContent = '10';
+                currentWindowSize = 10;
+                
+                document.getElementById('stepSize').value = 5;
+                currentStepSize = 5;
+                
+                document.getElementById('changeThreshold').value = 0.3;
+                currentThreshold = 0.3;
+                
+                document.getElementById('smoothingFactor').value = 0.3;
+                currentSmoothing = 0.3;
+                
+                // Reset results
+                document.getElementById('avgCorrelationResult').textContent = '--';
+                document.getElementById('trendDirectionResult').textContent = '--';
+                document.getElementById('breakpointsResult').textContent = '--';
+                document.getElementById('trendStrength').textContent = '--';
+                document.getElementById('trendAnalysisText').textContent = currentLanguage === 'bn' ? 
+                    'কোরিলেশন ট্রেন্ড বিশ্লেষণের জন্য টাইম সিরিজ ইনপুট করুন' : 
+                    'Enter time series to analyze correlation trend';
+                
+                // Reset other displays
+                document.getElementById('firstBreak').textContent = '--';
+                document.getElementById('lastBreak').textContent = '--';
+                document.getElementById('maxChange').textContent = '--';
+                document.getElementById('avgDuration').textContent = '--';
+                
+                // Reset statistics
+                document.getElementById('windowsCount').textContent = '--';
+                document.getElementById('minCorrelation').textContent = '--';
+                document.getElementById('maxCorrelation').textContent = '--';
+                document.getElementById('correlationRange').textContent = '--';
+                document.getElementById('correlationStdDev').textContent = '--';
+                document.getElementById('correlationVolatility').textContent = '--';
+                
+                // Clear tables and visualizations
+                document.getElementById('rollingTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="rollingPlaceholder" data-en="Enter time series to see rolling correlations" data-bn="রোলিং কোরিলেশন দেখতে টাইম সিরিজ ইনপুট করুন">
+                        রোলিং কোরিলেশন দেখতে টাইম সিরিজ ইনপুট করুন
+                    </p>
+                `;
+                
+                document.getElementById('windowsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem; grid-column: 1 / -1;" id="windowsPlaceholder" data-en="Enter time series to see window analysis" data-bn="উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                        উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                    </p>
+                `;
+                
+                document.getElementById('windowTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="windowTablePlaceholder" data-en="Enter time series to see detailed window analysis" data-bn="বিস্তারিত উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                        বিস্তারিত উইন্ডো বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                    </p>
+                `;
+                
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter time series to see step-by-step analysis" data-bn="ধাপে ধাপে বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন">
+                        ধাপে ধাপে বিশ্লেষণ দেখতে টাইম সিরিজ ইনপুট করুন
+                    </p>
+                `;
+                
+                // Reset visualizations
+                document.getElementById('plotPlaceholder').style.display = 'flex';
+                document.querySelectorAll('canvas').forEach(canvas => {
+                    canvas.style.display = 'none';
+                });
+                
+                // Destroy all charts
+                Object.values(currentCharts).forEach(chart => {
+                    if (chart) {
+                        chart.destroy();
+                    }
+                });
+                
+                // Reset chart state
+                currentCharts = {
+                    rolling: null,
+                    breakpoints: null,
+                    timeSeries: null,
+                    heatmap: null,
+                    scatter: null
+                };
+                
+                // Show success message
+                showSuccess(currentLanguage === 'bn' ? 
+                    'সব ডেটা ক্লিয়ার করা হয়েছে' : 
+                    'All data cleared');
+            }
+
+            function showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            function showSuccess(message) {
+                const successDiv = document.getElementById('successMessage');
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

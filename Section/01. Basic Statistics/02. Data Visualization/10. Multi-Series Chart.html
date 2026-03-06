@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মাল্টি-সিরিজ চার্ট জেনারেটর | ডেটা ভিজ্যুয়ালাইজেশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --series-1: #6C63FF;
+            --series-2: #FF6584;
+            --series-3: #36D1DC;
+            --series-4: #FF9A3D;
+            --series-5: #5B86E5;
+            --series-6: #9B59B6;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--series-1), var(--series-2), var(--series-3), var(--series-4));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Series Management */
+        .series-management {
+            margin-bottom: 1.5rem;
+        }
+
+        .series-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .add-series-btn {
+            padding: 0.7rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .add-series-btn:hover {
+            background: var(--secondary);
+        }
+
+        .series-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .series-item {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .series-item.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .series-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .series-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .series-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .series-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .series-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .series-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .series-action-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .series-data-input {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            background: rgba(255,255,255,0.1);
+            color: inherit;
+        }
+
+        .series-data-input:focus {
+            outline: none;
+            border-color: white;
+        }
+
+        /* Chart Type Selection */
+        .chart-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-type-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .chart-type-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .chart-type-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* Chart Settings */
+        .chart-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-select, .setting-input {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .setting-input[type="color"] {
+            padding: 0.25rem;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        /* Data Points */
+        .data-points-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-points-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        .data-points-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #multiSeriesChart {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+        }
+
+        /* Interactive Legend */
+        .legend-container {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .legend-item:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .legend-item.hidden {
+            opacity: 0.4;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .legend-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .legend-toggle {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Tooltip Container */
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            min-width: 200px;
+            max-width: 300px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .tooltip-header {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tooltip-content {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .tooltip-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .tooltip-series {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .tooltip-value {
+            font-weight: 600;
+        }
+
+        /* Statistics Dashboard */
+        .stats-dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Series Comparison Table */
+        .comparison-table {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .series-header-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .series-cell-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Chart Gallery */
+        .gallery-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .gallery-item {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 2px solid var(--border);
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.2);
+        }
+
+        .gallery-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .gallery-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .gallery-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Export Options */
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .control-panel,
+            .chart-section,
+            .stats-dashboard,
+            .comparison-table,
+            .gallery-section,
+            .export-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .chart-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-settings {
+                grid-template-columns: 1fr;
+            }
+            
+            .series-container {
+                max-height: 200px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Multi-Series Chart Generator" data-bn="মাল্টি-সিরিজ চার্ট জেনারেটর">মাল্টি-সিরিজ চার্ট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create complex multi-series charts with interactive legend, advanced tooltips, and comprehensive data analysis" data-bn="ইন্টারেকটিভ লিজেন্ড, অ্যাডভান্সড টুলটিপস এবং ব্যাপক ডেটা বিশ্লেষণ সহ জটিল মাল্টি-সিরিজ চার্ট তৈরি করুন">
+                ইন্টারেকটিভ লিজেন্ড, অ্যাডভান্সড টুলটিপস এবং ব্যাপক ডেটা বিশ্লেষণ সহ জটিল মাল্টি-সিরিজ চার্ট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Chart Controls" data-bn="চার্ট কন্ট্রোলস">চার্ট কন্ট্রোলস</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="sample">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Sample Data" data-bn="স্যাম্পল ডেটা">স্যাম্পল ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- Chart Type Selection -->
+                <h3 class="section-title" style="font-size: 1.2rem; margin-top: 1.5rem;">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Chart Type" data-bn="চার্ট টাইপ">চার্ট টাইপ</span>
+                </h3>
+                
+                <div class="chart-types">
+                    <button class="chart-type-btn active" data-type="line">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Line Chart" data-bn="লাইন চার্ট">লাইন চার্ট</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="bar">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Bar Chart" data-bn="বার চার্ট">বার চার্ট</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="area">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Area Chart" data-bn="এরিয়া চার্ট">এরিয়া চার্ট</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="scatter">
+                        <i class="fas fa-braille"></i>
+                        <span data-en="Scatter Plot" data-bn="স্ক্যাটার প্লট">স্ক্যাটার প্লট</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="radar">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Radar Chart" data-bn="রাডার চার্ট">রাডার চার্ট</span>
+                    </button>
+                    <button class="chart-type-btn" data-type="mixed">
+                        <i class="fas fa-blend"></i>
+                        <span data-en="Mixed Chart" data-bn="মিক্সড চার্ট">মিক্সড চার্ট</span>
+                    </button>
+                </div>
+
+                <!-- Series Management -->
+                <div class="series-management">
+                    <div class="series-header">
+                        <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 0;">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Data Series" data-bn="ডেটা সিরিজ">ডেটা সিরিজ</span>
+                        </h3>
+                        <button class="add-series-btn" id="addSeriesBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Series" data-bn="সিরিজ যোগ">সিরিজ যোগ</span>
+                        </button>
+                    </div>
+                    
+                    <div class="series-container" id="seriesContainer">
+                        <!-- Series items will be added here -->
+                    </div>
+                </div>
+
+                <!-- Chart Settings -->
+                <h3 class="section-title" style="font-size: 1.2rem; margin-top: 1.5rem;">
+                    <i class="fas fa-cog"></i>
+                    <span data-en="Chart Settings" data-bn="চার্ট সেটিংস">চার্ট সেটিংস</span>
+                </h3>
+                
+                <div class="chart-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Chart Theme" data-bn="চার্ট থিম">চার্ট থিম</span>
+                        </label>
+                        <select id="chartTheme" class="setting-select">
+                            <option value="light" data-en="Light" data-bn="লাইট">লাইট</option>
+                            <option value="dark" data-en="Dark" data-bn="ডার্ক">ডার্ক</option>
+                            <option value="colorful" data-en="Colorful" data-bn="কালারফুল">কালারফুল</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-dot-circle"></i>
+                            <span data-en="Point Style" data-bn="পয়েন্ট স্টাইল">পয়েন্ট স্টাইল</span>
+                        </label>
+                        <select id="pointStyle" class="setting-select">
+                            <option value="circle" data-en="Circle" data-bn="সার্কেল">সার্কেল</option>
+                            <option value="triangle" data-en="Triangle" data-bn="ট্রায়াঙ্গেল">ট্রায়াঙ্গেল</option>
+                            <option value="rect" data-en="Rectangle" data-bn="রেক্ট্যাঙ্গেল">রেক্ট্যাঙ্গেল</option>
+                            <option value="cross" data-en="Cross" data-bn="ক্রস">ক্রস</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <span data-en="Grid Style" data-bn="গ্রিড স্টাইল">গ্রিড স্টাইল</span>
+                        </label>
+                        <select id="gridStyle" class="setting-select">
+                            <option value="solid" data-en="Solid" data-bn="সলিড">সলিড</option>
+                            <option value="dashed" data-en="Dashed" data-bn="ড্যাশড">ড্যাশড</option>
+                            <option value="dotted" data-en="Dotted" data-bn="ডটেড">ডটেড</option>
+                            <option value="none" data-en="None" data-bন="কোনোটিই না">কোনোটিই না</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-font"></i>
+                            <span data-en="Font Size" data-bন="ফন্ট সাইজ">ফন্ট সাইজ</span>
+                        </label>
+                        <select id="fontSize" class="setting-select">
+                            <option value="12" data-en="Small" data-bন="ছোট">ছোট</option>
+                            <option value="14" data-en="Medium" data-bন="মিডিয়াম">মিডিয়াম</option>
+                            <option value="16" data-en="Large" data-bন="বড়">বড়</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Data Points -->
+                <div class="data-points-input">
+                    <div class="data-input-label">
+                        <label class="setting-label">
+                            <i class="fas fa-list-ol"></i>
+                            <span data-en="Data Points (X-axis)" data-bন="ডেটা পয়েন্ট (X-অক্ষ)">ডেটা পয়েন্ট (X-অক্ষ)</span>
+                        </label>
+                    </div>
+                    <textarea id="dataPoints" class="data-points-textarea" placeholder="1, 2, 3, 4, 5, 6, 7, 8, 9, 10">1, 2, 3, 4, 5, 6, 7, 8, 9, 10</textarea>
+                </div>
+
+                <!-- Chart Titles -->
+                <div class="chart-settings">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-heading"></i>
+                            <span data-en="Chart Title" data-bন="চার্ট শিরোনাম">চার্ট শিরোনাম</span>
+                        </label>
+                        <input type="text" id="chartTitle" class="setting-input" placeholder="Multi-Series Analysis" value="মাল্টি-সিরিজ ডেটা বিশ্লেষণ">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-x"></i>
+                            <span data-en="X-axis Label" data-bন="X-অক্ষ লেবেল">X-অক্ষ লেবেল</span>
+                        </label>
+                        <input type="text" id="xAxisLabel" class="setting-input" placeholder="Time Period" value="সময়কাল">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-y"></i>
+                            <span data-en="Y-axis Label" data-bন="Y-অক্ষ লেবেল">Y-অক্ষ লেবেল</span>
+                        </label>
+                        <input type="text" id="yAxisLabel" class="setting-input" placeholder="Values" value="মান">
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Generate Chart" data-bন="চার্ট তৈরি করুন">চার্ট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Multi-Series Chart" data-bন="মাল্টি-সিরিজ চার্ট">মাল্টি-সিরিজ চার্ট</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="multiSeriesChart"></canvas>
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p data-en="Add data series and click Generate to create chart" data-bন="ডেটা সিরিজ যোগ করুন এবং চার্ট তৈরি করতে জেনারেট ক্লিক করুন">
+                            ডেটা সিরিজ যোগ করুন এবং চার্ট তৈরি করতে জেনারেট ক্লিক করুন
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interactive Legend -->
+                <div class="legend-container">
+                    <div class="legend-title">
+                        <i class="fas fa-layer-group"></i>
+                        <span data-en="Data Series Legend" data-bন="ডেটা সিরিজ লিজেন্ড">ডেটা সিরিজ লিজেন্ড</span>
+                        <span style="font-size: 0.8rem; color: var(--gray); margin-left: auto;">
+                            (<span data-en="Click to toggle visibility" data-bন="দৃশ্যমানতা টগল করতে ক্লিক করুন">দৃশ্যমানতা টগল করতে ক্লিক করুন</span>)
+                        </span>
+                    </div>
+                    <div class="legend-grid" id="legendGrid">
+                        <!-- Legend items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Tooltip -->
+        <div class="custom-tooltip" id="customTooltip"></div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-dashboard">
+            <div class="stats-header">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Series Statistics" data-bন="সিরিজ পরিসংখ্যান">সিরিজ পরিসংখ্যান</span>
+                </h2>
+            </div>
+            
+            <div class="stats-grid" id="statsGrid">
+                <!-- Statistics will be added here -->
+            </div>
+        </div>
+
+        <!-- Series Comparison Table -->
+        <div class="comparison-table">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Series Comparison" data-bন="সিরিজ তুলনা">সিরিজ তুলনা</span>
+            </h2>
+            
+            <div id="comparisonTable">
+                <!-- Comparison table will be added here -->
+            </div>
+        </div>
+
+        <!-- Chart Gallery -->
+        <div class="gallery-section">
+            <h2 class="section-title">
+                <i class="fas fa-images"></i>
+                <span data-en="Chart Gallery" data-bন="চার্ট গ্যালারি">চার্ট গ্যালারি</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on chart types to quickly load sample configurations:" data-bন="নমুনা কনফিগারেশন দ্রুত লোড করতে চার্ট টাইপে ক্লিক করুন:">
+                নমুনা কনফিগারেশন দ্রুত লোড করতে চার্ট টাইপে ক্লিক করুন:
+            </p>
+            
+            <div class="gallery-grid">
+                <div class="gallery-item" data-preset="sales-trend">
+                    <div class="gallery-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="gallery-title" data-en="Sales Trends" data-bন="সেলস ট্রেন্ডস">সেলস ট্রেন্ডস</div>
+                    <div class="gallery-description" data-en="3 products over 12 months" data-bন="১২ মাসে ৩টি প্রোডাক্ট">১২ মাসে ৩টি প্রোডাক্ট</div>
+                </div>
+                
+                <div class="gallery-item" data-preset="stock-prices">
+                    <div class="gallery-icon">
+                        <i class="fas fa-chart-area"></i>
+                    </div>
+                    <div class="gallery-title" data-en="Stock Prices" data-bন="স্টক প্রাইস">স্টক প্রাইস</div>
+                    <div class="gallery-description" data-en="4 companies over time" data-bন="সময়ের সাথে ৪টি কোম্পানি">সময়ের সাথে ৪টি কোম্পানি</div>
+                </div>
+                
+                <div class="gallery-item" data-preset="weather-data">
+                    <div class="gallery-icon">
+                        <i class="fas fa-temperature-high"></i>
+                    </div>
+                    <div class="gallery-title" data-en="Weather Data" data-bন="আবহাওয়া ডেটা">আবহাওয়া ডেটা</div>
+                    <div class="gallery-description" data-en="Temperature across cities" data-bন="শহর জুড়ে তাপমাত্রা">শহর জুড়ে তাপমাত্রা</div>
+                </div>
+                
+                <div class="gallery-item" data-preset="website-analytics">
+                    <div class="gallery-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="gallery-title" data-en="Website Analytics" data-bন="ওয়েবসাইট অ্যানালিটিক্স">ওয়েবসাইট অ্যানালিটিক্স</div>
+                    <div class="gallery-description" data-en="Traffic sources comparison" data-bন="ট্রাফিক সোর্স তুলনা">ট্রাফিক সোর্স তুলনা</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                <span data-en="Export & Share" data-bন="এক্সপোর্ট ও শেয়ার">এক্সপোর্ট ও শেয়ার</span>
+            </h2>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportPNG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as PNG" data-bন="PNG হিসেবে ডাউনলোড">PNG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportJPG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as JPG" data-bন="JPG হিসেবে ডাউনলোড">JPG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-en="Download as PDF" data-bন="PDF হিসেবে ডাউনলোড">PDF হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportData">
+                    <i class="fas fa-file-csv"></i>
+                    <span data-en="Export Data (CSV)" data-bন="ডেটা এক্সপোর্ট (CSV)">ডেটা এক্সপোর্ট (CSV)</span>
+                </button>
+                <button class="export-btn" id="shareLink">
+                    <i class="fas fa-share-alt"></i>
+                    <span data-en="Share Chart" data-bন="চার্ট শেয়ার">চার্ট শেয়ার</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.1.1"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Chart.js
+            let multiSeriesChart = null;
+            let currentLanguage = 'bn';
+            let currentChartType = 'line';
+            let seriesCounter = 1;
+            
+            // Color palette for series
+            const colorPalette = [
+                '#6C63FF', '#FF6584', '#36D1DC', '#FF9A3D', 
+                '#5B86E5', '#9B59B6', '#2ECC71', '#E74C3C',
+                '#3498DB', '#F1C40F', '#1ABC9C', '#95A5A6'
+            ];
+            
+            // Data series array
+            let series = [
+                {
+                    id: 1,
+                    name: 'Series 1',
+                    color: colorPalette[0],
+                    data: [65, 59, 80, 81, 56, 55, 40, 75, 90, 85],
+                    type: 'line',
+                    visible: true,
+                    showPoints: true,
+                    lineWidth: 2
+                }
+            ];
+            
+            // Sample data presets
+            const presets = {
+                'sales-trend': {
+                    title: 'Product Sales Trends',
+                    xLabel: 'Months',
+                    yLabel: 'Sales (in thousands)',
+                    dataPoints: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    series: [
+                        {
+                            name: 'Product A',
+                            data: [120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285],
+                            color: colorPalette[0],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Product B',
+                            data: [80, 95, 110, 125, 140, 155, 170, 185, 200, 215, 230, 245],
+                            color: colorPalette[1],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Product C',
+                            data: [60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225],
+                            color: colorPalette[2],
+                            type: 'line'
+                        }
+                    ]
+                },
+                'stock-prices': {
+                    title: 'Stock Price Comparison',
+                    xLabel: 'Trading Days',
+                    yLabel: 'Price ($)',
+                    dataPoints: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10'],
+                    series: [
+                        {
+                            name: 'Company A',
+                            data: [150, 152, 148, 155, 160, 158, 162, 165, 168, 170],
+                            color: colorPalette[0],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Company B',
+                            data: [200, 195, 210, 205, 215, 220, 218, 225, 230, 235],
+                            color: colorPalette[1],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Company C',
+                            data: [120, 125, 130, 128, 135, 140, 138, 145, 150, 155],
+                            color: colorPalette[2],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Company D',
+                            data: [180, 185, 190, 188, 195, 200, 198, 205, 210, 215],
+                            color: colorPalette[3],
+                            type: 'line'
+                        }
+                    ]
+                },
+                'weather-data': {
+                    title: 'Temperature Comparison',
+                    xLabel: 'Cities',
+                    yLabel: 'Temperature (°C)',
+                    dataPoints: ['New York', 'London', 'Tokyo', 'Sydney', 'Dubai', 'Moscow', 'Rio', 'Cairo'],
+                    series: [
+                        {
+                            name: 'January',
+                            data: [-2, 5, 8, 26, 19, -10, 29, 14],
+                            color: colorPalette[0],
+                            type: 'bar'
+                        },
+                        {
+                            name: 'July',
+                            data: [28, 22, 31, 16, 41, 23, 25, 35],
+                            color: colorPalette[1],
+                            type: 'bar'
+                        },
+                        {
+                            name: 'Average',
+                            data: [13, 13.5, 19.5, 21, 30, 6.5, 27, 24.5],
+                            color: colorPalette[2],
+                            type: 'line'
+                        }
+                    ]
+                },
+                'website-analytics': {
+                    title: 'Website Traffic Sources',
+                    xLabel: 'Months',
+                    yLabel: 'Visitors (thousands)',
+                    dataPoints: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    series: [
+                        {
+                            name: 'Organic Search',
+                            data: [45, 52, 60, 65, 70, 75],
+                            color: colorPalette[0],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Social Media',
+                            data: [25, 30, 35, 40, 45, 50],
+                            color: colorPalette[1],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Direct Traffic',
+                            data: [15, 18, 20, 22, 25, 28],
+                            color: colorPalette[2],
+                            type: 'line'
+                        },
+                        {
+                            name: 'Referral',
+                            data: [10, 12, 14, 16, 18, 20],
+                            color: colorPalette[3],
+                            type: 'line'
+                        }
+                    ]
+                }
+            };
+
+            // Initialize the application
+            initMultiSeriesGenerator();
+
+            function initMultiSeriesGenerator() {
+                // Language Toggle
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input Methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'sample') {
+                            loadSampleData();
+                        }
+                    });
+                });
+
+                // Chart Type Selection
+                document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentChartType = this.dataset.type;
+                        updateChartType();
+                    });
+                });
+
+                // Add Series Button
+                document.getElementById('addSeriesBtn').addEventListener('click', addSeries);
+
+                // Generate Button
+                document.getElementById('generateBtn').addEventListener('click', generateChart);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Gallery Items
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        loadPreset(this.dataset.preset);
+                    });
+                });
+
+                // Export Buttons
+                document.getElementById('exportPNG').addEventListener('click', () => exportChart('png'));
+                document.getElementById('exportJPG').addEventListener('click', () => exportChart('jpg'));
+                document.getElementById('exportPDF').addEventListener('click', exportPDF);
+                document.getElementById('exportData').addEventListener('click', exportCSV);
+                document.getElementById('shareLink').addEventListener('click', shareChart);
+
+                // Set Bengali as default language
+                setLanguage('bn');
+
+                // Initialize series container
+                updateSeriesContainer();
+
+                // Generate initial chart
+                setTimeout(() => {
+                    generateChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update series names
+                updateSeriesContainer();
+
+                // Update chart if exists
+                if (multiSeriesChart) {
+                    updateChartLanguage();
+                }
+            }
+
+            function parseDataPoints(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const items = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                return items;
+            }
+
+            function parseSeriesData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function addSeries() {
+                seriesCounter++;
+                const seriesId = Date.now();
+                const colorIndex = (series.length) % colorPalette.length;
+                
+                // Create new series
+                const newSeries = {
+                    id: seriesId,
+                    name: `Series ${seriesCounter}`,
+                    color: colorPalette[colorIndex],
+                    data: Array(10).fill(0).map(() => Math.floor(Math.random() * 100) + 20),
+                    type: currentChartType,
+                    visible: true,
+                    showPoints: true,
+                    lineWidth: 2
+                };
+                
+                series.push(newSeries);
+                updateSeriesContainer();
+                
+                // Regenerate chart if exists
+                if (multiSeriesChart) {
+                    generateChart();
+                }
+            }
+
+            function removeSeries(seriesId) {
+                if (series.length <= 1) {
+                    alert(currentLanguage === 'bn' ? 
+                        'কমপক্ষে একটি সিরিজ থাকতে হবে' : 
+                        'At least one series must remain');
+                    return;
+                }
+                
+                series = series.filter(s => s.id !== seriesId);
+                updateSeriesContainer();
+                
+                if (multiSeriesChart) {
+                    generateChart();
+                }
+            }
+
+            function updateSeriesContainer() {
+                const container = document.getElementById('seriesContainer');
+                container.innerHTML = '';
+                
+                series.forEach((s, index) => {
+                    const seriesElement = document.createElement('div');
+                    seriesElement.className = `series-item ${s.visible ? 'active' : ''}`;
+                    seriesElement.style.borderLeftColor = s.color;
+                    seriesElement.style.background = s.visible ? s.color + '20' : 'var(--light-gray)';
+                    
+                    seriesElement.innerHTML = `
+                        <div class="series-header-row">
+                            <div class="series-info">
+                                <div class="series-color" style="background: ${s.color};"></div>
+                                <span class="series-name">${s.name}</span>
+                            </div>
+                            <div class="series-actions">
+                                <button class="series-action-btn edit-series" data-id="${s.id}" title="${currentLanguage === 'bn' ? 'সম্পাদনা' : 'Edit'}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="series-action-btn remove-series" data-id="${s.id}" title="${currentLanguage === 'bn' ? 'মুছে ফেলা' : 'Remove'}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="text" class="series-data-input" 
+                               data-id="${s.id}"
+                               placeholder="${currentLanguage === 'bn' ? 'ডেটা মান (কমা দ্বারা আলাদা)' : 'Data values (comma separated)'}"
+                               value="${s.data.join(', ')}">
+                    `;
+                    
+                    container.appendChild(seriesElement);
+                    
+                    // Add event listeners
+                    const dataInput = seriesElement.querySelector('.series-data-input');
+                    dataInput.addEventListener('input', function() {
+                        const values = parseSeriesData(this.value);
+                        if (values.length > 0) {
+                            s.data = values;
+                            if (multiSeriesChart) {
+                                generateChart();
+                            }
+                        }
+                    });
+                    
+                    // Toggle visibility
+                    seriesElement.addEventListener('click', function(e) {
+                        if (!e.target.closest('.series-actions')) {
+                            s.visible = !s.visible;
+                            this.classList.toggle('active');
+                            this.style.background = s.visible ? s.color + '20' : 'var(--light-gray)';
+                            
+                            if (multiSeriesChart) {
+                                updateSeriesVisibility(s.id, s.visible);
+                            }
+                        }
+                    });
+                });
+                
+                // Add event listeners for action buttons
+                document.querySelectorAll('.edit-series').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const seriesId = parseInt(this.dataset.id);
+                        editSeries(seriesId);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-series').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const seriesId = parseInt(this.dataset.id);
+                        removeSeries(seriesId);
+                    });
+                });
+            }
+
+            function editSeries(seriesId) {
+                const s = series.find(series => series.id === seriesId);
+                if (!s) return;
+                
+                const newName = prompt(currentLanguage === 'bn' ? 
+                    'সিরিজের নতুন নাম লিখুন:' : 
+                    'Enter new series name:', s.name);
+                
+                if (newName && newName.trim()) {
+                    s.name = newName.trim();
+                    updateSeriesContainer();
+                    
+                    if (multiSeriesChart) {
+                        generateChart();
+                    }
+                }
+            }
+
+            function updateChartType() {
+                // Update all series to new chart type
+                series.forEach(s => {
+                    s.type = currentChartType;
+                });
+                
+                updateSeriesContainer();
+                
+                if (multiSeriesChart) {
+                    generateChart();
+                }
+            }
+
+            function generateChart() {
+                // Get data points
+                const dataPoints = parseDataPoints(document.getElementById('dataPoints').value);
+                if (dataPoints.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে ডেটা পয়েন্ট ইনপুট করুন' : 
+                        'Please enter data points');
+                    return;
+                }
+                
+                // Update series data from inputs
+                document.querySelectorAll('.series-data-input').forEach(input => {
+                    const seriesId = parseInt(input.dataset.id);
+                    const s = series.find(series => series.id === seriesId);
+                    if (s) {
+                        const values = parseSeriesData(input.value);
+                        if (values.length > 0) {
+                            s.data = values;
+                        }
+                    }
+                });
+                
+                // Validate data
+                const valid = series.every(s => s.data.length === dataPoints.length);
+                if (!valid) {
+                    alert(currentLanguage === 'bn' ? 
+                        `প্রত্যেক সিরিজে ঠিক ${dataPoints.length}টি মান থাকতে হবে` : 
+                        `Each series must have exactly ${dataPoints.length} values`);
+                    return;
+                }
+
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                // Get chart settings
+                const chartTitle = document.getElementById('chartTitle').value || 'Multi-Series Chart';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'X-axis';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Y-axis';
+                const chartTheme = document.getElementById('chartTheme').value;
+                const pointStyle = document.getElementById('pointStyle').value;
+                const gridStyle = document.getElementById('gridStyle').value;
+                const fontSize = parseInt(document.getElementById('fontSize').value);
+                
+                // Create or update chart
+                createChart(dataPoints, chartTitle, xAxisLabel, yAxisLabel, chartTheme, pointStyle, gridStyle, fontSize);
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Update comparison table
+                updateComparisonTable(dataPoints);
+                
+                // Update legend
+                updateLegend();
+            }
+
+            function createChart(labels, chartTitle, xAxisLabel, yAxisLabel, theme, pointStyle, gridStyle, fontSize) {
+                const ctx = document.getElementById('multiSeriesChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (multiSeriesChart) {
+                    multiSeriesChart.destroy();
+                }
+                
+                // Prepare datasets for Chart.js
+                const datasets = series.map(s => {
+                    let datasetConfig = {
+                        label: s.name,
+                        data: s.data,
+                        borderColor: s.color,
+                        backgroundColor: s.color + '40',
+                        borderWidth: s.lineWidth,
+                        fill: currentChartType === 'area',
+                        pointRadius: s.showPoints ? 5 : 0,
+                        pointStyle: pointStyle,
+                        pointBackgroundColor: s.color,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        tension: 0.2,
+                        hidden: !s.visible
+                    };
+                    
+                    // Adjust for different chart types
+                    if (currentChartType === 'bar') {
+                        datasetConfig.type = 'bar';
+                        datasetConfig.borderWidth = 1;
+                        datasetConfig.borderRadius = 4;
+                        datasetConfig.barPercentage = 0.8;
+                    } else if (currentChartType === 'scatter') {
+                        datasetConfig.type = 'scatter';
+                        datasetConfig.showLine = false;
+                        datasetConfig.pointRadius = 6;
+                    } else if (currentChartType === 'radar') {
+                        datasetConfig.type = 'radar';
+                        datasetConfig.fill = true;
+                        datasetConfig.tension = 0;
+                    }
+                    
+                    return datasetConfig;
+                });
+                
+                // Theme configuration
+                const themeConfig = getThemeConfig(theme);
+                
+                // Chart configuration
+                const config = {
+                    type: currentChartType === 'radar' ? 'radar' : currentChartType === 'mixed' ? 'bar' : 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false, // We'll use custom legend
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: fontSize,
+                                        family: "'Poppins', sans-serif"
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: false, // We'll use custom tooltip
+                                external: externalTooltipHandler
+                            },
+                            title: {
+                                display: true,
+                                text: chartTitle,
+                                font: {
+                                    size: fontSize + 2,
+                                    weight: 'bold',
+                                    family: "'Poppins', sans-serif"
+                                },
+                                color: themeConfig.textColor
+                            },
+                            zoom: {
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy',
+                                },
+                                pan: {
+                                    enabled: true,
+                                    mode: 'xy',
+                                }
+                            }
+                        },
+                        scales: currentChartType !== 'radar' ? {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xAxisLabel,
+                                    font: {
+                                        size: fontSize,
+                                        weight: 'bold',
+                                        family: "'Poppins', sans-serif"
+                                    },
+                                    color: themeConfig.textColor
+                                },
+                                grid: {
+                                    color: themeConfig.gridColor,
+                                    borderDash: gridStyle === 'dashed' ? [5, 5] : 
+                                               gridStyle === 'dotted' ? [2, 2] : [],
+                                    drawBorder: gridStyle !== 'none'
+                                },
+                                ticks: {
+                                    color: themeConfig.textColor,
+                                    font: {
+                                        size: fontSize - 2,
+                                        family: "'Poppins', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yAxisLabel,
+                                    font: {
+                                        size: fontSize,
+                                        weight: 'bold',
+                                        family: "'Poppins', sans-serif"
+                                    },
+                                    color: themeConfig.textColor
+                                },
+                                grid: {
+                                    color: themeConfig.gridColor,
+                                    borderDash: gridStyle === 'dashed' ? [5, 5] : 
+                                               gridStyle === 'dotted' ? [2, 2] : [],
+                                    drawBorder: gridStyle !== 'none'
+                                },
+                                ticks: {
+                                    color: themeConfig.textColor,
+                                    font: {
+                                        size: fontSize - 2,
+                                        family: "'Poppins', sans-serif"
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        } : {},
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        animation: {
+                            duration: 750,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                };
+                
+                // For mixed chart type, set different types for different series
+                if (currentChartType === 'mixed') {
+                    config.data.datasets[0].type = 'line';
+                    config.data.datasets[1].type = 'bar';
+                    config.data.datasets[2].type = 'line';
+                }
+                
+                // Create chart
+                multiSeriesChart = new Chart(ctx, config);
+                
+                // Register custom tooltip handler
+                ctx.canvas.addEventListener('mousemove', handleMouseMove);
+                ctx.canvas.addEventListener('mouseleave', handleMouseLeave);
+                
+                // Theme application
+                applyTheme(themeConfig);
+            }
+
+            function getThemeConfig(theme) {
+                switch(theme) {
+                    case 'dark':
+                        return {
+                            backgroundColor: '#1a1a2e',
+                            textColor: '#ffffff',
+                            gridColor: 'rgba(255, 255, 255, 0.1)'
+                        };
+                    case 'colorful':
+                        return {
+                            backgroundColor: '#ffffff',
+                            textColor: '#2D3748',
+                            gridColor: 'rgba(108, 99, 255, 0.1)'
+                        };
+                    default: // light
+                        return {
+                            backgroundColor: '#ffffff',
+                            textColor: '#2D3748',
+                            gridColor: 'rgba(0, 0, 0, 0.1)'
+                        };
+                }
+            }
+
+            function applyTheme(themeConfig) {
+                const chartContainer = document.querySelector('.chart-container');
+                chartContainer.style.backgroundColor = themeConfig.backgroundColor;
+            }
+
+            function externalTooltipHandler(context) {
+                // Custom tooltip implementation
+                const tooltip = document.getElementById('customTooltip');
+                
+                if (context.tooltip.opacity === 0) {
+                    tooltip.style.display = 'none';
+                    return;
+                }
+                
+                const chart = context.chart;
+                const position = chart.canvas.getBoundingClientRect();
+                const index = context.tooltip.dataPoints[0].dataIndex;
+                const label = chart.data.labels[index];
+                
+                // Build tooltip content
+                let content = `<div class="tooltip-header">${label}</div><div class="tooltip-content">`;
+                
+                context.tooltip.dataPoints.forEach(point => {
+                    const series = chart.data.datasets[point.datasetIndex];
+                    content += `
+                        <div class="tooltip-item">
+                            <div class="tooltip-series">
+                                <div class="tooltip-color" style="background: ${series.borderColor};"></div>
+                                <span>${series.label}</span>
+                            </div>
+                            <span class="tooltip-value">${point.raw}</span>
+                        </div>
+                    `;
+                });
+                
+                content += '</div>';
+                tooltip.innerHTML = content;
+                
+                // Position tooltip
+                const left = position.left + context.tooltip.caretX;
+                const top = position.top + context.tooltip.caretY;
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = (top - tooltip.offsetHeight - 10) + 'px';
+                tooltip.style.display = 'block';
+                
+                // Add fade-in animation
+                tooltip.classList.add('fade-in');
+            }
+
+            function handleMouseMove(event) {
+                if (!multiSeriesChart) return;
+                
+                const chart = multiSeriesChart;
+                const canvas = chart.canvas;
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                // Show custom cursor for better UX
+                canvas.style.cursor = 'crosshair';
+                
+                // Tooltip handling is done by externalTooltipHandler
+            }
+
+            function handleMouseLeave() {
+                const tooltip = document.getElementById('customTooltip');
+                tooltip.style.display = 'none';
+                
+                if (multiSeriesChart && multiSeriesChart.canvas) {
+                    multiSeriesChart.canvas.style.cursor = 'default';
+                }
+            }
+
+            function updateSeriesVisibility(seriesId, visible) {
+                if (!multiSeriesChart) return;
+                
+                const chart = multiSeriesChart;
+                const datasetIndex = series.findIndex(s => s.id === seriesId);
+                
+                if (datasetIndex !== -1) {
+                    chart.setDatasetVisibility(datasetIndex, visible);
+                    chart.update();
+                }
+            }
+
+            function updateLegend() {
+                const legendGrid = document.getElementById('legendGrid');
+                legendGrid.innerHTML = '';
+                
+                series.forEach((s, index) => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = `legend-item ${s.visible ? '' : 'hidden'}`;
+                    legendItem.dataset.index = index;
+                    
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background: ${s.color};"></div>
+                        <span class="legend-name">${s.name}</span>
+                        <div class="legend-toggle">
+                            ${s.visible ? '✓' : '×'}
+                        </div>
+                    `;
+                    
+                    legendGrid.appendChild(legendItem);
+                    
+                    // Add click event
+                    legendItem.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        const seriesItem = series[index];
+                        seriesItem.visible = !seriesItem.visible;
+                        
+                        this.classList.toggle('hidden');
+                        this.querySelector('.legend-toggle').textContent = seriesItem.visible ? '✓' : '×';
+                        
+                        // Update chart
+                        updateSeriesVisibility(seriesItem.id, seriesItem.visible);
+                        
+                        // Update series container
+                        updateSeriesContainer();
+                    });
+                });
+            }
+
+            function updateStatistics() {
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = '';
+                
+                // Calculate overall statistics
+                let allValues = [];
+                series.forEach(s => {
+                    allValues = allValues.concat(s.data);
+                });
+                
+                const maxValue = Math.max(...allValues);
+                const minValue = Math.min(...allValues);
+                const total = allValues.reduce((a, b) => a + b, 0);
+                const average = total / allValues.length;
+                
+                // Grand total card
+                statsGrid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${series.length}</div>
+                        <div class="stat-label" data-en="Total Series" data-bন="মোট সিরিজ">মোট সিরিজ</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${total.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Grand Total" data-bন="গ্র্যান্ড টোটাল">গ্র্যান্ড টোটাল</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${average.toFixed(1)}</div>
+                        <div class="stat-label" data-en="Overall Average" data-bন="সামগ্রিক গড়">সামগ্রিক গড়</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${maxValue.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Maximum Value" data-bন="সর্বোচ্চ মান">সর্বোচ্চ মান</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${minValue.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Minimum Value" data-bন="সর্বনিম্ন মান">সর্বনিম্ন মান</div>
+                    </div>
+                `;
+                
+                // Series specific statistics
+                series.forEach((s, index) => {
+                    const seriesTotal = s.data.reduce((a, b) => a + b, 0);
+                    const seriesAvg = seriesTotal / s.data.length;
+                    const seriesMax = Math.max(...s.data);
+                    const seriesMin = Math.min(...s.data);
+                    
+                    statsGrid.innerHTML += `
+                        <div class="stat-card" style="border-left-color: ${s.color};">
+                            <div class="stat-value">${seriesTotal.toLocaleString()}</div>
+                            <div class="stat-label">${s.name} ${currentLanguage === 'bn' ? 'টোটাল' : 'Total'}</div>
+                            <div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem;">
+                                Avg: ${seriesAvg.toFixed(1)} | Max: ${seriesMax} | Min: ${seriesMin}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateComparisonTable(labels) {
+                const container = document.getElementById('comparisonTable');
+                
+                container.innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Data Point" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</th>
+                                    ${series.map(s => `
+                                        <th>
+                                            <div class="series-header-cell">
+                                                <div class="series-cell-color" style="background: ${s.color};"></div>
+                                                ${s.name}
+                                            </div>
+                                        </th>
+                                    `).join('')}
+                                    <th data-en="Point Total" data-bন="পয়েন্ট টোটাল">পয়েন্ট টোটাল</th>
+                                    <th data-en="Point Avg" data-bন="পয়েন্ট গড়">পয়েন্ট গড়</th>
+                                    <th data-en="Point Max" data-bন="পয়েন্ট সর্বোচ্চ">পয়েন্ট সর্বোচ্চ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${labels.map((label, index) => {
+                                    const pointValues = series.map(s => s.data[index]);
+                                    const pointTotal = pointValues.reduce((a, b) => a + b, 0);
+                                    const pointAvg = pointTotal / series.length;
+                                    const pointMax = Math.max(...pointValues);
+                                    
+                                    return `
+                                        <tr>
+                                            <td><strong>${label}</strong></td>
+                                            ${pointValues.map((value, sIndex) => `
+                                                <td style="background: ${series[sIndex].color}10;">
+                                                    ${value}
+                                                </td>
+                                            `).join('')}
+                                            <td class="highlight">${pointTotal.toLocaleString()}</td>
+                                            <td>${pointAvg.toFixed(1)}</td>
+                                            <td>${pointMax}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                                <tr class="highlight">
+                                    <td><strong data-en="Series Total" data-bন="সিরিজ টোটাল">সিরিজ টোটাল</strong></td>
+                                    ${series.map(s => {
+                                        const total = s.data.reduce((a, b) => a + b, 0);
+                                        return `
+                                            <td style="background: ${s.color}20;">
+                                                <strong>${total.toLocaleString()}</strong>
+                                            </td>
+                                        `;
+                                    }).join('')}
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><strong data-en="Series Avg" data-bন="সিরিজ গড়">সিরিজ গড়</strong></td>
+                                    ${series.map(s => {
+                                        const avg = s.data.reduce((a, b) => a + b, 0) / s.data.length;
+                                        return `
+                                            <td>${avg.toFixed(1)}</td>
+                                        `;
+                                    }).join('')}
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function updateChartLanguage() {
+                if (!multiSeriesChart) return;
+                
+                const chartTitle = document.getElementById('chartTitle').value || 'Multi-Series Chart';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'X-axis';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Y-axis';
+                
+                multiSeriesChart.options.plugins.title.text = chartTitle;
+                if (multiSeriesChart.options.scales) {
+                    multiSeriesChart.options.scales.x.title.text = xAxisLabel;
+                    multiSeriesChart.options.scales.y.title.text = yAxisLabel;
+                }
+                
+                multiSeriesChart.update();
+            }
+
+            function loadSampleData() {
+                series = [
+                    {
+                        id: 1,
+                        name: 'Sales 2023',
+                        color: colorPalette[0],
+                        data: [120, 135, 150, 165, 180, 195, 210, 225, 240, 255],
+                        type: currentChartType,
+                        visible: true,
+                        showPoints: true,
+                        lineWidth: 2
+                    },
+                    {
+                        id: 2,
+                        name: 'Sales 2024',
+                        color: colorPalette[1],
+                        data: [130, 145, 160, 175, 190, 205, 220, 235, 250, 265],
+                        type: currentChartType,
+                        visible: true,
+                        showPoints: true,
+                        lineWidth: 2
+                    },
+                    {
+                        id: 3,
+                        name: 'Target',
+                        color: colorPalette[2],
+                        data: [150, 160, 170, 180, 190, 200, 210, 220, 230, 240],
+                        type: currentChartType,
+                        visible: true,
+                        showPoints: true,
+                        lineWidth: 2
+                    }
+                ];
+                
+                seriesCounter = 3;
+                document.getElementById('dataPoints').value = 'Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10';
+                document.getElementById('chartTitle').value = 'Quarterly Sales Comparison';
+                document.getElementById('xAxisLabel').value = 'Quarters';
+                document.getElementById('yAxisLabel').value = 'Sales (in thousands)';
+                
+                updateSeriesContainer();
+                generateChart();
+            }
+
+            function loadPreset(presetName) {
+                if (presets[presetName]) {
+                    const preset = presets[presetName];
+                    
+                    // Set chart type based on preset
+                    const firstSeriesType = preset.series[0].type;
+                    const chartTypeBtn = document.querySelector(`.chart-type-btn[data-type="${firstSeriesType}"]`);
+                    if (chartTypeBtn) {
+                        chartTypeBtn.click();
+                    }
+                    
+                    // Update data points
+                    document.getElementById('dataPoints').value = preset.dataPoints.join(', ');
+                    
+                    // Update titles
+                    document.getElementById('chartTitle').value = preset.title;
+                    document.getElementById('xAxisLabel').value = preset.xLabel;
+                    document.getElementById('yAxisLabel').value = preset.yLabel;
+                    
+                    // Create series from preset
+                    series = preset.series.map((s, index) => ({
+                        id: index + 1,
+                        name: s.name,
+                        color: s.color,
+                        data: s.data,
+                        type: s.type,
+                        visible: true,
+                        showPoints: true,
+                        lineWidth: 2
+                    }));
+                    
+                    seriesCounter = series.length;
+                    updateSeriesContainer();
+                    generateChart();
+                }
+            }
+
+            function exportChart(format) {
+                if (!multiSeriesChart) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি চার্ট তৈরি করুন' : 
+                        'Please generate a chart first');
+                    return;
+                }
+                
+                const link = document.createElement('a');
+                link.download = `multi-series-chart.${format}`;
+                link.href = multiSeriesChart.toBase64Image();
+                link.click();
+            }
+
+            function exportPDF() {
+                alert(currentLanguage === 'bn' ? 
+                    'PDF এক্সপোর্ট সেটআপ প্রয়োজন' : 
+                    'PDF export requires additional setup');
+            }
+
+            function exportCSV() {
+                const labels = parseDataPoints(document.getElementById('dataPoints').value);
+                
+                let csv = 'Data Point,' + series.map(s => s.name).join(',') + '\n';
+                
+                labels.forEach((label, index) => {
+                    const rowValues = series.map(s => s.data[index]);
+                    csv += `${label},${rowValues.join(',')}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.download = 'multi-series-data.csv';
+                link.href = window.URL.createObjectURL(blob);
+                link.click();
+            }
+
+            function shareChart() {
+                // Create a shareable configuration
+                const config = {
+                    chartType: currentChartType,
+                    title: document.getElementById('chartTitle').value,
+                    xLabel: document.getElementById('xAxisLabel').value,
+                    yLabel: document.getElementById('yAxisLabel').value,
+                    dataPoints: parseDataPoints(document.getElementById('dataPoints').value),
+                    series: series.map(s => ({
+                        name: s.name,
+                        data: s.data,
+                        color: s.color,
+                        type: s.type
+                    }))
+                };
+                
+                // Convert to JSON and create a data URL
+                const jsonString = JSON.stringify(config, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create a temporary link to download the config
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'chart-config.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert(currentLanguage === 'bn' ? 
+                    'চার্ট কনফিগারেশন ফাইল ডাউনলোড হয়েছে। অন্যকে শেয়ার করতে এই ফাইলটি পাঠান।' : 
+                    'Chart configuration file downloaded. Share this file with others to load the same chart.');
+            }
+
+            function clearAll() {
+                // Reset to single series
+                series = [
+                    {
+                        id: 1,
+                        name: 'Series 1',
+                        color: colorPalette[0],
+                        data: [],
+                        type: currentChartType,
+                        visible: true,
+                        showPoints: true,
+                        lineWidth: 2
+                    }
+                ];
+                
+                seriesCounter = 1;
+                
+                // Clear inputs
+                document.getElementById('dataPoints').value = '';
+                document.getElementById('chartTitle').value = '';
+                document.getElementById('xAxisLabel').value = '';
+                document.getElementById('yAxisLabel').value = '';
+                
+                // Update UI
+                updateSeriesContainer();
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Clear statistics and table
+                document.getElementById('statsGrid').innerHTML = '';
+                document.getElementById('comparisonTable').innerHTML = '';
+                document.getElementById('legendGrid').innerHTML = '';
+                
+                // Destroy chart
+                if (multiSeriesChart) {
+                    multiSeriesChart.destroy();
+                    multiSeriesChart = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

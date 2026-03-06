@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z-স্কোর ক্যালকুলেটর | ডেটা স্ট্যান্ডার্ডাইজেশন ও আউটলায়ার শনাক্তকরণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --normal-color: #36D1DC;
+            --outlier-color: #FF6584;
+            --zscore-color: #5B86E5;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--normal-color), var(--zscore-color), var(--outlier-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Threshold Input */
+        .threshold-input-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .threshold-input-group {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .threshold-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .threshold-update-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .threshold-update-btn:hover {
+            background: var(--secondary);
+        }
+
+        .threshold-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--warning);
+        }
+
+        .threshold-item {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .threshold-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .threshold-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Results Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.mean::before { background: var(--normal-color); }
+        .result-card.std::before { background: var(--zscore-color); }
+        .result-card.outliers::before { background: var(--outlier-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.mean .result-icon { color: var(--normal-color); }
+        .result-card.std .result-icon { color: var(--zscore-color); }
+        .result-card.outliers .result-icon { color: var(--outlier-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Z-Score Distribution */
+        .zscore-distribution {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .zscore-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .zscore-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .zscore-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .zscore-stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .zscore-stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .zscore-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Outlier Detection */
+        .outlier-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .outlier-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .outlier-card {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--outlier-color);
+        }
+
+        .outlier-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .outlier-zscore {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Z-Score Distribution Chart */
+        .zscore-chart {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 1rem 0;
+        }
+
+        .zscore-bar-container {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .zscore-bar {
+            width: 60%;
+            background: var(--zscore-color);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .zscore-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .zscore-bar.outlier {
+            background: var(--outlier-color);
+        }
+
+        .zscore-bar-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            position: absolute;
+            bottom: -25px;
+            width: 100%;
+        }
+
+        .zscore-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        /* Normal Distribution Curve */
+        .normal-curve-chart {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .normal-curve {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .zscore-point {
+            fill: var(--accent);
+            stroke: white;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+
+        .zscore-point:hover {
+            fill: var(--warning);
+            r: 6;
+        }
+
+        .threshold-line {
+            stroke: var(--danger);
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
+        .threshold-label {
+            font-size: 12px;
+            fill: var(--dark);
+            text-anchor: middle;
+        }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .zscore-formula .formula-icon { background: var(--zscore-color); }
+        .mean-formula .formula-icon { background: var(--normal-color); }
+        .std-formula .formula-icon { background: var(--warning); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Calculation Tables */
+        .calculation-tables {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        .data-table .outlier-row {
+            background: rgba(255, 101, 132, 0.1);
+            border-left: 3px solid var(--outlier-color);
+        }
+
+        .data-table .formula-cell {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            background: var(--formula-bg);
+        }
+
+        /* Step-by-Step Calculation */
+        .step-by-step {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.normal { background: var(--normal-color); }
+        .legend-color.zscore { background: var(--zscore-color); }
+        .legend-color.outlier { background: var(--outlier-color); }
+        .legend-color.threshold { background: var(--danger); }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section,
+            .threshold-input-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .calculation-tables,
+            .step-by-step {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .data-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Z-Score Calculator" data-bn="Z-স্কোর ক্যালকুলেটর">Z-স্কোর ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Standardize data points using Z-Score formula, detect outliers, and visualize data distribution" data-bn="Z-স্কোর সূত্র ব্যবহার করে ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করুন, আউটলায়ার শনাক্ত করুন, এবং ডেটা বন্টন ভিজ্যুয়ালাইজ করুন">
+                Z-স্কোর সূত্র ব্যবহার করে ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করুন, আউটলায়ার শনাক্ত করুন, এবং ডেটা বন্টন ভিজ্যুয়ালাইজ করুন
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <div class="threshold-input-section">
+                    <div class="threshold-input-group">
+                        <input type="number" id="thresholdInput" class="threshold-input" min="0" max="10" step="0.1" placeholder="Z-স্কোর থ্রেশহোল্ড ইনপুট করুন (ডিফল্ট: ২.০)" value="2.0">
+                        <button class="threshold-update-btn" id="updateThresholdBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            <span data-en="Update" data-bn="আপডেট করুন">আপডেট করুন</span>
+                        </button>
+                    </div>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Set Z-score threshold for outlier detection (common: 2.0, 2.5, or 3.0)" data-bn="আউটলায়ার শনাক্তকরণের জন্য Z-স্কোর থ্রেশহোল্ড সেট করুন (সাধারণ: ২.০, ২.৫, বা ৩.০)">
+                            আউটলায়ার শনাক্তকরণের জন্য Z-স্কোর থ্রেশহোল্ড সেট করুন (সাধারণ: ২.০, ২.৫, বা ৩.০)
+                        </span>
+                    </div>
+                    <div class="threshold-info">
+                        <div class="threshold-item">
+                            <div class="threshold-label" data-en="Current Threshold" data-bn="বর্তমান থ্রেশহোল্ড">বর্তমান থ্রেশহোল্ড</div>
+                            <div class="threshold-value" id="currentThreshold">±2.0</div>
+                        </div>
+                        <div class="threshold-item">
+                            <div class="threshold-label" data-en="Lower Bound" data-bn="নিম্ন সীমা">নিম্ন সীমা</div>
+                            <div class="threshold-value" id="lowerBound">--</div>
+                        </div>
+                        <div class="threshold-item">
+                            <div class="threshold-label" data-en="Upper Bound" data-bn="উচ্চ সীমা">উচ্চ সীমা</div>
+                            <div class="threshold-value" id="upperBound">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 65, 72, 68, 74, 82, 70, 85, 78, 90, 62
+বা: 65 72 68 74 82 70 85 78 90 62
+বা: 
+65
+72
+68
+74
+82
+70
+85
+78
+90
+62">65, 72, 68, 74, 82, 70, 85, 78, 90, 62, 95, 58</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Z-Scores" data-bn="Z-স্কোর গণনা করুন">Z-স্কোর গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bn="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Calculation Results" data-bn="গণনার ফলাফল">গণনার ফলাফল</span>
+                </h2>
+                
+                <div class="results-grid">
+                    <!-- Mean -->
+                    <div class="result-card mean">
+                        <div class="result-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <div class="result-title" data-en="Mean (μ)" data-bn="গড় (μ)">গড় (μ)</div>
+                        <div class="result-value" id="meanResult">--</div>
+                        <div class="result-description" data-en="Average of data points" data-bn="ডেটা পয়েন্টগুলোর গড়">ডেটা পয়েন্টগুলোর গড়</div>
+                    </div>
+
+                    <!-- Standard Deviation -->
+                    <div class="result-card std">
+                        <div class="result-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <div class="result-title" data-en="Std Dev (σ)" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</div>
+                        <div class="result-value" id="stdResult">--</div>
+                        <div class="result-description" data-en="Spread of data" data-bন="ডেটার বিস্তার">ডেটার বিস্তার</div>
+                    </div>
+
+                    <!-- Outliers -->
+                    <div class="result-card outliers">
+                        <div class="result-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="result-title" data-en="Outliers" data-bন="আউটলায়ার">আউটলায়ার</div>
+                        <div class="result-value" id="outliersResult">0</div>
+                        <div class="result-description" data-en="Points beyond threshold" data-bন="থ্রেশহোল্ডের বাইরের পয়েন্ট">থ্রেশহোল্ডের বাইরের পয়েন্ট</div>
+                    </div>
+                </div>
+
+                <!-- Z-Score Distribution -->
+                <div class="zscore-distribution">
+                    <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-percentage"></i>
+                        <span data-en="Z-Score Statistics" data-bন="Z-স্কোর পরিসংখ্যান">Z-স্কোর পরিসংখ্যান</span>
+                    </h3>
+                    <div class="zscore-stats">
+                        <div class="zscore-stat-item">
+                            <div class="zscore-stat-label" data-en="Min Z-Score" data-bন="ন্যূনতম Z-স্কোর">ন্যূনতম Z-স্কোর</div>
+                            <div class="zscore-stat-value" id="minZScore">--</div>
+                        </div>
+                        <div class="zscore-stat-item">
+                            <div class="zscore-stat-label" data-en="Max Z-Score" data-bন="সর্বোচ্চ Z-স্কোর">সর্বোচ্চ Z-স্কোর</div>
+                            <div class="zscore-stat-value" id="maxZScore">--</div>
+                        </div>
+                        <div class="zscore-stat-item">
+                            <div class="zscore-stat-label" data-en="Avg Z-Score" data-bন="গড় Z-স্কোর">গড় Z-স্কোর</div>
+                            <div class="zscore-stat-value" id="avgZScore">--</div>
+                        </div>
+                        <div class="zscore-stat-item">
+                            <div class="zscore-stat-label" data-en="Std Z-Score" data-bন="Z-স্কোর বিচ্যুতি">Z-স্কোর বিচ্যুতি</div>
+                            <div class="zscore-stat-value" id="stdZScore">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outlier Detection -->
+                <div class="outlier-section">
+                    <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-search"></i>
+                        <span data-en="Detected Outliers" data-bন="শনাক্তকৃত আউটলায়ার">শনাক্তকৃত আউটলায়ার</span>
+                    </h3>
+                    <div class="outlier-cards" id="outliersContainer">
+                        <div style="color: var(--gray); text-align: center; padding: 2rem; width: 100%;" data-en="No outliers detected" data-bন="কোন আউটলায়ার শনাক্ত হয়নি">
+                            কোন আউটলায়ার শনাক্ত হয়নি
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                <span data-en="Data Visualization" data-bন="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Z-Score Distribution -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Z-Score Distribution" data-bন="Z-স্কোর বন্টন">Z-স্কোর বন্টন</span>
+                    </h3>
+                    <div id="zscoreChart" class="zscore-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p data-en="Enter data to see Z-score distribution" data-bন="ডেটা ইনপুট করে Z-স্কোর বন্টন দেখুন">
+                                ডেটা ইনপুট করে Z-স্কোর বন্টন দেখুন
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="zscoreChartLegend"></div>
+                </div>
+
+                <!-- Normal Distribution Curve -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Normal Distribution" data-bন="নরমাল ডিস্ট্রিবিউশন">নরমাল ডিস্ট্রিবিউশন</span>
+                    </h3>
+                    <div id="normalCurveChart" class="normal-curve-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line"></i>
+                            <p data-en="Enter data to see normal distribution curve" data-bন="ডেটা ইনপুট করে নরমাল ডিস্ট্রিবিউশন কার্ভ দেখুন">
+                                ডেটা ইনপুট করে নরমাল ডিস্ট্রিবিউশন কার্ভ দেখুন
+                            </p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="normalCurveLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Formulas and Definitions" data-bন="সূত্র এবং সংজ্ঞা">সূত্র এবং সংজ্ঞা</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Z-Score Formula -->
+                <div class="formula-card zscore-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Z-Score Formula" data-bন="Z-স্কোর সূত্র">Z-স্কোর সূত্র</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Standardizes data points relative to mean and standard deviation" data-bন="গড় এবং স্ট্যান্ডার্ড ডেভিয়েশন এর সাপেক্ষে ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করে">
+                            গড় এবং স্ট্যান্ডার্ড ডেভিয়েশন এর সাপেক্ষে ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করে
+                        </p>
+                        <div class="formula-equation">
+                            Z = (X - μ) / σ
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="Z = Z-score (standardized value)" data-bন="Z = Z-স্কোর (স্ট্যান্ডার্ডাইজড মান)">Z = Z-স্কোর (স্ট্যান্ডার্ডাইজড মান)</li>
+                            <li data-en="X = Individual data point" data-bন="X = পৃথক ডেটা পয়েন্ট">X = পৃথক ডেটা পয়েন্ট</li>
+                            <li data-en="μ = Mean of all data points" data-bন="μ = সব ডেটা পয়েন্টের গড়">μ = সব ডেটা পয়েন্টের গড়</li>
+                            <li data-en="σ = Standard deviation of data" data-bন="σ = ডেটার স্ট্যান্ডার্ড ডেভিয়েশন">σ = ডেটার স্ট্যান্ডার্ড ডেভিয়েশন</li>
+                            <li data-en="Z-score tells how many standard deviations away from mean" data-bন="Z-স্কোর বলে গড় থেকে কত স্ট্যান্ডার্ড ডেভিয়েশন দূরে">Z-স্কোর বলে গড় থেকে কত স্ট্যান্ডার্ড ডেভিয়েশন দূরে</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Mean Formula -->
+                <div class="formula-card mean-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Mean (Average)" data-bন="গড় (এভারেজ)">গড় (এভারেজ)</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Central tendency measure - average of all values" data-bন="কেন্দ্রীয় প্রবণতা পরিমাপ - সব মানের গড়">
+                            কেন্দ্রীয় প্রবণতা পরিমাপ - সব মানের গড়
+                        </p>
+                        <div class="formula-equation">
+                            μ = ΣX / n
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="μ = Population mean" data-bন="μ = জনসংখ্যার গড়">μ = জনসংখ্যার গড়</li>
+                            <li data-en="ΣX = Sum of all data points" data-bন="ΣX = সব ডেটা পয়েন্টের যোগফল">ΣX = সব ডেটা পয়েন্টের যোগফল</li>
+                            <li data-en="n = Number of data points" data-bন="n = ডেটা পয়েন্টের সংখ্যা">n = ডেটা পয়েন্টের সংখ্যা</li>
+                            <li data-en="Center of data distribution" data-bন="ডেটা বন্টনের কেন্দ্র">ডেটা বন্টনের কেন্দ্র</li>
+                            <li data-en="Sensitive to extreme values (outliers)" data-bন="চরম মানের প্রতি সংবেদনশীল (আউটলায়ার)">চরম মানের প্রতি সংবেদনশীল (আউটলায়ার)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Standard Deviation Formula -->
+                <div class="formula-card std-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Measures spread or dispersion of data points" data-bন="ডেটা পয়েন্টের বিস্তার বা বিক্ষেপণ পরিমাপ করে">
+                            ডেটা পয়েন্টের বিস্তার বা বিক্ষেপণ পরিমাপ করে
+                        </p>
+                        <div class="formula-equation">
+                            σ = √[Σ(X - μ)² / n]
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="σ = Population standard deviation" data-bন="σ = জনসংখ্যার স্ট্যান্ডার্ড ডেভিয়েশন">σ = জনসংখ্যার স্ট্যান্ডার্ড ডেভিয়েশন</li>
+                            <li data-en="X - μ = Deviation from mean" data-bন="X - μ = গড় থেকে বিচ্যুতি">X - μ = গড় থেকে বিচ্যুতি</li>
+                            <li data-en="Square removes negative signs" data-bন="বর্গ ঋণাত্মক চিহ্ন দূর করে">বর্গ ঋণাত্মক চিহ্ন দূর করে</li>
+                            <li data-en="Square root returns to original units" data-bন="বর্গমূল মূল এককে ফেরত দেয়">বর্গমূল মূল এককে ফেরত দেয়</li>
+                            <li data-en="Higher σ = More spread in data" data-bন="উচ্চ σ = ডেটায় বেশি বিস্তার">উচ্চ σ = ডেটায় বেশি বিস্তার</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculation Tables -->
+        <div class="calculation-tables">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Detailed Calculation Tables" data-bন="বিস্তারিত গণনা টেবিল">বিস্তারিত গণনা টেবিল</span>
+            </h2>
+            
+            <div id="tablesContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" data-en="Enter data and click Calculate to see detailed tables" data-bন="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="step-by-step">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Calculation" data-bন="ধাপে ধাপে গণনা">ধাপে ধাপে গণনা</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" data-en="Enter data and click Calculate to see step-by-step calculations" data-bন="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                    ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="test-scores">
+                    <span data-en="Test Scores" data-bন="পরীক্ষার স্কোর">পরীক্ষার স্কোর</span>
+                    <span class="example-data">65, 72, 68, 74, 82, 70, 85, 78, 90, 62, 95, 58</span>
+                </button>
+                <button class="example-btn" data-example="height-data">
+                    <span data-en="Height Data" data-bন="উচ্চতা ডেটা">উচ্চতা ডেটা</span>
+                    <span class="example-data">165, 172, 168, 174, 182, 170, 185, 178, 190, 162</span>
+                </button>
+                <button class="example-btn" data-example="income-data">
+                    <span data-en="Income Data" data-bন="আয় ডেটা">আয় ডেটা</span>
+                    <span class="example-data">45000, 52000, 48000, 55000, 62000, 50000, 75000, 58000, 42000, 85000</span>
+                </button>
+                <button class="example-btn" data-example="with-outliers">
+                    <span data-en="Data with Outliers" data-bন="আউটলায়ার সহ ডেটা">আউটলায়ার সহ ডেটা</span>
+                    <span class="example-data">10, 12, 11, 13, 12, 11, 10, 13, 12, 50, 9, 55</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+            let threshold = 2.0;
+
+            // Example Data Sets
+            const examples = {
+                'test-scores': [65, 72, 68, 74, 82, 70, 85, 78, 90, 62, 95, 58],
+                'height-data': [165, 172, 168, 174, 182, 170, 185, 178, 190, 162],
+                'income-data': [45000, 52000, 48000, 55000, 62000, 50000, 75000, 58000, 42000, 85000],
+                'with-outliers': [10, 12, 11, 13, 12, 11, 10, 13, 12, 50, 9, 55]
+            };
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Update Threshold Button
+                document.getElementById('updateThresholdBtn').addEventListener('click', updateThreshold);
+
+                // Enter key support for threshold input
+                document.getElementById('thresholdInput').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        updateThreshold();
+                    }
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateZScores);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Enter key support for data input
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        calculateZScores();
+                    }
+                });
+
+                // Calculate with initial data
+                setTimeout(() => {
+                    calculateZScores();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            element.value = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function updateThreshold() {
+                const input = document.getElementById('thresholdInput');
+                const value = parseFloat(input.value.trim());
+                
+                if (isNaN(value) || value <= 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে একটি বৈধ ধনাত্মক থ্রেশহোল্ড ইনপুট করুন' : 
+                        'Please enter a valid positive threshold');
+                    return;
+                }
+                
+                threshold = value;
+                document.getElementById('currentThreshold').textContent = `±${threshold.toFixed(1)}`;
+                
+                // Recalculate if data exists
+                const dataInput = document.getElementById('dataInput').value.trim();
+                if (dataInput) {
+                    calculateZScores();
+                }
+            }
+
+            function parseInputData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateZScores() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে কিছু ডেটা ইনপুট করুন' : 'Please enter some data');
+                    return;
+                }
+
+                const data = parseInputData(input);
+                
+                if (data.length === 0) {
+                    alert(currentLanguage === 'bn' ? 'দয়া করে বৈধ সংখ্যা ইনপুট করুন' : 'Please enter valid numbers');
+                    return;
+                }
+
+                if (data.length < 2) {
+                    alert(currentLanguage === 'bn' ? 'Z-স্কোর গণনার জন্য কমপক্ষে ২টি মান প্রয়োজন' : 'Z-score calculation requires at least 2 values');
+                    return;
+                }
+
+                // Calculate mean and standard deviation
+                const mean = calculateMean(data);
+                const std = calculateStandardDeviation(data, mean);
+                
+                if (std === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'স্ট্যান্ডার্ড ডেভিয়েশন শূন্য। সমস্ত ডেটা পয়েন্ট একই।' : 
+                        'Standard deviation is zero. All data points are identical.');
+                    return;
+                }
+
+                // Calculate Z-scores for each data point
+                const zScores = data.map(x => (x - mean) / std);
+                
+                // Detect outliers
+                const outliers = detectOutliers(data, zScores, threshold);
+                
+                // Calculate Z-score statistics
+                const zScoreStats = calculateZScoreStats(zScores);
+                
+                // Calculate bounds
+                const lowerBound = mean - (threshold * std);
+                const upperBound = mean + (threshold * std);
+
+                // Update results
+                updateResults(mean, std, outliers, zScoreStats, lowerBound, upperBound);
+                
+                // Update charts
+                updateCharts(data, zScores, outliers, mean, std, threshold, lowerBound, upperBound);
+                
+                // Update detailed tables
+                updateCalculationTables(data, zScores, outliers, mean, std);
+                
+                // Update step-by-step calculations
+                updateStepByStep(data, zScores, outliers, mean, std, threshold);
+            }
+
+            function calculateMean(data) {
+                const sum = data.reduce((a, b) => a + b, 0);
+                return sum / data.length;
+            }
+
+            function calculateStandardDeviation(data, mean) {
+                const squaredDiffs = data.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / data.length;
+                return Math.sqrt(variance);
+            }
+
+            function detectOutliers(data, zScores, threshold) {
+                const outliers = [];
+                data.forEach((value, index) => {
+                    if (Math.abs(zScores[index]) > threshold) {
+                        outliers.push({
+                            value: value,
+                            zScore: zScores[index],
+                            index: index
+                        });
+                    }
+                });
+                return outliers;
+            }
+
+            function calculateZScoreStats(zScores) {
+                const min = Math.min(...zScores);
+                const max = Math.max(...zScores);
+                const mean = zScores.reduce((a, b) => a + b, 0) / zScores.length;
+                const squaredDiffs = zScores.map(z => Math.pow(z - mean, 2));
+                const variance = squaredDiffs.reduce((a, b) => a + b, 0) / zScores.length;
+                const std = Math.sqrt(variance);
+                
+                return { min, max, mean, std };
+            }
+
+            function updateResults(mean, std, outliers, zScoreStats, lowerBound, upperBound) {
+                // Update main results
+                document.getElementById('meanResult').textContent = mean.toFixed(2);
+                document.getElementById('stdResult').textContent = std.toFixed(2);
+                document.getElementById('outliersResult').textContent = outliers.length;
+                
+                // Update Z-score statistics
+                document.getElementById('minZScore').textContent = zScoreStats.min.toFixed(2);
+                document.getElementById('maxZScore').textContent = zScoreStats.max.toFixed(2);
+                document.getElementById('avgZScore').textContent = zScoreStats.mean.toFixed(2);
+                document.getElementById('stdZScore').textContent = zScoreStats.std.toFixed(2);
+                
+                // Update bounds
+                document.getElementById('lowerBound').textContent = lowerBound.toFixed(2);
+                document.getElementById('upperBound').textContent = upperBound.toFixed(2);
+                
+                // Update outliers container
+                updateOutliersContainer(outliers);
+            }
+
+            function updateOutliersContainer(outliers) {
+                const container = document.getElementById('outliersContainer');
+                container.innerHTML = '';
+                
+                if (outliers.length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.style.cssText = 'color: var(--gray); text-align: center; padding: 2rem; width: 100%;';
+                    emptyMessage.textContent = currentLanguage === 'bn' ? 
+                        'কোন আউটলায়ার শনাক্ত হয়নি' : 
+                        'No outliers detected';
+                    container.appendChild(emptyMessage);
+                    return;
+                }
+                
+                outliers.forEach(outlier => {
+                    const card = document.createElement('div');
+                    card.className = 'outlier-card';
+                    card.innerHTML = `
+                        <div class="outlier-value">${outlier.value.toFixed(2)}</div>
+                        <div class="outlier-zscore">Z = ${outlier.zScore.toFixed(2)}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            function updateCharts(data, zScores, outliers, mean, std, threshold, lowerBound, upperBound) {
+                // Update Z-Score Chart
+                updateZScoreChart(data, zScores, outliers);
+                
+                // Update Normal Curve Chart
+                updateNormalCurveChart(data, zScores, mean, std, threshold, lowerBound, upperBound);
+                
+                // Update Chart Legends
+                updateChartLegends(threshold);
+            }
+
+            function updateZScoreChart(data, zScores, outliers) {
+                const chart = document.getElementById('zscoreChart');
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                if (data.length === 0) {
+                    chart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে Z-স্কোর বন্টন দেখুন' : 'Enter data to see Z-score distribution'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const maxAbsZScore = Math.max(...zScores.map(z => Math.abs(z)));
+                const scale = 80 / (maxAbsZScore * 2); // Scale to fit in 80% width
+                const zeroPosition = 50; // Center point
+                
+                // Create histogram of Z-scores
+                const histogram = {};
+                zScores.forEach(z => {
+                    const bin = Math.round(z * 2) / 2; // Round to nearest 0.5
+                    histogram[bin] = (histogram[bin] || 0) + 1;
+                });
+                
+                const maxFrequency = Math.max(...Object.values(histogram));
+                
+                Object.entries(histogram).forEach(([bin, frequency]) => {
+                    const z = parseFloat(bin);
+                    const position = zeroPosition + (z * scale);
+                    const height = (frequency / maxFrequency) * 60;
+                    const isOutlier = Math.abs(z) > threshold;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'zscore-bar-container';
+                    barContainer.style.position = 'absolute';
+                    barContainer.style.left = `${position}%`;
+                    barContainer.style.bottom = '0';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = `zscore-bar ${isOutlier ? 'outlier' : ''}`;
+                    bar.style.height = `${height}%`;
+                    
+                    const barValue = document.createElement('div');
+                    barValue.className = 'zscore-bar-value';
+                    barValue.textContent = frequency;
+                    
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'zscore-bar-label';
+                    barLabel.textContent = z.toFixed(1);
+                    
+                    bar.appendChild(barValue);
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(barLabel);
+                    chart.appendChild(barContainer);
+                });
+                
+                // Add zero line
+                const zeroLine = document.createElement('div');
+                zeroLine.style.position = 'absolute';
+                zeroLine.style.left = '50%';
+                zeroLine.style.top = '0';
+                zeroLine.style.bottom = '0';
+                zeroLine.style.width = '2px';
+                zeroLine.style.background = 'var(--dark)';
+                zeroLine.style.opacity = '0.5';
+                chart.appendChild(zeroLine);
+                
+                // Add zero label
+                const zeroLabel = document.createElement('div');
+                zeroLabel.style.position = 'absolute';
+                zeroLabel.style.left = '50%';
+                zeroLabel.style.top = 'calc(100% + 5px)';
+                zeroLabel.style.transform = 'translateX(-50%)';
+                zeroLabel.style.fontSize = '0.8rem';
+                zeroLabel.style.color = 'var(--dark)';
+                zeroLabel.textContent = '0';
+                chart.appendChild(zeroLabel);
+            }
+
+            function updateNormalCurveChart(data, zScores, mean, std, threshold, lowerBound, upperBound) {
+                const chart = document.getElementById('normalCurveChart');
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                if (data.length === 0) {
+                    chart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line"></i>
+                            <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে নরমাল ডিস্ট্রিবিউশন কার্ভ দেখুন' : 'Enter data to see normal distribution curve'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create SVG element
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.setAttribute('viewBox', '0 0 400 300');
+                
+                const minValue = Math.min(...data);
+                const maxValue = Math.max(...data);
+                const range = maxValue - minValue;
+                const padding = range * 0.2;
+                const plotMin = minValue - padding;
+                const plotMax = maxValue + padding;
+                const plotRange = plotMax - plotMin;
+                
+                // Normal distribution function
+                function normalPDF(x, mu, sigma) {
+                    return Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI));
+                }
+                
+                // Create normal curve path
+                let pathData = '';
+                const steps = 100;
+                
+                for (let i = 0; i <= steps; i++) {
+                    const x = plotMin + (i / steps) * plotRange;
+                    const y = normalPDF(x, mean, std);
+                    const scaledX = 40 + ((x - plotMin) / plotRange) * 320;
+                    const scaledY = 260 - (y / (1/(std * Math.sqrt(2 * Math.PI)))) * 200; // Scale to max height
+                    
+                    if (i === 0) {
+                        pathData += `M ${scaledX} ${scaledY} `;
+                    } else {
+                        pathData += `L ${scaledX} ${scaledY} `;
+                    }
+                }
+                
+                // Add normal curve
+                const normalCurve = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                normalCurve.setAttribute('d', pathData);
+                normalCurve.setAttribute('fill', 'none');
+                normalCurve.setAttribute('stroke', 'var(--primary)');
+                normalCurve.setAttribute('stroke-width', '2');
+                normalCurve.setAttribute('class', 'normal-curve');
+                svg.appendChild(normalCurve);
+                
+                // Add data points
+                data.forEach((value, index) => {
+                    const x = 40 + ((value - plotMin) / plotRange) * 320;
+                    const y = normalPDF(value, mean, std);
+                    const scaledY = 260 - (y / (1/(std * Math.sqrt(2 * Math.PI)))) * 200;
+                    const isOutlier = Math.abs(zScores[index]) > threshold;
+                    
+                    // Point
+                    const point = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    point.setAttribute('cx', x);
+                    point.setAttribute('cy', scaledY);
+                    point.setAttribute('r', '4');
+                    point.setAttribute('fill', isOutlier ? 'var(--outlier-color)' : 'var(--accent)');
+                    point.setAttribute('stroke', 'white');
+                    point.setAttribute('stroke-width', '2');
+                    point.setAttribute('class', 'zscore-point');
+                    point.setAttribute('title', `${value} (Z = ${zScores[index].toFixed(2)})`);
+                    svg.appendChild(point);
+                });
+                
+                // Add mean line
+                const meanX = 40 + ((mean - plotMin) / plotRange) * 320;
+                const meanLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                meanLine.setAttribute('x1', meanX);
+                meanLine.setAttribute('y1', '40');
+                meanLine.setAttribute('x2', meanX);
+                meanLine.setAttribute('y2', '260');
+                meanLine.setAttribute('stroke', 'var(--normal-color)');
+                meanLine.setAttribute('stroke-width', '2');
+                meanLine.setAttribute('stroke-dasharray', '5,5');
+                svg.appendChild(meanLine);
+                
+                // Add threshold lines
+                const lowerX = 40 + ((lowerBound - plotMin) / plotRange) * 320;
+                const upperX = 40 + ((upperBound - plotMin) / plotRange) * 320;
+                
+                [lowerX, upperX].forEach(x => {
+                    const thresholdLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    thresholdLine.setAttribute('x1', x);
+                    thresholdLine.setAttribute('y1', '40');
+                    thresholdLine.setAttribute('x2', x);
+                    thresholdLine.setAttribute('y2', '260');
+                    thresholdLine.setAttribute('stroke', 'var(--danger)');
+                    thresholdLine.setAttribute('stroke-width', '1');
+                    thresholdLine.setAttribute('stroke-dasharray', '5,5');
+                    thresholdLine.setAttribute('class', 'threshold-line');
+                    svg.appendChild(thresholdLine);
+                });
+                
+                // Add labels
+                const meanLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                meanLabel.setAttribute('x', meanX);
+                meanLabel.setAttribute('y', '30');
+                meanLabel.setAttribute('text-anchor', 'middle');
+                meanLabel.setAttribute('font-size', '12');
+                meanLabel.setAttribute('fill', 'var(--normal-color)');
+                meanLabel.setAttribute('font-weight', 'bold');
+                meanLabel.textContent = 'μ';
+                svg.appendChild(meanLabel);
+                
+                const meanValueLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                meanValueLabel.setAttribute('x', meanX);
+                meanValueLabel.setAttribute('y', '280');
+                meanValueLabel.setAttribute('text-anchor', 'middle');
+                meanValueLabel.setAttribute('font-size', '11');
+                meanValueLabel.setAttribute('fill', 'var(--dark)');
+                meanValueLabel.textContent = mean.toFixed(1);
+                svg.appendChild(meanValueLabel);
+                
+                // Add axes
+                // X-axis
+                const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                xAxis.setAttribute('x1', '40');
+                xAxis.setAttribute('y1', '260');
+                xAxis.setAttribute('x2', '360');
+                xAxis.setAttribute('y2', '260');
+                xAxis.setAttribute('stroke', 'var(--dark)');
+                xAxis.setAttribute('stroke-width', '1');
+                svg.appendChild(xAxis);
+                
+                // Y-axis
+                const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                yAxis.setAttribute('x1', '40');
+                yAxis.setAttribute('y1', '40');
+                yAxis.setAttribute('x2', '40');
+                yAxis.setAttribute('y2', '260');
+                yAxis.setAttribute('stroke', 'var(--dark)');
+                yAxis.setAttribute('stroke-width', '1');
+                svg.appendChild(yAxis);
+                
+                // Axis labels
+                const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xLabel.setAttribute('x', '200');
+                xLabel.setAttribute('y', '290');
+                xLabel.setAttribute('text-anchor', 'middle');
+                xLabel.setAttribute('font-size', '12');
+                xLabel.setAttribute('fill', 'var(--dark)');
+                xLabel.textContent = currentLanguage === 'bn' ? 'মান' : 'Value';
+                svg.appendChild(xLabel);
+                
+                const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yLabel.setAttribute('x', '20');
+                yLabel.setAttribute('y', '150');
+                yLabel.setAttribute('text-anchor', 'middle');
+                yLabel.setAttribute('font-size', '12');
+                yLabel.setAttribute('fill', 'var(--dark)');
+                yLabel.setAttribute('transform', 'rotate(-90 20 150)');
+                yLabel.textContent = currentLanguage === 'bn' ? 'সম্ভাব্যতা ঘনত্ব' : 'Probability Density';
+                svg.appendChild(yLabel);
+                
+                chart.appendChild(svg);
+            }
+
+            function updateChartLegends(threshold) {
+                const zscoreLegend = document.getElementById('zscoreChartLegend');
+                const normalCurveLegend = document.getElementById('normalCurveLegend');
+                
+                // Z-Score Chart Legend
+                zscoreLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color zscore"></div>
+                        <span data-en="Normal Z-Scores" data-bন="স্বাভাবিক Z-স্কোর">স্বাভাবিক Z-স্কোর</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color outlier"></div>
+                        <span data-en="Outliers (|Z| > ${threshold})" data-bন="আউটলায়ার (|Z| > ${threshold})">আউটলায়ার (|Z| > ${threshold})</span>
+                    </div>
+                `;
+                
+                // Normal Curve Chart Legend
+                normalCurveLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div style="width: 20px; height: 2px; background: var(--primary);"></div>
+                        <span data-en="Normal Distribution" data-bন="নরমাল ডিস্ট্রিবিউশন">নরমাল ডিস্ট্রিবিউশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color normal"></div>
+                        <span data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color threshold"></div>
+                        <span data-en="Threshold (±${threshold}σ)" data-bন="থ্রেশহোল্ড (±${threshold}σ)">থ্রেশহোল্ড (±${threshold}σ)</span>
+                    </div>
+                `;
+                
+                // Update language for legends
+                updateDynamicContent();
+            }
+
+            function updateCalculationTables(data, zScores, outliers, mean, std) {
+                const container = document.getElementById('tablesContainer');
+                const n = data.length;
+                
+                container.innerHTML = `
+                    <!-- Data Points with Z-Scores -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Data Points with Z-Scores" data-bন="Z-স্কোর সহ ডেটা পয়েন্ট">Z-স্কোর সহ ডেটা পয়েন্ট</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Index" data-bন="সূচক">সূচক</th>
+                                    <th data-en="Value (X)" data-bন="মান (X)">মান (X)</th>
+                                    <th data-en="Deviation (X - μ)" data-bন="বিচ্যুতি (X - μ)">বিচ্যুতি (X - μ)</th>
+                                    <th data-en="Z-Score" data-bন="Z-স্কোর">Z-স্কোর</th>
+                                    <th data-en="Status" data-bন="অবস্থা">অবস্থা</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map((value, index) => {
+                                    const deviation = value - mean;
+                                    const zScore = zScores[index];
+                                    const isOutlier = outliers.some(o => o.index === index);
+                                    const rowClass = isOutlier ? 'class="outlier-row"' : '';
+                                    
+                                    return `
+                                        <tr ${rowClass}>
+                                            <td>${index + 1}</td>
+                                            <td>${value.toFixed(2)}</td>
+                                            <td>${deviation.toFixed(2)}</td>
+                                            <td><strong>${zScore.toFixed(2)}</strong></td>
+                                            <td>${isOutlier ? 
+                                                `<span style="color: var(--outlier-color); font-weight: bold;">${currentLanguage === 'bn' ? 'আউটলায়ার' : 'Outlier'}</span>` : 
+                                                `<span style="color: var(--normal-color);">${currentLanguage === 'bn' ? 'স্বাভাবিক' : 'Normal'}</span>`}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Statistics -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Summary Statistics" data-bন="সারসংক্ষেপ পরিসংখ্যান">সারসংক্ষেপ পরিসংখ্যান</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Statistic" data-bন="পরিসংখ্যান">পরিসংখ্যান</th>
+                                    <th data-en="Formula" data-bন="সূত্র">সূত্র</th>
+                                    <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                    <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-en="Mean (μ)" data-bন="গড় (μ)">গড় (μ)</td>
+                                    <td>ΣX / n</td>
+                                    <td>${data.reduce((a, b) => a + b, 0).toFixed(2)} / ${n}</td>
+                                    <td><strong>${mean.toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Std Dev (σ)" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন (σ)">স্ট্যান্ডার্ড ডেভিয়েশন (σ)</td>
+                                    <td>√[Σ(X - μ)² / n]</td>
+                                    <td>√[${data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0).toFixed(2)} / ${n}]</td>
+                                    <td><strong>${std.toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Variance" data-bন="ভ্যারিয়েন্স">ভ্যারিয়েন্স</td>
+                                    <td>σ²</td>
+                                    <td>${std.toFixed(2)}²</td>
+                                    <td><strong>${Math.pow(std, 2).toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Z-Score Range" data-bন="Z-স্কোর রেঞ্জ">Z-স্কোর রেঞ্জ</td>
+                                    <td>Min to Max</td>
+                                    <td>${Math.min(...zScores).toFixed(2)} to ${Math.max(...zScores).toFixed(2)}</td>
+                                    <td><strong>[${Math.min(...zScores).toFixed(2)}, ${Math.max(...zScores).toFixed(2)}]</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Outlier Analysis -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Outlier Analysis" data-bন="আউটলায়ার বিশ্লেষণ">আউটলায়ার বিশ্লেষণ</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Outlier" data-bন="আউটলায়ার">আউটলায়ার</th>
+                                    <th data-en="Value" data-bন="মান">মান</th>
+                                    <th data-en="Z-Score" data-bন="Z-স্কোর">Z-স্কোর</th>
+                                    <th data-en="Deviation from Mean" data-bন="গড় থেকে বিচ্যুতি">গড় থেকে বিচ্যুতি</th>
+                                    <th data-en="Standard Deviations" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${outliers.length > 0 ? outliers.map(outlier => `
+                                    <tr class="outlier-row">
+                                        <td>#${outlier.index + 1}</td>
+                                        <td><strong>${outlier.value.toFixed(2)}</strong></td>
+                                        <td><strong>${outlier.zScore.toFixed(2)}</strong></td>
+                                        <td>${(outlier.value - mean).toFixed(2)}</td>
+                                        <td>${Math.abs(outlier.zScore).toFixed(2)}σ ${outlier.zScore > 0 ? 'above' : 'below'} mean</td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: var(--gray);">
+                                            ${currentLanguage === 'bn' ? 'কোন আউটলায়ার শনাক্ত হয়নি' : 'No outliers detected'}
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Threshold Information -->
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Threshold Information" data-bন="থ্রেশহোল্ড তথ্য">থ্রেশহোল্ড তথ্য</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Description" data-bন="বর্ণনা">বর্ণনা</th>
+                                    <th data-en="Formula" data-bন="সূত্র">সূত্র</th>
+                                    <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                    <th data-en="Result" data-bন="ফলাফল">ফলাফল</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-en="Current Threshold" data-bন="বর্তমান থ্রেশহোল্ড">বর্তমান থ্রেশহোল্ড</td>
+                                    <td>|Z| > ${threshold}</td>
+                                    <td>Absolute Z-score > ${threshold}</td>
+                                    <td><strong>${threshold}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Lower Bound" data-bন="নিম্ন সীমা">নিম্ন সীমা</td>
+                                    <td>μ - ${threshold}σ</td>
+                                    <td>${mean.toFixed(2)} - ${threshold}×${std.toFixed(2)}</td>
+                                    <td><strong>${(mean - threshold * std).toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Upper Bound" data-bন="উচ্চ সীমা">উচ্চ সীমা</td>
+                                    <td>μ + ${threshold}σ</td>
+                                    <td>${mean.toFixed(2)} + ${threshold}×${std.toFixed(2)}</td>
+                                    <td><strong>${(mean + threshold * std).toFixed(2)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td data-en="Outlier Percentage" data-bন="আউটলায়ার শতাংশ">আউটলায়ার শতাংশ</td>
+                                    <td>(Outliers / Total) × 100</td>
+                                    <td>(${outliers.length} / ${n}) × 100</td>
+                                    <td><strong>${((outliers.length / n) * 100).toFixed(1)}%</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateStepByStep(data, zScores, outliers, mean, std, threshold) {
+                const container = document.getElementById('stepsContainer');
+                const n = data.length;
+                const sum = data.reduce((a, b) => a + b, 0);
+                const squaredDeviations = data.map(x => Math.pow(x - mean, 2));
+                const sumSquaredDeviations = squaredDeviations.reduce((a, b) => a + b, 0);
+                
+                container.innerHTML = `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Calculate Mean (μ)" data-bন="ধাপ ১: গড় (μ) গণনা করুন">ধাপ ১: গড় (μ) গণনা করুন</h4>
+                            <p data-en="Find the average of all data points" data-bন="সমস্ত ডেটা পয়েন্টের গড় নির্ণয় করুন">
+                                সমস্ত ডেটা পয়েন্টের গড় নির্ণয় করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> μ = ΣX / n</p>
+                                <p><strong data-en="Where:" data-bন="যেখানে:">যেখানে:</strong></p>
+                                <ul>
+                                    <li>ΣX = Sum of all values = ${sum.toFixed(2)}</li>
+                                    <li>n = Number of values = ${n}</li>
+                                </ul>
+                                <p><strong data-en="Calculation:" data-bন="গণনা:">গণনা:</strong></p>
+                                <p class="step-equation">μ = ${sum.toFixed(2)} / ${n} = <strong>${mean.toFixed(2)}</strong></p>
+                                <p><strong data-en="Interpretation:" data-bন="ব্যাখ্যা:">ব্যাখ্যা:</strong> ${currentLanguage === 'bn' ? 'গড় হল ডেটার কেন্দ্রীয় মান' : 'The mean is the central value of the data'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Standard Deviation (σ)" data-bন="ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন (σ) গণনা করুন">ধাপ ২: স্ট্যান্ডার্ড ডেভিয়েশন (σ) গণনা করুন</h4>
+                            <p data-en="Measure the spread or dispersion of data" data-bন="ডেটার বিস্তার বা বিক্ষেপণ পরিমাপ করুন">
+                                ডেটার বিস্তার বা বিক্ষেপণ পরিমাপ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> σ = √[Σ(X - μ)² / n]</p>
+                                <p><strong data-en="Steps:" data-bন="ধাপসমূহ:">ধাপসমূহ:</strong></p>
+                                <ol>
+                                    <li data-en="Calculate deviation of each point from mean" data-bন="প্রতিটি পয়েন্টের গড় থেকে বিচ্যুতি গণনা করুন">প্রতিটি পয়েন্টের গড় থেকে বিচ্যুতি গণনা করুন</li>
+                                    <li data-en="Square each deviation" data-bন="প্রতিটি বিচ্যুতিকে বর্গ করুন">প্রতিটি বিচ্যুতিকে বর্গ করুন</li>
+                                    <li data-en="Sum all squared deviations" data-bন="সমস্ত বর্গ বিচ্যুতি যোগ করুন">সমস্ত বর্গ বিচ্যুতি যোগ করুন</li>
+                                    <li data-en="Divide by number of points" data-bন="পয়েন্ট সংখ্যা দ্বারা ভাগ করুন">পয়েন্ট সংখ্যা দ্বারা ভাগ করুন</li>
+                                    <li data-en="Take square root" data-bন="বর্গমূল নিন">বর্গমূল নিন</li>
+                                </ol>
+                                <p><strong data-en="Calculation:" data-bন="গণনা:">গণনা:</strong></p>
+                                <p class="step-equation">σ = √[${sumSquaredDeviations.toFixed(2)} / ${n}] = √[${(sumSquaredDeviations/n).toFixed(2)}] = <strong>${std.toFixed(2)}</strong></p>
+                                <p><strong data-en="Interpretation:" data-bন="ব্যাখ্যা:">ব্যাখ্যা:</strong> ${currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন ডেটা কতটা ছড়িয়ে আছে তা নির্দেশ করে' : 'Standard deviation indicates how spread out the data is'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Z-Scores" data-bন="ধাপ ৩: Z-স্কোর গণনা করুন">ধাপ ৩: Z-স্কোর গণনা করুন</h4>
+                            <p data-en="Standardize each data point using Z-score formula" data-bন="Z-স্কোর সূত্র ব্যবহার করে প্রতিটি ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করুন">
+                                Z-স্কোর সূত্র ব্যবহার করে প্রতিটি ডেটা পয়েন্ট স্ট্যান্ডার্ডাইজ করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Formula:" data-bন="সূত্র:">সূত্র:</strong> Z = (X - μ) / σ</p>
+                                <p><strong data-en="Example Calculation for First Value:" data-bন="প্রথম মানের উদাহরণ গণনা:">প্রথম মানের উদাহরণ গণনা:</strong></p>
+                                <p>X₁ = ${data[0].toFixed(2)}, μ = ${mean.toFixed(2)}, σ = ${std.toFixed(2)}</p>
+                                <p class="step-equation">Z₁ = (${data[0].toFixed(2)} - ${mean.toFixed(2)}) / ${std.toFixed(2)} = ${(data[0] - mean).toFixed(2)} / ${std.toFixed(2)} = <strong>${zScores[0].toFixed(2)}</strong></p>
+                                <p><strong data-en="Interpretation:" data-bন="ব্যাখ্যা:">ব্যাখ্যা:</strong></p>
+                                <ul>
+                                    <li data-en="Z = 0: Value equals mean" data-bন="Z = ০: মান গড়ের সমান">Z = ০: মান গড়ের সমান</li>
+                                    <li data-en="Z = +1: One standard deviation above mean" data-bন="Z = +১: গড় থেকে এক স্ট্যান্ডার্ড ডেভিয়েশন উপরে">Z = +১: গড় থেকে এক স্ট্যান্ডার্ড ডেভিয়েশন উপরে</li>
+                                    <li data-en="Z = -1: One standard deviation below mean" data-bন="Z = -১: গড় থেকে এক স্ট্যান্ডার্ড ডেভিয়েশন নিচে">Z = -১: গড় থেকে এক স্ট্যান্ডার্ড ডেভিয়েশন নিচে</li>
+                                    <li data-en="Z = ${zScores[0].toFixed(2)}: ${Math.abs(zScores[0]).toFixed(2)} standard deviations ${zScores[0] > 0 ? 'above' : 'below'} mean" 
+                                        data-bন="Z = ${zScores[0].toFixed(2)}: ${Math.abs(zScores[0]).toFixed(2)} স্ট্যান্ডার্ড ডেভিয়েশন ${zScores[0] > 0 ? 'উপরে' : 'নিচে'}">
+                                        Z = ${zScores[0].toFixed(2)}: ${Math.abs(zScores[0]).toFixed(2)} স্ট্যান্ডার্ড ডেভিয়েশন ${zScores[0] > 0 ? 'উপরে' : 'নিচে'}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Detect Outliers" data-bন="ধাপ ৪: আউটলায়ার শনাক্ত করুন">ধাপ ৪: আউটলায়ার শনাক্ত করুন</h4>
+                            <p data-en="Identify values that are significantly different from others" data-bন="যেসব মান অন্যদের থেকে উল্লেখযোগ্যভাবে আলাদা তাদের শনাক্ত করুন">
+                                যেসব মান অন্যদের থেকে উল্লেখযোগ্যভাবে আলাদা তাদের শনাক্ত করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Threshold Criteria:" data-bন="থ্রেশহোল্ড মানদণ্ড:">থ্রেশহোল্ড মানদণ্ড:</strong> |Z| > ${threshold}</p>
+                                <p><strong data-en="Where:" data-bন="যেখানে:">যেখানে:</strong></p>
+                                <ul>
+                                    <li>|Z| = Absolute value of Z-score</li>
+                                    <li>${threshold} = Threshold for outlier detection</li>
+                                </ul>
+                                <p><strong data-en="Boundary Calculations:" data-bন="সীমানা গণনা:">সীমানা গণনা:</strong></p>
+                                <p>Lower Bound = μ - ${threshold}σ = ${mean.toFixed(2)} - ${threshold}×${std.toFixed(2)} = <strong>${(mean - threshold * std).toFixed(2)}</strong></p>
+                                <p>Upper Bound = μ + ${threshold}σ = ${mean.toFixed(2)} + ${threshold}×${std.toFixed(2)} = <strong>${(mean + threshold * std).toFixed(2)}</strong></p>
+                                <p><strong data-en="Outlier Detection:" data-bন="আউটলায়ার শনাক্তকরণ:">আউটলায়ার শনাক্তকরণ:</strong></p>
+                                <p>Values outside [${(mean - threshold * std).toFixed(2)}, ${(mean + threshold * std).toFixed(2)}] are considered outliers</p>
+                                ${outliers.length > 0 ? `
+                                    <p><strong>${currentLanguage === 'bn' ? 'শনাক্তকৃত আউটলায়ার:' : 'Detected Outliers:'}</strong></p>
+                                    <ul>
+                                        ${outliers.map(o => `
+                                            <li>${o.value.toFixed(2)} (Z = ${o.zScore.toFixed(2)})</li>
+                                        `).join('')}
+                                    </ul>
+                                ` : `
+                                    <p>${currentLanguage === 'bn' ? 'কোন আউটলায়ার শনাক্ত হয়নি' : 'No outliers detected'}</p>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-number">৫</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 5: Interpret Results" data-bন="ধাপ ৫: ফলাফল ব্যাখ্যা করুন">ধাপ ৫: ফলাফল ব্যাখ্যা করুন</h4>
+                            <p data-en="Understand what the Z-scores and outliers mean" data-bন="Z-স্কোর এবং আউটলায়ারগুলির অর্থ বুঝুন">
+                                Z-স্কোর এবং আউটলায়ারগুলির অর্থ বুঝুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong data-en="Z-Score Interpretation Guidelines:" data-bন="Z-স্কোর ব্যাখ্যা নির্দেশিকা:">Z-স্কোর ব্যাখ্যা নির্দেশিকা:</strong></p>
+                                <ul>
+                                    <li data-en="|Z| < 1: Very common (68% of data in normal distribution)" data-bন="|Z| < ১: খুব সাধারণ (নরমাল ডিস্ট্রিবিউশনে ৬৮% ডেটা)">|Z| < ১: খুব সাধারণ (নরমাল ডিস্ট্রিবিউশনে ৬৮% ডেটা)</li>
+                                    <li data-en="1 ≤ |Z| < 2: Uncommon but not rare" data-bন="১ ≤ |Z| < ২: অসাধারণ কিন্তু বিরল নয়">১ ≤ |Z| < ২: অসাধারণ কিন্তু বিরল নয়</li>
+                                    <li data-en="2 ≤ |Z| < 3: Rare (considered potential outliers)" data-bন="২ ≤ |Z| < ৩: বিরল (সম্ভাব্য আউটলায়ার হিসেবে বিবেচিত)">২ ≤ |Z| < ৩: বিরল (সম্ভাব্য আউটলায়ার হিসেবে বিবেচিত)</li>
+                                    <li data-en="|Z| ≥ 3: Very rare (definite outliers)" data-bন="|Z| ≥ ৩: খুব বিরল (নিশ্চিত আউটলায়ার)">|Z| ≥ ৩: খুব বিরল (নিশ্চিত আউটলায়ার)</li>
+                                </ul>
+                                <p><strong data-en="Application:" data-bন="প্রয়োগ:">প্রয়োগ:</strong></p>
+                                <ul>
+                                    <li data-en="Data Standardization: Compare values from different distributions" data-bন="ডেটা স্ট্যান্ডার্ডাইজেশন: বিভিন্ন বন্টনের মান তুলনা করুন">ডেটা স্ট্যান্ডার্ডাইজেশন: বিভিন্ন বন্টনের মান তুলনা করুন</li>
+                                    <li data-en="Quality Control: Identify defective products" data-bন="কোয়ালিটি কন্ট্রোল: ত্রুটিপূর্ণ পণ্য শনাক্ত করুন">কোয়ালিটি কন্ট্রোল: ত্রুটিপূর্ণ পণ্য শনাক্ত করুন</li>
+                                    <li data-en="Anomaly Detection: Find unusual patterns in data" data-bন="অস্বাভাবিকতা শনাক্তকরণ: ডেটায় অস্বাভাবিক প্যাটার্ন খুঁজুন">অস্বাভাবিকতা শনাক্তকরণ: ডেটায় অস্বাভাবিক প্যাটার্ন খুঁজুন</li>
+                                    <li data-en="Statistical Testing: Prepare data for hypothesis tests" data-bন="পরিসংখ্যানগত পরীক্ষা: হাইপোথিসিস টেস্টের জন্য ডেটা প্রস্তুত করুন">পরিসংখ্যানগত পরীক্ষা: হাইপোথিসিস টেস্টের জন্য ডেটা প্রস্তুত করুন</li>
+                                </ul>
+                                <p><strong data-en="Summary:" data-bন="সারসংক্ষেপ:">সারসংক্ষেপ:</strong></p>
+                                <p>${currentLanguage === 'bn' ? 
+                                    `ডেটার গড় ${mean.toFixed(2)} এবং স্ট্যান্ডার্ড ডেভিয়েশন ${std.toFixed(2)}। ${outliers.length}টি আউটলায়ার শনাক্ত হয়েছে (${((outliers.length / n) * 100).toFixed(1)}%)।` : 
+                                    `Data has mean ${mean.toFixed(2)} and standard deviation ${std.toFixed(2)}. ${outliers.length} outliers detected (${((outliers.length / n) * 100).toFixed(1)}%).`}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Update language for new content
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 10;
+                const mean = Math.floor(Math.random() * 50) + 50;
+                const std = Math.floor(Math.random() * 10) + 5;
+                const data = [];
+                
+                // Generate normally distributed data
+                for (let i = 0; i < count; i++) {
+                    // Box-Muller transform for normal distribution
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    data.push(Math.round(mean + z * std));
+                }
+                
+                // Add some outliers
+                if (Math.random() > 0.5) {
+                    data.push(mean + std * 4); // 4 sigma outlier
+                }
+                if (Math.random() > 0.5) {
+                    data.push(mean - std * 3.5); // -3.5 sigma outlier
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                calculateZScores();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('dataInput').value = examples[example].join(', ');
+                    calculateZScores();
+                }
+            }
+
+            function clearCalculator() {
+                document.getElementById('dataInput').value = '';
+                document.getElementById('thresholdInput').value = '2.0';
+                threshold = 2.0;
+                document.getElementById('currentThreshold').textContent = '±2.0';
+                
+                // Clear results
+                document.getElementById('meanResult').textContent = '--';
+                document.getElementById('stdResult').textContent = '--';
+                document.getElementById('outliersResult').textContent = '0';
+                document.getElementById('minZScore').textContent = '--';
+                document.getElementById('maxZScore').textContent = '--';
+                document.getElementById('avgZScore').textContent = '--';
+                document.getElementById('stdZScore').textContent = '--';
+                document.getElementById('lowerBound').textContent = '--';
+                document.getElementById('upperBound').textContent = '--';
+                
+                // Clear outliers container
+                const outliersContainer = document.getElementById('outliersContainer');
+                outliersContainer.innerHTML = `
+                    <div style="color: var(--gray); text-align: center; padding: 2rem; width: 100%;">
+                        ${currentLanguage === 'bn' ? 'কোন আউটলায়ার শনাক্ত হয়নি' : 'No outliers detected'}
+                    </div>
+                `;
+                
+                // Clear charts
+                document.getElementById('zscoreChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে Z-স্কোর বন্টন দেখুন' : 'Enter data to see Z-score distribution'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('normalCurveChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-chart-line"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে নরমাল ডিস্ট্রিবিউশন কার্ভ দেখুন' : 'Enter data to see normal distribution curve'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('zscoreChartLegend').innerHTML = '';
+                document.getElementById('normalCurveLegend').innerHTML = '';
+                
+                // Clear tables
+                document.getElementById('tablesContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="tablesPlaceholder" 
+                       data-en="Enter data and click Calculate to see detailed tables" 
+                       data-bn="ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং বিস্তারিত টেবিল দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see detailed tables'}
+                    </p>
+                `;
+                
+                // Clear steps
+                document.getElementById('stepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                       data-en="Enter data and click Calculate to see step-by-step calculations" 
+                       data-bn="ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং ধাপে ধাপে গণনা দেখতে গণনা করুন ক্লিক করুন' : 
+                            'Enter data and click Calculate to see step-by-step calculations'}
+                    </p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

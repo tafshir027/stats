@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>হিস্টোগ্রাম জেনারেটর | ফ্রিকোয়েন্সি ডিস্ট্রিবিউশন বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --histogram-color: #FF6584;
+            --bin-color: #6C63FF;
+            --stat-color: #36D1DC;
+            --export-color: #5B86E5;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--histogram-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 101, 132, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--histogram-color), var(--bin-color), var(--stat-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--histogram-color);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--histogram-color);
+            color: white;
+            border-color: var(--histogram-color);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--histogram-color);
+            box-shadow: 0 0 0 3px rgba(255, 101, 132, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Bin Configuration */
+        .bin-configuration {
+            margin-bottom: 1.5rem;
+        }
+
+        .bin-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .bin-option {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .bin-option.active {
+            background: var(--bin-color);
+            color: white;
+            border-color: var(--bin-color);
+        }
+
+        .custom-bin-config {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .custom-bin-config.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bin-input-group {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .bin-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        /* Chart Customization */
+        .chart-customization {
+            margin-bottom: 1.5rem;
+        }
+
+        .customization-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .customization-group {
+            margin-bottom: 1rem;
+        }
+
+        .customization-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .color-option.active {
+            border-color: var(--dark);
+            transform: scale(1.1);
+        }
+
+        .range-slider {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--histogram-color);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 101, 132, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #histogramChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Export Options */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--export-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(91, 134, 229, 0.3);
+        }
+
+        .export-btn.png {
+            background: var(--histogram-color);
+        }
+
+        .export-btn.pdf {
+            background: var(--accent);
+        }
+
+        .export-btn.csv {
+            background: var(--success);
+        }
+
+        /* Statistics Panel */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--stat-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Frequency Distribution Table */
+        .frequency-table {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .frequency-table table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .frequency-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .frequency-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .frequency-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        /* Example Datasets */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--histogram-color);
+            color: white;
+            border-color: var(--histogram-color);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .statistics-panel,
+            .frequency-table,
+            .examples-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--histogram-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Histogram Generator" data-bn="হিস্টোগ্রাম জেনারেটর">হিস্টোগ্রাম জেনারেটর</h1>
+            <p class="subtitle" data-en="Create interactive frequency distribution histograms for data analysis with customizable bins, statistics, and export options" data-bn="কাস্টমাইজেবল বিন, পরিসংখ্যান, এবং এক্সপোর্ট অপশন সহ ডেটা অ্যানালাইসিসের জন্য ইন্টারেকটিভ ফ্রিকোয়েন্সি ডিস্ট্রিবিউশন হিস্টোগ্রাম তৈরি করুন">
+                কাস্টমাইজেবল বিন, পরিসংখ্যান, এবং এক্সপোর্ট অপশন সহ ডেটা অ্যানালাইসিসের জন্য ইন্টারেকটিভ ফ্রিকোয়েন্সি ডিস্ট্রিবিউশন হিস্টোগ্রাম তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Control Panel" data-bn="নিয়ন্ত্রণ প্যানেল">নিয়ন্ত্রণ প্যানেল</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+বা: 10 20 30 40 50 60 70 80 90 100
+বা: 
+10
+20
+30
+40
+50
+60
+70
+80
+90
+100">45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bin-configuration">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-th"></i>
+                        <span data-en="Bin Configuration" data-bn="বিন কনফিগারেশন">বিন কনফিগারেশন</span>
+                    </h3>
+                    
+                    <div class="bin-options">
+                        <div class="bin-option active" data-bins="auto">
+                            <span data-en="Auto (Sturges)" data-bn="অটো (স্টার্জেস)">অটো (স্টার্জেস)</span>
+                        </div>
+                        <div class="bin-option" data-bins="sqrt">
+                            <span data-en="Square Root" data-bn="বর্গমূল">বর্গমূল</span>
+                        </div>
+                        <div class="bin-option" data-bins="custom">
+                            <span data-en="Custom" data-bn="কাস্টম">কাস্টম</span>
+                        </div>
+                    </div>
+                    
+                    <div class="custom-bin-config" id="customBinConfig">
+                        <div class="bin-input-group">
+                            <input type="number" id="binCount" class="bin-input" min="2" max="50" value="5" placeholder="বিন সংখ্যা">
+                            <button class="control-btn" id="applyBinsBtn" style="background: var(--bin-color); color: white;">
+                                <i class="fas fa-check"></i>
+                                <span data-en="Apply" data-bn="প্রয়োগ করুন">প্রয়োগ করুন</span>
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Enter number of bins (2-50)" data-bn="বিন সংখ্যা লিখুন (২-৫০)">
+                                বিন সংখ্যা লিখুন (২-৫০)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-customization">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-palette"></i>
+                        <span data-en="Chart Customization" data-bn="চার্ট কাস্টমাইজেশন">চার্ট কাস্টমাইজেশন</span>
+                    </h3>
+                    
+                    <div class="customization-options">
+                        <div class="customization-group">
+                            <label data-en="Bar Color" data-bn="বার রঙ">বার রঙ</label>
+                            <div class="color-picker">
+                                <div class="color-option active" style="background: #FF6584;" data-color="#FF6584"></div>
+                                <div class="color-option" style="background: #6C63FF;" data-color="#6C63FF"></div>
+                                <div class="color-option" style="background: #36D1DC;" data-color="#36D1DC"></div>
+                                <div class="color-option" style="background: #FF9A3D;" data-color="#FF9A3D"></div>
+                                <div class="color-option" style="background: #5B86E5;" data-color="#5B86E5"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="customization-group">
+                            <label data-en="Border Width" data-bn="বর্ডার প্রস্থ">বর্ডার প্রস্থ</label>
+                            <input type="range" id="borderWidth" class="range-slider" min="0" max="5" value="1" step="0.5">
+                        </div>
+                        
+                        <div class="customization-group">
+                            <label data-en="Show Grid" data-bn="গ্রিড দেখান">গ্রিড দেখান</label>
+                            <div style="margin-top: 0.5rem;">
+                                <label class="switch">
+                                    <input type="checkbox" id="showGrid" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Generate Histogram" data-bn="হিস্টোগ্রাম তৈরি করুন">হিস্টোগ্রাম তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Histogram Visualization" data-bn="হিস্টোগ্রাম ভিজ্যুয়ালাইজেশন">হিস্টোগ্রাম ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <div class="loading" id="chartLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p data-en="Enter data and click Generate Histogram to visualize" data-bn="ডেটা ইনপুট করুন এবং ভিজ্যুয়ালাইজ করতে হিস্টোগ্রাম তৈরি করুন ক্লিক করুন">
+                            ডেটা ইনপুট করুন এবং ভিজ্যুয়ালাইজ করতে হিস্টোগ্রাম তৈরি করুন ক্লিক করুন
+                        </p>
+                    </div>
+                    
+                    <canvas id="histogramChart"></canvas>
+                </div>
+
+                <div class="export-options">
+                    <button class="export-btn png" id="exportPNG">
+                        <i class="fas fa-download"></i>
+                        <span data-en="Export as PNG" data-bn="PNG হিসেবে এক্সপোর্ট করুন">PNG হিসেবে এক্সপোর্ট করুন</span>
+                    </button>
+                    <button class="export-btn csv" id="exportCSV">
+                        <i class="fas fa-file-csv"></i>
+                        <span data-en="Export Data as CSV" data-bn="CSV হিসেবে ডেটা এক্সপোর্ট করুন">CSV হিসেবে ডেটা এক্সপোর্ট করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="statistics-panel">
+            <h2 class="section-title">
+                <i class="fas fa-calculator"></i>
+                <span data-en="Distribution Statistics" data-bn="বন্টন পরিসংখ্যান">বন্টন পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statMean">--</div>
+                    <div class="stat-label" data-en="Mean" data-bn="গড়">গড়</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statMedian">--</div>
+                    <div class="stat-label" data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statMode">--</div>
+                    <div class="stat-label" data-en="Mode" data-bn="মোড">মোড</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statStdDev">--</div>
+                    <div class="stat-label" data-en="Standard Deviation" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statVariance">--</div>
+                    <div class="stat-label" data-en="Variance" data-bn="ভ্যারিয়েন্স">ভ্যারিয়েন্স</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRange">--</div>
+                    <div class="stat-label" data-en="Range" data-bn="রেঞ্জ">রেঞ্জ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frequency Distribution Table -->
+        <div class="frequency-table">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Frequency Distribution Table" data-bn="ফ্রিকোয়েন্সি ডিস্ট্রিবিউশন টেবিল">ফ্রিকোয়েন্সি ডিস্ট্রিবিউশন টেবিল</span>
+            </h2>
+            
+            <div class="table-container">
+                <table id="frequencyTable">
+                    <thead>
+                        <tr>
+                            <th data-en="Bin Range" data-bn="বিন রেঞ্জ">বিন রেঞ্জ</th>
+                            <th data-en="Frequency" data-bn="ফ্রিকোয়েন্সি">ফ্রিকোয়েন্সি</th>
+                            <th data-en="Relative Frequency" data-bn="আপেক্ষিক ফ্রিকোয়েন্সি">আপেক্ষিক ফ্রিকোয়েন্সি</th>
+                            <th data-en="Cumulative Frequency" data-bn="ক্রমবর্ধমান ফ্রিকোয়েন্সি">ক্রমবর্ধমান ফ্রিকোয়েন্সি</th>
+                            <th data-en="Percentage" data-bn="শতকরা">শতকরা</th>
+                        </tr>
+                    </thead>
+                    <tbody id="frequencyTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);" data-en="No data available. Generate a histogram first." data-bn="কোন ডেটা নেই। প্রথমে একটি হিস্টোগ্রাম তৈরি করুন।">
+                                কোন ডেটা নেই। প্রথমে একটি হিস্টোগ্রাম তৈরি করুন।
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bn="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="test-scores">
+                    <span data-en="Test Scores" data-bn="পরীক্ষার স্কোর">পরীক্ষার স্কোর</span>
+                    <span class="example-data">45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130</span>
+                </button>
+                <button class="example-btn" data-example="normal-dist">
+                    <span data-en="Normal Distribution" data-bn="নরমাল ডিস্ট্রিবিউশন">নরমাল ডিস্ট্রিবিউশন</span>
+                    <span class="example-data">50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120</span>
+                </button>
+                <button class="example-btn" data-example="income-data">
+                    <span data-en="Income Data" data-bn="আয় ডেটা">আয় ডেটা</span>
+                    <span class="example-data">30000, 35000, 40000, 45000, 50000, 60000, 70000, 80000, 90000, 100000</span>
+                </button>
+                <button class="example-btn" data-example="skewed-dist">
+                    <span data-en="Skewed Distribution" data-bn="স্কিউড ডিস্ট্রিবিউশন">স্কিউড ডিস্ট্রিবিউশন</span>
+                    <span class="example-data">10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 150, 200</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentLanguage = 'bn';
+            let histogramChart = null;
+            let currentData = [];
+            let currentBins = [];
+            let currentFrequencies = [];
+            
+            // Example datasets
+            const examples = {
+                'test-scores': [45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130],
+                'normal-dist': [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120],
+                'income-data': [30000, 35000, 40000, 45000, 50000, 60000, 70000, 80000, 90000, 100000],
+                'skewed-dist': [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 150, 200]
+            };
+
+            // Initialize the application
+            initializeApp();
+
+            function initializeApp() {
+                // Language Management
+                setupLanguageToggle();
+                
+                // Input Methods
+                setupInputMethods();
+                
+                // Bin Configuration
+                setupBinConfiguration();
+                
+                // Chart Customization
+                setupChartCustomization();
+                
+                // Control Buttons
+                setupControlButtons();
+                
+                // Export Functions
+                setupExportFunctions();
+                
+                // Example Datasets
+                setupExampleDatasets();
+                
+                // Set Bengali as default language
+                setLanguage('bn');
+                
+                // Generate initial histogram with example data
+                setTimeout(() => {
+                    generateHistogram();
+                }, 100);
+            }
+
+            function setupLanguageToggle() {
+                const langBtns = document.querySelectorAll('.lang-btn');
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+            }
+
+            function setupInputMethods() {
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 20) + 10;
+                const mean = Math.floor(Math.random() * 100) + 50;
+                const stdDev = Math.floor(Math.random() * 20) + 10;
+                
+                const data = [];
+                for (let i = 0; i < count; i++) {
+                    // Generate normally distributed random numbers
+                    let value = mean + stdDev * (Math.random() * 2 - 1);
+                    value = Math.round(value);
+                    data.push(value);
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                generateHistogram();
+            }
+
+            function setupBinConfiguration() {
+                const binOptions = document.querySelectorAll('.bin-option');
+                const customBinConfig = document.getElementById('customBinConfig');
+                
+                binOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        binOptions.forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.bins === 'custom') {
+                            customBinConfig.classList.add('show');
+                        } else {
+                            customBinConfig.classList.remove('show');
+                            if (currentData.length > 0) {
+                                generateHistogram();
+                            }
+                        }
+                    });
+                });
+                
+                document.getElementById('applyBinsBtn').addEventListener('click', function() {
+                    if (currentData.length > 0) {
+                        generateHistogram();
+                    }
+                });
+            }
+
+            function setupChartCustomization() {
+                // Color picker
+                const colorOptions = document.querySelectorAll('.color-option');
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        colorOptions.forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (histogramChart) {
+                            const color = this.dataset.color;
+                            histogramChart.data.datasets[0].backgroundColor = color;
+                            histogramChart.data.datasets[0].borderColor = color;
+                            histogramChart.update();
+                        }
+                    });
+                });
+                
+                // Border width
+                document.getElementById('borderWidth').addEventListener('input', function() {
+                    if (histogramChart) {
+                        histogramChart.data.datasets[0].borderWidth = parseFloat(this.value);
+                        histogramChart.update();
+                    }
+                });
+                
+                // Grid toggle
+                document.getElementById('showGrid').addEventListener('change', function() {
+                    if (histogramChart) {
+                        histogramChart.options.scales.x.grid.display = this.checked;
+                        histogramChart.options.scales.y.grid.display = this.checked;
+                        histogramChart.update();
+                    }
+                });
+            }
+
+            function setupControlButtons() {
+                document.getElementById('generateBtn').addEventListener('click', generateHistogram);
+                
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+                
+                // Enter key support for data input
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        generateHistogram();
+                    }
+                });
+            }
+
+            function setupExportFunctions() {
+                document.getElementById('exportPNG').addEventListener('click', exportAsPNG);
+                document.getElementById('exportCSV').addEventListener('click', exportAsCSV);
+            }
+
+            function setupExampleDatasets() {
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    document.getElementById('dataInput').value = examples[example].join(', ');
+                    generateHistogram();
+                }
+            }
+
+            function parseInputData() {
+                const input = document.getElementById('dataInput').value.trim();
+                
+                if (!input) {
+                    showError(currentLanguage === 'bn' ? 
+                        'দয়া করে কিছু ডেটা ইনপুট করুন' : 
+                        'Please enter some data');
+                    return [];
+                }
+                
+                const numbers = input.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateBins(data) {
+                const n = data.length;
+                const min = Math.min(...data);
+                const max = Math.max(...data);
+                const range = max - min;
+                
+                let binCount;
+                const selectedBinOption = document.querySelector('.bin-option.active');
+                
+                switch(selectedBinOption.dataset.bins) {
+                    case 'auto':
+                        // Sturges' formula
+                        binCount = Math.ceil(Math.log2(n)) + 1;
+                        break;
+                    case 'sqrt':
+                        // Square root choice
+                        binCount = Math.ceil(Math.sqrt(n));
+                        break;
+                    case 'custom':
+                        binCount = parseInt(document.getElementById('binCount').value) || 5;
+                        break;
+                    default:
+                        binCount = 5;
+                }
+                
+                // Ensure binCount is within limits
+                binCount = Math.max(2, Math.min(50, binCount));
+                
+                // Calculate bin width
+                const binWidth = range / binCount;
+                
+                // Generate bin edges
+                const bins = [];
+                for (let i = 0; i <= binCount; i++) {
+                    bins.push(min + (i * binWidth));
+                }
+                
+                return bins;
+            }
+
+            function calculateFrequencies(data, bins) {
+                const frequencies = new Array(bins.length - 1).fill(0);
+                
+                data.forEach(value => {
+                    for (let i = 0; i < bins.length - 1; i++) {
+                        if (value >= bins[i] && (i === bins.length - 2 ? value <= bins[i+1] : value < bins[i+1])) {
+                            frequencies[i]++;
+                            break;
+                        }
+                    }
+                });
+                
+                return frequencies;
+            }
+
+            function calculateStatistics(data) {
+                if (data.length === 0) return null;
+                
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = data.length;
+                
+                // Mean
+                const mean = data.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Median
+                const median = n % 2 === 0 
+                    ? (sortedData[n/2 - 1] + sortedData[n/2]) / 2
+                    : sortedData[Math.floor(n/2)];
+                
+                // Mode
+                const frequencyMap = {};
+                data.forEach(val => {
+                    frequencyMap[val] = (frequencyMap[val] || 0) + 1;
+                });
+                const mode = Object.keys(frequencyMap).reduce((a, b) => 
+                    frequencyMap[a] > frequencyMap[b] ? a : b
+                );
+                
+                // Standard Deviation and Variance
+                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                const stdDev = Math.sqrt(variance);
+                
+                // Range
+                const range = Math.max(...data) - Math.min(...data);
+                
+                return {
+                    mean: mean.toFixed(2),
+                    median: median.toFixed(2),
+                    mode: parseFloat(mode).toFixed(2),
+                    stdDev: stdDev.toFixed(2),
+                    variance: variance.toFixed(2),
+                    range: range.toFixed(2)
+                };
+            }
+
+            function generateHistogram() {
+                showLoading(true);
+                
+                // Parse input data
+                const data = parseInputData();
+                if (data.length === 0) {
+                    showLoading(false);
+                    return;
+                }
+                
+                if (data.length < 2) {
+                    showError(currentLanguage === 'bn' ? 
+                        'হিস্টোগ্রামের জন্য কমপক্ষে ২টি মান প্রয়োজন' : 
+                        'Histogram requires at least 2 values');
+                    showLoading(false);
+                    return;
+                }
+                
+                currentData = data;
+                
+                // Calculate bins
+                currentBins = calculateBins(data);
+                currentFrequencies = calculateFrequencies(data, currentBins);
+                
+                // Generate labels for bins
+                const binLabels = [];
+                for (let i = 0; i < currentBins.length - 1; i++) {
+                    binLabels.push(`${currentBins[i].toFixed(1)}-${currentBins[i+1].toFixed(1)}`);
+                }
+                
+                // Get chart customization settings
+                const selectedColor = document.querySelector('.color-option.active').dataset.color;
+                const borderWidth = parseFloat(document.getElementById('borderWidth').value);
+                const showGrid = document.getElementById('showGrid').checked;
+                
+                // Destroy existing chart if it exists
+                if (histogramChart) {
+                    histogramChart.destroy();
+                }
+                
+                // Get canvas context
+                const ctx = document.getElementById('histogramChart').getContext('2d');
+                
+                // Create histogram chart
+                histogramChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: binLabels,
+                        datasets: [{
+                            label: currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি' : 'Frequency',
+                            data: currentFrequencies,
+                            backgroundColor: selectedColor,
+                            borderColor: selectedColor,
+                            borderWidth: borderWidth,
+                            hoverBackgroundColor: selectedColor.replace(')', ', 0.8)').replace('rgb', 'rgba'),
+                            hoverBorderColor: selectedColor,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleFont: {
+                                    family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        const binIndex = context.dataIndex;
+                                        const freq = context.raw;
+                                        const total = currentData.length;
+                                        const percentage = ((freq / total) * 100).toFixed(1);
+                                        return [
+                                            currentLanguage === 'bn' ? 
+                                                `ফ্রিকোয়েন্সি: ${freq}` : 
+                                                `Frequency: ${freq}`,
+                                            currentLanguage === 'bn' ?
+                                                `শতকরা: ${percentage}%` :
+                                                `Percentage: ${percentage}%`,
+                                            currentLanguage === 'bn' ?
+                                                `বিন: ${binLabels[binIndex]}` :
+                                                `Bin: ${binLabels[binIndex]}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'বিন রেঞ্জ' : 'Bin Range',
+                                    font: {
+                                        size: 14,
+                                        weight: '600',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                },
+                                grid: {
+                                    display: showGrid,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ফ্রিকোয়েন্সি' : 'Frequency',
+                                    font: {
+                                        size: 14,
+                                        weight: '600',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                },
+                                beginAtZero: true,
+                                grid: {
+                                    display: showGrid,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    precision: 0
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+                
+                // Update statistics
+                updateStatistics(data);
+                
+                // Update frequency table
+                updateFrequencyTable();
+                
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                showLoading(false);
+            }
+
+            function updateStatistics(data) {
+                const stats = calculateStatistics(data);
+                if (!stats) return;
+                
+                document.getElementById('statMean').textContent = stats.mean;
+                document.getElementById('statMedian').textContent = stats.median;
+                document.getElementById('statMode').textContent = stats.mode;
+                document.getElementById('statStdDev').textContent = stats.stdDev;
+                document.getElementById('statVariance').textContent = stats.variance;
+                document.getElementById('statRange').textContent = stats.range;
+            }
+
+            function updateFrequencyTable() {
+                const tableBody = document.getElementById('frequencyTableBody');
+                const total = currentData.length;
+                
+                let cumulativeFreq = 0;
+                let tableHTML = '';
+                
+                for (let i = 0; i < currentFrequencies.length; i++) {
+                    const freq = currentFrequencies[i];
+                    const relativeFreq = freq / total;
+                    cumulativeFreq += freq;
+                    const percentage = (relativeFreq * 100).toFixed(1);
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${currentBins[i].toFixed(1)} - ${currentBins[i+1].toFixed(1)}</td>
+                            <td>${freq}</td>
+                            <td>${relativeFreq.toFixed(3)}</td>
+                            <td>${cumulativeFreq}</td>
+                            <td>${percentage}%</td>
+                        </tr>
+                    `;
+                }
+                
+                // Add total row
+                tableHTML += `
+                    <tr style="background: var(--light-gray); font-weight: 600;">
+                        <td data-en="Total" data-bn="মোট">মোট</td>
+                        <td>${total}</td>
+                        <td>1.000</td>
+                        <td>${total}</td>
+                        <td>100%</td>
+                    </tr>
+                `;
+                
+                tableBody.innerHTML = tableHTML;
+                
+                // Update language for total row
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function exportAsPNG() {
+                if (!histogramChart) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি হিস্টোগ্রাম তৈরি করুন' : 
+                        'Please generate a histogram first');
+                    return;
+                }
+                
+                const chartContainer = document.querySelector('.chart-container');
+                const chartCanvas = document.getElementById('histogramChart');
+                
+                html2canvas(chartContainer).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `histogram_${new Date().getTime()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }
+
+            function exportAsCSV() {
+                if (currentData.length === 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি হিস্টোগ্রাম তৈরি করুন' : 
+                        'Please generate a histogram first');
+                    return;
+                }
+                
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Add metadata
+                csvContent += "Histogram Data Export\n";
+                csvContent += `Generated: ${new Date().toLocaleString()}\n`;
+                csvContent += `Total Data Points: ${currentData.length}\n\n`;
+                
+                // Add frequency distribution table
+                csvContent += "Bin Range,Frequency,Relative Frequency,Cumulative Frequency,Percentage\n";
+                
+                const total = currentData.length;
+                let cumulativeFreq = 0;
+                
+                for (let i = 0; i < currentFrequencies.length; i++) {
+                    const freq = currentFrequencies[i];
+                    const relativeFreq = freq / total;
+                    cumulativeFreq += freq;
+                    const percentage = (relativeFreq * 100).toFixed(1);
+                    
+                    csvContent += `"${currentBins[i].toFixed(1)} - ${currentBins[i+1].toFixed(1)}",${freq},${relativeFreq.toFixed(3)},${cumulativeFreq},${percentage}%\n`;
+                }
+                
+                csvContent += `Total,${total},1.000,${total},100%\n\n`;
+                
+                // Add raw data
+                csvContent += "Raw Data\n";
+                csvContent += currentData.join(',');
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `histogram_data_${new Date().getTime()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function clearAll() {
+                // Clear input
+                document.getElementById('dataInput').value = '';
+                
+                // Destroy chart
+                if (histogramChart) {
+                    histogramChart.destroy();
+                    histogramChart = null;
+                }
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Clear statistics
+                document.getElementById('statMean').textContent = '--';
+                document.getElementById('statMedian').textContent = '--';
+                document.getElementById('statMode').textContent = '--';
+                document.getElementById('statStdDev').textContent = '--';
+                document.getElementById('statVariance').textContent = '--';
+                document.getElementById('statRange').textContent = '--';
+                
+                // Clear frequency table
+                const tableBody = document.getElementById('frequencyTableBody');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);" 
+                            data-en="No data available. Generate a histogram first." 
+                            data-bn="কোন ডেটা নেই। প্রথমে একটি হিস্টোগ্রাম তৈরি করুন।">
+                            ${currentLanguage === 'bn' ? 
+                                'কোন ডেটা নেই। প্রথমে একটি হিস্টোগ্রাম তৈরি করুন।' : 
+                                'No data available. Generate a histogram first.'}
+                        </td>
+                    </tr>
+                `;
+                
+                // Reset data arrays
+                currentData = [];
+                currentBins = [];
+                currentFrequencies = [];
+            }
+
+            function showLoading(show) {
+                const loadingElement = document.getElementById('chartLoading');
+                if (show) {
+                    loadingElement.classList.add('show');
+                } else {
+                    loadingElement.classList.remove('show');
+                }
+            }
+
+            function showError(message) {
+                alert(message);
+            }
+
+            // Add CSS for switch
+            const style = document.createElement('style');
+            style.textContent = `
+                .switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 50px;
+                    height: 24px;
+                }
+                
+                .switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                
+                .slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: var(--border);
+                    transition: .4s;
+                    border-radius: 24px;
+                }
+                
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 16px;
+                    width: 16px;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: white;
+                    transition: .4s;
+                    border-radius: 50%;
+                }
+                
+                input:checked + .slider {
+                    background-color: var(--histogram-color);
+                }
+                
+                input:checked + .slider:before {
+                    transform: translateX(26px);
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কোরিলেশন ম্যাট্রিক্স ভিজ্যুয়ালাইজার | হিটম্যাপ ও ক্লাস্টার বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --heatmap-high: #36D1DC;
+            --heatmap-medium: #5B86E5;
+            --heatmap-low: #A8DADC;
+            --heatmap-neg-high: #FF6584;
+            --heatmap-neg-medium: #FF9A3D;
+            --heatmap-neg-low: #FFD166;
+            --cluster-color: #6C63FF;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--heatmap-high), var(--primary), var(--heatmap-neg-high));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .data-input-area {
+            margin-bottom: 1rem;
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            background: var(--light-gray);
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+            background: white;
+        }
+
+        .input-hint {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .variables-input {
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .control-btn {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* Visualization Controls */
+        .visualization-controls {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .select-control {
+            width: 100%;
+            padding: 0.6rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Heatmap Container */
+        .heatmap-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .heatmap-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .option-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .canvas-container {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--gray);
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        #heatmapCanvas {
+            width: 100% !important;
+            height: auto !important;
+            max-height: 500px;
+        }
+
+        .legend-container {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .color-scale {
+            height: 20px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #FF6584, #FF9A3D, #FFD166, #A8DADC, #5B86E5, #36D1DC);
+        }
+
+        .color-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Statistics Panel */
+        .stats-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* Matrix Table */
+        .matrix-table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            min-width: 600px;
+        }
+
+        .matrix-table th {
+            background: #e9ecef;
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .matrix-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            font-weight: 500;
+            min-width: 50px;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 0.75rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .heatmap-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Correlation Matrix Visualizer" data-bn="কোরিলেশন ম্যাট্রিক্স ভিজ্যুয়ালাইজার">কোরিলেশন ম্যাট্রিক্স ভিজ্যুয়ালাইজার</h1>
+            <p class="subtitle" data-en="Create interactive heatmap visualizations of correlation matrices with clustering and color schemes" data-bn="ক্লাস্টারিং এবং কালার স্কিম সহ কোরিলেশন ম্যাট্রিক্সের ইন্টারেক্টিভ হিটম্যাপ ভিজ্যুয়ালাইজেশন তৈরি করুন">
+                ক্লাস্টারিং এবং কালার স্কিম সহ কোরিলেশন ম্যাট্রিক্সের ইন্টারেক্টিভ হিটম্যাপ ভিজ্যুয়ালাইজেশন তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message">
+            <strong data-en="Error:" data-bn="ত্রুটি:">ত্রুটি:</strong> 
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="correlation">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Correlation Matrix" data-bn="কোরিলেশন ম্যাট্রিক্স">কোরিলেশন ম্যাট্রিক্স</span>
+                    </button>
+                    <button class="method-btn" data-method="raw">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Raw Data" data-bন="র ডেটা">র ডেটা</span>
+                    </button>
+                </div>
+
+                <div class="data-input-area">
+                    <label class="control-label">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Enter Correlation Matrix" data-bন="কোরিলেশন ম্যাট্রিক্স ইনপুট করুন">কোরিলেশন ম্যাট্রিক্স ইনপুট করুন</span>
+                    </label>
+                    <textarea id="matrixData" class="data-input" placeholder="1.00, 0.85, 0.42, -0.23
+0.85, 1.00, 0.67, 0.12
+0.42, 0.67, 1.00, 0.89
+-0.23, 0.12, 0.89, 1.00"></textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Each row should have same number of values" data-bন="প্রতিটি সারিতে সমান সংখ্যক মান থাকতে হবে">
+                            প্রতিটি সারিতে সমান সংখ্যক মান থাকতে হবে
+                        </span>
+                    </div>
+                </div>
+
+                <div class="variables-input">
+                    <label class="control-label">
+                        <i class="fas fa-tag"></i>
+                        <span data-en="Variable Names (Optional)" data-bন="ভেরিয়েবল নাম (ঐচ্ছিক)">ভেরিয়েবল নাম (ঐচ্ছিক)</span>
+                    </label>
+                    <textarea id="variableNames" class="data-input" placeholder="Var1, Var2, Var3, Var4" style="min-height: 80px;">Var1, Var2, Var3, Var4</textarea>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-chart-heatmap"></i>
+                        <span data-en="Generate Heatmap" data-bন="হিটম্যাপ তৈরি করুন">হিটম্যাপ তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bন="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+
+                <!-- Visualization Controls -->
+                <div class="visualization-controls">
+                    <h2 class="section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Settings" data-bন="সেটিংস">সেটিংস</span>
+                    </h2>
+                    
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fas fa-palette"></i>
+                            <span data-en="Color Scheme" data-bন="কালার স্কিম">কালার স্কিম</span>
+                        </label>
+                        <select id="colorScheme" class="select-control">
+                            <option value="viridis" data-en="Viridis" data-bন="ভিরিডিস">ভিরিডিস</option>
+                            <option value="plasma" data-en="Plasma" data-bন="প্লাজমা">প্লাজমা</option>
+                            <option value="redblue" data-en="Red-Blue" data-bন="লাল-নীল">লাল-নীল</option>
+                            <option value="greens" data-en="Greens" data-bন="সবুজ">সবুজ</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fas fa-sort-amount-up"></i>
+                            <span data-en="Clustering" data-bন="ক্লাস্টারিং">ক্লাস্টারিং</span>
+                        </label>
+                        <select id="clusteringMethod" class="select-control">
+                            <option value="hierarchical" data-en="Hierarchical" data-bন="হায়ারার্কিকাল">হায়ারার্কিকাল</option>
+                            <option value="none" data-en="No Clustering" data-bন="কোন ক্লাস্টারিং নয়">কোন ক্লাস্টারিং নয়</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <i class="fas fa-eye"></i>
+                            <span data-en="Display" data-bন="ডিসপ্লে">ডিসপ্লে</span>
+                        </label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showValues" checked>
+                            <label for="showValues" data-en="Show Values" data-bন="মান দেখান">মান দেখান</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Heatmap Container -->
+                <div class="heatmap-container">
+                    <div class="heatmap-header">
+                        <h2 class="section-title" style="margin: 0; border: none;">
+                            <i class="fas fa-chart-heatmap"></i>
+                            <span data-en="Correlation Heatmap" data-bন="কোরিলেশন হিটম্যাপ">কোরিলেশন হিটম্যাপ</span>
+                        </h2>
+                        <div class="heatmap-options">
+                            <button class="option-btn" id="downloadBtn">
+                                <i class="fas fa-download"></i>
+                                <span data-en="Download" data-bন="ডাউনলোড">ডাউনলোড</span>
+                            </button>
+                            <button class="option-btn active" id="toggleViewBtn">
+                                <i class="fas fa-sync-alt"></i>
+                                <span data-en="Refresh" data-bন="রিফ্রেশ">রিফ্রেশ</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <div id="heatmapPlaceholder" class="chart-placeholder">
+                            <i class="fas fa-chart-heatmap"></i>
+                            <p data-en="Enter data and click 'Generate Heatmap'" data-bন="ডেটা ইনপুট করুন এবং 'হিটম্যাপ তৈরি করুন' ক্লিক করুন">
+                                ডেটা ইনপুট করুন এবং 'হিটম্যাপ তৈরি করুন' ক্লিক করুন
+                            </p>
+                        </div>
+                        <canvas id="heatmapCanvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="legend-container">
+                        <div class="color-scale"></div>
+                        <div class="color-labels">
+                            <span>-1.0</span>
+                            <span data-en="Negative" data-bন="নেগেটিভ">নেগেটিভ</span>
+                            <span>0</span>
+                            <span data-en="Positive" data-bন="পজিটিভ">পজিটিভ</span>
+                            <span>+1.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Panel -->
+                <div class="stats-panel">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Matrix Statistics" data-bন="ম্যাট্রিক্স পরিসংখ্যান">ম্যাট্রিক্স পরিসংখ্যান</span>
+                    </h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="matrixSize">--</div>
+                            <div class="stat-label" data-en="Matrix Size" data-bন="ম্যাট্রিক্স সাইজ">ম্যাট্রিক্স সাইজ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgCorrelation">--</div>
+                            <div class="stat-label" data-en="Avg Correlation" data-bন="গড় কোরিলেশন">গড় কোরিলেশন</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="strongCorrelations">--</div>
+                            <div class="stat-label" data-en="Strong (≥0.7)" data-bন="শক্তিশালী (≥০.৭)">শক্তিশালী (≥০.৭)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="weakCorrelations">--</div>
+                            <div class="stat-label" data-en="Weak (≤0.3)" data-bন="দুর্বল (≤০.৩)">দুর্বল (≤০.৩)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correlation Matrix Table -->
+                <div class="matrix-table-container">
+                    <h2 class="section-title">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Correlation Matrix" data-bন="কোরিলেশন ম্যাট্রিক্স">কোরিলেশন ম্যাট্রিক্স</span>
+                    </h2>
+                    <div id="matrixTable">
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" data-en="Matrix will appear here" data-bন="ম্যাট্রিক্স এখানে প্রদর্শিত হবে">
+                            ম্যাট্রিক্স এখানে প্রদর্শিত হবে
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Example Datasets -->
+                <div class="examples-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+                    </h2>
+                    <div class="examples-grid">
+                        <button class="example-btn" data-example="example1">
+                            <div data-en="4×4 Matrix" data-bন="৪×৪ ম্যাট্রিক্স">৪×৪ ম্যাট্রিক্স</div>
+                            <small data-en="Mixed correlations" data-bন="মিশ্র কোরিলেশন">মিশ্র কোরিলেশন</small>
+                        </button>
+                        <button class="example-btn" data-example="example2">
+                            <div data-en="5×5 Matrix" data-bন="৫×৫ ম্যাট্রিক্স">৫×৫ ম্যাট্রিক্স</div>
+                            <small data-en="Strong positive" data-bন="শক্তিশালী পজিটিভ">শক্তিশালী পজিটিভ</small>
+                        </button>
+                        <button class="example-btn" data-example="example3">
+                            <div data-en="6×6 Matrix" data-bন="৬×৬ ম্যাট্রিক্স">৬×৬ ম্যাট্রিক্স</div>
+                            <small data-en="Negative correlations" data-bন="নেগেটিভ কোরিলেশন">নেগেটিভ কোরিলেশন</small>
+                        </button>
+                        <button class="example-btn" data-example="example4">
+                            <div data-en="7×7 Matrix" data-bন="৭×৭ ম্যাট্রিক্স">৭×৭ ম্যাট্রিক্স</div>
+                            <small data-en="Complex patterns" data-bন="জটিল প্যাটার্ন">জটিল প্যাটার্ন</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentLanguage = 'bn';
+            let correlationMatrix = [];
+            let variableNames = [];
+            let heatmapChart = null;
+            
+            // Example datasets
+            const examples = {
+                example1: {
+                    matrix: [
+                        [1.00, 0.85, 0.42, -0.23],
+                        [0.85, 1.00, 0.67, 0.12],
+                        [0.42, 0.67, 1.00, 0.89],
+                        [-0.23, 0.12, 0.89, 1.00]
+                    ],
+                    variables: ['Sales', 'Marketing', 'R&D', 'Production']
+                },
+                example2: {
+                    matrix: [
+                        [1.00, 0.92, 0.85, 0.78, 0.67],
+                        [0.92, 1.00, 0.88, 0.81, 0.72],
+                        [0.85, 0.88, 1.00, 0.89, 0.78],
+                        [0.78, 0.81, 0.89, 1.00, 0.85],
+                        [0.67, 0.72, 0.78, 0.85, 1.00]
+                    ],
+                    variables: ['Tech', 'Finance', 'Healthcare', 'Energy', 'Consumer']
+                },
+                example3: {
+                    matrix: [
+                        [1.00, -0.82, -0.65, -0.43, -0.21, 0.12],
+                        [-0.82, 1.00, 0.78, 0.56, 0.34, -0.08],
+                        [-0.65, 0.78, 1.00, 0.67, 0.45, -0.23],
+                        [-0.43, 0.56, 0.67, 1.00, 0.78, -0.41],
+                        [-0.21, 0.34, 0.45, 0.78, 1.00, -0.67],
+                        [0.12, -0.08, -0.23, -0.41, -0.67, 1.00]
+                    ],
+                    variables: ['Var A', 'Var B', 'Var C', 'Var D', 'Var E', 'Var F']
+                },
+                example4: {
+                    matrix: [
+                        [1.00, 0.45, 0.67, 0.32, 0.56, 0.78, 0.23],
+                        [0.45, 1.00, 0.51, 0.67, 0.42, 0.89, 0.34],
+                        [0.67, 0.51, 1.00, 0.38, 0.71, 0.45, 0.67],
+                        [0.32, 0.67, 0.38, 1.00, 0.29, 0.56, 0.78],
+                        [0.56, 0.42, 0.71, 0.29, 1.00, 0.34, 0.91],
+                        [0.78, 0.89, 0.45, 0.56, 0.34, 1.00, 0.42],
+                        [0.23, 0.34, 0.67, 0.78, 0.91, 0.42, 1.00]
+                    ],
+                    variables: ['Factor1', 'Factor2', 'Factor3', 'Factor4', 'Factor5', 'Factor6', 'Factor7']
+                }
+            };
+
+            // Initialize application
+            initApp();
+
+            function initApp() {
+                // Language switching
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input method switching
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        updateInputMethod(this.dataset.method);
+                    });
+                });
+
+                // Calculate button
+                document.getElementById('calculateBtn').addEventListener('click', function() {
+                    generateHeatmap();
+                });
+
+                // Clear button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Download button
+                document.getElementById('downloadBtn').addEventListener('click', downloadHeatmap);
+
+                // Toggle view button
+                document.getElementById('toggleViewBtn').addEventListener('click', function() {
+                    if (correlationMatrix.length > 0) {
+                        generateHeatmap();
+                    }
+                });
+
+                // Example buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Settings changes
+                document.getElementById('colorScheme').addEventListener('change', function() {
+                    if (correlationMatrix.length > 0) {
+                        updateHeatmapColors();
+                    }
+                });
+
+                document.getElementById('showValues').addEventListener('change', function() {
+                    if (correlationMatrix.length > 0) {
+                        updateHeatmap();
+                    }
+                });
+
+                // Load default example
+                loadExample('example1');
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update language buttons
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable text
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    const text = element.getAttribute(`data-${lang}`);
+                    if (text) {
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function updateInputMethod(method) {
+                // Placeholder for future implementation
+                console.log('Input method changed to:', method);
+            }
+
+            function parseMatrixData(text) {
+                const rows = text.trim().split('\n').filter(row => row.trim() !== '');
+                const matrix = [];
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i].split(/[,\s]+/).filter(val => val !== '');
+                    const rowValues = row.map(val => {
+                        const num = parseFloat(val);
+                        if (isNaN(num)) {
+                            throw new Error(currentLanguage === 'bn' ? 
+                                `অবৈধ সংখ্যা: ${val} (সারি ${i+1})` : 
+                                `Invalid number: ${val} (row ${i+1})`);
+                        }
+                        return num;
+                    });
+                    matrix.push(rowValues);
+                }
+
+                // Validate matrix
+                const n = matrix.length;
+                for (let i = 0; i < n; i++) {
+                    if (matrix[i].length !== n) {
+                        throw new Error(currentLanguage === 'bn' ? 
+                            `সারি ${i+1} এ ${matrix[i].length} টি মান আছে, কিন্তু প্রত্যাশিত ${n} টি` : 
+                            `Row ${i+1} has ${matrix[i].length} values, expected ${n}`);
+                    }
+                    
+                    // Check diagonal values (should be 1.00 or close)
+                    if (Math.abs(matrix[i][i] - 1.00) > 0.01) {
+                        console.warn(`Warning: Diagonal value at position (${i},${i}) is ${matrix[i][i]}, expected 1.00`);
+                    }
+                }
+
+                return matrix;
+            }
+
+            function parseVariableNames(text) {
+                if (!text.trim()) return [];
+                return text.split(',').map(name => name.trim()).filter(name => name !== '');
+            }
+
+            function generateHeatmap() {
+                try {
+                    // Clear any previous error
+                    hideError();
+                    
+                    const matrixText = document.getElementById('matrixData').value;
+                    const variablesText = document.getElementById('variableNames').value;
+
+                    // Parse input
+                    correlationMatrix = parseMatrixData(matrixText);
+                    variableNames = parseVariableNames(variablesText);
+
+                    const n = correlationMatrix.length;
+
+                    // Generate default variable names if needed
+                    if (variableNames.length === 0) {
+                        variableNames = Array.from({length: n}, (_, i) => `Variable ${i + 1}`);
+                    } else if (variableNames.length !== n) {
+                        // Adjust variable names length
+                        const defaultNames = Array.from({length: n}, (_, i) => `Variable ${i + 1}`);
+                        variableNames = variableNames.concat(defaultNames.slice(variableNames.length));
+                        variableNames = variableNames.slice(0, n);
+                    }
+
+                    // Calculate statistics
+                    updateStatistics(correlationMatrix);
+
+                    // Create or update heatmap
+                    createHeatmap(correlationMatrix, variableNames);
+
+                    // Update matrix table
+                    updateMatrixTable(correlationMatrix, variableNames);
+
+                } catch (error) {
+                    showError(error.message);
+                }
+            }
+
+            function calculateMatrixStats(matrix) {
+                const n = matrix.length;
+                let sum = 0;
+                let count = 0;
+                let strong = 0;
+                let weak = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 1; j < n; j++) {
+                        const val = Math.abs(matrix[i][j]);
+                        sum += matrix[i][j];
+                        count++;
+                        
+                        if (val >= 0.7) strong++;
+                        if (val <= 0.3) weak++;
+                    }
+                }
+                
+                return {
+                    avg: sum / count,
+                    strong: strong,
+                    weak: weak,
+                    total: count
+                };
+            }
+
+            function updateStatistics(matrix) {
+                const stats = calculateMatrixStats(matrix);
+                const n = matrix.length;
+                
+                document.getElementById('matrixSize').textContent = `${n}×${n}`;
+                document.getElementById('avgCorrelation').textContent = stats.avg.toFixed(3);
+                document.getElementById('strongCorrelations').textContent = 
+                    `${stats.strong} (${(stats.strong/stats.total*100).toFixed(0)}%)`;
+                document.getElementById('weakCorrelations').textContent = 
+                    `${stats.weak} (${(stats.weak/stats.total*100).toFixed(0)}%)`;
+            }
+
+            function createHeatmap(matrix, variables) {
+                const canvas = document.getElementById('heatmapCanvas');
+                const placeholder = document.getElementById('heatmapPlaceholder');
+                
+                // Hide placeholder, show canvas
+                placeholder.style.display = 'none';
+                canvas.style.display = 'block';
+                
+                // DESTROY previous chart if it exists
+                if (heatmapChart) {
+                    try {
+                        heatmapChart.destroy();
+                        heatmapChart = null;
+                    } catch (error) {
+                        console.warn('Error destroying previous chart:', error);
+                    }
+                }
+                
+                // Clear canvas context
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Set canvas dimensions
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = 500;
+                
+                // Prepare data
+                const n = matrix.length;
+                const cellSize = Math.min(canvas.width, canvas.height) / (n + 2);
+                
+                // Draw heatmap manually (not using Chart.js)
+                drawManualHeatmap(ctx, matrix, variables, cellSize);
+            }
+
+            function drawManualHeatmap(ctx, matrix, variables, cellSize) {
+                const n = matrix.length;
+                const showValues = document.getElementById('showValues').checked;
+                const padding = cellSize;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                
+                // Draw variable names on top
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = '#333';
+                
+                for (let i = 0; i < n; i++) {
+                    const x = padding + (i + 0.5) * cellSize;
+                    const y = padding * 0.5;
+                    const label = variables[i].length > 8 ? variables[i].substring(0, 8) + '...' : variables[i];
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(-Math.PI / 4);
+                    ctx.fillText(label, 0, 0);
+                    ctx.restore();
+                }
+                
+                // Draw variable names on left
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                
+                for (let i = 0; i < n; i++) {
+                    const x = padding * 0.5;
+                    const y = padding + (i + 0.5) * cellSize;
+                    const label = variables[i].length > 8 ? variables[i].substring(0, 8) + '...' : variables[i];
+                    ctx.fillText(label, x, y);
+                }
+                
+                // Draw heatmap cells
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        const value = matrix[i][j];
+                        const x = padding + j * cellSize;
+                        const y = padding + i * cellSize;
+                        
+                        // Get color based on value
+                        const color = getColorForValue(value);
+                        
+                        // Draw cell
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                        
+                        // Draw border
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                        
+                        // Draw diagonal differently
+                        if (i === j) {
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                            ctx.fillRect(x, y, cellSize, cellSize);
+                            ctx.fillStyle = '#000';
+                            ctx.font = 'bold 14px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('1.00', x + cellSize/2, y + cellSize/2);
+                        }
+                        // Draw correlation values for off-diagonal cells
+                        else if (showValues) {
+                            ctx.fillStyle = Math.abs(value) > 0.5 ? '#fff' : '#000';
+                            ctx.font = 'bold 12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(value.toFixed(2), x + cellSize/2, y + cellSize/2);
+                        }
+                    }
+                }
+            }
+
+            function getColorForValue(value) {
+                const colorScheme = document.getElementById('colorScheme').value;
+                
+                // Normalize value from -1 to 1 to 0 to 1
+                const normalized = (value + 1) / 2;
+                
+                switch(colorScheme) {
+                    case 'viridis':
+                        // Viridis color scheme approximation
+                        if (normalized < 0.25) return '#440154';
+                        if (normalized < 0.5) return '#31688E';
+                        if (normalized < 0.75) return '#35B779';
+                        return '#FDE725';
+                        
+                    case 'plasma':
+                        // Plasma color scheme
+                        if (normalized < 0.25) return '#0D0887';
+                        if (normalized < 0.5) return '#CC4678';
+                        if (normalized < 0.75) return '#F89441';
+                        return '#F0F921';
+                        
+                    case 'redblue':
+                        // Red to blue gradient
+                        if (value < 0) {
+                            const intensity = Math.abs(value);
+                            const r = Math.floor(200 + 55 * intensity);
+                            const g = Math.floor(100 + 155 * (1 - intensity));
+                            const b = Math.floor(100 + 155 * (1 - intensity));
+                            return `rgb(${r}, ${g}, ${b})`;
+                        } else {
+                            const intensity = value;
+                            const r = Math.floor(100 + 155 * (1 - intensity));
+                            const g = Math.floor(100 + 155 * (1 - intensity));
+                            const b = Math.floor(200 + 55 * intensity);
+                            return `rgb(${r}, ${g}, ${b})`;
+                        }
+                        
+                    case 'greens':
+                        // Greens sequential
+                        const intensity = normalized;
+                        const r = Math.floor(255 * (1 - intensity));
+                        const g = Math.floor(100 + 155 * intensity);
+                        const b = Math.floor(255 * (1 - intensity));
+                        return `rgb(${r}, ${g}, ${b})`;
+                        
+                    default:
+                        return '#ccc';
+                }
+            }
+
+            function updateHeatmapColors() {
+                const canvas = document.getElementById('heatmapCanvas');
+                if (!canvas || correlationMatrix.length === 0) return;
+                
+                const ctx = canvas.getContext('2d');
+                const n = correlationMatrix.length;
+                const cellSize = Math.min(canvas.width, canvas.height) / (n + 2);
+                
+                // Redraw heatmap with new colors
+                drawManualHeatmap(ctx, correlationMatrix, variableNames, cellSize);
+            }
+
+            function updateHeatmap() {
+                const canvas = document.getElementById('heatmapCanvas');
+                if (!canvas || correlationMatrix.length === 0) return;
+                
+                const ctx = canvas.getContext('2d');
+                const n = correlationMatrix.length;
+                const cellSize = Math.min(canvas.width, canvas.height) / (n + 2);
+                
+                // Redraw heatmap
+                drawManualHeatmap(ctx, correlationMatrix, variableNames, cellSize);
+            }
+
+            function updateMatrixTable(matrix, variables) {
+                const container = document.getElementById('matrixTable');
+                const n = matrix.length;
+                
+                let html = `
+                    <div style="overflow-x: auto;">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                `;
+                
+                // Header
+                variables.forEach(v => {
+                    html += `<th>${v}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                // Rows
+                for (let i = 0; i < n; i++) {
+                    html += `<tr><td><strong>${variables[i]}</strong></td>`;
+                    for (let j = 0; j < n; j++) {
+                        const value = matrix[i][j];
+                        const color = getColorForValue(value);
+                        const textColor = Math.abs(value) > 0.5 ? 'white' : 'black';
+                        const fontWeight = i === j ? 'bold' : 'normal';
+                        
+                        html += `
+                            <td style="background-color: ${color}; color: ${textColor}; font-weight: ${fontWeight}">
+                                ${value.toFixed(3)}
+                            </td>
+                        `;
+                    }
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            }
+
+            function downloadHeatmap() {
+                const canvas = document.getElementById('heatmapCanvas');
+                if (!canvas || canvas.style.display === 'none') {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি হিটম্যাপ তৈরি করুন।' : 
+                        'Please generate a heatmap first.');
+                    return;
+                }
+                
+                try {
+                    const link = document.createElement('a');
+                    link.download = 'correlation_heatmap.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (error) {
+                    showError(currentLanguage === 'bn' ? 
+                        'ডাউনলোড করতে সমস্যা হচ্ছে।' : 
+                        'Error downloading heatmap.');
+                }
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    
+                    // Format matrix as text
+                    const matrixText = example.matrix.map(row => 
+                        row.map(val => val.toFixed(2)).join(', ')
+                    ).join('\n');
+                    
+                    document.getElementById('matrixData').value = matrixText;
+                    document.getElementById('variableNames').value = example.variables.join(', ');
+                    
+                    // Generate heatmap automatically
+                    generateHeatmap();
+                }
+            }
+
+            function clearAll() {
+                document.getElementById('matrixData').value = '';
+                document.getElementById('variableNames').value = 'Var1, Var2, Var3, Var4';
+                
+                // Clear canvas
+                const canvas = document.getElementById('heatmapCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Show placeholder
+                document.getElementById('heatmapPlaceholder').style.display = 'flex';
+                canvas.style.display = 'none';
+                
+                // Clear statistics
+                document.getElementById('matrixSize').textContent = '--';
+                document.getElementById('avgCorrelation').textContent = '--';
+                document.getElementById('strongCorrelations').textContent = '--';
+                document.getElementById('weakCorrelations').textContent = '--';
+                
+                // Clear table
+                document.getElementById('matrixTable').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" 
+                       data-en="Matrix will appear here" data-bন="ম্যাট্রিক্স এখানে প্রদর্শিত হবে">
+                        ${currentLanguage === 'bn' ? 'ম্যাট্রিক্স এখানে প্রদর্শিত হবে' : 'Matrix will appear here'}
+                    </p>
+                `;
+                
+                correlationMatrix = [];
+                variableNames = [];
+                heatmapChart = null;
+                
+                // Hide any error
+                hideError();
+            }
+
+            function showError(message) {
+                const errorElement = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                
+                errorText.textContent = message;
+                errorElement.classList.add('show');
+                
+                // Auto-hide error after 5 seconds
+                setTimeout(hideError, 5000);
+            }
+
+            function hideError() {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

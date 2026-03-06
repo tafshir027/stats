@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>বার চার্ট জেনারেটর | ডেটা ভিজ্যুয়ালাইজেশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --bar-color-1: #6C63FF;
+            --bar-color-2: #FF6584;
+            --bar-color-3: #36D1DC;
+            --bar-color-4: #FF9A3D;
+            --bar-color-5: #5B86E5;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--bar-color-1), var(--bar-color-2), var(--bar-color-3));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Responsive Header Text */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input Areas */
+        .data-input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Dataset Groups */
+        .dataset-groups {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .add-dataset-btn {
+            padding: 0.8rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .add-dataset-btn:hover {
+            background: var(--secondary);
+        }
+
+        .dataset-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .dataset-tag {
+            background: var(--light-gray);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dataset-tag-remove {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .dataset-tag-remove:hover {
+            color: var(--accent);
+        }
+
+        /* Chart Controls */
+        .chart-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control-select, .control-input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        /* Color Picker */
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        /* Bar Width Control */
+        .bar-width-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .bar-width-slider {
+            flex: 1;
+        }
+
+        .bar-width-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #barChart {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--light-gray);
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        /* Statistics Section */
+        .statistics-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Comparison Tables */
+        .tables-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 600px;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .data-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Formula Section */
+        .formula-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            background: var(--primary);
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1rem;
+        }
+
+        .formula-content li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-content li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Export Options */
+        .export-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Example Datasets */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-title {
+            font-weight: 600;
+        }
+
+        .example-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Chart Canvas Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Dataset Color Indicator */
+        .dataset-color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-layout {
+                gap: 1rem;
+            }
+            
+            .input-section, 
+            .chart-section,
+            .statistics-section,
+            .tables-section,
+            .formula-section,
+            .export-section {
+                padding: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .color-picker-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-grid,
+            .export-options,
+            .dataset-tags,
+            .color-picker-group {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .chart-section,
+            .statistics-section,
+            .tables-section,
+            .formula-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Bar Chart Generator" data-bn="বার চার্ট জেনারেটর">বার চার্ট জেনারেটর</h1>
+            <p class="subtitle" data-en="Create bar charts for categorical data comparison with vertical/horizontal bars, stacked bars, and grouped comparison" data-bn="ক্যাটাগরিকাল ডেটা তুলনা করার জন্য ভার্টিক্যাল/হরাইজন্টাল বার, স্ট্যাকড বার এবং গ্রুপড কম্পেয়ারিশন সহ বার চার্ট তৈরি করুন">
+                ক্যাটাগরিকাল ডেটা তুলনা করার জন্য ভার্টিক্যাল/হরাইজন্টাল বার, স্ট্যাকড বার এবং গ্রুপড কম্পেয়ারিশন সহ বার চার্ট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- Categories Input -->
+                <div class="data-input-group">
+                    <label class="input-label">
+                        <i class="fas fa-tags"></i>
+                        <span data-en="Categories (Labels)" data-bn="ক্যাটাগরিস (লেবেল)">ক্যাটাগরিস (লেবেল)</span>
+                    </label>
+                    <textarea id="categoriesInput" class="data-input" placeholder="ক্যাটাগরি নামগুলো কমা বা স্পেস দ্বারা আলাদা করুন
+উদাহরণ: Jan, Feb, Mar, Apr, May
+বা: Q1, Q2, Q3, Q4">Jan, Feb, Mar, Apr, May, Jun</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Category names for X-axis" data-bn="X-অক্ষের জন্য ক্যাটাগরি নাম">X-অক্ষের জন্য ক্যাটাগরি নাম</span>
+                    </div>
+                </div>
+
+                <!-- Dataset Groups -->
+                <div class="data-input-group">
+                    <div class="dataset-groups">
+                        <label class="input-label">
+                            <i class="fas fa-layer-group"></i>
+                            <span data-en="Dataset Values" data-bn="ডেটাসেট মান">ডেটাসেট মান</span>
+                        </label>
+                        <button class="add-dataset-btn" id="addDatasetBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Dataset" data-bn="ডেটাসেট যোগ">ডেটাসেট যোগ</span>
+                        </button>
+                    </div>
+                    
+                    <div id="datasetInputs">
+                        <!-- Dataset inputs will be added here -->
+                        <div class="dataset-group">
+                            <input type="text" class="data-input" style="min-height: auto; margin-bottom: 0.5rem;" 
+                                   placeholder="ডেটাসেট ১ এর মান (কমা দ্বারা আলাদা করুন)" 
+                                   value="120, 135, 150, 165, 180, 195">
+                            <div class="input-hint" style="margin-bottom: 1rem;">
+                                <i class="fas fa-palette"></i>
+                                <span data-en="Dataset 1 values" data-bn="ডেটাসেট ১ এর মান">ডেটাসেট ১ এর মান</span>
+                                <span class="dataset-color-indicator" style="background: var(--bar-color-1);"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dataset-tags" id="datasetTags">
+                        <!-- Dataset tags will be added here -->
+                        <div class="dataset-tag">
+                            <span>Dataset 1</span>
+                            <span class="dataset-color-indicator" style="background: var(--bar-color-1);"></span>
+                            <button class="dataset-tag-remove" data-index="0">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <div class="control-group">
+                        <label class="control-label" data-en="Chart Type" data-bn="চার্ট টাইপ">চার্ট টাইপ</label>
+                        <select id="chartType" class="control-select">
+                            <option value="vertical" data-en="Vertical Bars" data-bn="ভার্টিক্যাল বার">ভার্টিক্যাল বার</option>
+                            <option value="horizontal" data-en="Horizontal Bars" data-bn="হরাইজন্টাল বার">হরাইজন্টাল বার</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Bar Style" data-bn="বার স্টাইল">বার স্টাইল</label>
+                        <select id="barStyle" class="control-select">
+                            <option value="grouped" data-en="Grouped Bars" data-bn="গ্রুপড বার">গ্রুপড বার</option>
+                            <option value="stacked" data-en="Stacked Bars" data-bn="স্ট্যাকড বার">স্ট্যাকড বার</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Bar Width" data-bn="বার প্রস্থ">বার প্রস্থ</label>
+                        <div class="bar-width-control">
+                            <input type="range" id="barWidth" class="bar-width-slider" min="20" max="80" value="40">
+                            <span class="bar-width-value" id="barWidthValue">40%</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Show Values" data-bn="মান দেখান">মান দেখান</label>
+                        <select id="showValues" class="control-select">
+                            <option value="true" data-en="Yes" data-bn="হ্যাঁ">হ্যাঁ</option>
+                            <option value="false" data-en="No" data-bn="না">না</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" data-en="Color Palette" data-bn="কালার প্যালেট">কালার প্যালেট</label>
+                        <div class="color-picker-group">
+                            <div class="color-option active" style="background: #6C63FF;" data-color="#6C63FF"></div>
+                            <div class="color-option" style="background: #FF6584;" data-color="#FF6584"></div>
+                            <div class="color-option" style="background: #36D1DC;" data-color="#36D1DC"></div>
+                            <div class="color-option" style="background: #FF9A3D;" data-color="#FF9A3D"></div>
+                            <div class="color-option" style="background: #5B86E5;" data-color="#5B86E5"></div>
+                            <div class="color-option" style="background: #2D3748;" data-color="#2D3748"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Titles -->
+                <div class="data-input-group">
+                    <label class="input-label">
+                        <i class="fas fa-heading"></i>
+                        <span data-en="Chart Titles" data-bn="চার্ট টাইটেল">চার্ট টাইটেল</span>
+                    </label>
+                    <input type="text" id="chartTitle" class="data-input" style="min-height: auto;" 
+                           placeholder="চার্টের শিরোনাম" value="মাসিক সেলস ডেটা">
+                    <input type="text" id="xAxisLabel" class="data-input" style="min-height: auto; margin-top: 0.5rem;" 
+                           placeholder="X-অক্ষ লেবেল" value="মাস">
+                    <input type="text" id="yAxisLabel" class="data-input" style="min-height: auto; margin-top: 0.5rem;" 
+                           placeholder="Y-অক্ষ লেবেল" value="সেলস (হাজার)">
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Generate Chart" data-bn="চার্ট তৈরি করুন">চার্ট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Bar Chart" data-bn="বার চার্ট">বার চার্ট</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p data-en="Enter data and click Generate to create bar chart" data-bn="ডেটা ইনপুট করুন এবং বার চার্ট তৈরি করতে জেনারেট ক্লিক করুন">
+                            ডেটা ইনপুট করুন এবং বার চার্ট তৈরি করতে জেনারেট ক্লিক করুন
+                        </p>
+                    </div>
+                </div>
+
+                <div class="chart-legend" id="chartLegend">
+                    <!-- Legend will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="statistics-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Dataset Statistics" data-bn="ডেটাসেট পরিসংখ্যান">ডেটাসেট পরিসংখ্যান</span>
+            </h2>
+            
+            <div class="stats-grid" id="statsGrid">
+                <!-- Statistics will be added here -->
+            </div>
+        </div>
+
+        <!-- Comparison Tables -->
+        <div class="tables-section">
+            <h2 class="section-title">
+                <i class="fas fa-table"></i>
+                <span data-en="Data Comparison Tables" data-bn="ডেটা তুলনা টেবিল">ডেটা তুলনা টেবিল</span>
+            </h2>
+            
+            <div id="tablesContainer">
+                <!-- Tables will be added here -->
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="formula-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Chart Types & Usage" data-bn="চার্ট টাইপ ও ব্যবহার">চার্ট টাইপ ও ব্যবহার</span>
+            </h2>
+            
+            <div class="formula-cards">
+                <!-- Vertical/Horizontal Bars -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-align-left"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Vertical/Horizontal Bars" data-bn="ভার্টিক্যাল/হরাইজন্টাল বার">ভার্টিক্যাল/হরাইজন্টাল বার</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Comparison of categorical data using vertical or horizontal bars" data-bn="ভার্টিক্যাল বা হরাইজন্টাল বার ব্যবহার করে ক্যাটাগরিকাল ডেটার তুলনা">
+                            ভার্টিক্যাল বা হরাইজন্টাল বার ব্যবহার করে ক্যাটাগরিকাল ডেটার তুলনা
+                        </p>
+                        <ul>
+                            <li data-en="Vertical bars: For comparing values across categories" data-bn="ভার্টিক্যাল বার: ক্যাটাগরিগুলোর মধ্যে মান তুলনার জন্য">ভার্টিক্যাল বার: ক্যাটাগরিগুলোর মধ্যে মান তুলনার জন্য</li>
+                            <li data-en="Horizontal bars: For comparing long category names" data-bn="হরাইজন্টাল বার: দীর্ঘ ক্যাটাগরি নাম তুলনার জন্য">হরাইজন্টাল বার: দীর্ঘ ক্যাটাগরি নাম তুলনার জন্য</li>
+                            <li data-en="Easy to read and interpret" data-bn="পড়া ও ব্যাখ্যা করা সহজ">পড়া ও ব্যাখ্যা করা সহজ</li>
+                            <li data-en="Ideal for ranking and comparison" data-bn="র‍্যাঙ্কিং ও তুলনার জন্য আদর্শ">র‍্যাঙ্কিং ও তুলনার জন্য আদর্শ</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stacked Bars -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Stacked Bars" data-bn="স্ট্যাকড বার">স্ট্যাকড বার</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Shows part-to-whole relationships within categories" data-bন="ক্যাটাগরির মধ্যে অংশ-থেকে-সম্পর্ক দেখায়">
+                            ক্যাটাগরির মধ্যে অংশ-থেকে-সম্পর্ক দেখায়
+                        </p>
+                        <ul>
+                            <li data-en="Multiple datasets stacked on top of each other" data-bন="একাধিক ডেটাসেট একে অপরের উপরে স্ট্যাক করা">একাধিক ডেটাসেট একে অপরের উপরে স্ট্যাক করা</li>
+                            <li data-en="Shows total and component values" data-bন="মোট এবং উপাদান মান দেখায়">মোট এবং উপাদান মান দেখায়</li>
+                            <li data-en="Useful for percentage composition" data-bন="শতকরা কম্পোজিশনের জন্য দরকারী">শতকরা কম্পোজিশনের জন্য দরকারী</li>
+                            <li data-en="Best for 3-5 datasets per category" data-bন="প্রতি ক্যাটাগরিতে ৩-৫টি ডেটাসেটের জন্য সেরা">প্রতি ক্যাটাগরিতে ৩-৫টি ডেটাসেটের জন্য সেরা</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Grouped Comparison -->
+                <div class="formula-card">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-columns"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Grouped Comparison" data-bন="গ্রুপড কম্পেয়ারিশন">গ্রুপড কম্পেয়ারিশন</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Side-by-side comparison of multiple datasets" data-bন="একাধিক ডেটাসেটের পাশাপাশি তুলনা">
+                            একাধিক ডেটাসেটের পাশাপাশি তুলনা
+                        </p>
+                        <ul>
+                            <li data-en="Bars grouped by category" data-bন="ক্যাটাগরি অনুযায়ী বার গ্রুপ করা">ক্যাটাগরি অনুযায়ী বার গ্রুপ করা</li>
+                            <li data-en="Easy direct comparison between datasets" data-bন="ডেটাসেটগুলির মধ্যে সরাসরি তুলনা সহজ">ডেটাসেটগুলির মধ্যে সরাসরি তুলনা সহজ</li>
+                            <li data-en="Shows patterns and trends across categories" data-bন="ক্যাটাগরির মধ্যে প্যাটার্ন এবং ট্রেন্ড দেখায়">ক্যাটাগরির মধ্যে প্যাটার্ন এবং ট্রেন্ড দেখায়</li>
+                            <li data-en="Ideal for time series comparison" data-bন="টাইম সিরিজ তুলনার জন্য আদর্শ">টাইম সিরিজ তুলনার জন্য আদর্শ</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="statistics-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="monthly-sales">
+                    <div class="example-title" data-en="Monthly Sales" data-bন="মাসিক সেলস">মাসিক সেলস</div>
+                    <div class="example-description" data-en="3 products across 6 months" data-bন="৬ মাসে ৩টি প্রোডাক্ট">৬ মাসে ৩টি প্রোডাক্ট</div>
+                </button>
+                <button class="example-btn" data-example="student-scores">
+                    <div class="example-title" data-en="Student Scores" data-bন="স্টুডেন্ট স্কোর">স্টুডেন্ট স্কোর</div>
+                    <div class="example-description" data-en="4 subjects for 5 students" data-bন="৫ জন স্টুডেন্টের ৪টি সাবজেক্ট">৫ জন স্টুডেন্টের ৪টি সাবজেক্ট</div>
+                </button>
+                <button class="example-btn" data-example="website-traffic">
+                    <div class="example-title" data-en="Website Traffic" data-bন="ওয়েবসাইট ট্রাফিক">ওয়েবসাইট ট্রাফিক</div>
+                    <div class="example-description" data-en="3 sources across 4 quarters" data-bন="৪ কোয়ার্টারে ৩টি সোর্স">৪ কোয়ার্টারে ৩টি সোর্স</div>
+                </button>
+                <button class="example-btn" data-example="expense-breakdown">
+                    <div class="example-title" data-en="Expense Breakdown" data-bন="এক্সপেন্স ব্রেকডাউন">এক্সপেন্স ব্রেকডাউন</div>
+                    <div class="example-description" data-en="Stacked bars for categories" data-bন="ক্যাটাগরির জন্য স্ট্যাকড বার">ক্যাটাগরির জন্য স্ট্যাকড বার</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <h2 class="section-title">
+                <i class="fas fa-download"></i>
+                <span data-en="Export Options" data-bন="এক্সপোর্ট অপশন">এক্সপোর্ট অপশন</span>
+            </h2>
+            
+            <div class="export-options">
+                <button class="export-btn" id="exportPNG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as PNG" data-bন="PNG হিসেবে ডাউনলোড">PNG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportJPG">
+                    <i class="fas fa-file-image"></i>
+                    <span data-en="Download as JPG" data-bন="JPG হিসেবে ডাউনলোড">JPG হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-en="Download as PDF" data-bন="PDF হিসেবে ডাউনলোড">PDF হিসেবে ডাউনলোড</span>
+                </button>
+                <button class="export-btn" id="exportData">
+                    <i class="fas fa-file-csv"></i>
+                    <span data-en="Export Data (CSV)" data-bন="ডেটা এক্সপোর্ট (CSV)">ডেটা এক্সপোর্ট (CSV)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="chartTooltip"></div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Chart.js
+            let barChart = null;
+            let currentLanguage = 'bn';
+            let currentColorPalette = [
+                '#6C63FF', '#FF6584', '#36D1DC', '#FF9A3D', '#5B86E5', '#2D3748'
+            ];
+            let datasets = [
+                { name: 'Dataset 1', values: [120, 135, 150, 165, 180, 195], color: currentColorPalette[0] }
+            ];
+            let categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            let datasetCounter = 1;
+
+            // Example datasets
+            const examples = {
+                'monthly-sales': {
+                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        { name: 'Product A', values: [120, 135, 150, 165, 180, 195] },
+                        { name: 'Product B', values: [80, 95, 110, 125, 140, 155] },
+                        { name: 'Product C', values: [60, 75, 90, 105, 120, 135] }
+                    ],
+                    title: 'Monthly Sales Data',
+                    xLabel: 'Month',
+                    yLabel: 'Sales (in thousands)'
+                },
+                'student-scores': {
+                    categories: ['Math', 'Science', 'English', 'History', 'Arts'],
+                    datasets: [
+                        { name: 'Student 1', values: [85, 90, 78, 92, 88] },
+                        { name: 'Student 2', values: [78, 85, 92, 88, 82] },
+                        { name: 'Student 3', values: [92, 88, 85, 78, 90] },
+                        { name: 'Student 4', values: [88, 82, 90, 85, 78] }
+                    ],
+                    title: 'Student Scores by Subject',
+                    xLabel: 'Subject',
+                    yLabel: 'Score (%)'
+                },
+                'website-traffic': {
+                    categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [
+                        { name: 'Organic', values: [15000, 18000, 20000, 22000] },
+                        { name: 'Social Media', values: [8000, 9500, 11000, 12500] },
+                        { name: 'Direct', values: [5000, 6000, 7000, 8000] }
+                    ],
+                    title: 'Website Traffic Sources',
+                    xLabel: 'Quarter',
+                    yLabel: 'Visitors'
+                },
+                'expense-breakdown': {
+                    categories: ['Rent', 'Utilities', 'Food', 'Transport', 'Entertainment'],
+                    datasets: [
+                        { name: 'January', values: [1000, 200, 300, 150, 100] },
+                        { name: 'February', values: [1000, 250, 350, 180, 120] },
+                        { name: 'March', values: [1000, 220, 400, 160, 150] }
+                    ],
+                    title: 'Monthly Expense Breakdown',
+                    xLabel: 'Category',
+                    yLabel: 'Amount ($)'
+                }
+            };
+
+            // Initialize the application
+            initBarChartGenerator();
+
+            function initBarChartGenerator() {
+                // Language Toggle
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input Methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        }
+                    });
+                });
+
+                // Add Dataset Button
+                document.getElementById('addDatasetBtn').addEventListener('click', addDataset);
+
+                // Bar Width Slider
+                const barWidthSlider = document.getElementById('barWidth');
+                const barWidthValue = document.getElementById('barWidthValue');
+                
+                barWidthSlider.addEventListener('input', function() {
+                    barWidthValue.textContent = this.value + '%';
+                });
+
+                // Color Picker
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Update color palette based on selected color
+                        const baseColor = this.dataset.color;
+                        updateColorPalette(baseColor);
+                    });
+                });
+
+                // Generate Button
+                document.getElementById('generateBtn').addEventListener('click', generateBarChart);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Export Buttons
+                document.getElementById('exportPNG').addEventListener('click', () => exportChart('png'));
+                document.getElementById('exportJPG').addEventListener('click', () => exportChart('jpg'));
+                document.getElementById('exportPDF').addEventListener('click', exportPDF);
+                document.getElementById('exportData').addEventListener('click', exportCSV);
+
+                // Set Bengali as default language
+                setLanguage('bn');
+
+                // Update dataset tags
+                updateDatasetTags();
+
+                // Generate initial chart
+                setTimeout(() => {
+                    generateBarChart();
+                }, 100);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else if (element.tagName === 'TEXTAREA') {
+                                // Keep textarea content but update placeholder
+                                const currentPlaceholder = element.getAttribute('placeholder');
+                                if (currentPlaceholder && currentPlaceholder.includes('ক্যাটাগরি')) {
+                                    element.placeholder = text;
+                                }
+                            }
+                        } else if (element.tagName === 'OPTION') {
+                            element.textContent = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update dataset names in tags
+                updateDatasetTags();
+
+                // Update chart if exists
+                if (barChart) {
+                    updateChartLanguage();
+                }
+            }
+
+            function parseData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const items = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                return items;
+            }
+
+            function parseNumberData(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function addDataset() {
+                datasetCounter++;
+                const datasetIndex = datasets.length;
+                
+                // Generate a color for the new dataset
+                const colorIndex = datasetIndex % currentColorPalette.length;
+                const newColor = currentColorPalette[colorIndex];
+                
+                // Add to datasets array
+                datasets.push({
+                    name: `Dataset ${datasetCounter}`,
+                    values: Array(categories.length || 6).fill(0).map(() => Math.floor(Math.random() * 100) + 50),
+                    color: newColor
+                });
+                
+                // Add input field
+                const datasetInputs = document.getElementById('datasetInputs');
+                const newInputGroup = document.createElement('div');
+                newInputGroup.className = 'dataset-group';
+                newInputGroup.innerHTML = `
+                    <input type="text" class="data-input dataset-input" style="min-height: auto; margin-bottom: 0.5rem;" 
+                           placeholder="${currentLanguage === 'bn' ? `ডেটাসেট ${datasetCounter} এর মান` : `Dataset ${datasetCounter} values`}" 
+                           value="${datasets[datasetIndex].values.join(', ')}">
+                    <div class="input-hint" style="margin-bottom: 1rem;">
+                        <i class="fas fa-palette"></i>
+                        <span>${currentLanguage === 'bn' ? `ডেটাসেট ${datasetCounter} এর মান` : `Dataset ${datasetCounter} values`}</span>
+                        <span class="dataset-color-indicator" style="background: ${newColor};"></span>
+                    </div>
+                `;
+                datasetInputs.appendChild(newInputGroup);
+                
+                // Update tags
+                updateDatasetTags();
+                
+                // Add event listener to the new input
+                const newInput = newInputGroup.querySelector('.dataset-input');
+                newInput.addEventListener('input', function() {
+                    const values = parseNumberData(this.value);
+                    if (values.length > 0) {
+                        datasets[datasetIndex].values = values;
+                        if (barChart) {
+                            generateBarChart();
+                        }
+                    }
+                });
+            }
+
+            function removeDataset(index) {
+                if (datasets.length <= 1) {
+                    alert(currentLanguage === 'bn' ? 
+                        'কমপক্ষে একটি ডেটাসেট থাকতে হবে' : 
+                        'At least one dataset must remain');
+                    return;
+                }
+                
+                datasets.splice(index, 1);
+                datasetCounter--;
+                
+                // Update dataset names
+                datasets.forEach((dataset, idx) => {
+                    dataset.name = `Dataset ${idx + 1}`;
+                });
+                
+                // Update input fields
+                updateDatasetInputs();
+                updateDatasetTags();
+                
+                // Regenerate chart if exists
+                if (barChart) {
+                    generateBarChart();
+                }
+            }
+
+            function updateDatasetInputs() {
+                const datasetInputs = document.getElementById('datasetInputs');
+                datasetInputs.innerHTML = '';
+                
+                datasets.forEach((dataset, index) => {
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'dataset-group';
+                    inputGroup.innerHTML = `
+                        <input type="text" class="data-input dataset-input" style="min-height: auto; margin-bottom: 0.5rem;" 
+                               placeholder="${currentLanguage === 'bn' ? `ডেটাসেট ${index + 1} এর মান` : `Dataset ${index + 1} values`}" 
+                               value="${dataset.values.join(', ')}">
+                        <div class="input-hint" style="margin-bottom: 1rem;">
+                            <i class="fas fa-palette"></i>
+                            <span>${currentLanguage === 'bn' ? `ডেটাসেট ${index + 1} এর মান` : `Dataset ${index + 1} values`}</span>
+                            <span class="dataset-color-indicator" style="background: ${dataset.color};"></span>
+                        </div>
+                    `;
+                    datasetInputs.appendChild(inputGroup);
+                    
+                    // Add event listener
+                    const input = inputGroup.querySelector('.dataset-input');
+                    input.addEventListener('input', function() {
+                        const values = parseNumberData(this.value);
+                        if (values.length > 0) {
+                            datasets[index].values = values;
+                            if (barChart) {
+                                generateBarChart();
+                            }
+                        }
+                    });
+                });
+            }
+
+            function updateDatasetTags() {
+                const tagsContainer = document.getElementById('datasetTags');
+                tagsContainer.innerHTML = '';
+                
+                datasets.forEach((dataset, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'dataset-tag';
+                    tag.innerHTML = `
+                        <span>${dataset.name}</span>
+                        <span class="dataset-color-indicator" style="background: ${dataset.color};"></span>
+                        <button class="dataset-tag-remove" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    tagsContainer.appendChild(tag);
+                });
+                
+                // Add remove event listeners
+                document.querySelectorAll('.dataset-tag-remove').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        removeDataset(index);
+                    });
+                });
+            }
+
+            function updateColorPalette(baseColor) {
+                // Generate a complementary color palette based on the base color
+                const hsl = hexToHSL(baseColor);
+                
+                currentColorPalette = [
+                    baseColor,
+                    HSLToHex((hsl.h + 60) % 360, hsl.s, hsl.l),
+                    HSLToHex((hsl.h + 120) % 360, hsl.s, hsl.l),
+                    HSLToHex((hsl.h + 180) % 360, hsl.s, hsl.l),
+                    HSLToHex((hsl.h + 240) % 360, hsl.s, hsl.l),
+                    HSLToHex((hsl.h + 300) % 360, hsl.s, hsl.l)
+                ];
+                
+                // Update dataset colors
+                datasets.forEach((dataset, index) => {
+                    dataset.color = currentColorPalette[index % currentColorPalette.length];
+                });
+                
+                // Update inputs and tags
+                updateDatasetInputs();
+                updateDatasetTags();
+                
+                // Regenerate chart
+                if (barChart) {
+                    generateBarChart();
+                }
+            }
+
+            function hexToHSL(hex) {
+                let r = parseInt(hex.slice(1, 3), 16) / 255;
+                let g = parseInt(hex.slice(3, 5), 16) / 255;
+                let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+                let max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    let d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+                    h /= 6;
+                }
+
+                return {
+                    h: Math.round(h * 360),
+                    s: Math.round(s * 100),
+                    l: Math.round(l * 100)
+                };
+            }
+
+            function HSLToHex(h, s, l) {
+                h /= 360;
+                s /= 100;
+                l /= 100;
+                let r, g, b;
+                if (s === 0) {
+                    r = g = b = l;
+                } else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                const toHex = x => {
+                    const hex = Math.round(x * 255).toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                };
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            }
+
+            function generateBarChart() {
+                // Parse categories
+                const categoriesInput = parseData(document.getElementById('categoriesInput').value);
+                categories = categoriesInput.length > 0 ? categoriesInput : categories;
+                
+                // Validate data
+                if (categories.length === 0) {
+                    alert(currentLanguage === 'bn' ? 
+                        'দয়া করে কমপক্ষে একটি ক্যাটাগরি ইনপুট করুন' : 
+                        'Please enter at least one category');
+                    return;
+                }
+                
+                // Update dataset values from inputs
+                const datasetInputs = document.querySelectorAll('.dataset-input');
+                datasets.forEach((dataset, index) => {
+                    if (datasetInputs[index]) {
+                        const values = parseNumberData(datasetInputs[index].value);
+                        if (values.length > 0) {
+                            dataset.values = values;
+                        }
+                    }
+                });
+                
+                // Validate that all datasets have correct length
+                const expectedLength = categories.length;
+                let valid = true;
+                
+                datasets.forEach(dataset => {
+                    if (dataset.values.length !== expectedLength) {
+                        valid = false;
+                    }
+                });
+                
+                if (!valid) {
+                    alert(currentLanguage === 'bn' ? 
+                        `প্রত্যেক ডেটাসেটে ঠিক ${expectedLength}টি মান থাকতে হবে (ক্যাটাগরির সংখ্যা অনুযায়ী)` : 
+                        `Each dataset must have exactly ${expectedLength} values (matching number of categories)`);
+                    return;
+                }
+
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                // Get chart settings
+                const chartType = document.getElementById('chartType').value;
+                const barStyle = document.getElementById('barStyle').value;
+                const barWidth = parseInt(document.getElementById('barWidth').value);
+                const showValues = document.getElementById('showValues').value === 'true';
+                const chartTitle = document.getElementById('chartTitle').value || 'Bar Chart';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'Categories';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Values';
+                
+                // Calculate statistics
+                const stats = calculateStatistics();
+                
+                // Create or update chart
+                createChart(chartType, barStyle, barWidth, showValues, chartTitle, xAxisLabel, yAxisLabel);
+                
+                // Update statistics
+                updateStatistics(stats);
+                
+                // Update comparison tables
+                updateComparisonTables(stats);
+            }
+
+            function calculateStatistics() {
+                const stats = {
+                    categories: categories,
+                    datasets: [],
+                    totals: {
+                        categoryTotals: [],
+                        datasetTotals: [],
+                        grandTotal: 0
+                    }
+                };
+                
+                // Calculate category totals and dataset totals
+                const categoryTotals = Array(categories.length).fill(0);
+                const datasetTotals = Array(datasets.length).fill(0);
+                
+                datasets.forEach((dataset, datasetIndex) => {
+                    dataset.values.forEach((value, catIndex) => {
+                        categoryTotals[catIndex] += value;
+                        datasetTotals[datasetIndex] += value;
+                    });
+                });
+                
+                // Calculate grand total
+                const grandTotal = datasetTotals.reduce((a, b) => a + b, 0);
+                
+                // Calculate percentages
+                const categoryPercentages = categoryTotals.map(total => 
+                    total > 0 ? (total / grandTotal * 100).toFixed(1) : 0
+                );
+                
+                const datasetPercentages = datasetTotals.map(total => 
+                    total > 0 ? (total / grandTotal * 100).toFixed(1) : 0
+                );
+                
+                // Find maximum and minimum values
+                let allValues = [];
+                datasets.forEach(dataset => {
+                    allValues = allValues.concat(dataset.values);
+                });
+                
+                const maxValue = Math.max(...allValues);
+                const minValue = Math.min(...allValues);
+                const range = maxValue - minValue;
+                
+                // Calculate averages
+                const categoryAverages = categoryTotals.map(total => total / datasets.length);
+                const datasetAverages = datasetTotals.map(total => total / categories.length);
+                
+                stats.totals = {
+                    categoryTotals: categoryTotals,
+                    datasetTotals: datasetTotals,
+                    grandTotal: grandTotal,
+                    categoryPercentages: categoryPercentages,
+                    datasetPercentages: datasetPercentages,
+                    maxValue: maxValue,
+                    minValue: minValue,
+                    range: range,
+                    categoryAverages: categoryAverages,
+                    datasetAverages: datasetAverages
+                };
+                
+                // Calculate individual dataset statistics
+                datasets.forEach((dataset, index) => {
+                    const values = dataset.values;
+                    const total = datasetTotals[index];
+                    const average = values.reduce((a, b) => a + b, 0) / values.length;
+                    const max = Math.max(...values);
+                    const min = Math.min(...values);
+                    const variance = values.reduce((sum, val) => sum + Math.pow(val - average, 2), 0) / values.length;
+                    const stdDev = Math.sqrt(variance);
+                    
+                    stats.datasets.push({
+                        name: dataset.name,
+                        color: dataset.color,
+                        total: total,
+                        average: average,
+                        max: max,
+                        min: min,
+                        range: max - min,
+                        variance: variance,
+                        stdDev: stdDev,
+                        percentage: datasetPercentages[index]
+                    });
+                });
+                
+                return stats;
+            }
+
+            function createChart(chartType, barStyle, barWidth, showValues, chartTitle, xAxisLabel, yAxisLabel) {
+                const ctx = document.getElementById('barChart').getContext('2d');
+                
+                // Destroy existing chart
+                if (barChart) {
+                    barChart.destroy();
+                }
+                
+                // Prepare datasets for Chart.js
+                const chartDatasets = datasets.map((dataset, index) => {
+                    return {
+                        label: dataset.name,
+                        data: dataset.values,
+                        backgroundColor: dataset.color,
+                        borderColor: dataset.color,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        barPercentage: barWidth / 100,
+                        categoryPercentage: 0.8
+                    };
+                });
+                
+                // Chart configuration
+                const isVertical = chartType === 'vertical';
+                const isStacked = barStyle === 'stacked';
+                
+                const config = {
+                    type: isVertical ? 'bar' : 'horizontalBar',
+                    data: {
+                        labels: categories,
+                        datasets: chartDatasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: isVertical ? 'x' : 'y',
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    },
+                                    usePointStyle: true,
+                                    pointStyle: 'rect'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.dataset.label || '';
+                                        const value = context.parsed[isVertical ? 'y' : 'x'];
+                                        return `${label}: ${value}`;
+                                    }
+                                }
+                            },
+                            datalabels: showValues ? {
+                                display: true,
+                                color: 'white',
+                                font: {
+                                    weight: 'bold',
+                                    size: 11
+                                },
+                                formatter: function(value) {
+                                    return value;
+                                }
+                            } : null
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: isVertical ? xAxisLabel : yAxisLabel,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                },
+                                stacked: isStacked
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: isVertical ? yAxisLabel : xAxisLabel,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                },
+                                stacked: isStacked,
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                };
+                
+                // Remove datalabels plugin if not showing values
+                if (!showValues) {
+                    delete config.options.plugins.datalabels;
+                }
+                
+                // Create chart
+                barChart = new Chart(ctx, config);
+                
+                // Update chart legend
+                updateChartLegend();
+            }
+
+            function updateChartLegend() {
+                const legendContainer = document.getElementById('chartLegend');
+                legendContainer.innerHTML = '';
+                
+                datasets.forEach(dataset => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background: ${dataset.color};"></div>
+                        <span>${dataset.name}</span>
+                    `;
+                    legendContainer.appendChild(legendItem);
+                });
+            }
+
+            function updateChartLanguage() {
+                if (!barChart) return;
+                
+                // Update chart labels
+                const chartType = document.getElementById('chartType').value;
+                const isVertical = chartType === 'vertical';
+                const xAxisLabel = document.getElementById('xAxisLabel').value || 'Categories';
+                const yAxisLabel = document.getElementById('yAxisLabel').value || 'Values';
+                
+                barChart.options.scales.x.title.text = isVertical ? xAxisLabel : yAxisLabel;
+                barChart.options.scales.y.title.text = isVertical ? yAxisLabel : xAxisLabel;
+                
+                barChart.update();
+            }
+
+            function updateStatistics(stats) {
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = '';
+                
+                // Add grand total card
+                statsGrid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totals.grandTotal.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Grand Total" data-bn="গ্র্যান্ড টোটাল">গ্র্যান্ড টোটাল</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totals.maxValue.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Maximum Value" data-bn="সর্বোচ্চ মান">সর্বোচ্চ মান</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totals.minValue.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Minimum Value" data-bn="সর্বনিম্ন মান">সর্বনিম্ন মান</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totals.range.toLocaleString()}</div>
+                        <div class="stat-label" data-en="Value Range" data-bন="মান রেঞ্জ">মান রেঞ্জ</div>
+                    </div>
+                `;
+                
+                // Add dataset-specific statistics
+                stats.datasets.forEach(dataset => {
+                    statsGrid.innerHTML += `
+                        <div class="stat-card" style="border-left-color: ${dataset.color};">
+                            <div class="stat-value">${dataset.total.toLocaleString()}</div>
+                            <div class="stat-label">${dataset.name} ${currentLanguage === 'bn' ? 'টোটাল' : 'Total'}</div>
+                            <div style="font-size: 0.8rem; color: var(--gray); margin-top: 0.25rem;">
+                                ${dataset.percentage}%
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateComparisonTables(stats) {
+                const tablesContainer = document.getElementById('tablesContainer');
+                
+                // Table 1: Raw Data
+                tablesContainer.innerHTML = `
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Raw Data Table" data-bন="র ডেটা টেবিল">র ডেটা টেবিল</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Category" data-bন="ক্যাটাগরি">ক্যাটাগরি</th>
+                                    ${datasets.map(dataset => `<th>${dataset.name}</th>`).join('')}
+                                    <th data-en="Category Total" data-bন="ক্যাটাগরি টোটাল">ক্যাটাগরি টোটাল</th>
+                                    <th data-en="Category %" data-bন="ক্যাটাগরি %">ক্যাটাগরি %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories.map((category, catIndex) => {
+                                    const rowValues = datasets.map(dataset => dataset.values[catIndex]);
+                                    const categoryTotal = stats.totals.categoryTotals[catIndex];
+                                    const categoryPercentage = stats.totals.categoryPercentages[catIndex];
+                                    
+                                    return `
+                                        <tr>
+                                            <td><strong>${category}</strong></td>
+                                            ${rowValues.map((value, idx) => `
+                                                <td style="background: ${datasets[idx].color}10;">
+                                                    ${value.toLocaleString()}
+                                                </td>
+                                            `).join('')}
+                                            <td class="highlight">${categoryTotal.toLocaleString()}</td>
+                                            <td>${categoryPercentage}%</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                                <tr class="highlight">
+                                    <td><strong data-en="Dataset Total" data-bন="ডেটাসেট টোটাল">ডেটাসেট টোটাল</strong></td>
+                                    ${stats.totals.datasetTotals.map((total, idx) => `
+                                        <td style="background: ${datasets[idx].color}20;">
+                                            <strong>${total.toLocaleString()}</strong>
+                                        </td>
+                                    `).join('')}
+                                    <td><strong>${stats.totals.grandTotal.toLocaleString()}</strong></td>
+                                    <td>100%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong data-en="Dataset %" data-bন="ডেটাসেট %">ডেটাসেট %</strong></td>
+                                    ${stats.totals.datasetPercentages.map(percentage => `
+                                        <td>${percentage}%</td>
+                                    `).join('')}
+                                    <td>100%</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Dataset Statistics" data-bন="ডেটাসেট পরিসংখ্যান">ডেটাসেট পরিসংখ্যান</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Dataset" data-bন="ডেটাসেট">ডেটাসেট</th>
+                                    <th data-en="Color" data-bন="কালার">কালার</th>
+                                    <th data-en="Total" data-bন="টোটাল">টোটাল</th>
+                                    <th data-en="Average" data-bন="গড়">গড়</th>
+                                    <th data-en="Max" data-bন="সর্বোচ্চ">সর্বোচ্চ</th>
+                                    <th data-en="Min" data-bন="সর্বনিম্ন">সর্বনিম্ন</th>
+                                    <th data-en="Range" data-bন="রেঞ্জ">রেঞ্জ</th>
+                                    <th data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</th>
+                                    <th data-en="% of Total" data-bন="মোটের %">মোটের %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.datasets.map(dataset => `
+                                    <tr>
+                                        <td><strong>${dataset.name}</strong></td>
+                                        <td>
+                                            <div style="width: 20px; height: 20px; background: ${dataset.color}; border-radius: 3px;"></div>
+                                        </td>
+                                        <td>${dataset.total.toLocaleString()}</td>
+                                        <td>${dataset.average.toFixed(1)}</td>
+                                        <td>${dataset.max.toLocaleString()}</td>
+                                        <td>${dataset.min.toLocaleString()}</td>
+                                        <td>${dataset.range.toLocaleString()}</td>
+                                        <td>${dataset.stdDev.toFixed(2)}</td>
+                                        <td><strong>${dataset.percentage}%</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem; color: var(--dark);" data-en="Category Statistics" data-bন="ক্যাটাগরি পরিসংখ্যান">ক্যাটাগরি পরিসংখ্যান</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Category" data-bন="ক্যাটাগরি">ক্যাটাগরি</th>
+                                    <th data-en="Total" data-bন="টোটাল">টোটাল</th>
+                                    <th data-en="Average" data-bন="গড়">গড়</th>
+                                    <th data-en="% of Total" data-bন="মোটের %">মোটের %</th>
+                                    <th data-en="Max Dataset" data-bন="সর্বোচ্চ ডেটাসেট">সর্বোচ্চ ডেটাসেট</th>
+                                    <th data-en="Min Dataset" data-bন="সর্বনিম্ন ডেটাসেট">সর্বনিম্ন ডেটাসেট</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories.map((category, index) => {
+                                    const total = stats.totals.categoryTotals[index];
+                                    const average = stats.totals.categoryAverages[index];
+                                    const percentage = stats.totals.categoryPercentages[index];
+                                    
+                                    // Find max and min dataset for this category
+                                    let maxDataset = '';
+                                    let minDataset = '';
+                                    let maxValue = -Infinity;
+                                    let minValue = Infinity;
+                                    
+                                    datasets.forEach(dataset => {
+                                        const value = dataset.values[index];
+                                        if (value > maxValue) {
+                                            maxValue = value;
+                                            maxDataset = dataset.name;
+                                        }
+                                        if (value < minValue) {
+                                            minValue = value;
+                                            minDataset = dataset.name;
+                                        }
+                                    });
+                                    
+                                    return `
+                                        <tr>
+                                            <td><strong>${category}</strong></td>
+                                            <td>${total.toLocaleString()}</td>
+                                            <td>${average.toFixed(1)}</td>
+                                            <td>${percentage}%</td>
+                                            <td>${maxDataset} (${maxValue})</td>
+                                            <td>${minDataset} (${minValue})</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                // Update language
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                // Generate random categories
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const randomCategories = [];
+                const numCategories = Math.floor(Math.random() * 6) + 4;
+                
+                for (let i = 0; i < numCategories; i++) {
+                    randomCategories.push(monthNames[i]);
+                }
+                
+                document.getElementById('categoriesInput').value = randomCategories.join(', ');
+                categories = randomCategories;
+                
+                // Generate random datasets
+                const numDatasets = Math.floor(Math.random() * 3) + 2;
+                datasets = [];
+                
+                for (let i = 0; i < numDatasets; i++) {
+                    const values = Array(categories.length).fill(0).map(() => 
+                        Math.floor(Math.random() * 200) + 50
+                    );
+                    datasets.push({
+                        name: `Dataset ${i + 1}`,
+                        values: values,
+                        color: currentColorPalette[i % currentColorPalette.length]
+                    });
+                }
+                
+                datasetCounter = numDatasets;
+                
+                // Update inputs and tags
+                updateDatasetInputs();
+                updateDatasetTags();
+                
+                // Update titles
+                document.getElementById('chartTitle').value = 'Random Data Comparison';
+                document.getElementById('xAxisLabel').value = 'Categories';
+                document.getElementById('yAxisLabel').value = 'Values';
+                
+                generateBarChart();
+            }
+
+            function loadExampleData(example) {
+                if (examples[example]) {
+                    const exampleData = examples[example];
+                    
+                    // Set categories
+                    document.getElementById('categoriesInput').value = exampleData.categories.join(', ');
+                    categories = exampleData.categories;
+                    
+                    // Set datasets
+                    datasets = exampleData.datasets.map((dataset, index) => ({
+                        name: dataset.name,
+                        values: dataset.values,
+                        color: currentColorPalette[index % currentColorPalette.length]
+                    }));
+                    
+                    datasetCounter = datasets.length;
+                    
+                    // Update inputs and tags
+                    updateDatasetInputs();
+                    updateDatasetTags();
+                    
+                    // Set titles
+                    document.getElementById('chartTitle').value = exampleData.title;
+                    document.getElementById('xAxisLabel').value = exampleData.xLabel;
+                    document.getElementById('yAxisLabel').value = exampleData.yLabel;
+                    
+                    generateBarChart();
+                }
+            }
+
+            function exportChart(format) {
+                if (!barChart) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি বার চার্ট তৈরি করুন' : 
+                        'Please generate a bar chart first');
+                    return;
+                }
+                
+                const link = document.createElement('a');
+                link.download = `bar-chart.${format}`;
+                link.href = barChart.toBase64Image();
+                link.click();
+            }
+
+            function exportPDF() {
+                alert(currentLanguage === 'bn' ? 
+                    'PDF এক্সপোর্ট সেটআপ প্রয়োজন' : 
+                    'PDF export requires additional setup');
+            }
+
+            function exportCSV() {
+                let csv = 'Category,' + datasets.map(d => d.name).join(',') + '\n';
+                
+                categories.forEach((category, index) => {
+                    const rowValues = datasets.map(dataset => dataset.values[index]);
+                    csv += `${category},${rowValues.join(',')}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.download = 'bar-chart-data.csv';
+                link.href = window.URL.createObjectURL(blob);
+                link.click();
+            }
+
+            function clearAll() {
+                // Clear categories
+                document.getElementById('categoriesInput').value = '';
+                categories = [];
+                
+                // Clear datasets (keep one)
+                datasets = [
+                    { name: 'Dataset 1', values: [], color: currentColorPalette[0] }
+                ];
+                datasetCounter = 1;
+                
+                // Update inputs and tags
+                updateDatasetInputs();
+                updateDatasetTags();
+                
+                // Clear titles
+                document.getElementById('chartTitle').value = '';
+                document.getElementById('xAxisLabel').value = '';
+                document.getElementById('yAxisLabel').value = '';
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Clear statistics
+                document.getElementById('statsGrid').innerHTML = '';
+                
+                // Clear tables
+                document.getElementById('tablesContainer').innerHTML = '';
+                
+                // Clear legend
+                document.getElementById('chartLegend').innerHTML = '';
+                
+                // Destroy chart
+                if (barChart) {
+                    barChart.destroy();
+                    barChart = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কোরিলেশন সিগনিফিক্যান্স টেস্টার | পরিসংখ্যানিক তাৎপর্য বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --danger: #FF4757;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --significant: #36D1DC;
+            --not-significant: #FF6584;
+            --border-radius: 10px;
+            --shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--success), var(--primary), var(--danger));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 400px 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .method-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .method-btn:hover:not(.active) {
+            background: var(--light);
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input-area {
+            margin-bottom: 1rem;
+        }
+
+        .variable-inputs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .variable-inputs {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .variable-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .variable-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .variable-label i {
+            color: var(--primary);
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            background: var(--light-gray);
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+            background: white;
+        }
+
+        .input-hint {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Test Parameters */
+        .test-parameters {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .parameter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .parameter-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .parameter-input {
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .parameter-select {
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* Hypothesis Section */
+        .hypothesis-section {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--info);
+        }
+
+        .hypothesis-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .hypothesis-btn {
+            padding: 0.6rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .hypothesis-btn.active {
+            background: var(--info);
+            color: white;
+            border-color: var(--info);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .control-btn {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .test-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .test-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .result-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-significant {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .result-significant.yes {
+            background: var(--significant);
+            color: white;
+        }
+
+        .result-significant.no {
+            background: var(--not-significant);
+            color: white;
+        }
+
+        /* Test Decision */
+        .test-decision {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-top: 1.5rem;
+        }
+
+        .decision-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .decision-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .decision-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .decision-icon.significant {
+            background: var(--significant);
+        }
+
+        .decision-icon.not-significant {
+            background: var(--not-significant);
+        }
+
+        .decision-text {
+            flex: 1;
+        }
+
+        .decision-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .decision-description {
+            font-size: 0.95rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Visualization Section */
+        .visualization-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-container {
+            margin-top: 1rem;
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Detailed Results */
+        .detailed-results {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .results-table th {
+            background: var(--light-gray);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .results-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .results-table .value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Effect Size Section */
+        .effect-size-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .effect-size-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .effect-size-card {
+            background: var(--light-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--success);
+        }
+
+        .effect-size-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .effect-size-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .effect-size-interpretation {
+            font-size: 0.85rem;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 0.75rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .hypothesis-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .parameter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Correlation Significance Tester" data-bn="কোরিলেশন সিগনিফিক্যান্স টেস্টার">কোরিলেশন সিগনিফিক্যান্স টেস্টার</h1>
+            <p class="subtitle" data-en="Test statistical significance of correlation coefficients with hypothesis testing, p-value calculation, and effect size measurement" data-bn="হাইপোথিসিস টেস্টিং, পি-ভ্যালু গণনা, এবং ইফেক্ট সাইজ মেজারমেন্ট সহ কোরিলেশন কোয়েফিশিয়েন্টের পরিসংখ্যানিক তাৎপর্য পরীক্ষা করুন">
+                হাইপোথিসিস টেস্টিং, পি-ভ্যালু গণনা, এবং ইফেক্ট সাইজ মেজারমেন্ট সহ কোরিলেশন কোয়েফিশিয়েন্টের পরিসংখ্যানিক তাৎপর্য পরীক্ষা করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Test Input" data-bn="টেস্ট ইনপুট">টেস্ট ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="direct">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Direct Input" data-bn="সরাসরি ইনপুট">সরাসরি ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="data">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Raw Data" data-bন="র ডেটা">র ডেটা</span>
+                    </button>
+                </div>
+
+                <!-- Direct Input Mode -->
+                <div class="data-input-area" id="directInput">
+                    <div class="variable-inputs">
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-percentage"></i>
+                                <span data-en="Correlation Coefficient (r)" data-bন="কোরিলেশন কোয়েফিশিয়েন্ট (r)">কোরিলেশন কোয়েফিশিয়েন্ট (r)</span>
+                            </label>
+                            <input type="number" id="correlationValue" class="data-input" step="0.01" min="-1" max="1" value="0.75" style="min-height: auto;">
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Value between -1 and +1" data-bন="-১ থেকে +১ এর মধ্যে মান">-১ থেকে +১ এর মধ্যে মান</span>
+                            </div>
+                        </div>
+                        
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-users"></i>
+                                <span data-en="Sample Size (n)" data-bন="স্যাম্পল সাইজ (n)">স্যাম্পল সাইজ (n)</span>
+                            </label>
+                            <input type="number" id="sampleSize" class="data-input" min="3" value="50" style="min-height: auto;">
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Minimum 3 samples required" data-bন="ন্যূনতম ৩টি স্যাম্পল প্রয়োজন">ন্যূনতম ৩টি স্যাম্পল প্রয়োজন</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raw Data Mode (Hidden by default) -->
+                <div class="data-input-area" id="dataInput" style="display: none;">
+                    <div class="variable-inputs">
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span data-en="Variable X" data-bন="ভেরিয়েবল X">ভেরিয়েবল X</span>
+                            </label>
+                            <textarea id="dataX" class="data-input" placeholder="Enter values separated by commas or spaces">10, 15, 12, 18, 20, 14, 22, 25, 19, 28</textarea>
+                        </div>
+                        
+                        <div class="variable-input">
+                            <label class="variable-label">
+                                <i class="fas fa-chart-bar"></i>
+                                <span data-en="Variable Y" data-bন="ভেরিয়েবল Y">ভেরিয়েবল Y</span>
+                            </label>
+                            <textarea id="dataY" class="data-input" placeholder="Enter values separated by commas or spaces">50, 65, 55, 70, 75, 60, 80, 85, 72, 90</textarea>
+                        </div>
+                    </div>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Both variables must have same number of values" data-bন="উভয় ভেরিয়েবলের সমান সংখ্যক মান থাকতে হবে">
+                            উভয় ভেরিয়েবলের সমান সংখ্যক মান থাকতে হবে
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Test Parameters -->
+                <div class="test-parameters">
+                    <h3 class="section-title" style="font-size: 1.1rem; border: none; margin-bottom: 0.5rem;">
+                        <i class="fas fa-cog"></i>
+                        <span data-en="Test Parameters" data-bন="টেস্ট প্যারামিটার">টেস্ট প্যারামিটার</span>
+                    </h3>
+                    
+                    <div class="parameter-grid">
+                        <div class="parameter-group">
+                            <label class="parameter-label" data-en="Significance Level (α)" data-bন="সিগনিফিক্যান্স লেভেল (α)">সিগনিফিক্যান্স লেভেল (α)</label>
+                            <select id="alphaLevel" class="parameter-select">
+                                <option value="0.01">0.01 (1%)</option>
+                                <option value="0.05" selected>0.05 (5%)</option>
+                                <option value="0.10">0.10 (10%)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <label class="parameter-label" data-en="Test Type" data-bন="টেস্ট টাইপ">টেস্ট টাইপ</label>
+                            <select id="testType" class="parameter-select">
+                                <option value="two-tailed" selected data-en="Two-Tailed" data-bন="দুই-পুচ্ছ">দুই-পুচ্ছ</option>
+                                <option value="one-tailed-right" data-en="One-Tailed (Right)" data-bন="এক-পুচ্ছ (ডান)">এক-পুচ্ছ (ডান)</option>
+                                <option value="one-tailed-left" data-en="One-Tailed (Left)" data-bন="এক-পুচ্ছ (বাম)">এক-পুচ্ছ (বাম)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hypothesis Section -->
+                <div class="hypothesis-section">
+                    <h3 class="section-title" style="font-size: 1.1rem; border: none; margin-bottom: 0.5rem;">
+                        <i class="fas fa-question-circle"></i>
+                        <span data-en="Hypothesis Testing" data-bন="হাইপোথিসিস টেস্টিং">হাইপোথিসিস টেস্টিং</span>
+                    </h3>
+                    
+                    <div class="hypothesis-options">
+                        <button class="hypothesis-btn active" data-hypothesis="h0-zero">
+                            H₀: r = 0
+                        </button>
+                        <button class="hypothesis-btn" data-hypothesis="h0-value">
+                            H₀: r = 
+                            <input type="number" id="h0Value" value="0.5" step="0.1" min="-1" max="1" style="width: 40px; padding: 2px; border: 1px solid var(--border); border-radius: 3px;">
+                        </button>
+                        <button class="hypothesis-btn" data-hypothesis="custom">
+                            <span data-en="Custom" data-bন="কাস্টম">কাস্টম</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn test-btn" id="testBtn">
+                        <i class="fas fa-flask"></i>
+                        <span data-en="Run Significance Test" data-bন="সিগনিফিক্যান্স টেস্ট চালান">সিগনিফিক্যান্স টেস্ট চালান</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear" data-bন="ক্লিয়ার করুন">ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Results Section -->
+                <div class="results-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span data-en="Test Results" data-bন="টেস্ট ফলাফল">টেস্ট ফলাফল</span>
+                    </h2>
+                    
+                    <div class="results-grid">
+                        <!-- Correlation Coefficient -->
+                        <div class="result-card">
+                            <div class="result-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="result-title" data-en="Correlation (r)" data-bন="কোরিলেশন (r)">কোরিলেশন (r)</div>
+                            <div class="result-value" id="resultCorrelation">--</div>
+                            <div class="result-description" data-en="Sample Correlation" data-bন="স্যাম্পল কোরিলেশন">স্যাম্পল কোরিলেশন</div>
+                        </div>
+
+                        <!-- P-Value -->
+                        <div class="result-card">
+                            <div class="result-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="result-title" data-en="P-Value" data-bন="P-মান">P-মান</div>
+                            <div class="result-value" id="resultPValue">--</div>
+                            <div class="result-description" data-en="Statistical Significance" data-bন="পরিসংখ্যানিক তাৎপর্য">পরিসংখ্যানিক তাৎপর্য</div>
+                        </div>
+
+                        <!-- T-Statistic -->
+                        <div class="result-card">
+                            <div class="result-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="result-title" data-en="t-Statistic" data-bন="t-পরিসংখ্যান">t-পরিসংখ্যান</div>
+                            <div class="result-value" id="resultTStatistic">--</div>
+                            <div class="result-description" data-en="Test Statistic" data-bন="টেস্ট পরিসংখ্যান">টেস্ট পরিসংখ্যান</div>
+                        </div>
+
+                        <!-- Significance -->
+                        <div class="result-card">
+                            <div class="result-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="result-title" data-en="Significant?" data-bন="তাৎপর্যপূর্ণ?">তাৎপর্যপূর্ণ?</div>
+                            <div class="result-value" id="resultSignificant">--</div>
+                            <div id="resultSignificanceText">
+                                <span class="result-significant" id="significanceIndicator" style="display: none;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Decision -->
+                    <div class="test-decision">
+                        <div class="decision-content">
+                            <div class="decision-icon" id="decisionIcon">
+                                <i class="fas fa-question"></i>
+                            </div>
+                            <div class="decision-text">
+                                <div class="decision-title" data-en="Test Decision" data-bন="টেস্ট সিদ্ধান্ত">টেস্ট সিদ্ধান্ত</div>
+                                <div class="decision-description" id="decisionDescription">
+                                    <span data-en="Enter test parameters and click 'Run Significance Test'" data-bন="টেস্ট প্যারামিটার ইনপুট করুন এবং 'সিগনিফিক্যান্স টেস্ট চালান' ক্লিক করুন">
+                                        টেস্ট প্যারামিটার ইনপুট করুন এবং 'সিগনিফিক্যান্স টেস্ট চালান' ক্লিক করুন
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Section -->
+                <div class="visualization-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-area"></i>
+                        <span data-en="Statistical Distribution" data-bন="পরিসংখ্যানিক বিন্যাস">পরিসংখ্যানিক বিন্যাস</span>
+                    </h2>
+                    
+                    <div class="chart-container">
+                        <div id="distributionPlaceholder" class="chart-placeholder">
+                            <i class="fas fa-chart-bar"></i>
+                            <p data-en="Distribution plot will appear here" data-bন="বিন্যাস প্লট এখানে প্রদর্শিত হবে">
+                                বিন্যাস প্লট এখানে প্রদর্শিত হবে
+                            </p>
+                        </div>
+                        <canvas id="distributionCanvas" style="display: none;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detailed Results -->
+                <div class="detailed-results">
+                    <h2 class="section-title">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Detailed Calculations" data-bন="বিস্তারিত গণনা">বিস্তারিত গণনা</span>
+                    </h2>
+                    
+                    <div id="detailedResultsContainer">
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;" data-en="Detailed calculations will appear here" data-bন="বিস্তারিত গণনা এখানে প্রদর্শিত হবে">
+                            বিস্তারিত গণনা এখানে প্রদর্শিত হবে
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Effect Size Section -->
+                <div class="effect-size-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-ruler"></i>
+                        <span data-en="Effect Size Analysis" data-bন="ইফেক্ট সাইজ বিশ্লেষণ">ইফেক্ট সাইজ বিশ্লেষণ</span>
+                    </h2>
+                    
+                    <div class="effect-size-grid">
+                        <div class="effect-size-card">
+                            <div class="effect-size-label" data-en="Cohen's d" data-bন="কোহেনের d">কোহেনের d</div>
+                            <div class="effect-size-value" id="effectCohenD">--</div>
+                            <div class="effect-size-interpretation" id="cohenInterpretation">--</div>
+                        </div>
+                        
+                        <div class="effect-size-card">
+                            <div class="effect-size-label" data-en="R² (Coefficient of Determination)" data-bন="R² (নির্ধারণ সহগ)">R² (নির্ধারণ সহগ)</div>
+                            <div class="effect-size-value" id="effectRSquared">--</div>
+                            <div class="effect-size-interpretation" id="rSquaredInterpretation">--</div>
+                        </div>
+                        
+                        <div class="effect-size-card">
+                            <div class="effect-size-label" data-en="Power (1-β)" data-bন="পাওয়ার (১-β)">পাওয়ার (১-β)</div>
+                            <div class="effect-size-value" id="effectPower">--</div>
+                            <div class="effect-size-interpretation" id="powerInterpretation">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples Section -->
+                <div class="examples-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Example Tests" data-bন="উদাহরণ টেস্ট">উদাহরণ টেস্ট</span>
+                    </h2>
+                    
+                    <div class="examples-grid">
+                        <button class="example-btn" data-example="strong-positive">
+                            <div data-en="Strong Positive" data-bন="শক্তিশালী পজিটিভ">শক্তিশালী পজিটিভ</div>
+                            <small data-en="r = 0.85, n = 30" data-bন="r = ০.৮৫, n = ৩০">r = ০.৮৫, n = ৩০</small>
+                        </button>
+                        <button class="example-btn" data-example="moderate-negative">
+                            <div data-en="Moderate Negative" data-bন="মাঝারি নেগেটিভ">মাঝারি নেগেটিভ</div>
+                            <small data-en="r = -0.45, n = 100" data-bন="r = -০.৪৫, n = ১০০">r = -০.৪৫, n = ১০০</small>
+                        </button>
+                        <button class="example-btn" data-example="weak-correlation">
+                            <div data-en="Weak Correlation" data-bন="দুর্বল কোরিলেশন">দুর্বল কোরিলেশন</div>
+                            <small data-en="r = 0.15, n = 50" data-bন="r = ০.১৫, n = ৫০">r = ০.১৫, n = ৫০</small>
+                        </button>
+                        <button class="example-btn" data-example="large-sample">
+                            <div data-en="Large Sample" data-bন="বড় স্যাম্পল">বড় স্যাম্পল</div>
+                            <small data-en="r = 0.25, n = 500" data-bন="r = ০.২৫, n = ৫০০">r = ০.২৫, n = ৫০০</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentLanguage = 'bn';
+            let distributionChart = null;
+            
+            // Example tests data
+            const examples = {
+                'strong-positive': { r: 0.85, n: 30, description: 'Strong positive correlation example' },
+                'moderate-negative': { r: -0.45, n: 100, description: 'Moderate negative correlation example' },
+                'weak-correlation': { r: 0.15, n: 50, description: 'Weak correlation example' },
+                'large-sample': { r: 0.25, n: 500, description: 'Large sample size example' }
+            };
+
+            // Initialize application
+            initApp();
+
+            function initApp() {
+                // Language switching
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Input method switching
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = this.dataset.method;
+                        switchInputMethod(method);
+                    });
+                });
+
+                // Hypothesis testing options
+                document.querySelectorAll('.hypothesis-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.hypothesis-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Enable/disable H0 value input
+                        const h0ValueInput = document.getElementById('h0Value');
+                        if (this.dataset.hypothesis === 'h0-value') {
+                            h0ValueInput.disabled = false;
+                            h0ValueInput.style.backgroundColor = 'white';
+                        } else {
+                            h0ValueInput.disabled = true;
+                            h0ValueInput.style.backgroundColor = '#f0f0f0';
+                        }
+                    });
+                });
+
+                // Run test button
+                document.getElementById('testBtn').addEventListener('click', runSignificanceTest);
+
+                // Clear button
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+                // Example buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExample(example);
+                    });
+                });
+
+                // Initialize with default example
+                loadExample('strong-positive');
+                runSignificanceTest();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update language buttons
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable text
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    const text = element.getAttribute(`data-${lang}`);
+                    if (text) {
+                        element.textContent = text;
+                    }
+                });
+                
+                // Update option text for select elements
+                document.querySelectorAll('option[data-en]').forEach(option => {
+                    const text = option.getAttribute(`data-${lang}`);
+                    if (text) {
+                        option.textContent = text;
+                    }
+                });
+            }
+
+            function switchInputMethod(method) {
+                const directInput = document.getElementById('directInput');
+                const dataInput = document.getElementById('dataInput');
+                const methodBtns = document.querySelectorAll('.method-btn');
+                
+                methodBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-method="${method}"]`).classList.add('active');
+                
+                if (method === 'direct') {
+                    directInput.style.display = 'block';
+                    dataInput.style.display = 'none';
+                } else {
+                    directInput.style.display = 'none';
+                    dataInput.style.display = 'block';
+                }
+            }
+
+            function loadExample(exampleId) {
+                if (examples[exampleId]) {
+                    const example = examples[exampleId];
+                    
+                    // Set direct input values
+                    document.getElementById('correlationValue').value = example.r;
+                    document.getElementById('sampleSize').value = example.n;
+                    
+                    // Switch to direct input mode if needed
+                    switchInputMethod('direct');
+                }
+            }
+
+            function parseDataInput(input) {
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                if (!cleaned) return [];
+                
+                const numbers = cleaned.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateCorrelationFromData(x, y) {
+                if (x.length !== y.length || x.length < 2) {
+                    throw new Error(currentLanguage === 'bn' ? 
+                        'X এবং Y ভেরিয়েবলে সমান সংখ্যক মান থাকতে হবে (ন্যূনতম ২টি)' : 
+                        'X and Y variables must have same number of values (minimum 2)');
+                }
+                
+                const n = x.length;
+                
+                // Calculate means
+                const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Calculate covariance and standard deviations
+                let covariance = 0;
+                let sumXSquared = 0;
+                let sumYSquared = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    const xDiff = x[i] - meanX;
+                    const yDiff = y[i] - meanY;
+                    
+                    covariance += xDiff * yDiff;
+                    sumXSquared += xDiff * xDiff;
+                    sumYSquared += yDiff * yDiff;
+                }
+                
+                covariance /= n;
+                const stdX = Math.sqrt(sumXSquared / n);
+                const stdY = Math.sqrt(sumYSquared / n);
+                
+                // Calculate Pearson's r
+                const r = covariance / (stdX * stdY);
+                
+                return { r, n };
+            }
+
+            function runSignificanceTest() {
+                try {
+                    // Get input method
+                    const method = document.querySelector('.method-btn.active').dataset.method;
+                    
+                    let r, n;
+                    
+                    if (method === 'direct') {
+                        // Get values from direct input
+                        r = parseFloat(document.getElementById('correlationValue').value);
+                        n = parseInt(document.getElementById('sampleSize').value);
+                        
+                        if (isNaN(r) || r < -1 || r > 1) {
+                            throw new Error(currentLanguage === 'bn' ? 
+                                'কোরিলেশন মান -১ এবং ১ এর মধ্যে হতে হবে' : 
+                                'Correlation must be between -1 and 1');
+                        }
+                        
+                        if (isNaN(n) || n < 3) {
+                            throw new Error(currentLanguage === 'bn' ? 
+                                'স্যাম্পল সাইজ কমপক্ষে ৩ হতে হবে' : 
+                                'Sample size must be at least 3');
+                        }
+                    } else {
+                        // Calculate from raw data
+                        const x = parseDataInput(document.getElementById('dataX').value);
+                        const y = parseDataInput(document.getElementById('dataY').value);
+                        
+                        const result = calculateCorrelationFromData(x, y);
+                        r = result.r;
+                        n = result.n;
+                    }
+                    
+                    // Get test parameters
+                    const alpha = parseFloat(document.getElementById('alphaLevel').value);
+                    const testType = document.getElementById('testType').value;
+                    
+                    // Get null hypothesis value
+                    let h0Value = 0; // Default H0: r = 0
+                    const activeHypothesis = document.querySelector('.hypothesis-btn.active').dataset.hypothesis;
+                    
+                    if (activeHypothesis === 'h0-value') {
+                        h0Value = parseFloat(document.getElementById('h0Value').value);
+                        if (isNaN(h0Value) || h0Value < -1 || h0Value > 1) {
+                            h0Value = 0;
+                        }
+                    }
+                    
+                    // Perform significance test
+                    const testResults = performSignificanceTest(r, n, alpha, testType, h0Value);
+                    
+                    // Update results display
+                    updateResultsDisplay(r, n, testResults);
+                    
+                    // Update visualization
+                    updateDistributionChart(r, n, testResults);
+                    
+                    // Update detailed calculations
+                    updateDetailedCalculations(r, n, testResults);
+                    
+                    // Update effect size analysis
+                    updateEffectSizeAnalysis(r, n, testResults);
+                    
+                } catch (error) {
+                    alert(currentLanguage === 'bn' ? 
+                        `ত্রুটি: ${error.message}` : 
+                        `Error: ${error.message}`);
+                }
+            }
+
+            function performSignificanceTest(r, n, alpha, testType, h0Value = 0) {
+                // Calculate t-statistic
+                const t = calculateTStatistic(r, n, h0Value);
+                
+                // Calculate degrees of freedom
+                const df = n - 2;
+                
+                // Calculate p-value based on test type
+                let pValue;
+                
+                switch(testType) {
+                    case 'two-tailed':
+                        pValue = 2 * (1 - tCDF(Math.abs(t), df));
+                        break;
+                    case 'one-tailed-right':
+                        pValue = 1 - tCDF(t, df);
+                        break;
+                    case 'one-tailed-left':
+                        pValue = tCDF(t, df);
+                        break;
+                    default:
+                        pValue = 2 * (1 - tCDF(Math.abs(t), df));
+                }
+                
+                // Determine significance
+                const isSignificant = pValue <= alpha;
+                
+                // Calculate confidence interval
+                const ci = calculateConfidenceInterval(r, n, alpha, testType);
+                
+                // Calculate effect sizes
+                const effectSizes = calculateEffectSizes(r, n, alpha);
+                
+                return {
+                    t,
+                    df,
+                    pValue,
+                    isSignificant,
+                    alpha,
+                    testType,
+                    h0Value,
+                    ci,
+                    effectSizes
+                };
+            }
+
+            function calculateTStatistic(r, n, h0Value = 0) {
+                if (r === 1 || r === -1) {
+                    return r * Infinity; // Handle perfect correlation
+                }
+                
+                // t = (r - ρ₀) * √((n-2)/(1-r²))
+                const numerator = r - h0Value;
+                const denominator = Math.sqrt((1 - r * r) / (n - 2));
+                
+                return denominator !== 0 ? numerator / denominator : 0;
+            }
+
+            function tCDF(t, df) {
+                // Approximation of Student's t CDF
+                // Using incomplete beta function
+                if (df <= 0) return 0.5;
+                
+                const x = df / (df + t * t);
+                const a = df / 2;
+                const b = 0.5;
+                
+                // Regularized incomplete beta function
+                const ibeta = regularizedIncompleteBeta(x, a, b);
+                
+                return t >= 0 ? 1 - 0.5 * ibeta : 0.5 * ibeta;
+            }
+
+            function regularizedIncompleteBeta(x, a, b) {
+                // Continued fraction approximation
+                const maxIterations = 100;
+                const epsilon = 1e-10;
+                
+                if (x === 0 || x === 1) return x;
+                
+                // Use symmetry
+                if (x > (a + 1) / (a + b + 2)) {
+                    return 1 - regularizedIncompleteBeta(1 - x, b, a);
+                }
+                
+                // Lentz's algorithm for continued fraction
+                let f = 1;
+                let c = 1;
+                let d = 1 - (a + b) * x / (a + 1);
+                
+                if (Math.abs(d) < epsilon) d = epsilon;
+                d = 1 / d;
+                
+                for (let i = 1; i <= maxIterations; i++) {
+                    const m = i / 2;
+                    let numerator;
+                    
+                    if (i % 2 === 0) {
+                        numerator = m * (b - m) * x / ((a + 2 * m - 1) * (a + 2 * m));
+                    } else {
+                        numerator = -(a + m) * (a + b + m) * x / ((a + 2 * m) * (a + 2 * m + 1));
+                    }
+                    
+                    d = 1 + numerator * d;
+                    if (Math.abs(d) < epsilon) d = epsilon;
+                    d = 1 / d;
+                    
+                    c = 1 + numerator / c;
+                    if (Math.abs(c) < epsilon) c = epsilon;
+                    
+                    f *= c * d;
+                    
+                    if (Math.abs(c * d - 1) < epsilon) break;
+                }
+                
+                const beta = Math.exp(lgamma(a) + lgamma(b) - lgamma(a + b));
+                return Math.pow(x, a) * Math.pow(1 - x, b) / (a * beta) * f;
+            }
+
+            function lgamma(x) {
+                // Log gamma function approximation
+                const logSqrtTwoPi = 0.91893853320467274178;
+                
+                if (x < 12) {
+                    return Math.log(Math.abs(gamma(x)));
+                }
+                
+                const invX = 1 / x;
+                const invX2 = invX * invX;
+                const invX3 = invX2 * invX;
+                const invX5 = invX3 * invX2;
+                const invX7 = invX5 * invX2;
+                
+                return (x - 0.5) * Math.log(x) - x + logSqrtTwoPi + 
+                       invX / 12 - invX3 / 360 + invX5 / 1260 - invX7 / 1680;
+            }
+
+            function gamma(x) {
+                // Gamma function approximation
+                const p = [
+                    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                    771.32342877765313, -176.61502916214059, 12.507343278686905,
+                    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+                ];
+                
+                if (x < 0.5) {
+                    return Math.PI / (Math.sin(Math.PI * x) * gamma(1 - x));
+                }
+                
+                x -= 1;
+                let a = p[0];
+                const t = x + 7.5;
+                
+                for (let i = 1; i < p.length; i++) {
+                    a += p[i] / (x + i);
+                }
+                
+                return Math.sqrt(2 * Math.PI) * Math.pow(t, x + 0.5) * Math.exp(-t) * a;
+            }
+
+            function calculateConfidenceInterval(r, n, alpha, testType) {
+                if (r === 1 || r === -1) {
+                    return { lower: r, upper: r };
+                }
+                
+                // Fisher's z transformation
+                const z = 0.5 * Math.log((1 + r) / (1 - r));
+                const se = 1 / Math.sqrt(n - 3);
+                
+                // Z-score for confidence level
+                let zScore;
+                if (testType === 'two-tailed') {
+                    zScore = -Math.abs(inverseNormalCDF(alpha / 2));
+                } else {
+                    zScore = -Math.abs(inverseNormalCDF(alpha));
+                }
+                
+                // Confidence interval in z-space
+                const zLower = z + zScore * se;
+                const zUpper = z - zScore * se;
+                
+                // Transform back to r-space
+                const rLower = (Math.exp(2 * zLower) - 1) / (Math.exp(2 * zLower) + 1);
+                const rUpper = (Math.exp(2 * zUpper) - 1) / (Math.exp(2 * zUpper) + 1);
+                
+                return { lower: rLower, upper: rUpper };
+            }
+
+            function inverseNormalCDF(p) {
+                // Approximation of inverse normal CDF
+                if (p <= 0 || p >= 1) {
+                    return p === 0 ? -Infinity : Infinity;
+                }
+                
+                const a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
+                const a4 = 138.357751867269, a5 = -30.6647980661472, a6 = 2.50662827745924;
+                const b1 = -54.4760987982241, b2 = 161.585836858041, b3 = -155.698979859887;
+                const b4 = 66.8013118877197, b5 = -13.2806815528857;
+                const c1 = -7.78489400243029E-03, c2 = -0.322396458041136, c3 = -2.40075827716184;
+                const c4 = -2.54973253934373, c5 = 4.37466414146497, c6 = 2.93816398269878;
+                const d1 = 7.78469570904146E-03, d2 = 0.32246712907004, d3 = 2.445134137143;
+                const d4 = 3.75440866190742;
+                
+                let q, r, z;
+                
+                if (p < 0.02425) {
+                    q = Math.sqrt(-2 * Math.log(p));
+                    z = (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / 
+                        ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                } else if (p > 0.97575) {
+                    q = Math.sqrt(-2 * Math.log(1 - p));
+                    z = -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / 
+                        ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                } else {
+                    q = p - 0.5;
+                    r = q * q;
+                    z = (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / 
+                        (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+                }
+                
+                return z;
+            }
+
+            function calculateEffectSizes(r, n, alpha) {
+                // Cohen's d for correlation
+                const cohensD = (2 * r) / Math.sqrt(1 - r * r);
+                
+                // R² (coefficient of determination)
+                const rSquared = r * r;
+                
+                // Statistical power
+                const power = calculatePower(r, n, alpha);
+                
+                return { cohensD, rSquared, power };
+            }
+
+            function calculatePower(r, n, alpha) {
+                // Calculate statistical power
+                const df = n - 2;
+                const noncentrality = r * Math.sqrt((n - 2) / (1 - r * r));
+                
+                // Approximate power using non-central t distribution
+                const criticalT = -Math.abs(inverseNormalCDF(alpha / 2));
+                const power = 1 - tCDF(criticalT - noncentrality, df) + tCDF(-criticalT - noncentrality, df);
+                
+                return Math.max(0, Math.min(1, power));
+            }
+
+            function updateResultsDisplay(r, n, results) {
+                // Update correlation value
+                document.getElementById('resultCorrelation').textContent = r.toFixed(4);
+                
+                // Update p-value
+                document.getElementById('resultPValue').textContent = results.pValue.toFixed(6);
+                
+                // Update t-statistic
+                document.getElementById('resultTStatistic').textContent = results.t.toFixed(4);
+                
+                // Update significance indicator
+                const significanceIndicator = document.getElementById('significanceIndicator');
+                if (results.isSignificant) {
+                    document.getElementById('resultSignificant').textContent = currentLanguage === 'bn' ? 'হ্যাঁ' : 'Yes';
+                    significanceIndicator.textContent = currentLanguage === 'bn' ? 'তাৎপর্যপূর্ণ' : 'Significant';
+                    significanceIndicator.className = 'result-significant yes';
+                    significanceIndicator.style.display = 'inline-block';
+                } else {
+                    document.getElementById('resultSignificant').textContent = currentLanguage === 'bn' ? 'না' : 'No';
+                    significanceIndicator.textContent = currentLanguage === 'bn' ? 'অতাৎপর্যপূর্ণ' : 'Not Significant';
+                    significanceIndicator.className = 'result-significant no';
+                    significanceIndicator.style.display = 'inline-block';
+                }
+                
+                // Update test decision
+                updateTestDecision(r, results);
+            }
+
+            function updateTestDecision(r, results) {
+                const decisionIcon = document.getElementById('decisionIcon');
+                const decisionDescription = document.getElementById('decisionDescription');
+                
+                const alpha = results.alpha;
+                const pValue = results.pValue;
+                const h0Value = results.h0Value;
+                const testType = results.testType;
+                
+                if (results.isSignificant) {
+                    decisionIcon.className = 'decision-icon significant';
+                    decisionIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    
+                    let conclusion;
+                    if (h0Value === 0) {
+                        if (r > 0) {
+                            conclusion = currentLanguage === 'bn' ? 
+                                'উপাত্ত শূন্যের থেকে উল্লেখযোগ্যভাবে ভিন্ন একটি পজিটিভ কোরিলেশন দেখায়।' :
+                                'Data show a significantly positive correlation different from zero.';
+                        } else {
+                            conclusion = currentLanguage === 'bn' ? 
+                                'উপাত্ত শূন্যের থেকে উল্লেখযোগ্যভাবে ভিন্ন একটি নেগেটিভ কোরিলেশন দেখায়।' :
+                                'Data show a significantly negative correlation different from zero.';
+                        }
+                    } else {
+                        conclusion = currentLanguage === 'bn' ? 
+                            `কোরিলেশন ${h0Value} থেকে উল্লেখযোগ্যভাবে ভিন্ন (p < ${alpha})।` :
+                            `Correlation is significantly different from ${h0Value} (p < ${alpha}).`;
+                    }
+                    
+                    decisionDescription.innerHTML = `
+                        <strong>${currentLanguage === 'bn' ? 'সিদ্ধান্ত:' : 'Decision:'}</strong> 
+                        ${currentLanguage === 'bn' ? 'নাল হাইপোথিসিস প্রত্যাখ্যান করুন' : 'Reject the null hypothesis'} (H₀: r = ${h0Value}).<br>
+                        <strong>${currentLanguage === 'bn' ? 'কারণ:' : 'Reason:'}</strong> 
+                        p-মান (${pValue.toFixed(6)}) < α (${alpha}).<br>
+                        <strong>${currentLanguage === 'bn' ? 'উপসংহার:' : 'Conclusion:'}</strong> 
+                        ${conclusion}
+                    `;
+                } else {
+                    decisionIcon.className = 'decision-icon not-significant';
+                    decisionIcon.innerHTML = '<i class="fas fa-times-circle"></i>';
+                    
+                    decisionDescription.innerHTML = `
+                        <strong>${currentLanguage === 'bn' ? 'সিদ্ধান্ত:' : 'Decision:'}</strong> 
+                        ${currentLanguage === 'bn' ? 'নাল হাইপোথিসিস প্রত্যাখ্যান করতে ব্যর্থ হন' : 'Fail to reject the null hypothesis'} (H₀: r = ${h0Value}).<br>
+                        <strong>${currentLanguage === 'bn' ? 'কারণ:' : 'Reason:'}</strong> 
+                        p-মান (${pValue.toFixed(6)}) ≥ α (${alpha}).<br>
+                        <strong>${currentLanguage === 'bn' ? 'উপসংহার:' : 'Conclusion:'}</strong> 
+                        ${currentLanguage === 'bn' ? 
+                            'পর্যাপ্ত প্রমাণ নেই যে কোরিলেশন শূন্য থেকে উল্লেখযোগ্যভাবে ভিন্ন।' :
+                            'Insufficient evidence that correlation is significantly different from zero.'}
+                    `;
+                }
+            }
+
+            function updateDistributionChart(r, n, results) {
+                const canvas = document.getElementById('distributionCanvas');
+                const placeholder = document.getElementById('distributionPlaceholder');
+                
+                // Hide placeholder, show canvas
+                placeholder.style.display = 'none';
+                canvas.style.display = 'block';
+                
+                // Destroy previous chart if exists
+                if (distributionChart) {
+                    distributionChart.destroy();
+                }
+                
+                // Create chart
+                const ctx = canvas.getContext('2d');
+                distributionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: currentLanguage === 'bn' ? 'টি-বিন্যাস' : 't-Distribution',
+                                data: [],
+                                borderColor: '#6C63FF',
+                                backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'টি-পরিসংখ্যান' : 't-Statistic',
+                                data: [],
+                                borderColor: '#FF6584',
+                                backgroundColor: 'transparent',
+                                borderWidth: 3,
+                                borderDash: [5, 5],
+                                pointRadius: 8,
+                                pointBackgroundColor: '#FF6584'
+                            },
+                            {
+                                label: currentLanguage === 'bn' ? 'ক্রিটিক্যাল মান' : 'Critical Value',
+                                data: [],
+                                borderColor: '#36D1DC',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [3, 3],
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'টি-মান' : 't-Value'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'সম্ভাব্যতা ঘনত্ব' : 'Probability Density'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // Generate distribution data
+                const df = results.df;
+                const tStat = results.t;
+                const alpha = results.alpha;
+                
+                // Get critical values based on test type
+                let criticalLeft, criticalRight;
+                
+                if (results.testType === 'two-tailed') {
+                    criticalLeft = -Math.abs(inverseNormalCDF(alpha / 2));
+                    criticalRight = Math.abs(inverseNormalCDF(alpha / 2));
+                } else if (results.testType === 'one-tailed-right') {
+                    criticalLeft = -Infinity;
+                    criticalRight = inverseNormalCDF(1 - alpha);
+                } else { // one-tailed-left
+                    criticalLeft = inverseNormalCDF(alpha);
+                    criticalRight = Infinity;
+                }
+                
+                // Generate data points
+                const minX = Math.min(-4, tStat - 2, criticalLeft - 1);
+                const maxX = Math.max(4, tStat + 2, criticalRight + 1);
+                const step = (maxX - minX) / 100;
+                
+                const distributionData = [];
+                const tStatData = [];
+                const criticalData = [];
+                
+                for (let x = minX; x <= maxX; x += step) {
+                    // t-distribution PDF
+                    const pdf = tPDF(x, df);
+                    distributionData.push({ x: x, y: pdf });
+                    
+                    // t-statistic vertical line
+                    if (Math.abs(x - tStat) < step / 2) {
+                        tStatData.push({ x: x, y: pdf });
+                        tStatData.push({ x: x, y: 0 });
+                        tStatData.push({ x: x, y: pdf });
+                    } else {
+                        tStatData.push({ x: x, y: null });
+                    }
+                    
+                    // Critical value lines
+                    if (Math.abs(x - criticalLeft) < step / 2 || Math.abs(x - criticalRight) < step / 2) {
+                        criticalData.push({ x: x, y: pdf });
+                        criticalData.push({ x: x, y: 0 });
+                        criticalData.push({ x: x, y: pdf });
+                    } else {
+                        criticalData.push({ x: x, y: null });
+                    }
+                }
+                
+                // Update chart data
+                distributionChart.data.labels = distributionData.map(d => d.x.toFixed(2));
+                distributionChart.data.datasets[0].data = distributionData.map(d => d.y);
+                distributionChart.data.datasets[1].data = tStatData.map(d => d.y);
+                distributionChart.data.datasets[2].data = criticalData.map(d => d.y);
+                
+                distributionChart.update();
+            }
+
+            function tPDF(t, df) {
+                // Student's t distribution PDF
+                if (df <= 0) return 0;
+                
+                const numerator = gamma((df + 1) / 2);
+                const denominator = Math.sqrt(df * Math.PI) * gamma(df / 2);
+                const factor = Math.pow(1 + (t * t) / df, -(df + 1) / 2);
+                
+                return numerator / denominator * factor;
+            }
+
+            function updateDetailedCalculations(r, n, results) {
+                const container = document.getElementById('detailedResultsContainer');
+                
+                const alpha = results.alpha;
+                const pValue = results.pValue;
+                const t = results.t;
+                const df = results.df;
+                const ci = results.ci;
+                const testType = results.testType;
+                
+                let testTypeText = '';
+                switch(testType) {
+                    case 'two-tailed':
+                        testTypeText = currentLanguage === 'bn' ? 'দুই-পুচ্ছ টেস্ট' : 'Two-tailed test';
+                        break;
+                    case 'one-tailed-right':
+                        testTypeText = currentLanguage === 'bn' ? 'এক-পুচ্ছ টেস্ট (ডান)' : 'One-tailed test (right)';
+                        break;
+                    case 'one-tailed-left':
+                        testTypeText = currentLanguage === 'bn' ? 'এক-পুচ্ছ টেস্ট (বাম)' : 'One-tailed test (left)';
+                        break;
+                }
+                
+                let hypothesisText = '';
+                if (results.h0Value === 0) {
+                    hypothesisText = currentLanguage === 'bn' ? 
+                        'H₀: ρ = 0 (কোন কোরিলেশন নেই)<br>H₁: ρ ≠ 0 (কোরিলেশন আছে)' :
+                        'H₀: ρ = 0 (no correlation)<br>H₁: ρ ≠ 0 (correlation exists)';
+                } else {
+                    hypothesisText = currentLanguage === 'bn' ? 
+                        `H₀: ρ = ${results.h0Value}<br>H₁: ρ ≠ ${results.h0Value}` :
+                        `H₀: ρ = ${results.h0Value}<br>H₁: ρ ≠ ${results.h0Value}`;
+                }
+                
+                let decisionText = '';
+                if (results.isSignificant) {
+                    decisionText = currentLanguage === 'bn' ? 
+                        `নাল হাইপোথিসিস প্রত্যাখ্যান করুন (p < α)` :
+                        `Reject null hypothesis (p < α)`;
+                } else {
+                    decisionText = currentLanguage === 'bn' ? 
+                        `নাল হাইপোথিসিস প্রত্যাখ্যান করতে ব্যর্থ হন (p ≥ α)` :
+                        `Fail to reject null hypothesis (p ≥ α)`;
+                }
+                
+                container.innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>${currentLanguage === 'bn' ? 'প্যারামিটার' : 'Parameter'}</th>
+                                    <th>${currentLanguage === 'bn' ? 'মান' : 'Value'}</th>
+                                    <th>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'নমুনা কোরিলেশন (r)' : 'Sample correlation (r)'}</td>
+                                    <td class="value">${r.toFixed(4)}</td>
+                                    <td>${getCorrelationInterpretation(r)}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'নমুনা সাইজ (n)' : 'Sample size (n)'}</td>
+                                    <td class="value">${n}</td>
+                                    <td>${currentLanguage === 'bn' ? 'ডিগ্রি অফ ফ্রিডম: df = n - 2 = ' + df : 'Degrees of freedom: df = n - 2 = ' + df}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'টি-পরিসংখ্যান' : 't-statistic'}</td>
+                                    <td class="value">${t.toFixed(4)}</td>
+                                    <td>t = (r - ρ₀) × √[(n-2)/(1-r²)]</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'পি-মান' : 'p-value'}</td>
+                                    <td class="value">${pValue.toFixed(6)}</td>
+                                    <td>${currentLanguage === 'bn' ? 
+                                        'নাল হাইপোথিসিস সত্য হলে এই বা আরও চরম ফলাফল পাওয়ার সম্ভাবনা' : 
+                                        'Probability of obtaining this or more extreme results if null hypothesis is true'}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'সিগনিফিক্যান্স লেভেল (α)' : 'Significance level (α)'}</td>
+                                    <td class="value">${alpha}</td>
+                                    <td>${currentLanguage === 'bn' ? 'টাইপ I এরর এর সম্ভাবনা' : 'Probability of Type I error'}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'টেস্ট টাইপ' : 'Test type'}</td>
+                                    <td class="value">${testTypeText}</td>
+                                    <td>${hypothesisText}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'কনফিডেন্স ইন্টারভাল (95%)' : 'Confidence interval (95%)'}</td>
+                                    <td class="value">[${ci.lower.toFixed(4)}, ${ci.upper.toFixed(4)}]</td>
+                                    <td>${currentLanguage === 'bn' ? 
+                                        'জনসংখ্যা কোরিলেশন এর সম্ভাব্য মানের পরিসর' : 
+                                        'Plausible range for population correlation coefficient'}</td>
+                                </tr>
+                                <tr>
+                                    <td>${currentLanguage === 'bn' ? 'পরিসংখ্যানিক সিদ্ধান্ত' : 'Statistical decision'}</td>
+                                    <td class="value">${decisionText}</td>
+                                    <td>${currentLanguage === 'bn' ? 
+                                        (results.isSignificant ? 
+                                            'কোরিলেশন পরিসংখ্যানিকভাবে তাৎপর্যপূর্ণ' : 
+                                            'কোরিলেশন পরিসংখ্যানিকভাবে অতাৎপর্যপূর্ণ') : 
+                                        (results.isSignificant ? 
+                                            'Correlation is statistically significant' : 
+                                            'Correlation is not statistically significant')}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            function getCorrelationInterpretation(r) {
+                const absR = Math.abs(r);
+                
+                if (absR >= 0.9) {
+                    return currentLanguage === 'bn' ? 'খুবই শক্তিশালী সম্পর্ক' : 'Very strong relationship';
+                } else if (absR >= 0.7) {
+                    return currentLanguage === 'bn' ? 'শক্তিশালী সম্পর্ক' : 'Strong relationship';
+                } else if (absR >= 0.5) {
+                    return currentLanguage === 'bn' ? 'মাঝারি সম্পর্ক' : 'Moderate relationship';
+                } else if (absR >= 0.3) {
+                    return currentLanguage === 'bn' ? 'দুর্বল সম্পর্ক' : 'Weak relationship';
+                } else if (absR >= 0.1) {
+                    return currentLanguage === 'bn' ? 'খুব দুর্বল সম্পর্ক' : 'Very weak relationship';
+                } else {
+                    return currentLanguage === 'bn' ? 'নগণ্য সম্পর্ক' : 'Negligible relationship';
+                }
+            }
+
+            function updateEffectSizeAnalysis(r, n, results) {
+                const effectSizes = results.effectSizes;
+                
+                // Update Cohen's d
+                document.getElementById('effectCohenD').textContent = effectSizes.cohensD.toFixed(3);
+                document.getElementById('cohenInterpretation').textContent = 
+                    getCohenInterpretation(effectSizes.cohensD);
+                
+                // Update R²
+                document.getElementById('effectRSquared').textContent = (effectSizes.rSquared * 100).toFixed(1) + '%';
+                document.getElementById('rSquaredInterpretation').textContent = 
+                    getRSquaredInterpretation(effectSizes.rSquared);
+                
+                // Update Power
+                document.getElementById('effectPower').textContent = (effectSizes.power * 100).toFixed(1) + '%';
+                document.getElementById('powerInterpretation').textContent = 
+                    getPowerInterpretation(effectSizes.power);
+            }
+
+            function getCohenInterpretation(d) {
+                const absD = Math.abs(d);
+                
+                if (absD >= 0.8) {
+                    return currentLanguage === 'bn' ? 'বৃহৎ ইফেক্ট সাইজ' : 'Large effect size';
+                } else if (absD >= 0.5) {
+                    return currentLanguage === 'bn' ? 'মাঝারি ইফেক্ট সাইজ' : 'Medium effect size';
+                } else if (absD >= 0.2) {
+                    return currentLanguage === 'bn' ? 'ছোট ইফেক্ট সাইজ' : 'Small effect size';
+                } else {
+                    return currentLanguage === 'bn' ? 'খুব ছোট ইফেক্ট সাইজ' : 'Very small effect size';
+                }
+            }
+
+            function getRSquaredInterpretation(r2) {
+                const percent = r2 * 100;
+                
+                if (percent >= 64) {
+                    return currentLanguage === 'bn' ? 'উচ্চ ভ্যারিয়েন্স ব্যাখ্যা' : 'High variance explained';
+                } else if (percent >= 25) {
+                    return currentLanguage === 'bn' ? 'মাঝারি ভ্যারিয়েন্স ব্যাখ্যা' : 'Moderate variance explained';
+                } else if (percent >= 9) {
+                    return currentLanguage === 'bn' ? 'নিম্ন ভ্যারিয়েন্স ব্যাখ্যা' : 'Low variance explained';
+                } else {
+                    return currentLanguage === 'bn' ? 'খুব কম ভ্যারিয়েন্স ব্যাখ্যা' : 'Very low variance explained';
+                }
+            }
+
+            function getPowerInterpretation(power) {
+                if (power >= 0.8) {
+                    return currentLanguage === 'bn' ? 'উচ্চ স্ট্যাটিস্টিকাল পাওয়ার' : 'High statistical power';
+                } else if (power >= 0.5) {
+                    return currentLanguage === 'bn' ? 'মাঝারি স্ট্যাটিস্টিকাল পাওয়ার' : 'Moderate statistical power';
+                } else {
+                    return currentLanguage === 'bn' ? 'নিম্ন স্ট্যাটিস্টিকাল পাওয়ার' : 'Low statistical power';
+                }
+            }
+
+            function clearAll() {
+                // Reset input fields
+                document.getElementById('correlationValue').value = '';
+                document.getElementById('sampleSize').value = '';
+                document.getElementById('dataX').value = '';
+                document.getElementById('dataY').value = '';
+                
+                // Reset results
+                document.getElementById('resultCorrelation').textContent = '--';
+                document.getElementById('resultPValue').textContent = '--';
+                document.getElementById('resultTStatistic').textContent = '--';
+                document.getElementById('resultSignificant').textContent = '--';
+                
+                // Hide significance indicator
+                document.getElementById('significanceIndicator').style.display = 'none';
+                
+                // Reset decision
+                const decisionIcon = document.getElementById('decisionIcon');
+                decisionIcon.className = 'decision-icon';
+                decisionIcon.innerHTML = '<i class="fas fa-question"></i>';
+                
+                document.getElementById('decisionDescription').innerHTML = `
+                    <span data-en="Enter test parameters and click 'Run Significance Test'" data-bন="টেস্ট প্যারামিটার ইনপুট করুন এবং 'সিগনিফিক্যান্স টেস্ট চালান' ক্লিক করুন">
+                        ${currentLanguage === 'bn' ? 
+                            "টেস্ট প্যারামিটার ইনপুট করুন এবং 'সিগনিফিক্যান্স টেস্ট চালান' ক্লিক করুন" : 
+                            "Enter test parameters and click 'Run Significance Test'"}
+                    </span>
+                `;
+                
+                // Reset effect sizes
+                document.getElementById('effectCohenD').textContent = '--';
+                document.getElementById('cohenInterpretation').textContent = '--';
+                document.getElementById('effectRSquared').textContent = '--';
+                document.getElementById('rSquaredInterpretation').textContent = '--';
+                document.getElementById('effectPower').textContent = '--';
+                document.getElementById('powerInterpretation').textContent = '--';
+                
+                // Clear chart
+                const canvas = document.getElementById('distributionCanvas');
+                const placeholder = document.getElementById('distributionPlaceholder');
+                
+                if (distributionChart) {
+                    distributionChart.destroy();
+                    distributionChart = null;
+                }
+                
+                placeholder.style.display = 'flex';
+                canvas.style.display = 'none';
+                
+                // Clear detailed results
+                document.getElementById('detailedResultsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" 
+                       data-en="Detailed calculations will appear here" data-bন="বিস্তারিত গণনা এখানে প্রদর্শিত হবে">
+                        ${currentLanguage === 'bn' ? 'বিস্তারিত গণনা এখানে প্রদর্শিত হবে' : 'Detailed calculations will appear here'}
+                    </p>
+                `;
+                
+                // Switch to direct input mode
+                switchInputMethod('direct');
+            }
+        });
+    </script>
+</body>
+</html>

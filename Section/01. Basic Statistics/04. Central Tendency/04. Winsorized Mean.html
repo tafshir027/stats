@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>উইনসোরাইজড মিন ক্যালকুলেটর | Winsorized Mean Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #9C27B0;
+            --secondary: #7B1FA2;
+            --accent: #FF4081;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FF9800;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --original-color: #2196F3;
+            --winsorized-color: #9C27B0;
+            --extreme-color: #FF4081;
+            --replacement-color: #4CAF50;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f3e5f5 0%, #f1f8e9 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--original-color), var(--winsorized-color), var(--extreme-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .data-input-container {
+            position: relative;
+        }
+
+        .data-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            line-height: 1.8;
+        }
+
+        .data-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .input-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Winsorization Settings */
+        .winsorization-settings {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .percentage-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .percentage-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .percentage-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+        }
+
+        .percentage-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .percentage-slider::-webkit-slider-thumb:hover {
+            background: var(--secondary);
+            transform: scale(1.2);
+        }
+
+        .percentage-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .option-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Preview */
+        .data-preview {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--border);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .data-point {
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 20px;
+            border: 2px solid var(--original-color);
+            font-weight: 600;
+            color: var(--original-color);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .data-point.extreme {
+            border-color: var(--extreme-color);
+            color: var(--extreme-color);
+            background: #ffebee;
+        }
+
+        .data-point.winsorized {
+            border-color: var(--replacement-color);
+            color: var(--replacement-color);
+            background: #e8f5e9;
+        }
+
+        .data-point:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .data-point-index {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .data-point-tag {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            background: var(--extreme-color);
+            color: white;
+            margin-left: 0.3rem;
+        }
+
+        /* Import Examples */
+        .examples-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .example-btn:hover .example-icon {
+            color: white;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Main Result Cards */
+        .result-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .result-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card.original {
+            border-color: var(--original-color);
+        }
+
+        .result-card.winsorized {
+            border-color: var(--winsorized-color);
+        }
+
+        .result-card.tukey {
+            border-color: var(--accent);
+        }
+
+        .result-card.impact {
+            border-color: var(--success);
+        }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .result-details {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Winsorization Summary */
+        .winsorization-summary {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f3e5f5;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .summary-stat {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Extreme Values Table */
+        .extreme-values-table {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .extreme-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .extreme-table th, .extreme-table td {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .extreme-table th {
+            background: var(--table-header);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .extreme-value {
+            background: #ffebee;
+            color: var(--extreme-color);
+            font-weight: 600;
+        }
+
+        .replacement-value {
+            background: #e8f5e9;
+            color: var(--replacement-color);
+            font-weight: 600;
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Box Plot Visualization */
+        .box-plot {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .box-plot-axis {
+            position: absolute;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--dark);
+            top: 50%;
+        }
+
+        .box-container {
+            position: absolute;
+            height: 60px;
+            background: rgba(156, 39, 176, 0.1);
+            border: 2px solid var(--winsorized-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        .box-median {
+            position: absolute;
+            width: 2px;
+            height: 80%;
+            background: var(--primary);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .whisker {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: var(--dark);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .whisker::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 2px;
+            background: var(--dark);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .whisker.left::before {
+            right: 100%;
+        }
+
+        .whisker.right::before {
+            left: 100%;
+        }
+
+        .outlier-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--extreme-color);
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .outlier-point:hover {
+            transform: translateY(-50%) scale(1.5);
+            z-index: 10;
+        }
+
+        .winsorized-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--replacement-color);
+            top: 50%;
+            transform: translateY(-50%);
+            border: 2px solid var(--winsorized-color);
+        }
+
+        .plot-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+            top: calc(50% + 40px);
+            transform: translateX(-50%);
+        }
+
+        /* Value Replacement Chart */
+        .replacement-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .replacement-line {
+            position: relative;
+            width: 80%;
+            height: 100px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding-bottom: 20px;
+        }
+
+        .original-column {
+            width: 30px;
+            background: var(--original-color);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .original-column.extreme {
+            background: var(--extreme-color);
+        }
+
+        .replacement-column {
+            width: 30px;
+            background: var(--replacement-color);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .value-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+
+        .arrow {
+            position: absolute;
+            color: var(--primary);
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+
+        /* Step-by-Step Calculation Section */
+        .calculation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .steps-container {
+            margin-top: 1.5rem;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--accent);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .highlight-cell {
+            background: #ffebee !important;
+            color: var(--extreme-color);
+            font-weight: 600;
+        }
+
+        .replacement-cell {
+            background: #e8f5e9 !important;
+            color: var(--replacement-color);
+            font-weight: 600;
+        }
+
+        /* Winsorization Technique Explanation */
+        .technique-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .technique-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .technique-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .technique-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .technique-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .technique-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            background: var(--primary);
+        }
+
+        .technique-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .technique-content {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* Comparison with Other Methods */
+        .comparison-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table th, .comparison-table td {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: var(--table-header);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .comparison-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pros, .cons {
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .pros {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
+        }
+
+        .cons {
+            background: #ffebee;
+            border-left: 4px solid var(--extreme-color);
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .calculation-section,
+            .technique-section,
+            .comparison-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .step-table,
+            .comparison-table,
+            .extreme-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Winsorized Mean Calculator" data-bn="উইনসোরাইজড মিন ক্যালকুলেটর">উইনসোরাইজড মিন ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate mean after replacing extreme values - robust alternative to arithmetic mean that's less sensitive to outliers" data-bn="চরম মান প্রতিস্থাপনের পর গড় গণনা করুন - গাণিতিক গড়ের একটি রোবাস্ট বিকল্প যা আউটলায়ারের প্রতি কম সংবেদনশীল">
+                চরম মান প্রতিস্থাপনের পর গড় গণনা করুন - গাণিতিক গড়ের একটি রোবাস্ট বিকল্প যা আউটলায়ারের প্রতি কম সংবেদনশীল
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span data-en="Data Input & Settings" data-bn="ডেটা ইনপুট ও সেটিংস">ডেটা ইনপুট ও সেটিংস</span>
+                </h2>
+                
+                <!-- Data Input -->
+                <div class="data-input-area">
+                    <div class="data-input-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-edit"></i>
+                            <span data-en="Enter Your Data" data-bn="আপনার ডেটা ইনপুট করুন">আপনার ডেটা ইনপুট করুন</span>
+                        </h3>
+                        <span id="dataCount" style="color: var(--gray); font-weight: 600;">0 values</span>
+                    </div>
+                    
+                    <div class="data-input-container">
+                        <textarea class="data-input" id="dataInput" placeholder="Enter numbers separated by commas, spaces, or new lines
+Example with outliers: 10, 12, 14, 15, 16, 100, 18, 20, 22, 500" data-bn-placeholder="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইনে আলাদা করুন
+আউটলায়ার সহ উদাহরণ: ১০, ১২, ১৪, ১৫, ১৬, ১০০, ১৮, ২০, ২২, ৫০০"></textarea>
+                    </div>
+                    
+                    <div class="input-hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Include some extreme values to see Winsorization in action" data-bn="উইনসোরাইজেশন দেখতে কিছু চরম মান অন্তর্ভুক্ত করুন">
+                            উইনসোরাইজেশন দেখতে কিছু চরম মান অন্তর্ভুক্ত করুন
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Winsorization Settings -->
+                <div class="winsorization-settings">
+                    <div class="settings-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-sliders-h"></i>
+                            <span data-en="Winsorization Settings" data-bn="উইনসোরাইজেশন সেটিংস">উইনসোরাইজেশন সেটিংস</span>
+                        </h3>
+                        <span id="percentageInfo" style="color: var(--primary); font-weight: 600;">10% each end</span>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i class="fas fa-percentage"></i>
+                                <span data-en="Winsorization Percentage" data-bn="উইনসোরাইজেশন পার্সেন্টেজ">উইনসোরাইজেশন পার্সেন্টেজ</span>
+                            </label>
+                            <div class="setting-control">
+                                <input type="range" class="percentage-slider" id="winsorizationSlider" min="0" max="25" value="10" step="1">
+                                <div class="percentage-value" id="winsorizationValue">10%</div>
+                            </div>
+                            <div class="setting-options">
+                                <button class="option-btn active" data-percentage="5">5%</button>
+                                <button class="option-btn" data-percentage="10">10%</button>
+                                <button class="option-btn" data-percentage="15">15%</button>
+                                <button class="option-btn" data-percentage="20">20%</button>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span data-en="Replacement Method" data-bn="প্রতিস্থাপন পদ্ধতি">প্রতিস্থাপন পদ্ধতি</span>
+                            </label>
+                            <div class="setting-options">
+                                <button class="option-btn active" data-method="percentile">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span data-en="Percentile" data-bn="পার্সেন্টাইল">পার্সেন্টাইল</span>
+                                </button>
+                                <button class="option-btn" data-method="iqr">
+                                    <i class="fas fa-ruler"></i>
+                                    <span data-en="IQR-Based" data-bন="আইকিউআর-ভিত্তিক">আইকিউআর-ভিত্তিক</span>
+                                </button>
+                                <button class="option-btn" data-method="std">
+                                    <i class="fas fa-sigma"></i>
+                                    <span data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Preview -->
+                <div class="data-preview">
+                    <div class="preview-header">
+                        <span data-en="Data Preview (Sorted)" data-bন="ডেটা প্রিভিউ (সাজানো)">ডেটা প্রিভিউ (সাজানো)</span>
+                        <span id="previewStats" style="color: var(--gray); font-weight: 600;">Extreme: 0</span>
+                    </div>
+                    <div class="preview-items" id="dataPreview">
+                        <!-- Data points will appear here -->
+                    </div>
+                </div>
+                
+                <!-- Import Examples -->
+                <div class="examples-section">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-file-import"></i>
+                        <span data-en="Load Example Datasets" data-bন="উদাহরণ ডেটাসেট লোড করুন">উদাহরণ ডেটাসেট লোড করুন</span>
+                    </h3>
+                    
+                    <div class="examples-grid">
+                        <button class="example-btn" data-example="outliers">
+                            <i class="fas fa-exclamation-triangle example-icon"></i>
+                            <span data-en="Clear Outliers" data-bন="পরিষ্কার আউটলায়ার">পরিষ্কার আউটলায়ার</span>
+                        </button>
+                        <button class="example-btn" data-example="income">
+                            <i class="fas fa-money-bill-wave example-icon"></i>
+                            <span data-en="Income Data" data-bন="আয় ডেটা">আয় ডেটা</span>
+                        </button>
+                        <button class="example-btn" data-example="test-scores">
+                            <i class="fas fa-graduation-cap example-icon"></i>
+                            <span data-en="Test Scores" data-bন="পরীক্ষার নম্বর">পরীক্ষার নম্বর</span>
+                        </button>
+                        <button class="example-btn" data-example="symmetric">
+                            <i class="fas fa-balance-scale example-icon"></i>
+                            <span data-en="Symmetric Data" data-bন="সিমেট্রিক ডেটা">সিমেট্রিক ডেটা</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Winsorized Mean" data-bন="উইনসোরাইজড মিন গণনা করুন">উইনসোরাইজড মিন গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Winsorization Results" data-bন="উইনসোরাইজেশন ফলাফল">উইনসোরাইজেশন ফলাফল</span>
+                </h2>
+                
+                <!-- Result Cards -->
+                <div class="result-cards">
+                    <div class="result-card original">
+                        <div class="result-title" data-en="Original Mean" data-bন="অরিজিনাল মিন">অরিজিনাল মিন</div>
+                        <div class="result-value" id="originalMeanResult">72.70</div>
+                        <div class="result-details" data-en="Sensitive to outliers" data-bন="আউটলায়ারের প্রতি সংবেদনশীল">
+                            আউটলায়ারের প্রতি সংবেদনশীল
+                        </div>
+                    </div>
+                    
+                    <div class="result-card winsorized">
+                        <div class="result-title" data-en="Winsorized Mean" data-bন="উইনসোরাইজড মিন">উইনসোরাইজড মিন</div>
+                        <div class="result-value" id="winsorizedMeanResult">17.20</div>
+                        <div class="result-details" data-en="Robust to outliers" data-bন="আউটলায়ারের প্রতি রোবাস্ট">
+                            আউটলায়ারের প্রতি রোবাস্ট
+                        </div>
+                    </div>
+                    
+                    <div class="result-card tukey">
+                        <div class="result-title" data-en="Trimmed Mean (20%)" data-bন="ট্রিম্ড মিন (২০%)">ট্রিম্ড মিন (২০%)</div>
+                        <div class="result-value" id="trimmedMeanResult">16.13</div>
+                        <div class="result-details" data-en="For comparison" data-bন="তুলনার জন্য">
+                            তুলনার জন্য
+                        </div>
+                    </div>
+                    
+                    <div class="result-card impact">
+                        <div class="result-title" data-en="Outlier Impact" data-bন="আউটলায়ার ইমপ্যাক্ট">আউটলায়ার ইমপ্যাক্ট</div>
+                        <div class="result-value" id="impactResult">-76.3%</div>
+                        <div class="result-details" id="impactDetails" data-en="Reduction due to winsorization" data-bন="উইনসোরাইজেশনের কারণে হ্রাস">
+                            উইনসোরাইজেশনের কারণে হ্রাস
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Winsorization Summary -->
+                <div class="winsorization-summary">
+                    <div class="summary-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-info-circle"></i>
+                            <span data-en="Winsorization Summary" data-bন="উইনসোরাইজেশন সারসংক্ষেপ">উইনসোরাইজেশন সারসংক্ষেপ</span>
+                        </h3>
+                        <span id="summaryPercent" style="color: var(--primary); font-weight: 600;">10% each end</span>
+                    </div>
+                    
+                    <p style="color: var(--gray); line-height: 1.6; margin-bottom: 1rem;" id="summaryDescription" 
+                       data-en="10% of values from each end (lowest and highest) are replaced with nearest non-extreme values"
+                       data-bn="প্রতিটি প্রান্ত থেকে ১০% মান (সর্বনিম্ন এবং সর্বোচ্চ) নিকটতম অ-চরম মান দ্বারা প্রতিস্থাপিত হয়েছে">
+                        প্রতিটি প্রান্ত থেকে ১০% মান (সর্বনিম্ন এবং সর্বোচ্চ) নিকটতম অ-চরম মান দ্বারা প্রতিস্থাপিত হয়েছে
+                    </p>
+                    
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <div class="stat-label" data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</div>
+                            <div class="stat-value" id="totalPoints">10</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="stat-label" data-en="Extreme Values" data-bন="চরম মান">চরম মান</div>
+                            <div class="stat-value" id="extremeCount">2</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="stat-label" data-en="Replaced Low" data-bন="প্রতিস্থাপিত নিম্ন">প্রতিস্থাপিত নিম্ন</div>
+                            <div class="stat-value" id="replacedLow">1</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="stat-label" data-en="Replaced High" data-bন="প্রতিস্থাপিত উচ্চ">প্রতিস্থাপিত উচ্চ</div>
+                            <div class="stat-value" id="replacedHigh">1</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Extreme Values Table -->
+                <div class="extreme-values-table">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span data-en="Extreme Value Replacement" data-bন="চরম মান প্রতিস্থাপন">চরম মান প্রতিস্থাপন</span>
+                    </h3>
+                    
+                    <div class="table-container">
+                        <table class="extreme-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Type" data-bন="প্রকার">প্রকার</th>
+                                    <th data-en="Position" data-bন="অবস্থান">অবস্থান</th>
+                                    <th data-en="Original Value" data-bন="অরিজিনাল মান">অরিজিনাল মান</th>
+                                    <th data-en="Replacement Value" data-bন="প্রতিস্থাপন মান">প্রতিস্থাপন মান</th>
+                                    <th data-en="Difference" data-bন="পার্থক্য">পার্থক্য</th>
+                                </tr>
+                            </thead>
+                            <tbody id="extremeTableBody">
+                                <!-- Extreme values will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Interpretation -->
+                <div style="margin-top: 2rem; padding: 1.5rem; background: #f3e5f5; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Interpretation" data-bন="ব্যাখ্যা">ব্যাখ্যা</span>
+                    </h4>
+                    <p id="interpretationText" style="color: var(--gray); line-height: 1.6;" 
+                       data-en="The Winsorized mean reduces the influence of extreme values while preserving all data points. It's more representative of the central tendency when outliers are present."
+                       data-bn="উইনসোরাইজড মিন চরম মানের প্রভাব হ্রাস করে যখন সমস্ত ডেটা পয়েন্ট সংরক্ষণ করে। আউটলায়ার থাকলে এটি কেন্দ্রীয় প্রবণতার আরও ভাল প্রতিনিধিত্ব করে।">
+                        উইনসোরাইজড মিন চরম মানের প্রভাব হ্রাস করে যখন সমস্ত ডেটা পয়েন্ট সংরক্ষণ করে। আউটলায়ার থাকলে এটি কেন্দ্রীয় প্রবণতার আরও ভাল প্রতিনিধিত্ব করে।
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span data-en="Data Visualization" data-bন="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Box Plot -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-box"></i>
+                        <span data-en="Box Plot with Winsorization" data-bন="উইনসোরাইজেশন সহ বক্স প্লট">উইনসোরাইজেশন সহ বক্স প্লট</span>
+                    </h3>
+                    <div id="boxPlot" class="box-plot">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-box"></i>
+                            <p data-en="Enter data to see box plot" data-bন="ডেটা ইনপুট করে বক্স প্লট দেখুন">ডেটা ইনপুট করে বক্স প্লট দেখুন</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Replacement Visualization -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span data-en="Value Replacement" data-bন="মান প্রতিস্থাপন">মান প্রতিস্থাপন</span>
+                    </h3>
+                    <div id="replacementVisualization" class="replacement-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-exchange-alt"></i>
+                            <p data-en="Enter data to see value replacement" data-bন="ডেটা ইনপুট করে মান প্রতিস্থাপন দেখুন">ডেটা ইনপুট করে মান প্রতিস্থাপন দেখুন</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Calculation Section -->
+        <div class="calculation-section">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Step-by-Step Winsorization" data-bন="ধাপে ধাপে উইনসোরাইজেশন">ধাপে ধাপে উইনসোরাইজেশন</span>
+            </h2>
+            
+            <div id="stepsContainer">
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Sort Data and Identify Percentage" data-bন="ধাপ ১: ডেটা সাজান এবং পার্সেন্টেজ চিহ্নিত করুন">ধাপ ১: ডেটা সাজান এবং পার্সেন্টেজ চিহ্নিত করুন</h4>
+                            <p data-en="Sort data in ascending order and calculate how many values to replace from each end" data-bন="ডেটা আরোহী ক্রমে সাজান এবং প্রতিটি প্রান্ত থেকে কতগুলি মান প্রতিস্থাপন করতে হবে তা গণনা করুন">
+                                ডেটা আরোহী ক্রমে সাজান এবং প্রতিটি প্রান্ত থেকে কতগুলি মান প্রতিস্থাপন করতে হবে তা গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Parameter" data-bন="প্যারামিটার">প্যারামিটার</th>
+                                            <th data-en="Value" data-bন="মান">মান</th>
+                                            <th data-en="Calculation" data-bন="গণনা">গণনা</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="step1Table">
+                                        <!-- Data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Find Replacement Values" data-bন="ধাপ ২: প্রতিস্থাপন মান খুঁজুন">ধাপ ২: প্রতিস্থাপন মান খুঁজুন</h4>
+                            <p data-en="Determine which values to use as replacements for extreme values" data-bন="চরম মানের প্রতিস্থাপন হিসাবে কোন মানগুলি ব্যবহার করতে হবে তা নির্ধারণ করুন">
+                                চরম মানের প্রতিস্থাপন হিসাবে কোন মানগুলি ব্যবহার করতে হবে তা নির্ধারণ করুন
+                            </p>
+                            <div class="step-details">
+                                <div class="step-equation" id="step2Equation">
+                                    Lower replacement = Value at position (k+1)<br>
+                                    Upper replacement = Value at position (n-k)
+                                </div>
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="End" data-bন="প্রান্ত">প্রান্ত</th>
+                                            <th data-en="Position" data-bন="অবস্থান">অবস্থান</th>
+                                            <th data-en="Replacement Value" data-bন="প্রতিস্থাপন মান">প্রতিস্থাপন মান</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="step2Table">
+                                        <!-- Data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Create Winsorized Dataset" data-bন="ধাপ ৩: উইনসোরাইজড ডেটাসেট তৈরি করুন">ধাপ ৩: উইনসোরাইজড ডেটাসেট তৈরি করুন</h4>
+                            <p data-en="Replace extreme values with the determined replacement values" data-bন="চরম মানগুলিকে নির্ধারিত প্রতিস্থাপন মান দ্বারা প্রতিস্থাপন করুন">
+                                চরম মানগুলিকে নির্ধারিত প্রতিস্থাপন মান দ্বারা প্রতিস্থাপন করুন
+                            </p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Position" data-bন="অবস্থান">অবস্থান</th>
+                                            <th data-en="Original Value" data-bন="অরিজিনাল মান">অরিজিনাল মান</th>
+                                            <th data-en="Winsorized Value" data-bন="উইনসোরাইজড মান">উইনসোরাইজড মান</th>
+                                            <th data-en="Status" data-bন="স্ট্যাটাস">স্ট্যাটাস</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="step3Table">
+                                        <!-- Data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">৪</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 4: Calculate Winsorized Mean" data-bন="ধাপ ৪: উইনসোরাইজড মিন গণনা করুন">ধাপ ৪: উইনসোরাইজড মিন গণনা করুন</h4>
+                            <p data-en="Calculate the mean of the Winsorized dataset" data-bন="উইনসোরাইজড ডেটাসেটের গড় গণনা করুন">
+                                উইনসোরাইজড ডেটাসেটের গড় গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <div class="step-equation" id="step4Equation">
+                                    Winsorized Mean = Σ(Winsorized Values) / n
+                                </div>
+                                <div class="step-equation" id="step4Calculation">
+                                    Winsorized Mean = 172 / 10 = 17.2
+                                </div>
+                                <p id="step4Result" style="text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--winsorized-color);"
+                                   data-en="Winsorized Mean = 17.20" data-bন="উইনসোরাইজড মিন = ১৭.২০">
+                                    উইনসোরাইজড মিন = ১৭.২০
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Winsorization Technique Explanation -->
+        <div class="technique-section">
+            <h2 class="section-title">
+                <i class="fas fa-cogs"></i>
+                <span data-en="Winsorization Technique" data-bন="উইনসোরাইজেশন টেকনিক">উইনসোরাইজেশন টেকনিক</span>
+            </h2>
+            
+            <div class="technique-cards">
+                <!-- What is Winsorization -->
+                <div class="technique-card">
+                    <div class="technique-header">
+                        <div class="technique-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <h3 class="technique-title" data-en="What is Winsorization?" data-bন="উইনসোরাইজেশন কী?">উইনসোরাইজেশন কী?</h3>
+                    </div>
+                    <div class="technique-content">
+                        <p data-en="Winsorization is a statistical transformation that replaces extreme values with less extreme values. Unlike trimming which removes extreme values, Winsorization replaces them, preserving the sample size while reducing the influence of outliers."
+                           data-bন="উইনসোরাইজেশন হল একটি পরিসংখ্যানিক রূপান্তর যা চরম মানগুলিকে কম চরম মান দ্বারা প্রতিস্থাপন করে। চরম মান অপসারণকারী ট্রিমিংয়ের বিপরীতে, উইনসোরাইজেশন সেগুলিকে প্রতিস্থাপন করে, নমুনার আকার সংরক্ষণ করে যখন আউটলায়ারদের প্রভাব হ্রাস করে।">
+                            উইনসোরাইজেশন হল একটি পরিসংখ্যানিক রূপান্তর যা চরম মানগুলিকে কম চরম মান দ্বারা প্রতিস্থাপন করে। চরম মান অপসারণকারী ট্রিমিংয়ের বিপরীতে, উইনসোরাইজেশন সেগুলিকে প্রতিস্থাপন করে, নমুনার আকার সংরক্ষণ করে যখন আউটলায়ারদের প্রভাব হ্রাস করে।
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Why Use Winsorization -->
+                <div class="technique-card">
+                    <div class="technique-header">
+                        <div class="technique-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3 class="technique-title" data-en="Why Use Winsorization?" data-bন="কেন উইনসোরাইজেশন ব্যবহার করবেন?">কেন উইনসোরাইজেশন ব্যবহার করবেন?</h3>
+                    </div>
+                    <div class="technique-content">
+                        <ul style="padding-left: 1.5rem; color: var(--gray);">
+                            <li data-en="Reduces outlier influence without losing data" data-bন="ডেটা হারানো ছাড়াই আউটলায়ার প্রভাব হ্রাস করে">ডেটা হারানো ছাড়াই আউটলায়ার প্রভাব হ্রাস করে</li>
+                            <li data-en="Preserves sample size for statistical tests" data-bন="পরিসংখ্যানিক পরীক্ষার জন্য নমুনার আকার সংরক্ষণ করে">পরিসংখ্যানিক পরীক্ষার জন্য নমুনার আকার সংরক্ষণ করে</li>
+                            <li data-en="More robust than arithmetic mean" data-bন="গাণিতিক গড়ের চেয়ে বেশি রোবাস্ট">গাণিতিক গড়ের চেয়ে বেশি রোবাস্ট</li>
+                            <li data-en="Better represents central tendency with outliers" data-bন="আউটলায়ার সহ কেন্দ্রীয় প্রবণতার আরও ভাল প্রতিনিধিত্ব করে">আউটলায়ার সহ কেন্দ্রীয় প্রবণতার আরও ভাল প্রতিনিধিত্ব করে</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Common Percentages -->
+                <div class="technique-card">
+                    <div class="technique-header">
+                        <div class="technique-icon">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <h3 class="technique-title" data-en="Common Winsorization Levels" data-bন="সাধারণ উইনসোরাইজেশন স্তর">সাধারণ উইনসোরাইজেশন স্তর</h3>
+                    </div>
+                    <div class="technique-content">
+                        <ul style="padding-left: 1.5rem; color: var(--gray);">
+                            <li><strong>5% each end:</strong> <span data-en="Mild winsorization" data-bন="হালকা উইনসোরাইজেশন">হালকা উইনসোরাইজেশন</span></li>
+                            <li><strong>10% each end:</strong> <span data-en="Standard practice" data-bন="স্ট্যান্ডার্ড অনুশীলন">স্ট্যান্ডার্ড অনুশীলন</span></li>
+                            <li><strong>15% each end:</strong> <span data-en="Moderate winsorization" data-bন="মাঝারি উইনসোরাইজেশন">মাঝারি উইনসোরাইজেশন</span></li>
+                            <li><strong>20% each end:</strong> <span data-en="Aggressive winsorization" data-bন="আক্রমনাত্মক উইনসোরাইজেশন">আক্রমনাত্মক উইনসোরাইজেশন</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison with Other Methods -->
+        <div class="comparison-section">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Comparison with Other Robust Methods" data-bন="অন্যান্য রোবাস্ট পদ্ধতির সাথে তুলনা">অন্যান্য রোবাস্ট পদ্ধতির সাথে তুলনা</span>
+            </h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th data-en="Method" data-bন="পদ্ধতি">পদ্ধতি</th>
+                        <th data-en="Description" data-bন="বর্ণনা">বর্ণনা</th>
+                        <th data-en="Preserves Data?" data-bন="ডেটা সংরক্ষণ করে?">ডেটা সংরক্ষণ করে?</th>
+                        <th data-en="Robustness" data-bন="রোবাস্টনেস">রোবাস্টনেস</th>
+                        <th data-en="Use Case" data-bন="ব্যবহারের ক্ষেত্র">ব্যবহারের ক্ষেত্র</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong data-en="Arithmetic Mean" data-bন="গাণিতিক গড়">গাণিতিক গড়</strong></td>
+                        <td data-en="Simple average of all values" data-bন="সমস্ত মানের সরল গড়">সমস্ত মানের সরল গড়</td>
+                        <td>✓</td>
+                        <td data-en="Low" data-bন="নিম্ন">নিম্ন</td>
+                        <td data-en="No outliers, normal distribution" data-bন="কোন আউটলায়ার নেই, স্বাভাবিক বন্টন">কোন আউটলায়ার নেই, স্বাভাবিক বন্টন</td>
+                    </tr>
+                    <tr>
+                        <td><strong data-en="Winsorized Mean" data-bন="উইনসোরাইজড মিন">উইনসোরাইজড মিন</strong></td>
+                        <td data-en="Replace extreme values" data-bন="চরম মান প্রতিস্থাপন">চরম মান প্রতিস্থাপন</td>
+                        <td>✓*</td>
+                        <td data-en="High" data-bন="উচ্চ">উচ্চ</td>
+                        <td data-en="Moderate outliers, preserve sample size" data-bন="মাঝারি আউটলায়ার, নমুনার আকার সংরক্ষণ">মাঝারি আউটলায়ার, নমুনার আকার সংরক্ষণ</td>
+                    </tr>
+                    <tr>
+                        <td><strong data-en="Trimmed Mean" data-bন="ট্রিম্ড মিন">ট্রিম্ড মিন</strong></td>
+                        <td data-en="Remove extreme values" data-bন="চরম মান অপসারণ">চরম মান অপসারণ</td>
+                        <td>✗</td>
+                        <td data-en="High" data-bন="উচ্চ">উচ্চ</td>
+                        <td data-en="Severe outliers, reduce bias" data-bন="গুরুতর আউটলায়ার, পক্ষপাত হ্রাস">গুরুতর আউটলায়ার, পক্ষপাত হ্রাস</td>
+                    </tr>
+                    <tr>
+                        <td><strong data-en="Median" data-bন="মিডিয়ান">মিডিয়ান</strong></td>
+                        <td data-en="Middle value when sorted" data-bন="সাজানো অবস্থায় মধ্যম মান">সাজানো অবস্থায় মধ্যম মান</td>
+                        <td>✓</td>
+                        <td data-en="Very High" data-bন="খুব উচ্চ">খুব উচ্চ</td>
+                        <td data-en="Extreme outliers, skewed data" data-bন="চরম আউটলায়ার, বাঁকানো ডেটা">চরম আউটলায়ার, বাঁকানো ডেটা</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4 style="color: var(--success); margin-bottom: 1rem;">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span data-en="Pros of Winsorization" data-bন="উইনসোরাইজেশনের সুবিধা">উইনসোরাইজেশনের সুবিধা</span>
+                    </h4>
+                    <ul style="padding-left: 1.5rem; color: var(--gray);">
+                        <li data-en="Preserves all data points (sample size)" data-bন="সমস্ত ডেটা পয়েন্ট সংরক্ষণ করে (নমুনার আকার)">সমস্ত ডেটা পয়েন্ট সংরক্ষণ করে (নমুনার আকার)</li>
+                        <li data-en="Less sensitive to outliers than arithmetic mean" data-bন="গাণিতিক গড়ের চেয়ে আউটলায়ারের প্রতি কম সংবেদনশীল">গাণিতিক গড়ের চেয়ে আউটলায়ারের প্রতি কম সংবেদনশীল</li>
+                        <li data-en="More efficient than median for normal-ish data" data-bন="স্বাভাবিক-জাতীয় ডেটার জন্য মিডিয়ানের চেয়ে বেশি কার্যকর">স্বাভাবিক-জাতীয় ডেটার জন্য মিডিয়ানের চেয়ে বেশি কার্যকর</li>
+                        <li data-en="Reduces variance more effectively than trimming" data-bন="ট্রিমিংয়ের চেয়ে আরও কার্যকরভাবে ভ্যারিয়েন্স হ্রাস করে">ট্রিমিংয়ের চেয়ে আরও কার্যকরভাবে ভ্যারিয়েন্স হ্রাস করে</li>
+                    </ul>
+                </div>
+                
+                <div class="cons">
+                    <h4 style="color: var(--extreme-color); margin-bottom: 1rem;">
+                        <i class="fas fa-thumbs-down"></i>
+                        <span data-en="Cons of Winsorization" data-bন="উইনসোরাইজেশনের অসুবিধা">উইনসোরাইজেশনের অসুবিধা</span>
+                    </h4>
+                    <ul style="padding-left: 1.5rem; color: var(--gray);">
+                        <li data-en="Arbitrary choice of percentage" data-bন="পার্সেন্টেজের নির্বিচার পছন্দ">পার্সেন্টেজের নির্বিচার পছন্দ</li>
+                        <li data-en="Can distort true distribution if overused" data-bন="অত্যধিক ব্যবহার করা হলে প্রকৃত বন্টন বিকৃত করতে পারে">অত্যধিক ব্যবহার করা হলে প্রকৃত বন্টন বিকৃত করতে পারে</li>
+                        <li data-en="Less robust than median for extreme cases" data-bন="চরম ক্ষেত্রে মিডিয়ানের চেয়ে কম রোবাস্ট">চরম ক্ষেত্রে মিডিয়ানের চেয়ে কম রোবাস্ট</li>
+                        <li data-en="Requires more computation than simple mean" data-bন="সরল গড়ের চেয়ে বেশি গণনার প্রয়োজন">সরল গড়ের চেয়ে বেশি গণনার প্রয়োজন</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example datasets
+            const examples = {
+                'outliers': {
+                    name: 'Clear Outliers',
+                    data: [10, 12, 14, 15, 16, 100, 18, 20, 22, 500],
+                    description: 'Clearly shows how outliers affect mean'
+                },
+                'income': {
+                    name: 'Income Data',
+                    data: [25000, 28000, 32000, 35000, 38000, 42000, 45000, 48000, 52000, 55000, 200000, 220000],
+                    description: 'Realistic income data with high earners'
+                },
+                'test-scores': {
+                    name: 'Test Scores',
+                    data: [65, 68, 72, 75, 78, 82, 85, 88, 92, 95, 100, 100, 100, 45],
+                    description: 'Test scores with perfect scores and one low score'
+                },
+                'symmetric': {
+                    name: 'Symmetric Data',
+                    data: [10, 12, 14, 16, 18, 20, 22, 24, 26, 28],
+                    description: 'Symmetric data without outliers'
+                }
+            };
+
+            // Store data and settings
+            let originalData = [];
+            let winsorizedData = [];
+            let winsorizationPercentage = 10;
+            let replacementMethod = 'percentile';
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Percentage Slider
+                const percentageSlider = document.getElementById('winsorizationSlider');
+                const percentageValue = document.getElementById('winsorizationValue');
+                
+                percentageSlider.addEventListener('input', function() {
+                    winsorizationPercentage = parseInt(this.value);
+                    percentageValue.textContent = `${winsorizationPercentage}%`;
+                    updatePercentageInfo();
+                    
+                    // Update active option button
+                    document.querySelectorAll('.option-btn[data-percentage]').forEach(btn => {
+                        if (parseInt(btn.dataset.percentage) === winsorizationPercentage) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    
+                    // Recalculate if we have data
+                    if (originalData.length > 0) {
+                        calculateWinsorizedMean();
+                    }
+                });
+
+                // Percentage Option Buttons
+                document.querySelectorAll('.option-btn[data-percentage]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        winsorizationPercentage = parseInt(this.dataset.percentage);
+                        percentageSlider.value = winsorizationPercentage;
+                        percentageValue.textContent = `${winsorizationPercentage}%`;
+                        updatePercentageInfo();
+                        
+                        // Update active buttons
+                        document.querySelectorAll('.option-btn[data-percentage]').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        // Recalculate if we have data
+                        if (originalData.length > 0) {
+                            calculateWinsorizedMean();
+                        }
+                    });
+                });
+
+                // Method Option Buttons
+                document.querySelectorAll('.option-btn[data-method]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        replacementMethod = this.dataset.method;
+                        
+                        // Update active buttons
+                        document.querySelectorAll('.option-btn[data-method]').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        // Recalculate if we have data
+                        if (originalData.length > 0) {
+                            calculateWinsorizedMean();
+                        }
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', function() {
+                    parseInputData();
+                    if (originalData.length > 0) {
+                        calculateWinsorizedMean();
+                    }
+                });
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Real-time data input
+                document.getElementById('dataInput').addEventListener('input', function() {
+                    parseInputData();
+                    if (originalData.length > 0) {
+                        calculateWinsorizedMean();
+                    }
+                });
+
+                // Load initial example
+                loadExampleData('outliers');
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+
+                // Update dynamic content if needed
+                if (originalData.length > 0) {
+                    updateDynamicContent();
+                }
+            }
+
+            function parseInputData() {
+                const input = document.getElementById('dataInput').value.trim();
+                if (!input) {
+                    originalData = [];
+                    updateDataPreview();
+                    return;
+                }
+
+                // Split by commas, spaces, or new lines
+                const tokens = input.split(/[,\s\n]+/);
+                
+                // Parse numbers
+                originalData = tokens.map(token => {
+                    const num = parseFloat(token);
+                    return isNaN(num) ? null : num;
+                }).filter(num => num !== null);
+                
+                updateDataPreview();
+            }
+
+            function updateDataPreview() {
+                const preview = document.getElementById('dataPreview');
+                const dataCount = document.getElementById('dataCount');
+                const previewStats = document.getElementById('previewStats');
+                
+                preview.innerHTML = '';
+                
+                if (originalData.length === 0) {
+                    dataCount.textContent = currentLanguage === 'bn' ? '০ মান' : '0 values';
+                    previewStats.textContent = currentLanguage === 'bn' ? 'চরম: ০' : 'Extreme: 0';
+                    return;
+                }
+                
+                // Sort data for preview
+                const sortedData = [...originalData].sort((a, b) => a - b);
+                dataCount.textContent = currentLanguage === 'bn' ? 
+                    `${originalData.length} টি মান` : 
+                    `${originalData.length} values`;
+                
+                // Show all data points
+                sortedData.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'data-point';
+                    point.innerHTML = `
+                        <span class="data-point-index">${index + 1}</span>
+                        <span class="data-point-value">${formatNumber(value)}</span>
+                    `;
+                    
+                    // Add tag for extreme values if we've calculated
+                    if (winsorizedData.length > 0) {
+                        const originalIndex = originalData.indexOf(value);
+                        if (originalIndex !== -1 && originalData[originalIndex] !== winsorizedData[originalIndex]) {
+                            point.classList.add('extreme');
+                            const tag = document.createElement('span');
+                            tag.className = 'data-point-tag';
+                            tag.textContent = currentLanguage === 'bn' ? 'চরম' : 'Extreme';
+                            point.appendChild(tag);
+                        }
+                    }
+                    
+                    preview.appendChild(point);
+                });
+                
+                // Update stats
+                if (winsorizedData.length > 0) {
+                    const extremeCount = originalData.reduce((count, val, idx) => 
+                        val !== winsorizedData[idx] ? count + 1 : count, 0);
+                    previewStats.textContent = currentLanguage === 'bn' ? 
+                        `চরম: ${extremeCount}` : `Extreme: ${extremeCount}`;
+                }
+            }
+
+            function formatNumber(num) {
+                // Format number with appropriate decimal places
+                if (Number.isInteger(num)) {
+                    return num.toString();
+                }
+                
+                const absNum = Math.abs(num);
+                if (absNum >= 1000 || absNum < 0.001) {
+                    return num.toExponential(2);
+                } else if (absNum < 1) {
+                    return num.toFixed(3);
+                } else {
+                    return num.toFixed(2);
+                }
+            }
+
+            function calculateWinsorizedMean() {
+                if (originalData.length === 0) return;
+                
+                // Calculate number of values to replace from each end
+                const n = originalData.length;
+                const k = Math.floor(n * winsorizationPercentage / 100);
+                
+                // Sort data
+                const sortedData = [...originalData].sort((a, b) => a - b);
+                
+                // Determine replacement values based on method
+                let lowerReplacement, upperReplacement;
+                
+                switch (replacementMethod) {
+                    case 'iqr':
+                        // IQR-based method
+                        const q1 = calculatePercentile(sortedData, 25);
+                        const q3 = calculatePercentile(sortedData, 75);
+                        const iqr = q3 - q1;
+                        lowerReplacement = q1 - 1.5 * iqr;
+                        upperReplacement = q3 + 1.5 * iqr;
+                        break;
+                        
+                    case 'std':
+                        // Standard deviation method
+                        const mean = originalData.reduce((a, b) => a + b, 0) / n;
+                        const std = Math.sqrt(originalData.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n);
+                        lowerReplacement = mean - 2 * std;
+                        upperReplacement = mean + 2 * std;
+                        break;
+                        
+                    case 'percentile':
+                    default:
+                        // Percentile method (standard Winsorization)
+                        lowerReplacement = sortedData[k];
+                        upperReplacement = sortedData[n - k - 1];
+                        break;
+                }
+                
+                // Create winsorized dataset
+                winsorizedData = originalData.map(value => {
+                    if (value < lowerReplacement) {
+                        return lowerReplacement;
+                    } else if (value > upperReplacement) {
+                        return upperReplacement;
+                    } else {
+                        return value;
+                    }
+                });
+                
+                // Calculate various means
+                const originalMean = originalData.reduce((a, b) => a + b, 0) / n;
+                const winsorizedMean = winsorizedData.reduce((a, b) => a + b, 0) / n;
+                
+                // Calculate trimmed mean for comparison (same percentage)
+                const trimmedData = sortedData.slice(k, n - k);
+                const trimmedMean = trimmedData.reduce((a, b) => a + b, 0) / trimmedData.length;
+                
+                // Calculate impact
+                const impact = ((winsorizedMean - originalMean) / originalMean) * 100;
+                
+                // Update results
+                updateResults(originalMean, winsorizedMean, trimmedMean, impact, k);
+                
+                // Update step-by-step calculation
+                updateStepByStep(sortedData, k, lowerReplacement, upperReplacement, winsorizedMean);
+                
+                // Update visualizations
+                updateVisualizations(sortedData, k, lowerReplacement, upperReplacement);
+                
+                // Update extreme values table
+                updateExtremeValuesTable(lowerReplacement, upperReplacement);
+                
+                // Update interpretation
+                updateInterpretation(originalMean, winsorizedMean, impact);
+            }
+
+            function calculatePercentile(data, percentile) {
+                const index = (percentile / 100) * (data.length - 1);
+                const lower = Math.floor(index);
+                const upper = Math.ceil(index);
+                
+                if (lower === upper) {
+                    return data[lower];
+                }
+                
+                // Linear interpolation
+                const weight = index - lower;
+                return data[lower] * (1 - weight) + data[upper] * weight;
+            }
+
+            function updateResults(originalMean, winsorizedMean, trimmedMean, impact, k) {
+                // Update result cards
+                document.getElementById('originalMeanResult').textContent = formatNumber(originalMean);
+                document.getElementById('winsorizedMeanResult').textContent = formatNumber(winsorizedMean);
+                document.getElementById('trimmedMeanResult').textContent = formatNumber(trimmedMean);
+                document.getElementById('impactResult').textContent = formatNumber(impact) + '%';
+                
+                // Update impact details
+                const impactDetails = document.getElementById('impactDetails');
+                if (impact < 0) {
+                    impactDetails.textContent = currentLanguage === 'bn' ? 
+                        `উইনসোরাইজেশনের কারণে হ্রাস` : `Reduction due to winsorization`;
+                    impactDetails.style.color = 'var(--success)';
+                } else if (impact > 0) {
+                    impactDetails.textContent = currentLanguage === 'bn' ? 
+                        `উইনসোরাইজেশনের কারণে বৃদ্ধি` : `Increase due to winsorization`;
+                    impactDetails.style.color = 'var(--extreme-color)';
+                } else {
+                    impactDetails.textContent = currentLanguage === 'bn' ? 
+                        `কোন পরিবর্তন নেই` : `No change`;
+                    impactDetails.style.color = 'var(--gray)';
+                }
+                
+                // Update summary
+                const totalPoints = originalData.length;
+                const extremeCount = originalData.reduce((count, val, idx) => 
+                    val !== winsorizedData[idx] ? count + 1 : count, 0);
+                const replacedLow = originalData.filter((val, idx) => 
+                    val < winsorizedData[idx]).length;
+                const replacedHigh = originalData.filter((val, idx) => 
+                    val > winsorizedData[idx]).length;
+                
+                document.getElementById('totalPoints').textContent = totalPoints;
+                document.getElementById('extremeCount').textContent = extremeCount;
+                document.getElementById('replacedLow').textContent = replacedLow;
+                document.getElementById('replacedHigh').textContent = replacedHigh;
+                
+                // Update summary description
+                const summaryDescription = document.getElementById('summaryDescription');
+                summaryDescription.textContent = currentLanguage === 'bn' ? 
+                    `${winsorizationPercentage}% মান প্রতিটি প্রান্ত থেকে (সর্বনিম্ন এবং সর্বোচ্চ) নিকটতম অ-চরম মান দ্বারা প্রতিস্থাপিত হয়েছে` :
+                    `${winsorizationPercentage}% of values from each end (lowest and highest) are replaced with nearest non-extreme values`;
+            }
+
+            function updatePercentageInfo() {
+                const percentageInfo = document.getElementById('percentageInfo');
+                const summaryPercent = document.getElementById('summaryPercent');
+                
+                const info = currentLanguage === 'bn' ? 
+                    `${winsorizationPercentage}% প্রতিটি প্রান্ত` : 
+                    `${winsorizationPercentage}% each end`;
+                
+                percentageInfo.textContent = info;
+                summaryPercent.textContent = info;
+            }
+
+            function updateStepByStep(sortedData, k, lowerReplacement, upperReplacement, winsorizedMean) {
+                const n = sortedData.length;
+                
+                // Step 1: Sort data and identify percentage
+                const step1Table = document.getElementById('step1Table');
+                step1Table.innerHTML = `
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'মোট ডেটা পয়েন্ট' : 'Total data points'}</td>
+                        <td>n = ${n}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'উইনসোরাইজেশন পার্সেন্টেজ' : 'Winsorization percentage'}</td>
+                        <td>${winsorizationPercentage}%</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'প্রতিটি প্রান্তে প্রতিস্থাপন করতে হবে' : 'Values to replace from each end'}</td>
+                        <td>k = ${k}</td>
+                        <td>k = floor(${n} × ${winsorizationPercentage}% / 100)</td>
+                    </tr>
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'মোট প্রতিস্থাপিত মান' : 'Total values replaced'}</td>
+                        <td>${k * 2}</td>
+                        <td>2 × k = 2 × ${k}</td>
+                    </tr>
+                `;
+                
+                // Step 2: Find replacement values
+                const step2Equation = document.getElementById('step2Equation');
+                const step2Table = document.getElementById('step2Table');
+                
+                step2Equation.textContent = currentLanguage === 'bn' ? 
+                    `নিম্ন প্রতিস্থাপন = অবস্থান (k+1) এ মান\nউচ্চ প্রতিস্থাপন = অবস্থান (n-k) এ মান` :
+                    `Lower replacement = Value at position (k+1)\nUpper replacement = Value at position (n-k)`;
+                
+                step2Table.innerHTML = `
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'নিম্ন' : 'Lower'}</td>
+                        <td>${k + 1}</td>
+                        <td>${formatNumber(lowerReplacement)}</td>
+                    </tr>
+                    <tr>
+                        <td>${currentLanguage === 'bn' ? 'উচ্চ' : 'Upper'}</td>
+                        <td>${n - k}</td>
+                        <td>${formatNumber(upperReplacement)}</td>
+                    </tr>
+                `;
+                
+                // Step 3: Create winsorized dataset
+                const step3Table = document.getElementById('step3Table');
+                step3Table.innerHTML = '';
+                
+                // Show first and last few values plus extreme ones
+                const showIndices = new Set([
+                    ...Array.from({length: Math.min(k + 2, n)}, (_, i) => i),
+                    ...Array.from({length: Math.min(k + 2, n)}, (_, i) => n - i - 1),
+                    k, k + 1, n - k - 2, n - k - 1
+                ]);
+                
+                Array.from(showIndices).sort((a, b) => a - b).forEach(index => {
+                    if (index < 0 || index >= n) return;
+                    
+                    const originalValue = sortedData[index];
+                    let winsorizedValue = originalValue;
+                    let status = currentLanguage === 'bn' ? 'অপরিবর্তিত' : 'Unchanged';
+                    
+                    if (index < k) {
+                        winsorizedValue = lowerReplacement;
+                        status = currentLanguage === 'bn' ? 'প্রতিস্থাপিত (নিম্ন)' : 'Replaced (Low)';
+                    } else if (index >= n - k) {
+                        winsorizedValue = upperReplacement;
+                        status = currentLanguage === 'bn' ? 'প্রতিস্থাপিত (উচ্চ)' : 'Replaced (High)';
+                    }
+                    
+                    const row = document.createElement('tr');
+                    if (originalValue !== winsorizedValue) {
+                        row.classList.add('highlight-cell');
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${formatNumber(originalValue)}</td>
+                        <td>${formatNumber(winsorizedValue)}</td>
+                        <td>${status}</td>
+                    `;
+                    
+                    step3Table.appendChild(row);
+                });
+                
+                // Step 4: Calculate winsorized mean
+                const step4Equation = document.getElementById('step4Equation');
+                const step4Calculation = document.getElementById('step4Calculation');
+                const step4Result = document.getElementById('step4Result');
+                
+                step4Equation.textContent = currentLanguage === 'bn' ? 
+                    `উইনসোরাইজড মিন = Σ(উইনসোরাইজড মান) / n` : 
+                    `Winsorized Mean = Σ(Winsorized Values) / n`;
+                
+                const winsorizedSum = winsorizedData.reduce((a, b) => a + b, 0);
+                step4Calculation.innerHTML = currentLanguage === 'bn' ? 
+                    `উইনসোরাইজড মিন = ${formatNumber(winsorizedSum)} / ${n} = ${formatNumber(winsorizedMean)}` :
+                    `Winsorized Mean = ${formatNumber(winsorizedSum)} / ${n} = ${formatNumber(winsorizedMean)}`;
+                
+                step4Result.textContent = currentLanguage === 'bn' ? 
+                    `উইনসোরাইজড মিন = ${formatNumber(winsorizedMean)}` : 
+                    `Winsorized Mean = ${formatNumber(winsorizedMean)}`;
+            }
+
+            function updateVisualizations(sortedData, k, lowerReplacement, upperReplacement) {
+                updateBoxPlot(sortedData, k, lowerReplacement, upperReplacement);
+                updateReplacementVisualization(sortedData, k, lowerReplacement, upperReplacement);
+            }
+
+            function updateBoxPlot(sortedData, k, lowerReplacement, upperReplacement) {
+                const boxPlot = document.getElementById('boxPlot');
+                boxPlot.innerHTML = '';
+                
+                if (sortedData.length === 0) return;
+                
+                const n = sortedData.length;
+                const min = sortedData[0];
+                const max = sortedData[n - 1];
+                const q1 = calculatePercentile(sortedData, 25);
+                const median = calculatePercentile(sortedData, 50);
+                const q3 = calculatePercentile(sortedData, 75);
+                
+                // Create axis
+                const axis = document.createElement('div');
+                axis.className = 'box-plot-axis';
+                boxPlot.appendChild(axis);
+                
+                // Calculate positions
+                const range = max - min;
+                const padding = 40;
+                const width = boxPlot.offsetWidth - 80;
+                
+                function getPosition(value) {
+                    return padding + ((value - min) / range) * width;
+                }
+                
+                // Create box
+                const box = document.createElement('div');
+                box.className = 'box-container';
+                box.style.left = `${getPosition(q1)}px`;
+                box.style.width = `${getPosition(q3) - getPosition(q1)}px`;
+                box.style.top = 'calc(50% - 30px)';
+                boxPlot.appendChild(box);
+                
+                // Add median line
+                const medianLine = document.createElement('div');
+                medianLine.className = 'box-median';
+                medianLine.style.left = `${getPosition(median) - getPosition(q1)}px`;
+                box.appendChild(medianLine);
+                
+                // Add left whisker
+                const leftWhisker = document.createElement('div');
+                leftWhisker.className = 'whisker left';
+                leftWhisker.style.left = `${getPosition(sortedData[k])}px`;
+                boxPlot.appendChild(leftWhisker);
+                
+                // Add right whisker
+                const rightWhisker = document.createElement('div');
+                rightWhisker.className = 'whisker right';
+                rightWhisker.style.left = `${getPosition(sortedData[n - k - 1])}px`;
+                boxPlot.appendChild(rightWhisker);
+                
+                // Add outlier points
+                sortedData.forEach((value, index) => {
+                    if (index < k || index >= n - k) {
+                        const outlier = document.createElement('div');
+                        outlier.className = 'outlier-point';
+                        outlier.style.left = `${getPosition(value)}px`;
+                        outlier.title = `${currentLanguage === 'bn' ? 'চরম মান' : 'Extreme value'}: ${formatNumber(value)}`;
+                        boxPlot.appendChild(outlier);
+                    }
+                });
+                
+                // Add winsorized replacement points
+                const lowReplacementPoint = document.createElement('div');
+                lowReplacementPoint.className = 'winsorized-point';
+                lowReplacementPoint.style.left = `${getPosition(lowerReplacement)}px`;
+                lowReplacementPoint.title = `${currentLanguage === 'bn' ? 'নিম্ন প্রতিস্থাপন' : 'Lower replacement'}: ${formatNumber(lowerReplacement)}`;
+                boxPlot.appendChild(lowReplacementPoint);
+                
+                const highReplacementPoint = document.createElement('div');
+                highReplacementPoint.className = 'winsorized-point';
+                highReplacementPoint.style.left = `${getPosition(upperReplacement)}px`;
+                highReplacementPoint.title = `${currentLanguage === 'bn' ? 'উচ্চ প্রতিস্থাপন' : 'Upper replacement'}: ${formatNumber(upperReplacement)}`;
+                boxPlot.appendChild(highReplacementPoint);
+                
+                // Add labels
+                const labels = [
+                    { position: min, label: 'Min' },
+                    { position: q1, label: 'Q1' },
+                    { position: median, label: 'Median' },
+                    { position: q3, label: 'Q3' },
+                    { position: max, label: 'Max' }
+                ];
+                
+                labels.forEach(item => {
+                    const label = document.createElement('div');
+                    label.className = 'plot-label';
+                    label.textContent = item.label;
+                    label.style.left = `${getPosition(item.position)}px`;
+                    boxPlot.appendChild(label);
+                });
+            }
+
+            function updateReplacementVisualization(sortedData, k, lowerReplacement, upperReplacement) {
+                const replacementViz = document.getElementById('replacementVisualization');
+                replacementViz.innerHTML = '';
+                
+                if (sortedData.length === 0) return;
+                
+                // Create replacement line
+                const line = document.createElement('div');
+                line.className = 'replacement-line';
+                replacementViz.appendChild(line);
+                
+                // Show first k+1 and last k+1 values
+                const showCount = Math.min(k + 1, 5);
+                const indices = [
+                    ...Array.from({length: showCount}, (_, i) => i),
+                    ...Array.from({length: showCount}, (_, i) => sortedData.length - showCount + i)
+                ];
+                
+                indices.forEach((index, i) => {
+                    if (index >= sortedData.length) return;
+                    
+                    const value = sortedData[index];
+                    const isExtreme = index < k || index >= sortedData.length - k;
+                    
+                    // Original value column
+                    const originalCol = document.createElement('div');
+                    originalCol.className = `original-column ${isExtreme ? 'extreme' : ''}`;
+                    
+                    // Scale height (0-100px)
+                    const maxVal = Math.max(...sortedData);
+                    const minVal = Math.min(...sortedData);
+                    const range = maxVal - minVal;
+                    const height = range > 0 ? ((value - minVal) / range) * 80 + 20 : 50;
+                    
+                    originalCol.style.height = `${height}px`;
+                    originalCol.title = `${currentLanguage === 'bn' ? 'অরিজিনাল মান' : 'Original value'}: ${formatNumber(value)}`;
+                    
+                    // Value label
+                    const valueLabel = document.createElement('div');
+                    valueLabel.className = 'value-label';
+                    valueLabel.textContent = formatNumber(value);
+                    originalCol.appendChild(valueLabel);
+                    
+                    line.appendChild(originalCol);
+                    
+                    // If extreme, show replacement
+                    if (isExtreme) {
+                        const replacementValue = index < k ? lowerReplacement : upperReplacement;
+                        
+                        // Arrow
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow';
+                        arrow.innerHTML = '↓';
+                        arrow.style.position = 'absolute';
+                        arrow.style.left = `${(i / (indices.length - 1)) * 100}%`;
+                        arrow.style.top = '50%';
+                        replacementViz.appendChild(arrow);
+                        
+                        // Replacement column
+                        const replacementCol = document.createElement('div');
+                        replacementCol.className = 'replacement-column';
+                        
+                        const replacementHeight = range > 0 ? ((replacementValue - minVal) / range) * 80 + 20 : 50;
+                        replacementCol.style.height = `${replacementHeight}px`;
+                        replacementCol.title = `${currentLanguage === 'bn' ? 'প্রতিস্থাপন মান' : 'Replacement value'}: ${formatNumber(replacementValue)}`;
+                        
+                        const replacementLabel = document.createElement('div');
+                        replacementLabel.className = 'value-label';
+                        replacementLabel.textContent = formatNumber(replacementValue);
+                        replacementCol.appendChild(replacementLabel);
+                        
+                        line.appendChild(replacementCol);
+                    }
+                });
+            }
+
+            function updateExtremeValuesTable(lowerReplacement, upperReplacement) {
+                const tableBody = document.getElementById('extremeTableBody');
+                tableBody.innerHTML = '';
+                
+                if (originalData.length === 0) return;
+                
+                // Find extreme values
+                const extremeValues = [];
+                
+                // Lower extreme values
+                originalData.forEach((value, index) => {
+                    if (value < lowerReplacement) {
+                        extremeValues.push({
+                            type: currentLanguage === 'bn' ? 'নিম্ন চরম' : 'Lower Extreme',
+                            position: index + 1,
+                            original: value,
+                            replacement: lowerReplacement,
+                            difference: lowerReplacement - value
+                        });
+                    }
+                });
+                
+                // Upper extreme values
+                originalData.forEach((value, index) => {
+                    if (value > upperReplacement) {
+                        extremeValues.push({
+                            type: currentLanguage === 'bn' ? 'উচ্চ চরম' : 'Upper Extreme',
+                            position: index + 1,
+                            original: value,
+                            replacement: upperReplacement,
+                            difference: upperReplacement - value
+                        });
+                    }
+                });
+                
+                // Add to table
+                extremeValues.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.type}</td>
+                        <td>${item.position}</td>
+                        <td class="extreme-value">${formatNumber(item.original)}</td>
+                        <td class="replacement-value">${formatNumber(item.replacement)}</td>
+                        <td>${formatNumber(item.difference)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // If no extreme values
+                if (extremeValues.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="5" style="text-align: center; color: var(--gray);">
+                            ${currentLanguage === 'bn' ? 'কোন চরম মান পাওয়া যায়নি' : 'No extreme values found'}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+            }
+
+            function updateInterpretation(originalMean, winsorizedMean, impact) {
+                const interpretation = document.getElementById('interpretationText');
+                
+                let interpretationText = '';
+                if (currentLanguage === 'bn') {
+                    interpretationText = `উইনসোরাইজড মিন (${formatNumber(winsorizedMean)}) অরিজিনাল মিন (${formatNumber(originalMean)}) থেকে `;
+                    
+                    if (Math.abs(impact) > 10) {
+                        interpretationText += `উল্লেখযোগ্যভাবে ${impact < 0 ? 'কম' : 'বেশি'}। `;
+                        interpretationText += `এর মানে হল ডেটাতে শক্তিশালী আউটলায়ার রয়েছে যা গড়কে ${impact < 0 ? 'নিচের' : 'উপরের'} দিকে টেনেছে। `;
+                    } else {
+                        interpretationText += `অনেকটা কাছাকাছি। এর মানে হল ডেটা তুলনামূলকভাবে স্বাভাবিক বন্টিত। `;
+                    }
+                    
+                    interpretationText += `উইনসোরাইজড মিন আউটলায়ারের প্রতি কম সংবেদনশীল এবং কেন্দ্রীয় প্রবণতার আরও ভাল অনুমান প্রদান করে।`;
+                } else {
+                    interpretationText = `The Winsorized mean (${formatNumber(winsorizedMean)}) is `;
+                    
+                    if (Math.abs(impact) > 10) {
+                        interpretationText += `significantly ${impact < 0 ? 'lower' : 'higher'} than the original mean (${formatNumber(originalMean)}). `;
+                        interpretationText += `This indicates strong outliers in the data that ${impact < 0 ? 'pull down' : 'pull up'} the average. `;
+                    } else {
+                        interpretationText += `quite close to the original mean (${formatNumber(originalMean)}). `;
+                        interpretationText += `This indicates relatively normally distributed data. `;
+                    }
+                    
+                    interpretationText += `The Winsorized mean is less sensitive to outliers and provides a better estimate of central tendency.`;
+                }
+                
+                interpretation.textContent = interpretationText;
+            }
+
+            function loadExampleData(exampleName) {
+                const example = examples[exampleName];
+                if (!example) return;
+                
+                document.getElementById('dataInput').value = example.data.join(', ');
+                parseInputData();
+                calculateWinsorizedMean();
+                
+                // Update description if available
+                const interpretation = document.getElementById('interpretationText');
+                if (currentLanguage === 'bn') {
+                    interpretation.textContent = `${example.name} উদাহরণ লোড করা হয়েছে। ${example.description}`;
+                } else {
+                    interpretation.textContent = `${example.name} example loaded. ${example.description}`;
+                }
+            }
+
+            function clearCalculator() {
+                originalData = [];
+                winsorizedData = [];
+                winsorizationPercentage = 10;
+                replacementMethod = 'percentile';
+                
+                // Reset inputs
+                document.getElementById('dataInput').value = '';
+                document.getElementById('winsorizationSlider').value = 10;
+                document.getElementById('winsorizationValue').textContent = '10%';
+                
+                // Reset option buttons
+                document.querySelectorAll('.option-btn[data-percentage]').forEach(btn => {
+                    if (parseInt(btn.dataset.percentage) === 10) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                document.querySelectorAll('.option-btn[data-method]').forEach(btn => {
+                    if (btn.dataset.method === 'percentile') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Reset displays
+                updateDataPreview();
+                
+                // Reset results
+                document.getElementById('originalMeanResult').textContent = '--';
+                document.getElementById('winsorizedMeanResult').textContent = '--';
+                document.getElementById('trimmedMeanResult').textContent = '--';
+                document.getElementById('impactResult').textContent = '--';
+                
+                document.getElementById('totalPoints').textContent = '0';
+                document.getElementById('extremeCount').textContent = '0';
+                document.getElementById('replacedLow').textContent = '0';
+                document.getElementById('replacedHigh').textContent = '0';
+                
+                // Clear tables
+                document.getElementById('extremeTableBody').innerHTML = '';
+                document.getElementById('step1Table').innerHTML = '';
+                document.getElementById('step2Table').innerHTML = '';
+                document.getElementById('step3Table').innerHTML = '';
+                
+                // Clear visualizations
+                document.getElementById('boxPlot').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-box"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বক্স প্লট দেখুন' : 'Enter data to see box plot'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('replacementVisualization').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-exchange-alt"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে মান প্রতিস্থাপন দেখুন' : 'Enter data to see value replacement'}</p>
+                    </div>
+                `;
+                
+                // Reset interpretation
+                document.getElementById('interpretationText').textContent = currentLanguage === 'bn' ? 
+                    'উইনসোরাইজড মিন চরম মানের প্রভাব হ্রাস করে যখন সমস্ত ডেটা পয়েন্ট সংরক্ষণ করে। আউটলায়ার থাকলে এটি কেন্দ্রীয় প্রবণতার আরও ভাল প্রতিনিধিত্ব করে।' :
+                    'The Winsorized mean reduces the influence of extreme values while preserving all data points. It\'s more representative of the central tendency when outliers are present.';
+            }
+
+            function updateDynamicContent() {
+                // Update any dynamic content that needs language-specific updates
+                if (originalData.length > 0) {
+                    updatePercentageInfo();
+                    updateDataPreview();
+                    // Recalculate to update all text
+                    calculateWinsorizedMean();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

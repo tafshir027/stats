@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>রেঞ্জ ইন্টারকোয়ার্টাইল ক্যালকুলেটর | IQR এবং আউটলায়ার শনাক্তকরণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #FF5722;
+            --secondary: #D84315;
+            --accent: #4CAF50;
+            --success: #4CAF50;
+            --info: #2196F3;
+            --warning: #FFC107;
+            --error: #F44336;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --iqr-color: #FF5722;
+            --range-color: #2196F3;
+            --quartile-color: #9C27B0;
+            --outlier-color: #F44336;
+            --whisker-color: #4CAF50;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--iqr-color), var(--range-color), var(--quartile-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Data Input Area */
+        .data-input-area {
+            margin-bottom: 2rem;
+        }
+
+        .data-input-area textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input-area textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Quartile Calculation Method */
+        .method-selection {
+            margin: 1.5rem 0;
+        }
+
+        .method-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .method-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .method-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .method-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Outlier Detection Settings */
+        .outlier-settings {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-group label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-group select,
+        .setting-group input {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .setting-group select:focus,
+        .setting-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Key Results Cards */
+        .key-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .key-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 3px solid;
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card.range-card {
+            border-color: var(--range-color);
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .result-card.iqr-card {
+            border-color: var(--iqr-color);
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        }
+
+        .result-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .range-card .result-icon {
+            color: var(--range-color);
+        }
+
+        .iqr-card .result-icon {
+            color: var(--iqr-color);
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: inherit;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .range-card .result-value {
+            color: var(--range-color);
+        }
+
+        .iqr-card .result-value {
+            color: var(--iqr-color);
+        }
+
+        .result-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-explanation {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Quartile Values */
+        .quartile-values {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .quartile-values {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quartile-values {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quartile-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .quartile-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .quartile-card.min {
+            border-color: var(--range-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .quartile-card.q1 {
+            border-color: var(--quartile-color);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .quartile-card.median {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .quartile-card.q3 {
+            border-color: var(--quartile-color);
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .quartile-card.max {
+            border-color: var(--range-color);
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .quartile-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .min .quartile-icon { color: var(--range-color); }
+        .q1 .quartile-icon { color: var(--quartile-color); }
+        .median .quartile-icon { color: var(--accent); }
+        .q3 .quartile-icon { color: var(--quartile-color); }
+        .max .quartile-icon { color: var(--range-color); }
+
+        .quartile-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .quartile-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .quartile-position {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Outlier Detection */
+        .outlier-detection {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-radius: 10px;
+            border: 2px solid var(--outlier-color);
+        }
+
+        .outlier-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            color: var(--outlier-color);
+            font-weight: 600;
+        }
+
+        .outlier-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .outlier-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .outlier-stat {
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .outlier-stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .outlier-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .outlier-list-container {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .outlier-list-title {
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--outlier-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .outlier-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            max-height: 100px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .outlier-item {
+            padding: 0.5rem 1rem;
+            background: var(--outlier-color);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .outlier-item.mild {
+            background: var(--warning);
+            color: var(--dark);
+        }
+
+        .outlier-item.extreme {
+            background: var(--outlier-color);
+            color: white;
+        }
+
+        /* Five-Number Summary */
+        .five-number-summary {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-radius: 10px;
+            border: 2px solid var(--quartile-color);
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .summary-table th {
+            background: var(--table-header);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .summary-table .statistic {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .summary-table .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        /* Box Plot Visualization */
+        .box-plot-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .box-plot-container {
+            height: 150px;
+            position: relative;
+            margin: 2rem 0;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+        }
+
+        .box-plot {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 60px;
+            transform: translateY(-50%);
+        }
+
+        .whisker {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: var(--whisker-color);
+        }
+
+        .whisker.left {
+            left: 0;
+        }
+
+        .whisker.right {
+            right: 0;
+        }
+
+        .box {
+            position: absolute;
+            height: 60px;
+            background: var(--iqr-color);
+            opacity: 0.8;
+            border-radius: 4px;
+        }
+
+        .median-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: white;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .quartile-marker {
+            position: absolute;
+            width: 2px;
+            height: 70px;
+            background: var(--quartile-color);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .outlier-marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .outlier-marker.mild {
+            background: var(--warning);
+            border: 2px solid var(--warning);
+        }
+
+        .outlier-marker.extreme {
+            background: var(--outlier-color);
+            border: 2px solid var(--outlier-color);
+        }
+
+        .plot-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Detailed Calculation Steps */
+        .calculation-steps {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .step-container {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .step-content {
+            padding-left: 3.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .step-content {
+                padding-left: 0;
+            }
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .data-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .data-table .sorted {
+            background: rgba(255, 87, 34, 0.1);
+        }
+
+        .data-table .quartile {
+            background: rgba(156, 39, 176, 0.1);
+            font-weight: 600;
+        }
+
+        .calculation-formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* Applications Section */
+        .applications-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .application-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .application-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .application-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Example Datasets */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .example-btn {
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .example-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            .result-value {
+                font-size: 2rem;
+            }
+            .step-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .result-value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Range Interquartile Calculator" data-bn="রেঞ্জ ইন্টারকোয়ার্টাইল ক্যালকুলেটর">রেঞ্জ ইন্টারকোয়ার্টাইল ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate interquartile range and range | IQR = Q3 - Q1 | Outlier detection and five-number summary" data-bn="ইন্টারকোয়ার্টাইল রেঞ্জ এবং রেঞ্জ গণনা করুন | IQR = Q3 - Q1 | আউটলায়ার শনাক্তকরণ এবং পাঁচ-সংখ্যা সারসংক্ষেপ">
+                ইন্টারকোয়ার্টাইল রেঞ্জ এবং রেঞ্জ গণনা করুন | IQR = Q3 - Q1 | আউটলায়ার শনাক্তকরণ এবং পাঁচ-সংখ্যা সারসংক্ষেপ
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <!-- Data Input Area -->
+                <div class="data-input-area">
+                    <textarea id="dataInput" placeholder="Enter numerical data separated by commas, spaces, or new lines
+Example: 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60
+or: 10 15 20 25 30 35 40 45 50 55 60
+or: 
+10
+15
+20
+25
+30" data-bn-placeholder="সংখ্যাগত ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা)
+উদাহরণ: 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60
+বা: 10 15 20 25 30 35 40 45 50 55 60
+বা: 
+10
+15
+20
+25
+30">15, 20, 35, 40, 50, 55, 60, 65, 70, 75, 80, 90, 100, 120, 150</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Enter numerical data for range and IQR calculation" data-bন="রেঞ্জ এবং IQR গণনার জন্য সংখ্যাগত ডেটা ইনপুট করুন">
+                            রেঞ্জ এবং IQR গণনার জন্য সংখ্যাগত ডেটা ইনপুট করুন
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Quartile Calculation Method -->
+                <div class="method-selection">
+                    <h3 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Quartile Calculation Method" data-bন="কোয়ার্টাইল গণনা পদ্ধতি">কোয়ার্টাইল গণনা পদ্ধতি</span>
+                    </h3>
+                    <div class="method-options">
+                        <button class="method-btn active" data-method="method1">
+                            <div class="method-icon">
+                                <i class="fas fa-sort-numeric-up"></i>
+                            </div>
+                            <div>
+                                <div data-en="Method 1" data-bন="পদ্ধতি ১">পদ্ধতি ১</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;" data-en="Inclusive median" data-bন="ইনক্লুসিভ মিডিয়ান">ইনক্লুসিভ মিডিয়ান</div>
+                            </div>
+                        </button>
+                        
+                        <button class="method-btn" data-method="method2">
+                            <div class="method-icon">
+                                <i class="fas fa-sort-numeric-down"></i>
+                            </div>
+                            <div>
+                                <div data-en="Method 2" data-bন="পদ্ধতি ২">পদ্ধতি ২</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;" data-en="Exclusive median" data-bন="এক্সক্লুসিভ মিডিয়ান">এক্সক্লুসিভ মিডিয়ান</div>
+                            </div>
+                        </button>
+                        
+                        <button class="method-btn" data-method="method3">
+                            <div class="method-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div>
+                                <div data-en="Method 3" data-bন="পদ্ধতি ৩">পদ্ধতি ৩</div>
+                                <div style="font-size: 0.8rem; opacity: 0.8;" data-en="Linear interpolation" data-bন="লিনিয়ার ইন্টারপোলেশন">লিনিয়ার ইন্টারপোলেশন</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Outlier Detection Settings -->
+                <div class="outlier-settings">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem;">
+                        <i class="fas fa-search"></i>
+                        <span data-en="Outlier Detection Settings" data-bন="আউটলায়ার শনাক্তকরণ সেটিংস">আউটলায়ার শনাক্তকরণ সেটিংস</span>
+                    </h3>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <label>
+                                <i class="fas fa-ruler"></i>
+                                <span data-en="IQR Multiplier" data-bন="IQR মাল্টিপ্লায়ার">IQR মাল্টিপ্লায়ার</span>
+                            </label>
+                            <select id="iqrMultiplier">
+                                <option value="1.5" selected>1.5 (Standard)</option>
+                                <option value="2.0">2.0 (Conservative)</option>
+                                <option value="3.0">3.0 (Extreme values only)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label>
+                                <i class="fas fa-filter"></i>
+                                <span data-en="Outlier Type" data-bন="আউটলায়ার টাইপ">আউটলায়ার টাইপ</span>
+                            </label>
+                            <select id="outlierType">
+                                <option value="both" selected data-en="Both mild and extreme" data-bন="উভয় মাইল্ড এবং এক্সট্রিম">উভয় মাইল্ড এবং এক্সট্রিম</option>
+                                <option value="mild" data-en="Mild outliers only" data-bন="শুধুমাত্র মাইল্ড আউটলায়ার">শুধুমাত্র মাইল্ড আউটলায়ার</option>
+                                <option value="extreme" data-en="Extreme outliers only" data-bন="শুধুমাত্র এক্সট্রিম আউটলায়ার">শুধুমাত্র এক্সট্রিম আউটলায়ার</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="input-hint" style="margin-top: 1rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <span data-en="Mild outliers: 1.5×IQR from quartiles | Extreme outliers: 3×IQR from quartiles" data-bন="মাইল্ড আউটলায়ার: কোয়ার্টাইল থেকে ১.৫×IQR | এক্সট্রিম আউটলায়ার: কোয়ার্টাইল থেকে ৩×IQR">
+                            মাইল্ড আউটলায়ার: কোয়ার্টাইল থেকে ১.৫×IQR | এক্সট্রিম আউটলায়ার: কোয়ার্টাইল থেকে ৩×IQR
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Range & IQR" data-bন="রেঞ্জ ও IQR গণনা করুন">রেঞ্জ ও IQR গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bন="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Range & IQR Results" data-bন="রেঞ্জ ও IQR ফলাফল">রেঞ্জ ও IQR ফলাফল</span>
+                </h2>
+                
+                <!-- Key Results -->
+                <div class="key-results">
+                    <div class="result-card range-card">
+                        <div class="result-icon">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                        <div class="result-title" data-en="Range" data-bন="রেঞ্জ">রেঞ্জ</div>
+                        <div class="result-value" id="rangeResult">--</div>
+                        <div class="result-formula">Range = Max - Min</div>
+                        <div class="result-explanation" data-en="Spread of entire dataset" data-bন="সম্পূর্ণ ডেটাসেটের বিস্তার">
+                            সম্পূর্ণ ডেটাসেটের বিস্তার
+                        </div>
+                    </div>
+                    
+                    <div class="result-card iqr-card">
+                        <div class="result-icon">
+                            <i class="fas fa-expand-alt"></i>
+                        </div>
+                        <div class="result-title" data-en="Interquartile Range (IQR)" data-bন="ইন্টারকোয়ার্টাইল রেঞ্জ (IQR)">ইন্টারকোয়ার্টাইল রেঞ্জ (IQR)</div>
+                        <div class="result-value" id="iqrResult">--</div>
+                        <div class="result-formula">IQR = Q3 - Q1</div>
+                        <div class="result-explanation" data-en="Spread of middle 50% of data" data-bন="ডেটার মাঝের ৫০% এর বিস্তার">
+                            ডেটার মাঝের ৫০% এর বিস্তার
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Five-Number Summary -->
+                <div class="five-number-summary">
+                    <div class="outlier-header">
+                        <i class="fas fa-list-ol"></i>
+                        <span data-en="Five-Number Summary" data-bন="পাঁচ-সংখ্যা সারসংক্ষেপ">পাঁচ-সংখ্যা সারসংক্ষেপ</span>
+                    </div>
+                    
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th data-en="Statistic" data-bন="পরিসংখ্যান">পরিসংখ্যান</th>
+                                <th data-en="Symbol" data-bন="প্রতীক">প্রতীক</th>
+                                <th data-en="Value" data-bন="মান">মান</th>
+                                <th data-en="Position" data-bন="অবস্থান">অবস্থান</th>
+                                <th data-en="Interpretation" data-bন="ব্যাখ্যা">ব্যাখ্যা</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="statistic" data-en="Minimum" data-bন="ন্যূনতম">ন্যূনতম</td>
+                                <td>Min</td>
+                                <td class="value" id="summaryMin">--</td>
+                                <td id="minPosition">--</td>
+                                <td data-en="Smallest value" data-bন="সবচেয়ে ছোট মান">সবচেয়ে ছোট মান</td>
+                            </tr>
+                            <tr>
+                                <td class="statistic" data-en="First Quartile" data-bন="প্রথম কোয়ার্টাইল">প্রথম কোয়ার্টাইল</td>
+                                <td>Q1</td>
+                                <td class="value" id="summaryQ1">--</td>
+                                <td id="q1Position">--</td>
+                                <td data-en="25th percentile" data-bন="২৫তম পারসেন্টাইল">২৫তম পারসেন্টাইল</td>
+                            </tr>
+                            <tr>
+                                <td class="statistic" data-en="Median" data-bন="মধ্যমা">মধ্যমা</td>
+                                <td>Q2</td>
+                                <td class="value" id="summaryMedian">--</td>
+                                <td id="medianPosition">--</td>
+                                <td data-en="50th percentile" data-bন="৫০তম পারসেন্টাইল">৫০তম পারসেন্টাইল</td>
+                            </tr>
+                            <tr>
+                                <td class="statistic" data-en="Third Quartile" data-bন="তৃতীয় কোয়ার্টাইল">তৃতীয় কোয়ার্টাইল</td>
+                                <td>Q3</td>
+                                <td class="value" id="summaryQ3">--</td>
+                                <td id="q3Position">--</td>
+                                <td data-en="75th percentile" data-bন="৭৫তম পারসেন্টাইল">৭৫তম পারসেন্টাইল</td>
+                            </tr>
+                            <tr>
+                                <td class="statistic" data-en="Maximum" data-bন="সর্বোচ্চ">সর্বোচ্চ</td>
+                                <td>Max</td>
+                                <td class="value" id="summaryMax">--</td>
+                                <td id="maxPosition">--</td>
+                                <td data-en="Largest value" data-bন="সবচেয়ে বড় মান">সবচেয়ে বড় মান</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Quartile Values Display -->
+                <h3 style="color: var(--dark); margin: 2rem 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-chart-bar"></i>
+                    <span data-en="Quartile Values" data-bন="কোয়ার্টাইল মান">কোয়ার্টাইল মান</span>
+                </h3>
+                
+                <div class="quartile-values">
+                    <div class="quartile-card min">
+                        <div class="quartile-icon">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="quartile-label" data-en="Minimum" data-bন="ন্যূনতম">ন্যূনতম</div>
+                        <div class="quartile-value" id="quartileMin">--</div>
+                        <div class="quartile-position" id="minPosLabel">Position: 1</div>
+                    </div>
+                    
+                    <div class="quartile-card q1">
+                        <div class="quartile-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="quartile-label" data-en="First Quartile (Q1)" data-bন="প্রথম কোয়ার্টাইল (Q1)">প্রথম কোয়ার্টাইল (Q1)</div>
+                        <div class="quartile-value" id="quartileQ1">--</div>
+                        <div class="quartile-position" id="q1PosLabel">25th percentile</div>
+                    </div>
+                    
+                    <div class="quartile-card median">
+                        <div class="quartile-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <div class="quartile-label" data-en="Median (Q2)" data-bন="মধ্যমা (Q2)">মধ্যমা (Q2)</div>
+                        <div class="quartile-value" id="quartileMedian">--</div>
+                        <div class="quartile-position" id="medianPosLabel">50th percentile</div>
+                    </div>
+                    
+                    <div class="quartile-card q3">
+                        <div class="quartile-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="quartile-label" data-en="Third Quartile (Q3)" data-bন="তৃতীয় কোয়ার্টাইল (Q3)">তৃতীয় কোয়ার্টাইল (Q3)</div>
+                        <div class="quartile-value" id="quartileQ3">--</div>
+                        <div class="quartile-position" id="q3PosLabel">75th percentile</div>
+                    </div>
+                    
+                    <div class="quartile-card max">
+                        <div class="quartile-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="quartile-label" data-en="Maximum" data-bন="সর্বোচ্চ">সর্বোচ্চ</div>
+                        <div class="quartile-value" id="quartileMax">--</div>
+                        <div class="quartile-position" id="maxPosLabel">Position: n</div>
+                    </div>
+                </div>
+
+                <!-- Box Plot Visualization -->
+                <div class="box-plot-section">
+                    <h3 style="color: var(--dark); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-chart-bar"></i>
+                        <span data-en="Box Plot Visualization" data-bন="বক্স প্লট ভিজ্যুয়ালাইজেশন">বক্স প্লট ভিজ্যুয়ালাইজেশন</span>
+                    </h3>
+                    
+                    <div class="box-plot-container" id="boxPlotContainer">
+                        <div class="box-plot" id="boxPlot">
+                            <!-- Box plot will be drawn here -->
+                        </div>
+                    </div>
+                    
+                    <div class="plot-labels">
+                        <span id="plotMinLabel">Min: --</span>
+                        <span id="plotQ1Label">Q1: --</span>
+                        <span id="plotMedianLabel">Median: --</span>
+                        <span id="plotQ3Label">Q3: --</span>
+                        <span id="plotMaxLabel">Max: --</span>
+                    </div>
+                </div>
+
+                <!-- Outlier Detection -->
+                <div class="outlier-detection">
+                    <div class="outlier-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="Outlier Detection" data-bন="আউটলায়ার শনাক্তকরণ">আউটলায়ার শনাক্তকরণ</span>
+                    </div>
+                    
+                    <div class="outlier-results">
+                        <div class="outlier-stat">
+                            <div class="outlier-stat-label" data-en="Mild Outliers" data-bন="মাইল্ড আউটলায়ার">মাইল্ড আউটলায়ার</div>
+                            <div class="outlier-stat-value" id="mildOutliersCount">0</div>
+                        </div>
+                        
+                        <div class="outlier-stat">
+                            <div class="outlier-stat-label" data-en="Extreme Outliers" data-bন="এক্সট্রিম আউটলায়ার">এক্সট্রিম আউটলায়ার</div>
+                            <div class="outlier-stat-value" id="extremeOutliersCount">0</div>
+                        </div>
+                        
+                        <div class="outlier-stat">
+                            <div class="outlier-stat-label" data-en="Total Outliers" data-bন="মোট আউটলায়ার">মোট আউটলায়ার</div>
+                            <div class="outlier-stat-value" id="totalOutliersCount">0</div>
+                        </div>
+                        
+                        <div class="outlier-stat">
+                            <div class="outlier-stat-label" data-en="Outlier %" data-bন="আউটলায়ার %">আউটলায়ার %</div>
+                            <div class="outlier-stat-value" id="outliersPercentage">0%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Outlier Boundaries -->
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 8px;">
+                        <h4 style="color: var(--dark); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-ruler-combined"></i>
+                            <span data-en="Outlier Boundaries" data-bন="আউটলায়ার সীমানা">আউটলায়ার সীমানা</span>
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.9rem; color: var(--warning); font-weight: 600;">
+                                    <i class="fas fa-circle" style="font-size: 0.8rem;"></i>
+                                    <span data-en="Mild Outlier Range" data-bন="মাইল্ড আউটলায়ার রেঞ্জ">মাইল্ড আউটলায়ার রেঞ্জ</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--dark); margin-top: 0.5rem;">
+                                    <span data-en="Lower:" data-bন="নিম্ন:">নিম্ন:</span> <span id="mildLowerBound">--</span><br>
+                                    <span data-en="Upper:" data-bন="উচ্চ:">উচ্চ:</span> <span id="mildUpperBound">--</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.9rem; color: var(--outlier-color); font-weight: 600;">
+                                    <i class="fas fa-circle" style="font-size: 0.8rem;"></i>
+                                    <span data-en="Extreme Outlier Range" data-bন="এক্সট্রিম আউটলায়ার রেঞ্জ">এক্সট্রিম আউটলায়ার রেঞ্জ</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--dark); margin-top: 0.5rem;">
+                                    <span data-en="Lower:" data-bন="নিম্ন:">নিম্ন:</span> <span id="extremeLowerBound">--</span><br>
+                                    <span data-en="Upper:" data-bন="উচ্চ:">উচ্চ:</span> <span id="extremeUpperBound">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Outlier List -->
+                    <div class="outlier-list-container">
+                        <div class="outlier-list-title">
+                            <i class="fas fa-list"></i>
+                            <span data-en="Detected Outliers" data-bন="শনাক্তকৃত আউটলায়ার">শনাক্তকৃত আউটলায়ার</span>
+                        </div>
+                        <div class="outlier-list" id="outlierList">
+                            <!-- Outlier items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Calculation Steps -->
+        <div class="calculation-steps">
+            <h2 class="section-title">
+                <i class="fas fa-list-ol"></i>
+                <span data-en="Detailed Calculation Steps" data-bন="বিস্তারিত গণনার ধাপ">বিস্তারিত গণনার ধাপ</span>
+            </h2>
+            
+            <div id="calculationStepsContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="stepsPlaceholder" 
+                   data-en="Enter data and calculate to see detailed calculation steps" 
+                   data-bন="ডেটা ইনপুট করুন এবং বিস্তারিত গণনার ধাপগুলো দেখতে গণনা করুন">
+                    ডেটা ইনপুট করুন এবং বিস্তারিত গণনার ধাপগুলো দেখতে গণনা করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-rocket"></i>
+                <span data-en="Applications of Range and IQR" data-bন="রেঞ্জ ও IQR এর প্রয়োগ">রেঞ্জ ও IQR এর প্রয়োগ</span>
+            </h2>
+            
+            <div class="applications-grid">
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Data Analysis" data-bন="ডেটা বিশ্লেষণ">ডেটা বিশ্লেষণ</h3>
+                    <p class="application-desc" data-en="Identify spread and variability in datasets" data-bন="ডেটাসেটে বিস্তার এবং পরিবর্তনশীলতা শনাক্ত করুন">
+                        ডেটাসেটে বিস্তার এবং পরিবর্তনশীলতা শনাক্ত করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Quality Control" data-bন="কোয়ালিটি কন্ট্রোল">কোয়ালিটি কন্ট্রোল</h3>
+                    <p class="application-desc" data-en="Detect anomalies and unusual values in processes" data-bন="প্রক্রিয়ায় অস্বাভাবিকতা এবং অস্বাভাবিক মান শনাক্ত করুন">
+                        প্রক্রিয়ায় অস্বাভাবিকতা এবং অস্বাভাবিক মান শনাক্ত করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Education" data-bন="শিক্ষা">শিক্ষা</h3>
+                    <p class="application-desc" data-en="Analyze test scores and student performance" data-bন="পরীক্ষার স্কোর এবং শিক্ষার্থীর পারফরম্যান্স বিশ্লেষণ">
+                        পরীক্ষার স্কোর এবং শিক্ষার্থীর পারফরম্যান্স বিশ্লেষণ
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Medical Research" data-bন="মেডিকেল গবেষণা">মেডিকেল গবেষণা</h3>
+                    <p class="application-desc" data-en="Identify extreme values in clinical measurements" data-bন="ক্লিনিকাল পরিমাপে চরম মান শনাক্ত করুন">
+                        ক্লিনিকাল পরিমাপে চরম মান শনাক্ত করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load different scenarios:" data-bন="বিভিন্ন দৃশ্যকল্প লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                বিভিন্ন দৃশ্যকল্প লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="normal">
+                    <div class="example-title" data-en="Normal Distribution" data-bন="স্বাভাবিক বন্টন">স্বাভাবিক বন্টন</div>
+                    <div class="example-desc" data-en="Symmetric data, few outliers" data-bন="সিমেট্রিক ডেটা, কম আউটলায়ার">
+                        সিমেট্রিক ডেটা, কম আউটলায়ার
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="skewed">
+                    <div class="example-title" data-en="Skewed Data" data-bন="স্কিউড ডেটা">স্কিউড ডেটা</div>
+                    <div class="example-desc" data-en="Right-skewed with outliers" data-bন="ডানদিকে স্কিউড, আউটলায়ার সহ">
+                        ডানদিকে স্কিউড, আউটলায়ার সহ
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="outliers">
+                    <div class="example-title" data-en="Many Outliers" data-bন="অনেক আউটলায়ার">অনেক আউটলায়ার</div>
+                    <div class="example-desc" data-en="Contains multiple extreme values" data-bন="একাধিক চরম মান রয়েছে">
+                        একাধিক চরম মান রয়েছে
+                    </div>
+                </button>
+                
+                <button class="example-btn" data-example="small">
+                    <div class="example-title" data-en="Small Dataset" data-bন="ছোট ডেটাসেট">ছোট ডেটাসেট</div>
+                    <div class="example-desc" data-en="Limited data points for quartile calculation" data-bন="কোয়ার্টাইল গণনার জন্য সীমিত ডেটা পয়েন্ট">
+                        কোয়ার্টাইল গণনার জন্য সীমিত ডেটা পয়েন্ট
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'normal': {
+                    data: [15, 18, 20, 22, 24, 25, 26, 27, 28, 30, 32, 35, 38, 40, 42],
+                    description: 'স্বাভাবিক বন্টন - সিমেট্রিক ডেটা, কম আউটলায়ার'
+                },
+                'skewed': {
+                    data: [10, 12, 15, 18, 20, 22, 25, 28, 30, 35, 40, 50, 60, 80, 120],
+                    description: 'স্কিউড ডেটা - ডানদিকে স্কিউড, আউটলায়ার সহ'
+                },
+                'outliers': {
+                    data: [10, 15, 18, 20, 22, 23, 24, 25, 26, 27, 28, 30, 35, 40, 150],
+                    description: 'অনেক আউটলায়ার - একাধিক চরম মান রয়েছে'
+                },
+                'small': {
+                    data: [12, 15, 18, 22, 25, 30, 35],
+                    description: 'ছোট ডেটাসেট - সীমিত ডেটা পয়েন্ট'
+                }
+            };
+
+            // Store data and results
+            let dataset = [];
+            let sortedData = [];
+            let results = null;
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Calculation Method Selection
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateRangeIQR);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Initial calculation
+                setTimeout(() => {
+                    calculateRangeIQR();
+                }, 500);
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+
+                // Update option values
+                const selectElements = document.querySelectorAll('option[data-en]');
+                selectElements.forEach(option => {
+                    if (option.hasAttribute(`data-${lang}`)) {
+                        option.textContent = option.getAttribute(`data-${lang}`);
+                    }
+                });
+
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function parseInputData(input) {
+                if (!input) return [];
+                
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                return cleaned.split(/[,\s]+/)
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+            }
+
+            function calculateStatistics(data) {
+                if (data.length === 0) {
+                    return {
+                        n: 0,
+                        sortedData: [],
+                        min: 0,
+                        max: 0,
+                        range: 0,
+                        q1: 0,
+                        median: 0,
+                        q3: 0,
+                        iqr: 0,
+                        outliers: {
+                            mild: [],
+                            extreme: [],
+                            all: []
+                        },
+                        boundaries: {
+                            mildLower: 0,
+                            mildUpper: 0,
+                            extremeLower: 0,
+                            extremeUpper: 0
+                        }
+                    };
+                }
+                
+                // Sort data
+                const sorted = [...data].sort((a, b) => a - b);
+                const n = sorted.length;
+                
+                // Calculate min and max
+                const min = sorted[0];
+                const max = sorted[n - 1];
+                const range = max - min;
+                
+                // Get calculation method
+                const method = document.querySelector('.method-btn.active').dataset.method;
+                
+                // Calculate quartiles based on selected method
+                let q1, median, q3;
+                
+                switch(method) {
+                    case 'method1':
+                        // Method 1: Inclusive median
+                        ({q1, median, q3} = calculateQuartilesMethod1(sorted));
+                        break;
+                    case 'method2':
+                        // Method 2: Exclusive median
+                        ({q1, median, q3} = calculateQuartilesMethod2(sorted));
+                        break;
+                    case 'method3':
+                        // Method 3: Linear interpolation
+                        ({q1, median, q3} = calculateQuartilesMethod3(sorted));
+                        break;
+                    default:
+                        ({q1, median, q3} = calculateQuartilesMethod1(sorted));
+                }
+                
+                // Calculate IQR
+                const iqr = q3 - q1;
+                
+                // Detect outliers
+                const iqrMultiplier = parseFloat(document.getElementById('iqrMultiplier').value);
+                const outlierType = document.getElementById('outlierType').value;
+                
+                const outlierDetection = detectOutliers(sorted, q1, q3, iqr, iqrMultiplier, outlierType);
+                
+                return {
+                    n,
+                    sortedData: sorted,
+                    min,
+                    max,
+                    range,
+                    q1,
+                    median,
+                    q3,
+                    iqr,
+                    outliers: outlierDetection.outliers,
+                    boundaries: outlierDetection.boundaries,
+                    positions: calculatePositions(n)
+                };
+            }
+
+            function calculateQuartilesMethod1(sortedData) {
+                const n = sortedData.length;
+                
+                // Calculate median
+                let median;
+                if (n % 2 === 0) {
+                    median = (sortedData[n/2 - 1] + sortedData[n/2]) / 2;
+                } else {
+                    median = sortedData[Math.floor(n/2)];
+                }
+                
+                // Calculate Q1 and Q3
+                let q1, q3;
+                
+                if (n % 2 === 0) {
+                    // Even number of elements
+                    const lowerHalf = sortedData.slice(0, n/2);
+                    const upperHalf = sortedData.slice(n/2);
+                    
+                    const m1 = lowerHalf.length;
+                    if (m1 % 2 === 0) {
+                        q1 = (lowerHalf[m1/2 - 1] + lowerHalf[m1/2]) / 2;
+                    } else {
+                        q1 = lowerHalf[Math.floor(m1/2)];
+                    }
+                    
+                    const m2 = upperHalf.length;
+                    if (m2 % 2 === 0) {
+                        q3 = (upperHalf[m2/2 - 1] + upperHalf[m2/2]) / 2;
+                    } else {
+                        q3 = upperHalf[Math.floor(m2/2)];
+                    }
+                } else {
+                    // Odd number of elements - include median in both halves
+                    const lowerHalf = sortedData.slice(0, Math.floor(n/2) + 1);
+                    const upperHalf = sortedData.slice(Math.floor(n/2));
+                    
+                    const m1 = lowerHalf.length;
+                    if (m1 % 2 === 0) {
+                        q1 = (lowerHalf[m1/2 - 1] + lowerHalf[m1/2]) / 2;
+                    } else {
+                        q1 = lowerHalf[Math.floor(m1/2)];
+                    }
+                    
+                    const m2 = upperHalf.length;
+                    if (m2 % 2 === 0) {
+                        q3 = (upperHalf[m2/2 - 1] + upperHalf[m2/2]) / 2;
+                    } else {
+                        q3 = upperHalf[Math.floor(m2/2)];
+                    }
+                }
+                
+                return { q1, median, q3 };
+            }
+
+            function calculateQuartilesMethod2(sortedData) {
+                const n = sortedData.length;
+                
+                // Calculate median (exclusive)
+                let median;
+                if (n % 2 === 0) {
+                    median = (sortedData[n/2 - 1] + sortedData[n/2]) / 2;
+                } else {
+                    median = sortedData[Math.floor(n/2)];
+                }
+                
+                // Calculate Q1 and Q3 (exclude median)
+                let q1, q3;
+                
+                if (n % 2 === 0) {
+                    // Even number of elements
+                    const lowerHalf = sortedData.slice(0, n/2);
+                    const upperHalf = sortedData.slice(n/2);
+                    
+                    const m1 = lowerHalf.length;
+                    if (m1 % 2 === 0) {
+                        q1 = (lowerHalf[m1/2 - 1] + lowerHalf[m1/2]) / 2;
+                    } else {
+                        q1 = lowerHalf[Math.floor(m1/2)];
+                    }
+                    
+                    const m2 = upperHalf.length;
+                    if (m2 % 2 === 0) {
+                        q3 = (upperHalf[m2/2 - 1] + upperHalf[m2/2]) / 2;
+                    } else {
+                        q3 = upperHalf[Math.floor(m2/2)];
+                    }
+                } else {
+                    // Odd number of elements - exclude median from both halves
+                    const lowerHalf = sortedData.slice(0, Math.floor(n/2));
+                    const upperHalf = sortedData.slice(Math.floor(n/2) + 1);
+                    
+                    const m1 = lowerHalf.length;
+                    if (m1 % 2 === 0) {
+                        q1 = (lowerHalf[m1/2 - 1] + lowerHalf[m1/2]) / 2;
+                    } else {
+                        q1 = lowerHalf[Math.floor(m1/2)];
+                    }
+                    
+                    const m2 = upperHalf.length;
+                    if (m2 % 2 === 0) {
+                        q3 = (upperHalf[m2/2 - 1] + upperHalf[m2/2]) / 2;
+                    } else {
+                        q3 = upperHalf[Math.floor(m2/2)];
+                    }
+                }
+                
+                return { q1, median, q3 };
+            }
+
+            function calculateQuartilesMethod3(sortedData) {
+                const n = sortedData.length;
+                
+                // Linear interpolation method
+                // Positions for quartiles
+                const q1Pos = (n + 1) / 4;
+                const medianPos = (n + 1) / 2;
+                const q3Pos = 3 * (n + 1) / 4;
+                
+                // Calculate quartiles using linear interpolation
+                const q1 = interpolate(sortedData, q1Pos);
+                const median = interpolate(sortedData, medianPos);
+                const q3 = interpolate(sortedData, q3Pos);
+                
+                return { q1, median, q3 };
+            }
+
+            function interpolate(sortedData, pos) {
+                const lowerIndex = Math.floor(pos) - 1;
+                const upperIndex = Math.ceil(pos) - 1;
+                const fraction = pos - Math.floor(pos);
+                
+                if (lowerIndex === upperIndex) {
+                    return sortedData[lowerIndex];
+                }
+                
+                return sortedData[lowerIndex] + fraction * (sortedData[upperIndex] - sortedData[lowerIndex]);
+            }
+
+            function calculatePositions(n) {
+                return {
+                    min: 1,
+                    q1: currentLanguage === 'bn' ? '২৫তম পারসেন্টাইল' : '25th percentile',
+                    median: currentLanguage === 'bn' ? '৫০তম পারসেন্টাইল' : '50th percentile',
+                    q3: currentLanguage === 'bn' ? '৭৫তম পারসেন্টাইল' : '75th percentile',
+                    max: n
+                };
+            }
+
+            function detectOutliers(sortedData, q1, q3, iqr, multiplier, outlierType) {
+                // Calculate boundaries
+                const mildLower = q1 - 1.5 * iqr;
+                const mildUpper = q3 + 1.5 * iqr;
+                const extremeLower = q1 - 3 * iqr;
+                const extremeUpper = q3 + 3 * iqr;
+                
+                // Initialize outlier arrays
+                const mildOutliers = [];
+                const extremeOutliers = [];
+                const allOutliers = [];
+                
+                // Detect outliers
+                sortedData.forEach(value => {
+                    if (value < extremeLower || value > extremeUpper) {
+                        extremeOutliers.push(value);
+                        allOutliers.push({value, type: 'extreme'});
+                    } else if ((value < mildLower || value > mildUpper) && 
+                              outlierType !== 'extreme') {
+                        mildOutliers.push(value);
+                        allOutliers.push({value, type: 'mild'});
+                    }
+                });
+                
+                return {
+                    outliers: {
+                        mild: mildOutliers,
+                        extreme: extremeOutliers,
+                        all: allOutliers
+                    },
+                    boundaries: {
+                        mildLower,
+                        mildUpper,
+                        extremeLower,
+                        extremeUpper
+                    }
+                };
+            }
+
+            function calculateRangeIQR() {
+                // Get input data
+                const dataInput = document.getElementById('dataInput').value;
+                dataset = parseInputData(dataInput);
+                
+                if (dataset.length < 2) {
+                    alert(currentLanguage === 'bn' ? 
+                        'রেঞ্জ এবং IQR গণনার জন্য কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 
+                        'At least 2 numbers are required for range and IQR calculation');
+                    return;
+                }
+                
+                // Calculate statistics
+                results = calculateStatistics(dataset);
+                
+                // Update results display
+                updateResults();
+                
+                // Update visualizations
+                updateVisualizations();
+                
+                // Update detailed calculations
+                updateDetailedCalculations();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function updateResults() {
+                // Update key results
+                document.getElementById('rangeResult').textContent = results.range.toFixed(2);
+                document.getElementById('iqrResult').textContent = results.iqr.toFixed(2);
+                
+                // Update five-number summary
+                document.getElementById('summaryMin').textContent = results.min.toFixed(2);
+                document.getElementById('summaryQ1').textContent = results.q1.toFixed(2);
+                document.getElementById('summaryMedian').textContent = results.median.toFixed(2);
+                document.getElementById('summaryQ3').textContent = results.q3.toFixed(2);
+                document.getElementById('summaryMax').textContent = results.max.toFixed(2);
+                
+                // Update quartile positions
+                const positions = results.positions;
+                document.getElementById('minPosition').textContent = positions.min;
+                document.getElementById('q1Position').textContent = positions.q1;
+                document.getElementById('medianPosition').textContent = positions.median;
+                document.getElementById('q3Position').textContent = positions.q3;
+                document.getElementById('maxPosition').textContent = positions.max;
+                
+                // Update quartile cards
+                document.getElementById('quartileMin').textContent = results.min.toFixed(2);
+                document.getElementById('quartileQ1').textContent = results.q1.toFixed(2);
+                document.getElementById('quartileMedian').textContent = results.median.toFixed(2);
+                document.getElementById('quartileQ3').textContent = results.q3.toFixed(2);
+                document.getElementById('quartileMax').textContent = results.max.toFixed(2);
+                
+                // Update position labels
+                document.getElementById('minPosLabel').textContent = currentLanguage === 'bn' ? 
+                    'অবস্থান: ১' : `Position: 1`;
+                document.getElementById('q1PosLabel').textContent = currentLanguage === 'bn' ? 
+                    '২৫তম পারসেন্টাইল' : '25th percentile';
+                document.getElementById('medianPosLabel').textContent = currentLanguage === 'bn' ? 
+                    '৫০তম পারসেন্টাইল' : '50th percentile';
+                document.getElementById('q3PosLabel').textContent = currentLanguage === 'bn' ? 
+                    '৭৫তম পারসেন্টাইল' : '75th percentile';
+                document.getElementById('maxPosLabel').textContent = currentLanguage === 'bn' ? 
+                    `অবস্থান: ${results.n}` : `Position: ${results.n}`;
+                
+                // Update outlier statistics
+                const mildCount = results.outliers.mild.length;
+                const extremeCount = results.outliers.extreme.length;
+                const totalCount = results.outliers.all.length;
+                const percentage = ((totalCount / results.n) * 100).toFixed(1);
+                
+                document.getElementById('mildOutliersCount').textContent = mildCount;
+                document.getElementById('extremeOutliersCount').textContent = extremeCount;
+                document.getElementById('totalOutliersCount').textContent = totalCount;
+                document.getElementById('outliersPercentage').textContent = `${percentage}%`;
+                
+                // Update outlier boundaries
+                document.getElementById('mildLowerBound').textContent = results.boundaries.mildLower.toFixed(2);
+                document.getElementById('mildUpperBound').textContent = results.boundaries.mildUpper.toFixed(2);
+                document.getElementById('extremeLowerBound').textContent = results.boundaries.extremeLower.toFixed(2);
+                document.getElementById('extremeUpperBound').textContent = results.boundaries.extremeUpper.toFixed(2);
+                
+                // Update outlier list
+                const outlierList = document.getElementById('outlierList');
+                outlierList.innerHTML = '';
+                
+                results.outliers.all.forEach(outlier => {
+                    const item = document.createElement('div');
+                    item.className = `outlier-item ${outlier.type}`;
+                    item.textContent = outlier.value.toFixed(2);
+                    outlierList.appendChild(item);
+                });
+                
+                if (totalCount === 0) {
+                    const noOutliers = document.createElement('div');
+                    noOutliers.style.color = 'var(--gray)';
+                    noOutliers.style.fontStyle = 'italic';
+                    noOutliers.textContent = currentLanguage === 'bn' ? 
+                        'কোন আউটলায়ার শনাক্ত করা হয়নি' : 'No outliers detected';
+                    outlierList.appendChild(noOutliers);
+                }
+            }
+
+            function updateVisualizations() {
+                updateBoxPlot();
+                updatePlotLabels();
+            }
+
+            function updateBoxPlot() {
+                const container = document.getElementById('boxPlot');
+                container.innerHTML = '';
+                
+                const width = document.getElementById('boxPlotContainer').offsetWidth;
+                const height = 150;
+                const padding = 20;
+                const plotWidth = width - padding * 2;
+                
+                // Calculate positions
+                const dataMin = results.min;
+                const dataMax = results.max;
+                const dataRange = dataMax - dataMin;
+                
+                // Function to convert value to x position
+                const valueToX = (value) => {
+                    return padding + ((value - dataMin) / dataRange) * plotWidth;
+                };
+                
+                // Draw whiskers
+                const whiskerLeft = document.createElement('div');
+                whiskerLeft.className = 'whisker left';
+                whiskerLeft.style.left = `${valueToX(results.q1) - 1}px`;
+                whiskerLeft.style.top = `${height/2 - 10}px`;
+                container.appendChild(whiskerLeft);
+                
+                const whiskerRight = document.createElement('div');
+                whiskerRight.className = 'whisker right';
+                whiskerRight.style.left = `${valueToX(results.q3) - 1}px`;
+                whiskerRight.style.top = `${height/2 - 10}px`;
+                container.appendChild(whiskerRight);
+                
+                // Draw box
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.style.left = `${valueToX(results.q1)}px`;
+                box.style.width = `${valueToX(results.q3) - valueToX(results.q1)}px`;
+                box.style.top = `${height/2 - 30}px`;
+                container.appendChild(box);
+                
+                // Draw median line
+                const medianLine = document.createElement('div');
+                medianLine.className = 'median-line';
+                medianLine.style.left = `${valueToX(results.median)}px`;
+                medianLine.style.width = '100%';
+                container.appendChild(medianLine);
+                
+                // Draw quartile markers
+                const q1Marker = document.createElement('div');
+                q1Marker.className = 'quartile-marker';
+                q1Marker.style.left = `${valueToX(results.q1)}px`;
+                container.appendChild(q1Marker);
+                
+                const q3Marker = document.createElement('div');
+                q3Marker.className = 'quartile-marker';
+                q3Marker.style.left = `${valueToX(results.q3)}px`;
+                container.appendChild(q3Marker);
+                
+                // Draw outliers
+                results.outliers.all.forEach(outlier => {
+                    const outlierMarker = document.createElement('div');
+                    outlierMarker.className = `outlier-marker ${outlier.type}`;
+                    outlierMarker.style.left = `${valueToX(outlier.value) - 5}px`;
+                    container.appendChild(outlierMarker);
+                });
+            }
+
+            function updatePlotLabels() {
+                document.getElementById('plotMinLabel').textContent = 
+                    currentLanguage === 'bn' ? `ন্যূনতম: ${results.min.toFixed(2)}` : `Min: ${results.min.toFixed(2)}`;
+                document.getElementById('plotQ1Label').textContent = 
+                    currentLanguage === 'bn' ? `Q1: ${results.q1.toFixed(2)}` : `Q1: ${results.q1.toFixed(2)}`;
+                document.getElementById('plotMedianLabel').textContent = 
+                    currentLanguage === 'bn' ? `মধ্যমা: ${results.median.toFixed(2)}` : `Median: ${results.median.toFixed(2)}`;
+                document.getElementById('plotQ3Label').textContent = 
+                    currentLanguage === 'bn' ? `Q3: ${results.q3.toFixed(2)}` : `Q3: ${results.q3.toFixed(2)}`;
+                document.getElementById('plotMaxLabel').textContent = 
+                    currentLanguage === 'bn' ? `সর্বোচ্চ: ${results.max.toFixed(2)}` : `Max: ${results.max.toFixed(2)}`;
+            }
+
+            function updateDetailedCalculations() {
+                const container = document.getElementById('calculationStepsContainer');
+                
+                if (results.n === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'ডেটা ইনপুট করুন এবং বিস্তারিত গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                                'Enter data and calculate to see detailed calculation steps'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const methodName = currentLanguage === 'bn' ? 
+                    (document.querySelector('.method-btn.active').dataset.method === 'method1' ? 'পদ্ধতি ১ (ইনক্লুসিভ মিডিয়ান)' :
+                     document.querySelector('.method-btn.active').dataset.method === 'method2' ? 'পদ্ধতি ২ (এক্সক্লুসিভ মিডিয়ান)' :
+                     'পদ্ধতি ৩ (লিনিয়ার ইন্টারপোলেশন)') :
+                    (document.querySelector('.method-btn.active').dataset.method === 'method1' ? 'Method 1 (Inclusive median)' :
+                     document.querySelector('.method-btn.active').dataset.method === 'method2' ? 'Method 2 (Exclusive median)' :
+                     'Method 3 (Linear interpolation)');
+                
+                const stepsHTML = `
+                    <div class="step-container">
+                        <div class="step-header">
+                            <div class="step-number">১</div>
+                            <h3 class="step-title" data-en="Step 1: Sort the Data" data-bন="ধাপ ১: ডেটা সাজানো">ধাপ ১: ডেটা সাজানো</h3>
+                        </div>
+                        <div class="step-content">
+                            <p data-en="First, we sort the data in ascending order" data-bন="প্রথমে, আমরা ডেটাকে ঊর্ধ্বক্রমে সাজাই">
+                                প্রথমে, আমরা ডেটাকে ঊর্ধ্বক্রমে সাজাই
+                            </p>
+                            <div class="step-details">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Original Data" data-bন="মূল ডেটা">মূল ডেটা</th>
+                                            <th data-en="Sorted Data" data-bন="সাজানো ডেটা">সাজানো ডেটা</th>
+                                            <th data-en="Position" data-bন="অবস্থান">অবস্থান</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${results.sortedData.map((value, index) => `
+                                            <tr class="${index === 0 || index === results.n - 1 ? 'sorted' : ''}">
+                                                <td>${dataset[index] ? dataset[index].toFixed(2) : '--'}</td>
+                                                <td>${value.toFixed(2)}</td>
+                                                <td>${index + 1}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-header">
+                            <div class="step-number">২</div>
+                            <h3 class="step-title" data-en="Step 2: Calculate Minimum and Maximum" data-bন="ধাপ ২: ন্যূনতম এবং সর্বোচ্চ গণনা">ধাপ ২: ন্যূনতম এবং সর্বোচ্চ গণনা</h3>
+                        </div>
+                        <div class="step-content">
+                            <p data-en="Find the smallest and largest values in the sorted data" data-bন="সাজানো ডেটার মধ্যে সবচেয়ে ছোট এবং সবচেয়ে বড় মান খুঁজে বের করুন">
+                                সাজানো ডেটার মধ্যে সবচেয়ে ছোট এবং সবচেয়ে বড় মান খুঁজে বের করুন
+                            </p>
+                            <div class="step-details">
+                                <div class="calculation-formula">
+                                    Min = ${results.min.toFixed(2)}, Max = ${results.max.toFixed(2)}
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> Range = Max - Min</p>
+                                <div class="calculation-formula">
+                                    Range = ${results.max.toFixed(2)} - ${results.min.toFixed(2)} = ${results.range.toFixed(2)}
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        'সম্পূর্ণ ডেটাসেটের মোট বিস্তার' : 
+                                        'Total spread of the entire dataset'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-header">
+                            <div class="step-number">৩</div>
+                            <h3 class="step-title" data-en="Step 3: Calculate Quartiles" data-bন="ধাপ ৩: কোয়ার্টাইল গণনা">ধাপ ৩: কোয়ার্টাইল গণনা</h3>
+                        </div>
+                        <div class="step-content">
+                            <p data-en="Calculate Q1 (25th percentile), Median (50th percentile), and Q3 (75th percentile) using ${methodName}" data-bন="${methodName} ব্যবহার করে Q1 (২৫তম পারসেন্টাইল), মধ্যমা (৫০তম পারসেন্টাইল), এবং Q3 (৭৫তম পারসেন্টাইল) গণনা করুন">
+                                ${methodName} ব্যবহার করে Q1 (২৫তম পারসেন্টাইল), মধ্যমা (৫০তম পারসেন্টাইল), এবং Q3 (৭৫তম পারসেন্টাইল) গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0;">
+                                    <div style="text-align: center; padding: 1rem; background: rgba(156, 39, 176, 0.1); border-radius: 8px;">
+                                        <div style="font-weight: 600; color: var(--quartile-color);">Q1</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">${results.q1.toFixed(2)}</div>
+                                        <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? '২৫তম পারসেন্টাইল' : '25th percentile'}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 1rem; background: rgba(76, 175, 80, 0.1); border-radius: 8px;">
+                                        <div style="font-weight: 600; color: var(--accent);">${currentLanguage === 'bn' ? 'মধ্যমা' : 'Median'}</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">${results.median.toFixed(2)}</div>
+                                        <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? '৫০তম পারসেন্টাইল' : '50th percentile'}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 1rem; background: rgba(156, 39, 176, 0.1); border-radius: 8px;">
+                                        <div style="font-weight: 600; color: var(--quartile-color);">Q3</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">${results.q3.toFixed(2)}</div>
+                                        <div style="font-size: 0.9rem; color: var(--gray);">${currentLanguage === 'bn' ? '৭৫তম পারসেন্টাইল' : '75th percentile'}</div>
+                                    </div>
+                                </div>
+                                
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> IQR = Q3 - Q1</p>
+                                <div class="calculation-formula">
+                                    IQR = ${results.q3.toFixed(2)} - ${results.q1.toFixed(2)} = ${results.iqr.toFixed(2)}
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'ব্যাখ্যা' : 'Interpretation'}:</strong> 
+                                    ${currentLanguage === 'bn' ? 
+                                        'ডেটার মাঝের ৫০% এর বিস্তার (প্রথম এবং তৃতীয় কোয়ার্টাইলের মধ্যে দূরত্ব)' : 
+                                        'Spread of the middle 50% of data (distance between first and third quartiles)'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <div class="step-header">
+                            <div class="step-number">৪</div>
+                            <h3 class="step-title" data-en="Step 4: Detect Outliers" data-bন="ধাপ ৪: আউটলায়ার শনাক্তকরণ">ধাপ ৪: আউটলায়ার শনাক্তকরণ</h3>
+                        </div>
+                        <div class="step-content">
+                            <p data-en="Identify values outside the expected range using IQR method" data-bন="IQR পদ্ধতি ব্যবহার করে প্রত্যাশিত সীমার বাইরের মান শনাক্ত করুন">
+                                IQR পদ্ধতি ব্যবহার করে প্রত্যাশিত সীমার বাইরের মান শনাক্ত করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong></p>
+                                <p>${currentLanguage === 'bn' ? 
+                                    'মাইল্ড আউটলায়ার সীমা: Q1 - 1.5×IQR এবং Q3 + 1.5×IQR' : 
+                                    'Mild outlier limits: Q1 - 1.5×IQR and Q3 + 1.5×IQR'}</p>
+                                <p>${currentLanguage === 'bn' ? 
+                                    'এক্সট্রিম আউটলায়ার সীমা: Q1 - 3×IQR এবং Q3 + 3×IQR' : 
+                                    'Extreme outlier limits: Q1 - 3×IQR and Q3 + 3×IQR'}</p>
+                                
+                                <div class="calculation-formula">
+                                    ${currentLanguage === 'bn' ? 'মাইল্ড নিম্ন সীমা' : 'Mild lower limit'}: ${results.q1.toFixed(2)} - 1.5 × ${results.iqr.toFixed(2)} = ${results.boundaries.mildLower.toFixed(2)}<br>
+                                    ${currentLanguage === 'bn' ? 'মাইল্ড উচ্চ সীমা' : 'Mild upper limit'}: ${results.q3.toFixed(2)} + 1.5 × ${results.iqr.toFixed(2)} = ${results.boundaries.mildUpper.toFixed(2)}
+                                </div>
+                                
+                                <div class="calculation-formula" style="margin-top: 1rem;">
+                                    ${currentLanguage === 'bn' ? 'এক্সট্রিম নিম্ন সীমা' : 'Extreme lower limit'}: ${results.q1.toFixed(2)} - 3 × ${results.iqr.toFixed(2)} = ${results.boundaries.extremeLower.toFixed(2)}<br>
+                                    ${currentLanguage === 'bn' ? 'এক্সট্রিম উচ্চ সীমা' : 'Extreme upper limit'}: ${results.q3.toFixed(2)} + 3 × ${results.iqr.toFixed(2)} = ${results.boundaries.extremeUpper.toFixed(2)}
+                                </div>
+                                
+                                <p style="margin-top: 1rem;">
+                                    <strong>${currentLanguage === 'bn' ? 'শনাক্তকৃত আউটলায়ার' : 'Detected outliers'}:</strong>
+                                    ${results.outliers.all.length === 0 ? 
+                                        (currentLanguage === 'bn' ? 'কোন আউটলায়ার শনাক্ত করা হয়নি' : 'No outliers detected') :
+                                        results.outliers.all.map(o => `${o.value.toFixed(2)} (${o.type})`).join(', ')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                document.getElementById('dataInput').value = data.data.join(', ');
+                calculateRangeIQR();
+            }
+
+            function clearCalculator() {
+                // Clear inputs
+                document.getElementById('dataInput').value = '';
+                
+                // Reset results
+                resetResults();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function resetResults() {
+                // Clear result values
+                document.getElementById('rangeResult').textContent = '--';
+                document.getElementById('iqrResult').textContent = '--';
+                
+                // Clear five-number summary
+                document.getElementById('summaryMin').textContent = '--';
+                document.getElementById('summaryQ1').textContent = '--';
+                document.getElementById('summaryMedian').textContent = '--';
+                document.getElementById('summaryQ3').textContent = '--';
+                document.getElementById('summaryMax').textContent = '--';
+                
+                // Clear quartile positions
+                document.getElementById('minPosition').textContent = '--';
+                document.getElementById('q1Position').textContent = '--';
+                document.getElementById('medianPosition').textContent = '--';
+                document.getElementById('q3Position').textContent = '--';
+                document.getElementById('maxPosition').textContent = '--';
+                
+                // Clear quartile cards
+                document.getElementById('quartileMin').textContent = '--';
+                document.getElementById('quartileQ1').textContent = '--';
+                document.getElementById('quartileMedian').textContent = '--';
+                document.getElementById('quartileQ3').textContent = '--';
+                document.getElementById('quartileMax').textContent = '--';
+                
+                // Clear outlier statistics
+                document.getElementById('mildOutliersCount').textContent = '0';
+                document.getElementById('extremeOutliersCount').textContent = '0';
+                document.getElementById('totalOutliersCount').textContent = '0';
+                document.getElementById('outliersPercentage').textContent = '0%';
+                
+                // Clear outlier boundaries
+                document.getElementById('mildLowerBound').textContent = '--';
+                document.getElementById('mildUpperBound').textContent = '--';
+                document.getElementById('extremeLowerBound').textContent = '--';
+                document.getElementById('extremeUpperBound').textContent = '--';
+                
+                // Clear outlier list
+                document.getElementById('outlierList').innerHTML = '';
+                
+                // Clear box plot
+                document.getElementById('boxPlot').innerHTML = '';
+                
+                // Clear plot labels
+                document.getElementById('plotMinLabel').textContent = currentLanguage === 'bn' ? 'ন্যূনতম: --' : 'Min: --';
+                document.getElementById('plotQ1Label').textContent = currentLanguage === 'bn' ? 'Q1: --' : 'Q1: --';
+                document.getElementById('plotMedianLabel').textContent = currentLanguage === 'bn' ? 'মধ্যমা: --' : 'Median: --';
+                document.getElementById('plotQ3Label').textContent = currentLanguage === 'bn' ? 'Q3: --' : 'Q3: --';
+                document.getElementById('plotMaxLabel').textContent = currentLanguage === 'bn' ? 'সর্বোচ্চ: --' : 'Max: --';
+                
+                // Clear detailed calculations
+                document.getElementById('calculationStepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং বিস্তারিত গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                            'Enter data and calculate to see detailed calculation steps'}
+                    </p>
+                `;
+                
+                // Reset data
+                dataset = [];
+                sortedData = [];
+                results = null;
+            }
+
+            function updateDynamicContent() {
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

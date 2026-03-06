@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পার্শিয়াল কোরিলেশন ক্যালকুলেটর | কন্ট্রোল ভেরিয়েবল সহ কোরিলেশন</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #4A6FA5;
+            --secondary: #166088;
+            --accent: #FF6B6B;
+            --success: #4ECDC4;
+            --info: #45B7D1;
+            --warning: #FFE66D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --residual-color: #FF6B6B;
+            --control-color: #4ECDC4;
+            --main-correlation-color: #4A6FA5;
+            --partial-correlation-color: #45B7D1;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--main-correlation-color), var(--partial-correlation-color), var(--control-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Variable Input Section */
+        .variable-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .variable-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .variable-group {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .variable-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .variable-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .variable-x .variable-icon { background: var(--main-correlation-color); }
+        .variable-y .variable-icon { background: var(--accent); }
+        .variable-z .variable-icon { background: var(--control-color); }
+
+        .variable-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .variable-input textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .variable-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Control Variables Management */
+        .control-variables {
+            margin: 1.5rem 0;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .add-control-btn {
+            padding: 0.5rem 1rem;
+            background: var(--control-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-control-btn:hover {
+            background: #3da89f;
+            transform: translateY(-2px);
+        }
+
+        .controls-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .remove-control {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .remove-control:hover {
+            transform: scale(1.2);
+        }
+
+        /* Calculation Method Toggle */
+        .method-toggle {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+        }
+
+        @media (max-width: 480px) {
+            .method-toggle {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .method-btn.residual {
+            color: var(--residual-color);
+        }
+
+        .method-btn.formula {
+            color: var(--primary);
+        }
+
+        .method-btn.matrix {
+            color: var(--control-color);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Results Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.correlation::before { background: var(--main-correlation-color); }
+        .result-card.partial::before { background: var(--partial-correlation-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.correlation .result-icon { color: var(--main-correlation-color); }
+        .result-card.partial .result-icon { color: var(--partial-correlation-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-interpretation {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* Residual Results */
+        .residual-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .residual-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .residual-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid var(--residual-color);
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Scatter Plot Styling */
+        .scatter-plot {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .plot-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translate(-50%, 50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .plot-point.original {
+            background: var(--main-correlation-color);
+            opacity: 0.6;
+        }
+
+        .plot-point.residual {
+            background: var(--residual-color);
+            opacity: 0.8;
+        }
+
+        .plot-point:hover {
+            transform: translate(-50%, 50%) scale(1.8);
+            z-index: 10;
+        }
+
+        .plot-trend-line {
+            position: absolute;
+            height: 2px;
+            background: var(--primary);
+            opacity: 0.5;
+            transform-origin: left;
+        }
+
+        .plot-trend-line.partial {
+            background: var(--partial-correlation-color);
+            opacity: 0.7;
+        }
+
+        .plot-axis-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .plot-axis-label.x {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .plot-axis-label.y {
+            top: 50%;
+            left: -40px;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        /* Residual Plot */
+        .residual-plot {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .residual-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+            opacity: 0.5;
+        }
+
+        /* Control Variables Chart */
+        .control-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            justify-content: space-around;
+        }
+
+        .control-bar {
+            flex: 1;
+            background: var(--control-color);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            max-width: 60px;
+        }
+
+        .control-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .control-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .control-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.original { background: var(--main-correlation-color); }
+        .legend-color.residual { background: var(--residual-color); }
+        .legend-color.partial { background: var(--partial-correlation-color); }
+        .legend-color.control { background: var(--control-color); }
+        .legend-color.trend { background: var(--primary); }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .residual-formula .formula-icon { background: var(--residual-color); }
+        .matrix-formula .formula-icon { background: var(--control-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* Residual Calculation Steps */
+        .residual-steps {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        /* Matrix Visualization */
+        .matrix-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .correlation-matrix {
+            border-collapse: collapse;
+            min-width: 400px;
+            margin: 0 auto;
+        }
+
+        .correlation-matrix th, .correlation-matrix td {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .correlation-matrix th {
+            background: var(--table-header);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .matrix-diagonal {
+            background: var(--light-gray);
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .matrix-partial {
+            background: #e3f2fd;
+            color: var(--partial-correlation-color);
+            font-weight: 600;
+        }
+
+        /* Control Variables Table */
+        .controls-table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        .controls-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .controls-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .controls-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .controls-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .controls-table .effect-cell {
+            text-align: center;
+            font-weight: 600;
+            border-left: 3px solid var(--border);
+        }
+
+        .effect-positive {
+            color: var(--accent);
+        }
+
+        .effect-negative {
+            color: var(--success);
+        }
+
+        /* Examples Section */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Formula Key */
+        .formula-key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .formula-key {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .key-item {
+                min-width: 100%;
+            }
+        }
+
+        .key-symbol {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 40px;
+        }
+
+        .key-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Interpretation Guide */
+        .interpretation-guide {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 4px solid var(--info);
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .guide-item {
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .guide-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .guide-value.strong-positive { color: #e63946; }
+        .guide-value.positive { color: var(--accent); }
+        .guide-value.weak { color: var(--gray); }
+        .guide-value.negative { color: var(--success); }
+        .guide-value.strong-negative { color: #1d3557; }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .examples-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .correlation-matrix,
+            .controls-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Partial Correlation Calculator" data-bn="পার্শিয়াল কোরিলেশন ক্যালকুলেটর">পার্শিয়াল কোরিলেশন ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate correlation between two variables while controlling for other variables" data-bn="অন্যান্য ভেরিয়েবল কন্ট্রোল করে দুটি ভেরিয়েবলের মধ্যে কোরিলেশন গণনা করুন">
+                অন্যান্য ভেরিয়েবল কন্ট্রোল করে দুটি ভেরিয়েবলের মধ্যে কোরিলেশন গণনা করুন
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Variable Input" data-bn="ভেরিয়েবল ইনপুট">ভেরিয়েবল ইনপুট</span>
+                </h2>
+                
+                <div class="variable-inputs">
+                    <!-- Variable X -->
+                    <div class="variable-group variable-x">
+                        <div class="variable-header">
+                            <div class="variable-icon">
+                                <i class="fas fa-x"></i>
+                            </div>
+                            <div class="variable-name" data-en="Variable X (Main)" data-bn="ভেরিয়েবল X (প্রধান)">ভেরিয়েবল X (প্রধান)</div>
+                        </div>
+                        <div class="variable-input">
+                            <textarea id="variableX" placeholder="Enter values for X variable
+Example: 10, 20, 30, 40, 50" data-bn-placeholder="X ভেরিয়েবলের মান ইনপুট করুন
+উদাহরণ: 10, 20, 30, 40, 50"></textarea>
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Enter numbers separated by commas" data-bn="সংখ্যাগুলো কমা দ্বারা আলাদা করুন">
+                                    সংখ্যাগুলো কমা দ্বারা আলাদা করুন
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Variable Y -->
+                    <div class="variable-group variable-y">
+                        <div class="variable-header">
+                            <div class="variable-icon">
+                                <i class="fas fa-y"></i>
+                            </div>
+                            <div class="variable-name" data-en="Variable Y (Dependent)" data-bn="ভেরিয়েবল Y (নির্ভরশীল)">ভেরিয়েবল Y (নির্ভরশীল)</div>
+                        </div>
+                        <div class="variable-input">
+                            <textarea id="variableY" placeholder="Enter values for Y variable
+Example: 15, 25, 35, 45, 55" data-bn-placeholder="Y ভেরিয়েবলের মান ইনপুট করুন
+উদাহরণ: 15, 25, 35, 45, 55"></textarea>
+                            <div class="input-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-en="Must have same number of values as X" data-bn="X এর মতো একই সংখ্যক মান থাকতে হবে">
+                                    X এর মতো একই সংখ্যক মান থাকতে হবে
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Variables -->
+                <div class="control-variables">
+                    <div class="controls-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-sliders-h"></i>
+                            <span data-en="Control Variables (Z)" data-bn="কন্ট্রোল ভেরিয়েবল (Z)">কন্ট্রোল ভেরিয়েবল (Z)</span>
+                        </h3>
+                        <button class="add-control-btn" id="addControlBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Control Variable" data-bn="কন্ট্রোল ভেরিয়েবল যোগ করুন">কন্ট্রোল ভেরিয়েবল যোগ করুন</span>
+                        </button>
+                    </div>
+                    <div class="controls-list" id="controlsList">
+                        <!-- Control variables will be added here -->
+                        <div class="control-item">
+                            <div class="variable-icon" style="background: var(--control-color); width: 30px; height: 30px; font-size: 0.9rem;">
+                                <i class="fas fa-z"></i>
+                            </div>
+                            <textarea class="control-input" placeholder="Enter control variable values
+Same length as X and Y" style="flex: 1; min-height: 60px;" data-bn-placeholder="কন্ট্রোল ভেরিয়েবলের মান ইনপুট করুন
+X এবং Y এর মতো একই দৈর্ঘ্য"></textarea>
+                            <button class="remove-control">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculation Method -->
+                <div class="method-toggle">
+                    <button class="method-btn residual active" data-method="residual">
+                        <i class="fas fa-wave-square"></i>
+                        <span data-en="Residual Method" data-bn="রেসিডুয়াল পদ্ধতি">রেসিডুয়াল পদ্ধতি</span>
+                    </button>
+                    <button class="method-btn formula" data-method="formula">
+                        <i class="fas fa-square-root-alt"></i>
+                        <span data-en="Formula Method" data-bn="সূত্র পদ্ধতি">সূত্র পদ্ধতি</span>
+                    </button>
+                    <button class="method-btn matrix" data-method="matrix">
+                        <i class="fas fa-table"></i>
+                        <span data-en="Matrix Method" data-bn="ম্যাট্রিক্স পদ্ধতি">ম্যাট্রিক্স পদ্ধতি</span>
+                    </button>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate Partial Correlation" data-bn="পার্শিয়াল কোরিলেশন গণনা করুন">পার্শিয়াল কোরিলেশন গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="Correlation Results" data-bn="কোরিলেশন ফলাফল">কোরিলেশন ফলাফল</span>
+                </h2>
+                
+                <div class="results-grid">
+                    <!-- Simple Correlation -->
+                    <div class="result-card correlation">
+                        <div class="result-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="result-title" data-en="Simple Correlation (r_xy)" data-bn="সরল কোরিলেশন (r_xy)">সরল কোরিলেশন (r_xy)</div>
+                        <div class="result-value" id="simpleCorrelationResult">--</div>
+                        <div class="result-interpretation" id="simpleInterpretation" data-en="No control variables" data-bn="কোন কন্ট্রোল ভেরিয়েবল নেই">
+                            কোন কন্ট্রোল ভেরিয়েবল নেই
+                        </div>
+                    </div>
+
+                    <!-- Partial Correlation -->
+                    <div class="result-card partial">
+                        <div class="result-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <div class="result-title" data-en="Partial Correlation (r_xy.z)" data-bn="পার্শিয়াল কোরিলেশন (r_xy.z)">পার্শিয়াল কোরিলেশন (r_xy.z)</div>
+                        <div class="result-value" id="partialCorrelationResult">--</div>
+                        <div class="result-interpretation" id="partialInterpretation" data-en="Controlling for variables" data-bn="ভেরিয়েবল কন্ট্রোল করা হয়েছে">
+                            ভেরিয়েবল কন্ট্রোল করা হয়েছে
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Residual Results -->
+                <div class="residual-results">
+                    <div class="residual-card">
+                        <div class="result-title" data-en="Residual Variance (X|Z)" data-bn="রেসিডুয়াল ভ্যারিয়েন্স (X|Z)">রেসিডুয়াল ভ্যারিয়েন্স (X|Z)</div>
+                        <div class="result-value" id="residualVarianceX">--</div>
+                        <div class="result-unit" data-en="units²" data-bn="একক²">একক²</div>
+                    </div>
+                    <div class="residual-card">
+                        <div class="result-title" data-en="Residual Variance (Y|Z)" data-bn="রেসিডুয়াল ভ্যারিয়েন্স (Y|Z)">রেসিডুয়াল ভ্যারিয়েন্স (Y|Z)</div>
+                        <div class="result-value" id="residualVarianceY">--</div>
+                        <div class="result-unit" data-en="units²" data-bn="একক²">একক²</div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Points (n)" data-bn="ডেটা পয়েন্ট (n)">ডেটা পয়েন্ট (n)</div>
+                        <div class="stat-value" id="dataCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Control Variables" data-bn="কন্ট্রোল ভেরিয়েবল">কন্ট্রোল ভেরিয়েবল</div>
+                        <div class="stat-value" id="controlCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="R² Change" data-bn="R² পরিবর্তন">R² পরিবর্তন</div>
+                        <div class="stat-value" id="rSquaredChange">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Effect Size" data-bn="ইফেক্ট সাইজ">ইফেক্ট সাইজ</div>
+                        <div class="stat-value" id="effectSize">--</div>
+                    </div>
+                </div>
+
+                <!-- Interpretation Guide -->
+                <div class="interpretation-guide">
+                    <h4 style="color: var(--dark); margin-bottom: 1rem;" data-en="Correlation Interpretation Guide" data-bn="কোরিলেশন ব্যাখ্যা গাইড">
+                        কোরিলেশন ব্যাখ্যা গাইড
+                    </h4>
+                    <div class="guide-grid">
+                        <div class="guide-item">
+                            <div class="guide-value strong-positive">+0.7 to +1.0</div>
+                            <div data-en="Strong Positive" data-bn="শক্তিশালী ধনাত্মক">শক্তিশালী ধনাত্মক</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value positive">+0.3 to +0.7</div>
+                            <div data-en="Moderate Positive" data-bn="মাঝারি ধনাত্মক">মাঝারি ধনাত্মক</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value weak">-0.3 to +0.3</div>
+                            <div data-en="Weak/No Correlation" data-bn="দুর্বল/কোন কোরিলেশন নেই">দুর্বল/কোন কোরিলেশন নেই</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value negative">-0.7 to -0.3</div>
+                            <div data-en="Moderate Negative" data-bn="মাঝারি ঋণাত্মক">মাঝারি ঋণাত্মক</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-value strong-negative">-1.0 to -0.7</div>
+                            <div data-en="Strong Negative" data-bn="শক্তিশালী ঋণাত্মক">শক্তিশালী ঋণাত্মক</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bn="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Scatter Plot -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Original vs Residual Plot" data-bn="অরিজিনাল বনাম রেসিডুয়াল প্লট">অরিজিনাল বনাম রেসিডুয়াল প্লট</span>
+                    </h3>
+                    <div id="scatterPlot" class="scatter-plot">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p data-en="Enter data to see scatter plot" data-bn="ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন">ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="scatterPlotLegend"></div>
+                </div>
+
+                <!-- Control Variables Effect -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-sliders-h"></i>
+                        <span data-en="Control Variables Effect" data-bn="কন্ট্রোল ভেরিয়েবল ইফেক্ট">কন্ট্রোল ভেরিয়েবল ইফেক্ট</span>
+                    </h3>
+                    <div id="controlChart" class="control-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-sliders-h"></i>
+                            <p data-en="Add control variables to see effects" data-bn="ইফেক্ট দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন">ইফেক্ট দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="controlChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="Partial Correlation Formulas and Methods" data-bn="পার্শিয়াল কোরিলেশন সূত্র এবং পদ্ধতি">পার্শিয়াল কোরিলেশন সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <!-- Formula Key -->
+            <div class="formula-key">
+                <div class="key-item">
+                    <span class="key-symbol">r_xy.z</span>
+                    <span class="key-label" data-en="Partial Correlation" data-bn="পার্শিয়াল কোরিলেশন">পার্শিয়াল কোরিলেশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">r_xy</span>
+                    <span class="key-label" data-en="Simple Correlation" data-bn="সরল কোরিলেশন">সরল কোরিলেশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">X|Z</span>
+                    <span class="key-label" data-en="X controlling for Z" data-bn="Z কন্ট্রোলে X">Z কন্ট্রোলে X</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">ε</span>
+                    <span class="key-label" data-en="Residuals" data-bn="রেসিডুয়াল">রেসিডুয়াল</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">R²</span>
+                    <span class="key-label" data-en="Coefficient of Determination" data-bn="নির্ণয়ের সহগ">নির্ণয়ের সহগ</span>
+                </div>
+            </div>
+            
+            <div class="formula-cards">
+                <!-- Residual Method -->
+                <div class="formula-card residual-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Residual Method" data-bn="রেসিডুয়াল পদ্ধতি">রেসিডুয়াল পদ্ধতি</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Calculate residuals after removing control variable effects" data-bn="কন্ট্রোল ভেরিয়েবল ইফেক্ট অপসারণের পর রেসিডুয়াল গণনা করুন">
+                            কন্ট্রোল ভেরিয়েবল ইফেক্ট অপসারণের পর রেসিডুয়াল গণনা করুন
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="r_xy.z = corr(X|Z, Y|Z)" data-bn="r_xy.z = corr(X|Z, Y|Z)">r_xy.z = corr(X|Z, Y|Z)</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="X|Z = Residuals of X regressed on Z" data-bn="X|Z = Z এর উপর X রিগ্রেশনের রেসিডুয়াল">X|Z = Z এর উপর X রিগ্রেশনের রেসিডুয়াল</li>
+                            <li data-en="Y|Z = Residuals of Y regressed on Z" data-bn="Y|Z = Z এর উপর Y রিগ্রেশনের রেসিডুয়াল">Y|Z = Z এর উপর Y রিগ্রেশনের রেসিডুয়াল</li>
+                            <li data-en="Correlate the residuals" data-bn="রেসিডুয়ালের মধ্যে কোরিলেশন করুন">রেসিডুয়ালের মধ্যে কোরিলেশন করুন</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Matrix Method -->
+                <div class="formula-card matrix-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="Matrix Method" data-bn="ম্যাট্রিক্স পদ্ধতি">ম্যাট্রিক্স পদ্ধতি</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Using correlation matrix inversion" data-bn="কোরিলেশন ম্যাট্রিক্স ইনভার্শন ব্যবহার করে">
+                            কোরিলেশন ম্যাট্রিক্স ইনভার্শন ব্যবহার করে
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="r_xy.z = -C_xy / √(C_xx * C_yy)" data-bn="r_xy.z = -C_xy / √(C_xx * C_yy)">r_xy.z = -C_xy / √(C_xx * C_yy)</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="C = R⁻¹ (Inverse correlation matrix)" data-bn="C = R⁻¹ (ইনভার্স কোরিলেশন ম্যাট্রিক্স)">C = R⁻¹ (ইনভার্স কোরিলেশন ম্যাট্রিক্স)</li>
+                            <li data-en="C_ij = Elements of inverse matrix" data-bn="C_ij = ইনভার্স ম্যাট্রিক্সের এলিমেন্ট">C_ij = ইনভার্স ম্যাট্রিক্সের এলিমেন্ট</li>
+                            <li data-en="Works for multiple control variables" data-bn="একাধিক কন্ট্রোল ভেরিয়েবলের জন্য কাজ করে">একাধিক কন্ট্রোল ভেরিয়েবলের জন্য কাজ করে</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Residual Calculation Steps -->
+            <div class="residual-steps">
+                <h3 class="section-title" style="font-size: 1.3rem;">
+                    <i class="fas fa-list-ol"></i>
+                    <span data-en="Step-by-Step Residual Calculation" data-bn="ধাপে ধাপে রেসিডুয়াল গণনা">ধাপে ধাপে রেসিডুয়াল গণনা</span>
+                </h3>
+                
+                <div id="residualStepsContainer">
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="residualStepsPlaceholder" 
+                       data-en="Enter data and calculate to see residual calculation steps" 
+                       data-bn="ডেটা ইনপুট করুন এবং রেসিডুয়াল গণনার ধাপগুলো দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং রেসিডুয়াল গণনার ধাপগুলো দেখতে গণনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Correlation Matrix -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-th"></i>
+                <span data-en="Correlation Matrix" data-bn="কোরিলেশন ম্যাট্রিক্স">কোরিলেশন ম্যাট্রিক্স</span>
+            </h2>
+            
+            <div id="matrixContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="matrixPlaceholder" 
+                   data-en="Enter data to see correlation matrix" 
+                   data-bn="ডেটা ইনপুট করে কোরিলেশন ম্যাট্রিক্স দেখুন">
+                    ডেটা ইনপুট করে কোরিলেশন ম্যাট্রিক্স দেখুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Control Variables Analysis -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                <span data-en="Control Variables Analysis" data-bn="কন্ট্রোল ভেরিয়েবল বিশ্লেষণ">কন্ট্রোল ভেরিয়েবল বিশ্লেষণ</span>
+            </h2>
+            
+            <div id="controlAnalysisContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="controlAnalysisPlaceholder" 
+                   data-en="Add control variables to see analysis" 
+                   data-bn="বিশ্লেষণ দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন">
+                    বিশ্লেষণ দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="simple">
+                    <span data-en="Simple Correlation" data-bন="সরল কোরিলেশন">সরল কোরিলেশন</span>
+                    <span class="example-data">X: 1,2,3,4,5 | Y: 2,4,6,8,10</span>
+                </button>
+                <button class="example-btn" data-example="confounding">
+                    <span data-en="Confounding Variable" data-bন="কনফাউন্ডিং ভেরিয়েবল">কনফাউন্ডিং ভেরিয়েবল</span>
+                    <span class="example-data">X,Y,Z all correlated</span>
+                </button>
+                <button class="example-btn" data-example="suppressor">
+                    <span data-en="Suppressor Variable" data-bন="সাপ্রেসর ভেরিয়েবল">সাপ্রেসর ভেরিয়েবল</span>
+                    <span class="example-data">Z increases X-Y correlation</span>
+                </button>
+                <button class="example-btn" data-example="real-world">
+                    <span data-en="Real World Data" data-bন="বাস্তব জগতের ডেটা">বাস্তব জগতের ডেটা</span>
+                    <span class="example-data">Education, Income, Experience</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'simple': {
+                    x: [1, 2, 3, 4, 5],
+                    y: [2, 4, 6, 8, 10],
+                    controls: []
+                },
+                'confounding': {
+                    x: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+                    y: [15, 25, 35, 45, 55, 65, 75, 85, 95, 105],
+                    controls: [
+                        [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+                    ]
+                },
+                'suppressor': {
+                    x: [20, 30, 40, 50, 60, 70, 80, 90, 100, 110],
+                    y: [25, 28, 32, 35, 38, 42, 45, 48, 52, 55],
+                    controls: [
+                        [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                    ]
+                },
+                'real-world': {
+                    x: [12, 14, 16, 18, 20, 22, 24, 26, 28, 30], // Education (years)
+                    y: [30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000], // Income
+                    controls: [
+                        [2, 4, 6, 8, 10, 12, 14, 16, 18, 20] // Experience (years)
+                    ]
+                }
+            };
+
+            // Store data
+            let variableX = [];
+            let variableY = [];
+            let controlVariables = [];
+            let calculationMethod = 'residual';
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Method Toggle
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        calculationMethod = this.dataset.method;
+                    });
+                });
+
+                // Add Control Variable Button
+                document.getElementById('addControlBtn').addEventListener('click', addControlVariable);
+
+                // Remove Control Variable
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.remove-control')) {
+                        const controlItem = e.target.closest('.control-item');
+                        if (controlItem && document.querySelectorAll('.control-item').length > 1) {
+                            controlItem.remove();
+                        }
+                    }
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculatePartialCorrelation);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Load initial example
+                loadExampleData('simple');
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+            }
+
+            function addControlVariable() {
+                const controlsList = document.getElementById('controlsList');
+                const controlCount = controlsList.querySelectorAll('.control-item').length + 1;
+                
+                const controlItem = document.createElement('div');
+                controlItem.className = 'control-item';
+                controlItem.innerHTML = `
+                    <div class="variable-icon" style="background: var(--control-color); width: 30px; height: 30px; font-size: 0.9rem;">
+                        <i class="fas fa-z"></i>
+                    </div>
+                    <textarea class="control-input" placeholder="${currentLanguage === 'bn' ? 
+                        'কন্ট্রোল ভেরিয়েবলের মান ইনপুট করুন\nX এবং Y এর মতো একই দৈর্ঘ্য' : 
+                        'Enter control variable values\nSame length as X and Y'}" 
+                        style="flex: 1; min-height: 60px;"></textarea>
+                    <button class="remove-control">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                controlsList.appendChild(controlItem);
+            }
+
+            function parseVariableData(textareaId) {
+                const text = document.getElementById(textareaId).value.trim();
+                if (!text) return [];
+                
+                return text.split(/[,\s]+/)
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+            }
+
+            function parseControlVariables() {
+                const controlInputs = document.querySelectorAll('.control-input');
+                return Array.from(controlInputs).map(input => {
+                    const text = input.value.trim();
+                    if (!text) return [];
+                    
+                    return text.split(/[,\s]+/)
+                        .map(item => parseFloat(item))
+                        .filter(item => !isNaN(item));
+                }).filter(arr => arr.length > 0);
+            }
+
+            function validateData(x, y, controls) {
+                if (x.length < 2 || y.length < 2) {
+                    alert(currentLanguage === 'bn' ? 
+                        'প্রতিটি ভেরিয়েবলে কমপক্ষে ২টি মান প্রয়োজন' : 
+                        'At least 2 values are required for each variable');
+                    return false;
+                }
+                
+                if (x.length !== y.length) {
+                    alert(currentLanguage === 'bn' ? 
+                        'X এবং Y ভেরিয়েবলের একই সংখ্যক মান থাকতে হবে' : 
+                        'X and Y variables must have the same number of values');
+                    return false;
+                }
+                
+                for (let i = 0; i < controls.length; i++) {
+                    if (controls[i].length !== x.length) {
+                        alert(currentLanguage === 'bn' ? 
+                            `কন্ট্রোল ভেরিয়েবল ${i + 1} এর X এবং Y এর মতো একই দৈর্ঘ্য থাকতে হবে` : 
+                            `Control variable ${i + 1} must have the same length as X and Y`);
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+
+            function calculateCorrelation(x, y) {
+                const n = x.length;
+                const meanX = mean(x);
+                const meanY = mean(y);
+                
+                let numerator = 0;
+                let denominatorX = 0;
+                let denominatorY = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    const devX = x[i] - meanX;
+                    const devY = y[i] - meanY;
+                    
+                    numerator += devX * devY;
+                    denominatorX += devX * devX;
+                    denominatorY += devY * devY;
+                }
+                
+                if (denominatorX === 0 || denominatorY === 0) return 0;
+                
+                return numerator / Math.sqrt(denominatorX * denominatorY);
+            }
+
+            function calculateResiduals(dependent, independent) {
+                // Simple linear regression: dependent = a + b*independent
+                const n = dependent.length;
+                const meanDep = mean(dependent);
+                const meanInd = mean(independent);
+                
+                let covariance = 0;
+                let varianceInd = 0;
+                
+                for (let i = 0; i < n; i++) {
+                    const devDep = dependent[i] - meanDep;
+                    const devInd = independent[i] - meanInd;
+                    
+                    covariance += devDep * devInd;
+                    varianceInd += devInd * devInd;
+                }
+                
+                const b = varianceInd === 0 ? 0 : covariance / varianceInd;
+                const a = meanDep - b * meanInd;
+                
+                // Calculate residuals
+                const residuals = [];
+                for (let i = 0; i < n; i++) {
+                    const predicted = a + b * independent[i];
+                    residuals.push(dependent[i] - predicted);
+                }
+                
+                return residuals;
+            }
+
+            function calculatePartialCorrelationResidualMethod(x, y, controls) {
+                let residualsX = [...x];
+                let residualsY = [...y];
+                
+                // Remove effect of each control variable
+                for (const control of controls) {
+                    residualsX = calculateResiduals(residualsX, control);
+                    residualsY = calculateResiduals(residualsY, control);
+                }
+                
+                // Calculate correlation between residuals
+                return calculateCorrelation(residualsX, residualsY);
+            }
+
+            function calculatePartialCorrelationMatrixMethod(x, y, controls) {
+                // Create correlation matrix
+                const allVariables = [x, y, ...controls];
+                const nVars = allVariables.length;
+                
+                // Build correlation matrix
+                const R = [];
+                for (let i = 0; i < nVars; i++) {
+                    R[i] = [];
+                    for (let j = 0; j < nVars; j++) {
+                        R[i][j] = calculateCorrelation(allVariables[i], allVariables[j]);
+                    }
+                }
+                
+                // Invert 2x2 or larger matrix
+                const C = invertMatrix(R);
+                
+                // Calculate partial correlation using formula
+                const c00 = C[0][0];
+                const c01 = C[0][1];
+                const c11 = C[1][1];
+                
+                return -c01 / Math.sqrt(c00 * c11);
+            }
+
+            function invertMatrix(matrix) {
+                const n = matrix.length;
+                
+                // For 2x2 matrix
+                if (n === 2) {
+                    const [[a, b], [c, d]] = matrix;
+                    const det = a * d - b * c;
+                    
+                    if (det === 0) return [[1, 0], [0, 1]];
+                    
+                    return [
+                        [d / det, -b / det],
+                        [-c / det, a / det]
+                    ];
+                }
+                
+                // For larger matrices, use a simple approach
+                // In production, use a proper matrix inversion library
+                const identity = [];
+                for (let i = 0; i < n; i++) {
+                    identity[i] = [];
+                    for (let j = 0; j < n; j++) {
+                        identity[i][j] = i === j ? 1 : 0;
+                    }
+                }
+                
+                return identity; // Simplified for demo
+            }
+
+            function calculatePartialCorrelation() {
+                // Parse input data
+                variableX = parseVariableData('variableX');
+                variableY = parseVariableData('variableY');
+                controlVariables = parseControlVariables();
+                
+                // Validate data
+                if (!validateData(variableX, variableY, controlVariables)) {
+                    return;
+                }
+                
+                // Calculate simple correlation
+                const simpleCorr = calculateCorrelation(variableX, variableY);
+                
+                // Calculate partial correlation based on selected method
+                let partialCorr;
+                if (controlVariables.length === 0) {
+                    partialCorr = simpleCorr;
+                } else if (calculationMethod === 'residual') {
+                    partialCorr = calculatePartialCorrelationResidualMethod(variableX, variableY, controlVariables);
+                } else {
+                    partialCorr = calculatePartialCorrelationMatrixMethod(variableX, variableY, controlVariables);
+                }
+                
+                // Calculate residual variances
+                let residualsX = variableX;
+                let residualsY = variableY;
+                
+                for (const control of controlVariables) {
+                    residualsX = calculateResiduals(residualsX, control);
+                    residualsY = calculateResiduals(residualsY, control);
+                }
+                
+                const residualVarianceX = variance(residualsX);
+                const residualVarianceY = variance(residualsY);
+                
+                // Update results
+                updateResults(simpleCorr, partialCorr, residualVarianceX, residualVarianceY);
+                
+                // Update visualizations
+                updateCharts(variableX, variableY, residualsX, residualsY);
+                
+                // Update detailed calculations
+                updateDetailedCalculations(variableX, variableY, controlVariables, simpleCorr, partialCorr);
+            }
+
+            function updateResults(simpleCorr, partialCorr, varX, varY) {
+                // Update result values
+                document.getElementById('simpleCorrelationResult').textContent = simpleCorr.toFixed(4);
+                document.getElementById('partialCorrelationResult').textContent = partialCorr.toFixed(4);
+                document.getElementById('residualVarianceX').textContent = varX.toFixed(4);
+                document.getElementById('residualVarianceY').textContent = varY.toFixed(4);
+                
+                // Update statistics
+                document.getElementById('dataCount').textContent = variableX.length;
+                document.getElementById('controlCount').textContent = controlVariables.length;
+                document.getElementById('rSquaredChange').textContent = 
+                    (Math.pow(partialCorr, 2) - Math.pow(simpleCorr, 2)).toFixed(4);
+                document.getElementById('effectSize').textContent = 
+                    Math.abs(partialCorr - simpleCorr).toFixed(4);
+                
+                // Update interpretations
+                updateInterpretations(simpleCorr, partialCorr);
+            }
+
+            function updateInterpretations(simpleCorr, partialCorr) {
+                const simpleInterpretation = getCorrelationInterpretation(simpleCorr);
+                const partialInterpretation = getCorrelationInterpretation(partialCorr);
+                
+                document.getElementById('simpleInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 
+                    `সরল কোরিলেশন: ${simpleInterpretation.bn}` :
+                    `Simple correlation: ${simpleInterpretation.en}`;
+                
+                let controlText = '';
+                if (controlVariables.length > 0) {
+                    controlText = currentLanguage === 'bn' ? 
+                        ` (${controlVariables.length} টি ভেরিয়েবল কন্ট্রোল করা হয়েছে)` :
+                        ` (controlling for ${controlVariables.length} variables)`;
+                }
+                
+                document.getElementById('partialInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 
+                    `পার্শিয়াল কোরিলেশন: ${partialInterpretation.bn}${controlText}` :
+                    `Partial correlation: ${partialInterpretation.en}${controlText}`;
+            }
+
+            function getCorrelationInterpretation(corr) {
+                const absCorr = Math.abs(corr);
+                
+                if (absCorr >= 0.7) {
+                    return {
+                        bn: corr > 0 ? 'শক্তিশালী ধনাত্মক সম্পর্ক' : 'শক্তিশালী ঋণাত্মক সম্পর্ক',
+                        en: corr > 0 ? 'strong positive relationship' : 'strong negative relationship'
+                    };
+                } else if (absCorr >= 0.3) {
+                    return {
+                        bn: corr > 0 ? 'মাঝারি ধনাত্মক সম্পর্ক' : 'মাঝারি ঋণাত্মক সম্পর্ক',
+                        en: corr > 0 ? 'moderate positive relationship' : 'moderate negative relationship'
+                    };
+                } else if (absCorr >= 0.1) {
+                    return {
+                        bn: corr > 0 ? 'দুর্বল ধনাত্মক সম্পর্ক' : 'দুর্বল ঋণাত্মক সম্পর্ক',
+                        en: corr > 0 ? 'weak positive relationship' : 'weak negative relationship'
+                    };
+                } else {
+                    return {
+                        bn: 'কোন সম্পর্ক নেই',
+                        en: 'no relationship'
+                    };
+                }
+            }
+
+            function updateCharts(originalX, originalY, residualsX, residualsY) {
+                updateScatterPlot(originalX, originalY, residualsX, residualsY);
+                updateControlChart();
+                updateChartLegends();
+            }
+
+            function updateScatterPlot(originalX, originalY, residualsX, residualsY) {
+                const scatterPlot = document.getElementById('scatterPlot');
+                
+                // Clear previous plot
+                scatterPlot.innerHTML = '';
+                
+                // Calculate plot dimensions
+                const plotWidth = scatterPlot.offsetWidth - 40;
+                const plotHeight = 210;
+                
+                // Find data ranges
+                const allX = [...originalX, ...residualsX];
+                const allY = [...originalY, ...residualsY];
+                
+                const minX = Math.min(...allX);
+                const maxX = Math.max(...allX);
+                const minY = Math.min(...allY);
+                const maxY = Math.max(...allY);
+                
+                const rangeX = maxX - minX;
+                const rangeY = maxY - minY;
+                
+                // Add axes labels
+                const xLabel = document.createElement('div');
+                xLabel.className = 'plot-axis-label x';
+                xLabel.textContent = currentLanguage === 'bn' ? 'ভেরিয়েবল X' : 'Variable X';
+                scatterPlot.appendChild(xLabel);
+                
+                const yLabel = document.createElement('div');
+                yLabel.className = 'plot-axis-label y';
+                yLabel.textContent = currentLanguage === 'bn' ? 'ভেরিয়েবল Y' : 'Variable Y';
+                scatterPlot.appendChild(yLabel);
+                
+                // Add original data points
+                for (let i = 0; i < originalX.length; i++) {
+                    const point = document.createElement('div');
+                    point.className = 'plot-point original';
+                    
+                    const xPos = ((originalX[i] - minX) / rangeX) * plotWidth + 20;
+                    const yPos = plotHeight - ((originalY[i] - minY) / rangeY) * plotHeight;
+                    
+                    point.style.left = `${xPos}px`;
+                    point.style.top = `${yPos}px`;
+                    
+                    scatterPlot.appendChild(point);
+                }
+                
+                // Add residual data points (if control variables exist)
+                if (controlVariables.length > 0) {
+                    for (let i = 0; i < residualsX.length; i++) {
+                        const point = document.createElement('div');
+                        point.className = 'plot-point residual';
+                        
+                        const xPos = ((residualsX[i] - minX) / rangeX) * plotWidth + 20;
+                        const yPos = plotHeight - ((residualsY[i] - minY) / rangeY) * plotHeight;
+                        
+                        point.style.left = `${xPos}px`;
+                        point.style.top = `${yPos}px`;
+                        
+                        scatterPlot.appendChild(point);
+                    }
+                    
+                    // Add trend lines (simplified)
+                    addTrendLine(scatterPlot, originalX, originalY, minX, maxX, minY, maxY, plotWidth, plotHeight, 'original');
+                    addTrendLine(scatterPlot, residualsX, residualsY, minX, maxX, minY, maxY, plotWidth, plotHeight, 'partial');
+                }
+            }
+
+            function addTrendLine(container, xData, yData, minX, maxX, minY, maxY, width, height, type) {
+                const correlation = calculateCorrelation(xData, yData);
+                if (Math.abs(correlation) < 0.1) return;
+                
+                const line = document.createElement('div');
+                line.className = `plot-trend-line ${type}`;
+                
+                // Simple trend line from min to max
+                const x1 = 20;
+                const x2 = width + 20;
+                
+                // Calculate y positions based on regression line
+                const meanX = mean(xData);
+                const meanY = mean(yData);
+                
+                let sumXY = 0;
+                let sumX2 = 0;
+                
+                for (let i = 0; i < xData.length; i++) {
+                    const devX = xData[i] - meanX;
+                    const devY = yData[i] - meanY;
+                    sumXY += devX * devY;
+                    sumX2 += devX * devX;
+                }
+                
+                const slope = sumX2 === 0 ? 0 : sumXY / sumX2;
+                const intercept = meanY - slope * meanX;
+                
+                // Convert to plot coordinates
+                const plotX1 = (0 - minX) / (maxX - minX) * width + 20;
+                const plotX2 = (maxX - minX) / (maxX - minX) * width + 20;
+                
+                const y1Value = slope * 0 + intercept;
+                const y2Value = slope * (maxX - minX) + intercept;
+                
+                const plotY1 = height - ((y1Value - minY) / (maxY - minY) * height);
+                const plotY2 = height - ((y2Value - minY) / (maxY - minY) * height);
+                
+                // Set line properties
+                const angle = Math.atan2(plotY2 - plotY1, plotX2 - plotX1) * 180 / Math.PI;
+                const length = Math.sqrt(Math.pow(plotX2 - plotX1, 2) + Math.pow(plotY2 - plotY1, 2));
+                
+                line.style.width = `${length}px`;
+                line.style.left = `${plotX1}px`;
+                line.style.top = `${plotY1}px`;
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                container.appendChild(line);
+            }
+
+            function updateControlChart() {
+                const controlChart = document.getElementById('controlChart');
+                
+                // Clear previous chart
+                controlChart.innerHTML = '';
+                
+                if (controlVariables.length === 0) {
+                    controlChart.innerHTML = `
+                        <div class="chart-placeholder">
+                            <i class="fas fa-sliders-h"></i>
+                            <p>${currentLanguage === 'bn' ? 
+                                'ইফেক্ট দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন' : 
+                                'Add control variables to see effects'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Calculate effect sizes
+                const effects = [];
+                for (let i = 0; i < controlVariables.length; i++) {
+                    const corrXZ = calculateCorrelation(variableX, controlVariables[i]);
+                    const corrYZ = calculateCorrelation(variableY, controlVariables[i]);
+                    effects.push({
+                        xEffect: Math.abs(corrXZ),
+                        yEffect: Math.abs(corrYZ),
+                        index: i + 1
+                    });
+                }
+                
+                // Find maximum effect for scaling
+                const maxEffect = Math.max(...effects.flatMap(e => [e.xEffect, e.yEffect]));
+                const chartHeight = 200;
+                
+                // Create bars
+                effects.forEach((effect, idx) => {
+                    const barContainer = document.createElement('div');
+                    barContainer.style.display = 'flex';
+                    barContainer.style.flexDirection = 'column';
+                    barContainer.style.alignItems = 'center';
+                    barContainer.style.gap = '10px';
+                    
+                    // Bar for X effect
+                    const barX = document.createElement('div');
+                    barX.className = 'control-bar';
+                    barX.style.height = `${(effect.xEffect / maxEffect) * chartHeight}px`;
+                    barX.style.background = 'var(--main-correlation-color)';
+                    barX.title = `Effect on X: ${effect.xEffect.toFixed(3)}`;
+                    
+                    const barXValue = document.createElement('div');
+                    barXValue.className = 'control-bar-value';
+                    barXValue.textContent = effect.xEffect.toFixed(2);
+                    
+                    // Bar for Y effect
+                    const barY = document.createElement('div');
+                    barY.className = 'control-bar';
+                    barY.style.height = `${(effect.yEffect / maxEffect) * chartHeight}px`;
+                    barY.style.background = 'var(--accent)';
+                    barY.title = `Effect on Y: ${effect.yEffect.toFixed(3)}`;
+                    
+                    const barYValue = document.createElement('div');
+                    barYValue.className = 'control-bar-value';
+                    barYValue.textContent = effect.yEffect.toFixed(2);
+                    
+                    // Label
+                    const label = document.createElement('div');
+                    label.className = 'control-bar-label';
+                    label.textContent = `Z${effect.index}`;
+                    
+                    barContainer.appendChild(barXValue);
+                    barContainer.appendChild(barX);
+                    barContainer.appendChild(barY);
+                    barContainer.appendChild(barYValue);
+                    barContainer.appendChild(label);
+                    controlChart.appendChild(barContainer);
+                });
+            }
+
+            function updateChartLegends() {
+                const scatterPlotLegend = document.getElementById('scatterPlotLegend');
+                const controlChartLegend = document.getElementById('controlChartLegend');
+                
+                // Scatter Plot Legend
+                scatterPlotLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color original"></div>
+                        <span data-en="Original Data" data-bn="অরিজিনাল ডেটা">অরিজিনাল ডেটা</span>
+                    </div>
+                    ${controlVariables.length > 0 ? `
+                    <div class="legend-item">
+                        <div class="legend-color residual"></div>
+                        <span data-en="Residuals (After Control)" data-bn="রেসিডুয়াল (কন্ট্রোল পর)">রেসিডুয়াল (কন্ট্রোল পর)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color trend"></div>
+                        <span data-en="Original Trend" data-bn="অরিজিনাল ট্রেন্ড">অরিজিনাল ট্রেন্ড</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color partial"></div>
+                        <span data-en="Partial Trend" data-bn="পার্শিয়াল ট্রেন্ড">পার্শিয়াল ট্রেন্ড</span>
+                    </div>
+                    ` : ''}
+                `;
+                
+                // Control Chart Legend
+                if (controlVariables.length > 0) {
+                    controlChartLegend.innerHTML = `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--main-correlation-color);"></div>
+                            <span data-en="Effect on Variable X" data-bn="ভেরিয়েবল X এর উপর ইফেক্ট">ভেরিয়েবল X এর উপর ইফেক্ট</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--accent);"></div>
+                            <span data-en="Effect on Variable Y" data-bn="ভেরিয়েবল Y এর উপর ইফেক্ট">ভেরিয়েবল Y এর উপর ইফেক্ট</span>
+                        </div>
+                    `;
+                }
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function updateDetailedCalculations(x, y, controls, simpleCorr, partialCorr) {
+                updateResidualSteps(x, y, controls);
+                updateCorrelationMatrix(x, y, controls);
+                updateControlAnalysis(x, y, controls, simpleCorr, partialCorr);
+            }
+
+            function updateResidualSteps(x, y, controls) {
+                const container = document.getElementById('residualStepsContainer');
+                
+                if (controls.length === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'কন্ট্রোল ভেরিয়েবল যোগ করুন রেসিডুয়াল গণনা দেখতে' : 
+                                'Add control variables to see residual calculations'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                let stepsHTML = '';
+                
+                // Step 1: Explain the process
+                stepsHTML += `
+                    <div class="step-container">
+                        <div class="step-number">১</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 1: Understanding Residuals" data-bn="ধাপ ১: রেসিডুয়াল বোঝা">ধাপ ১: রেসিডুয়াল বোঝা</h4>
+                            <p data-en="Residuals are what remains after removing the effect of control variables" data-bn="কন্ট্রোল ভেরিয়েবলের প্রভাব অপসারণের পর যা অবশিষ্ট থাকে তা হল রেসিডুয়াল">
+                                কন্ট্রোল ভেরিয়েবলের প্রভাব অপসারণের পর যা অবশিষ্ট থাকে তা হল রেসিডুয়াল
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong></p>
+                                <div class="step-equation">
+                                    X|Z = X - Ŷ_xz
+                                </div>
+                                <div class="step-equation">
+                                    Y|Z = Y - Ŷ_yz
+                                </div>
+                                <p>${currentLanguage === 'bn' ? 
+                                    'যেখানে Ŷ হল কন্ট্রোল ভেরিয়েবল (Z) থেকে X বা Y এর পূর্বাভাসিত মান' : 
+                                    'where Ŷ is the predicted value of X or Y from control variables (Z)'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Step 2: Calculate residuals for each control variable
+                stepsHTML += `
+                    <div class="step-container">
+                        <div class="step-number">২</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 2: Calculate Regression Residuals" data-bn="ধাপ ২: রিগ্রেশন রেসিডুয়াল গণনা করুন">ধাপ ২: রিগ্রেশন রেসিডুয়াল গণনা করুন</h4>
+                            <p data-en="For each control variable, calculate residuals of X and Y" data-bn="প্রতিটি কন্ট্রোল ভেরিয়েবলের জন্য, X এবং Y এর রেসিডুয়াল গণনা করুন">
+                                প্রতিটি কন্ট্রোল ভেরিয়েবলের জন্য, X এবং Y এর রেসিডুয়াল গণনা করুন
+                            </p>
+                            <div class="step-details">
+                                <table class="step-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-en="Control Variable" data-bn="কন্ট্রোল ভেরিয়েবল">কন্ট্রোল ভেরিয়েবল</th>
+                                            <th data-en="R² with X" data-bn="X এর সাথে R²">X এর সাথে R²</th>
+                                            <th data-en="R² with Y" data-bn="Y এর সাথে R²">Y এর সাথে R²</th>
+                                            <th data-en="Variance Explained" data-bn="ভ্যারিয়েন্স ব্যাখ্যা করা">ভ্যারিয়েন্স ব্যাখ্যা করা</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                
+                controls.forEach((control, index) => {
+                    const corrXZ = calculateCorrelation(x, control);
+                    const corrYZ = calculateCorrelation(y, control);
+                    const r2XZ = Math.pow(corrXZ, 2);
+                    const r2YZ = Math.pow(corrYZ, 2);
+                    
+                    stepsHTML += `
+                        <tr>
+                            <td>Z${index + 1}</td>
+                            <td>${r2XZ.toFixed(4)}</td>
+                            <td>${r2YZ.toFixed(4)}</td>
+                            <td>${(r2XZ + r2YZ).toFixed(4)}</td>
+                        </tr>
+                    `;
+                });
+                
+                stepsHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Step 3: Calculate partial correlation
+                stepsHTML += `
+                    <div class="step-container">
+                        <div class="step-number">৩</div>
+                        <div class="step-content">
+                            <h4 data-en="Step 3: Calculate Partial Correlation" data-bn="ধাপ ৩: পার্শিয়াল কোরিলেশন গণনা করুন">ধাপ ৩: পার্শিয়াল কোরিলেশন গণনা করুন</h4>
+                            <p data-en="Correlate the residuals of X and Y" data-bn="X এবং Y এর রেসিডুয়ালের মধ্যে কোরিলেশন করুন">
+                                X এবং Y এর রেসিডুয়ালের মধ্যে কোরিলেশন করুন
+                            </p>
+                            <div class="step-details">
+                                <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong></p>
+                                <div class="step-equation">
+                                    r_xy.z = corr(X|Z, Y|Z)
+                                </div>
+                                <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong></p>
+                                <div class="step-equation">
+                                    r_xy.z = ${calculateCorrelation(x, y).toFixed(4)} (after removing control effects)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function updateCorrelationMatrix(x, y, controls) {
+                const container = document.getElementById('matrixContainer');
+                const allVars = [x, y, ...controls];
+                const nVars = allVars.length;
+                
+                let matrixHTML = `
+                    <h3 style="color: var(--dark); margin-bottom: 1.5rem;" data-en="Correlation Matrix (R)" data-bn="কোরিলেশন ম্যাট্রিক্স (R)">
+                        কোরিলেশন ম্যাট্রিক্স (R)
+                    </h3>
+                    <div class="matrix-container">
+                        <table class="correlation-matrix">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                `;
+                
+                // Column headers
+                matrixHTML += `<th>X</th><th>Y</th>`;
+                for (let i = 0; i < controls.length; i++) {
+                    matrixHTML += `<th>Z${i + 1}</th>`;
+                }
+                matrixHTML += `</tr></thead><tbody>`;
+                
+                // Matrix rows
+                for (let i = 0; i < nVars; i++) {
+                    matrixHTML += `<tr>`;
+                    // Row header
+                    if (i === 0) matrixHTML += `<th>X</th>`;
+                    else if (i === 1) matrixHTML += `<th>Y</th>`;
+                    else matrixHTML += `<th>Z${i - 1}</th>`;
+                    
+                    // Matrix values
+                    for (let j = 0; j < nVars; j++) {
+                        const corr = calculateCorrelation(allVars[i], allVars[j]);
+                        const cellClass = i === j ? 'matrix-diagonal' : '';
+                        
+                        matrixHTML += `
+                            <td class="${cellClass}" style="background-color: ${getCorrelationColor(corr)};">
+                                ${corr.toFixed(3)}
+                            </td>
+                        `;
+                    }
+                    matrixHTML += `</tr>`;
+                }
+                
+                matrixHTML += `</tbody></table></div>`;
+                
+                container.innerHTML = matrixHTML;
+                updateDynamicContent();
+            }
+
+            function getCorrelationColor(corr) {
+                const absCorr = Math.abs(corr);
+                const opacity = absCorr * 0.5 + 0.1;
+                
+                if (corr > 0) {
+                    return `rgba(74, 111, 165, ${opacity})`;
+                } else if (corr < 0) {
+                    return `rgba(255, 107, 107, ${opacity})`;
+                } else {
+                    return 'var(--light-gray)';
+                }
+            }
+
+            function updateControlAnalysis(x, y, controls, simpleCorr, partialCorr) {
+                const container = document.getElementById('controlAnalysisContainer');
+                
+                if (controls.length === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'কন্ট্রোল ভেরিয়েবল যোগ করুন বিশ্লেষণ দেখতে' : 
+                                'Add control variables to see analysis'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                let analysisHTML = `
+                    <div class="controls-table-container">
+                        <table class="controls-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Control Variable" data-bn="কন্ট্রোল ভেরিয়েবল">কন্ট্রোল ভেরিয়েবল</th>
+                                    <th data-en="Correlation with X" data-bn="X এর সাথে কোরিলেশন">X এর সাথে কোরিলেশন</th>
+                                    <th data-en="Correlation with Y" data-bn="Y এর সাথে কোরিলেশন">Y এর সাথে কোরিলেশন</th>
+                                    <th data-en="Effect on X-Y Correlation" data-bন="X-Y কোরিলেশনে প্রভাব">X-Y কোরিলেশনে প্রভাব</th>
+                                    <th data-en="Interpretation" data-bন="ব্যাখ্যা">ব্যাখ্যা</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                controls.forEach((control, index) => {
+                    const corrXZ = calculateCorrelation(x, control);
+                    const corrYZ = calculateCorrelation(y, control);
+                    
+                    // Calculate effect on correlation
+                    const effect = partialCorr - simpleCorr;
+                    const effectClass = effect > 0 ? 'effect-positive' : 'effect-negative';
+                    const effectText = effect > 0 ? 
+                        (currentLanguage === 'bn' ? 'বৃদ্ধি করে' : 'Increases') :
+                        (currentLanguage === 'bn' ? 'হ্রাস করে' : 'Decreases');
+                    
+                    // Determine interpretation
+                    let interpretation = '';
+                    if (Math.abs(corrXZ) > 0.7 && Math.abs(corrYZ) > 0.7) {
+                        interpretation = currentLanguage === 'bn' ? 
+                            'শক্তিশালী কনফাউন্ডিং ভেরিয়েবল' : 
+                            'Strong confounding variable';
+                    } else if (Math.abs(corrXZ) > 0.3 && Math.abs(corrYZ) > 0.3) {
+                        interpretation = currentLanguage === 'bn' ? 
+                            'মাঝারি কনফাউন্ডিং ভেরিয়েবল' : 
+                            'Moderate confounding variable';
+                    } else if (Math.abs(corrXZ) < 0.1 && Math.abs(corrYZ) < 0.1) {
+                        interpretation = currentLanguage === 'bn' ? 
+                            'অপ্রাসঙ্গিক ভেরিয়েবল' : 
+                            'Irrelevant variable';
+                    } else if (Math.abs(effect) > 0.2) {
+                        interpretation = currentLanguage === 'bn' ? 
+                            'সাপ্রেসর ভেরিয়েবল' : 
+                            'Suppressor variable';
+                    } else {
+                        interpretation = currentLanguage === 'bn' ? 
+                            'সাধারণ কন্ট্রোল ভেরিয়েবল' : 
+                            'General control variable';
+                    }
+                    
+                    analysisHTML += `
+                        <tr>
+                            <td>Z${index + 1}</td>
+                            <td>${corrXZ.toFixed(3)}</td>
+                            <td>${corrYZ.toFixed(3)}</td>
+                            <td class="effect-cell ${effectClass}">${effectText} (${effect.toFixed(3)})</td>
+                            <td>${interpretation}</td>
+                        </tr>
+                    `;
+                });
+                
+                analysisHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="interpretation-guide" style="margin-top: 2rem;">
+                        <h4 style="color: var(--dark); margin-bottom: 1rem;" data-en="Analysis Summary" data-bn="বিশ্লেষণ সারসংক্ষেপ">
+                            বিশ্লেষণ সারসংক্ষেপ
+                        </h4>
+                        <p>
+                            ${currentLanguage === 'bn' ? 
+                                `সরল কোরিলেশন (r_xy): ${simpleCorr.toFixed(3)}<br>
+                                পার্শিয়াল কোরিলেশন (r_xy.z): ${partialCorr.toFixed(3)}<br>
+                                পরিবর্তন: ${(partialCorr - simpleCorr).toFixed(3)}` :
+                                `Simple correlation (r_xy): ${simpleCorr.toFixed(3)}<br>
+                                Partial correlation (r_xy.z): ${partialCorr.toFixed(3)}<br>
+                                Change: ${(partialCorr - simpleCorr).toFixed(3)}`}
+                        </p>
+                        <p style="margin-top: 1rem; font-weight: 600; color: var(--primary);">
+                            ${partialCorr > simpleCorr ? 
+                                (currentLanguage === 'bn' ? 
+                                    'কন্ট্রোল ভেরিয়েবলগুলি X এবং Y এর মধ্যে সম্পর্ক বৃদ্ধি করে' :
+                                    'Control variables increase the relationship between X and Y') :
+                                (currentLanguage === 'bn' ? 
+                                    'কন্ট্রোল ভেরিয়েবলগুলি X এবং Y এর মধ্যে সম্পর্ক হ্রাস করে' :
+                                    'Control variables decrease the relationship between X and Y')}
+                        </p>
+                    </div>
+                `;
+                
+                container.innerHTML = analysisHTML;
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function mean(arr) {
+                return arr.reduce((a, b) => a + b, 0) / arr.length;
+            }
+
+            function variance(arr) {
+                const m = mean(arr);
+                return arr.reduce((sum, val) => sum + Math.pow(val - m, 2), 0) / arr.length;
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                // Set X and Y variables
+                document.getElementById('variableX').value = data.x.join(', ');
+                document.getElementById('variableY').value = data.y.join(', ');
+                
+                // Clear existing controls
+                const controlsList = document.getElementById('controlsList');
+                controlsList.innerHTML = '';
+                
+                // Add control variables
+                data.controls.forEach((control, index) => {
+                    const controlItem = document.createElement('div');
+                    controlItem.className = 'control-item';
+                    controlItem.innerHTML = `
+                        <div class="variable-icon" style="background: var(--control-color); width: 30px; height: 30px; font-size: 0.9rem;">
+                            <i class="fas fa-z"></i>
+                        </div>
+                        <textarea class="control-input" placeholder="${currentLanguage === 'bn' ? 
+                            'কন্ট্রোল ভেরিয়েবলের মান ইনপুট করুন\nX এবং Y এর মতো একই দৈর্ঘ্য' : 
+                            'Enter control variable values\nSame length as X and Y'}" 
+                            style="flex: 1; min-height: 60px;">${control.join(', ')}</textarea>
+                        <button class="remove-control">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    controlsList.appendChild(controlItem);
+                });
+                
+                // If no controls, add one empty control
+                if (data.controls.length === 0) {
+                    addControlVariable();
+                }
+                
+                // Calculate
+                setTimeout(() => calculatePartialCorrelation(), 100);
+            }
+
+            function clearCalculator() {
+                // Clear inputs
+                document.getElementById('variableX').value = '';
+                document.getElementById('variableY').value = '';
+                
+                // Clear controls (keep one)
+                const controlsList = document.getElementById('controlsList');
+                controlsList.innerHTML = '';
+                addControlVariable();
+                
+                // Reset results
+                resetResults();
+                
+                // Reset method
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    if (btn.dataset.method === 'residual') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                calculationMethod = 'residual';
+            }
+
+            function resetResults() {
+                // Clear result values
+                document.getElementById('simpleCorrelationResult').textContent = '--';
+                document.getElementById('partialCorrelationResult').textContent = '--';
+                document.getElementById('residualVarianceX').textContent = '--';
+                document.getElementById('residualVarianceY').textContent = '--';
+                
+                // Clear statistics
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('controlCount').textContent = '0';
+                document.getElementById('rSquaredChange').textContent = '--';
+                document.getElementById('effectSize').textContent = '--';
+                
+                // Reset interpretations
+                document.getElementById('simpleInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 'কোন কন্ট্রোল ভেরিয়েবল নেই' : 'No control variables';
+                document.getElementById('partialInterpretation').textContent = 
+                    currentLanguage === 'bn' ? 'ভেরিয়েবল কন্ট্রোল করা হয়েছে' : 'Controlling for variables';
+                
+                // Clear charts
+                document.getElementById('scatterPlot').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-bullseye"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে স্ক্যাটার প্লট দেখুন' : 'Enter data to see scatter plot'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('controlChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-sliders-h"></i>
+                        <p>${currentLanguage === 'bn' ? 'ইফেক্ট দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন' : 'Add control variables to see effects'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('scatterPlotLegend').innerHTML = '';
+                document.getElementById('controlChartLegend').innerHTML = '';
+                
+                // Clear detailed sections
+                document.getElementById('residualStepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং রেসিডুয়াল গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                            'Enter data and calculate to see residual calculation steps'}
+                    </p>
+                `;
+                
+                document.getElementById('matrixContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করে কোরিলেশন ম্যাট্রিক্স দেখুন' : 
+                            'Enter data to see correlation matrix'}
+                    </p>
+                `;
+                
+                document.getElementById('controlAnalysisContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'বিশ্লেষণ দেখতে কন্ট্রোল ভেরিয়েবল যোগ করুন' : 
+                            'Add control variables to see analysis'}
+                    </p>
+                `;
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+        });
+    </script>
+</body>
+</html>

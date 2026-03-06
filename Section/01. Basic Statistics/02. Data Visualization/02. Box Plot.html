@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>বক্স প্লট জেনারেটর | ডেটা স্প্রেড ও আউটলায়ার বিশ্লেষণ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #6C63FF;
+            --secondary: #4A44C6;
+            --accent: #FF6584;
+            --success: #36D1DC;
+            --info: #5B86E5;
+            --warning: #FF9A3D;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --boxplot-color: #6C63FF;
+            --outlier-color: #FF6584;
+            --quartile-color: #36D1DC;
+            --dataset-color: #5B86E5;
+            --export-color: #FF9A3D;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--boxplot-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--boxplot-color), var(--quartile-color), var(--outlier-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--boxplot-color);
+        }
+
+        /* Dataset Management */
+        .dataset-management {
+            margin-bottom: 2rem;
+        }
+
+        .dataset-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .dataset-tab {
+            padding: 0.8rem 1.5rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dataset-tab.active {
+            background: var(--dataset-color);
+            color: white;
+            border-color: var(--dataset-color);
+        }
+
+        .dataset-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .dataset-action-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .add-dataset-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .add-dataset-btn:hover {
+            background: #2ab7c1;
+            transform: translateY(-2px);
+        }
+
+        .remove-dataset-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .remove-dataset-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--boxplot-color);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Box Plot Configuration */
+        .boxplot-config {
+            margin-bottom: 1.5rem;
+        }
+
+        .config-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .config-group {
+            margin-bottom: 1rem;
+        }
+
+        .config-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .color-option.active {
+            border-color: var(--dark);
+            transform: scale(1.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn {
+            background: var(--boxplot-color);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #boxPlotChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Export Options */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .export-btn {
+            padding: 1rem;
+            background: var(--export-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 154, 61, 0.3);
+        }
+
+        .export-btn.png {
+            background: var(--outlier-color);
+        }
+
+        .export-btn.csv {
+            background: var(--success);
+        }
+
+        .export-btn.pdf {
+            background: var(--info);
+        }
+
+        /* Statistics Panel */
+        .statistics-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .dataset-stats {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+
+        .dataset-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dataset-title i {
+            color: var(--dataset-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .outlier-list {
+            margin-top: 1rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .outlier-item {
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            border-left: 4px solid var(--outlier-color);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Outlier Detection Panel */
+        .outlier-detection {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .outlier-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .method-option {
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .method-option.active {
+            background: var(--outlier-color);
+            color: white;
+            border-color: var(--outlier-color);
+        }
+
+        .method-details {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .method-details.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .method-details h4 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .method-details p {
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .comparison-table th {
+            background: var(--light-gray);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .comparison-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .comparison-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Example Datasets */
+        .examples-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-btn {
+            padding: 1rem;
+            background: var(--light-gray);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .example-btn:hover {
+            background: var(--boxplot-color);
+            color: white;
+            border-color: var(--boxplot-color);
+            transform: translateY(-2px);
+        }
+
+        .example-data {
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--boxplot-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .legend-color.boxplot { background: var(--boxplot-color); }
+        .legend-color.outlier { background: var(--outlier-color); }
+        .legend-color.median { background: var(--quartile-color); }
+        .legend-color.whisker { background: var(--dark); }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .control-panel,
+            .visualization-area,
+            .statistics-panel,
+            .outlier-detection,
+            .comparison-table,
+            .examples-section {
+                padding: 1.5rem;
+            }
+            
+            .dataset-tabs {
+                flex-direction: column;
+            }
+            
+            .dataset-tab {
+                width: 100%;
+            }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Box Plot Generator" data-bn="বক্স প্লট জেনারেটর">বক্স প্লট জেনারেটর</h1>
+            <p class="subtitle" data-en="Generate interactive box plots to visualize data spread, quartiles, and detect outliers with multiple datasets comparison" data-bn="ডেটা স্প্রেড, কোয়ার্টাইল ভিজ্যুয়ালাইজেশন, এবং মাল্টিপল ডেটাসেট কম্পেয়ারিশন সহ আউটলায়ার ডিটেকশনের জন্য ইন্টারেকটিভ বক্স প্লট তৈরি করুন">
+                ডেটা স্প্রেড, কোয়ার্টাইল ভিজ্যুয়ালাইজেশন, এবং মাল্টিপল ডেটাসেট কম্পেয়ারিশন সহ আউটলায়ার ডিটেকশনের জন্য ইন্টারেকটিভ বক্স প্লট তৈরি করুন
+            </p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2 class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    <span data-en="Control Panel" data-bn="নিয়ন্ত্রণ প্যানেল">নিয়ন্ত্রণ প্যানেল</span>
+                </h2>
+                
+                <!-- Dataset Management -->
+                <div class="dataset-management">
+                    <div class="dataset-tabs" id="datasetTabs">
+                        <!-- Dataset tabs will be dynamically added -->
+                    </div>
+                    
+                    <div class="dataset-actions">
+                        <button class="dataset-action-btn add-dataset-btn" id="addDatasetBtn">
+                            <i class="fas fa-plus"></i>
+                            <span data-en="Add Dataset" data-bn="ডেটাসেট যোগ করুন">ডেটাসেট যোগ করুন</span>
+                        </button>
+                        <button class="dataset-action-btn remove-dataset-btn" id="removeDatasetBtn">
+                            <i class="fas fa-minus"></i>
+                            <span data-en="Remove Dataset" data-bn="ডেটাসেট সরান">ডেটাসেট সরান</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Input -->
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 45, 52, 61, 68, 72, 78, 85, 92, 98, 105
+বা: 45 52 61 68 72 78 85 92 98 105">45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150</textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Box Plot Configuration -->
+                <div class="boxplot-config">
+                    <h3 class="section-title" style="font-size: 1.2rem;">
+                        <i class="fas fa-cog"></i>
+                        <span data-en="Box Plot Configuration" data-bn="বক্স প্লট কনফিগারেশন">বক্স প্লট কনফিগারেশন</span>
+                    </h3>
+                    
+                    <div class="config-options">
+                        <div class="config-group">
+                            <label data-en="Box Color" data-bn="বক্স রঙ">বক্স রঙ</label>
+                            <div class="color-picker">
+                                <div class="color-option active" style="background: #6C63FF;" data-color="#6C63FF"></div>
+                                <div class="color-option" style="background: #FF6584;" data-color="#FF6584"></div>
+                                <div class="color-option" style="background: #36D1DC;" data-color="#36D1DC"></div>
+                                <div class="color-option" style="background: #FF9A3D;" data-color="#FF9A3D"></div>
+                                <div class="color-option" style="background: #5B86E5;" data-color="#5B86E5"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label data-en="Outlier Color" data-bn="আউটলায়ার রঙ">আউটলায়ার রঙ</label>
+                            <div class="color-picker">
+                                <div class="color-option active" style="background: #FF6584;" data-color="#FF6584"></div>
+                                <div class="color-option" style="background: #FF9A3D;" data-color="#FF9A3D"></div>
+                                <div class="color-option" style="background: #36D1DC;" data-color="#36D1DC"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-options">
+                        <div class="config-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showOutliers" checked>
+                                <label for="showOutliers" data-en="Show Outliers" data-bn="আউটলায়ার দেখান">আউটলায়ার দেখান</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showMean" checked>
+                                <label for="showMean" data-en="Show Mean Line" data-bn="গড় লাইন দেখান">গড় লাইন দেখান</label>
+                            </div>
+                        </div>
+                        
+                        <div class="config-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showDataPoints" checked>
+                                <label for="showDataPoints" data-en="Show Data Points" data-bn="ডেটা পয়েন্ট দেখান">ডেটা পয়েন্ট দেখান</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showGrid" checked>
+                                <label for="showGrid" data-en="Show Grid" data-bn="গ্রিড দেখান">গ্রিড দেখান</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn generate-btn" id="generateBtn">
+                        <i class="fas fa-chart-box"></i>
+                        <span data-en="Generate Box Plot" data-bn="বক্স প্লট তৈরি করুন">বক্স প্লট তৈরি করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="visualization-area">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-box"></i>
+                    <span data-en="Box Plot Visualization" data-bn="বক্স প্লট ভিজ্যুয়ালাইজেশন">বক্স প্লট ভিজ্যুয়ালাইজেশন</span>
+                </h2>
+                
+                <div class="chart-container">
+                    <div class="loading" id="chartLoading">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <i class="fas fa-chart-box"></i>
+                        <p data-en="Enter data and click Generate Box Plot to visualize" data-bn="ডেটা ইনপুট করুন এবং ভিজ্যুয়ালাইজ করতে বক্স প্লট তৈরি করুন ক্লিক করুন">
+                            ডেটা ইনপুট করুন এবং ভিজ্যুয়ালাইজ করতে বক্স প্লট তৈরি করুন ক্লিক করুন
+                        </p>
+                    </div>
+                    
+                    <canvas id="boxPlotChart"></canvas>
+                </div>
+
+                <!-- Chart Legend -->
+                <div class="chart-legend" id="chartLegend">
+                    <div class="legend-item">
+                        <div class="legend-color boxplot"></div>
+                        <span data-en="Box (IQR)" data-bn="বক্স (IQR)">বক্স (IQR)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color median"></div>
+                        <span data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color whisker"></div>
+                        <span data-en="Whisker" data-bn="হুইস্কার">হুইস্কার</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color outlier"></div>
+                        <span data-en="Outlier" data-bn="আউটলায়ার">আউটলায়ার</span>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="export-options">
+                    <button class="export-btn png" id="exportPNG">
+                        <i class="fas fa-download"></i>
+                        <span data-en="Export as PNG" data-bn="PNG হিসেবে এক্সপোর্ট করুন">PNG হিসেবে এক্সপোর্ট করুন</span>
+                    </button>
+                    <button class="export-btn csv" id="exportCSV">
+                        <i class="fas fa-file-csv"></i>
+                        <span data-en="Export Data as CSV" data-bn="CSV হিসেবে ডেটা এক্সপোর্ট করুন">CSV হিসেবে ডেটা এক্সপোর্ট করুন</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outlier Detection Panel -->
+        <div class="outlier-detection">
+            <h2 class="section-title">
+                <i class="fas fa-search"></i>
+                <span data-en="Outlier Detection Methods" data-bn="আউটলায়ার ডিটেকশন পদ্ধতি">আউটলায়ার ডিটেকশন পদ্ধতি</span>
+            </h2>
+            
+            <div class="outlier-methods">
+                <div class="method-option active" data-method="iqr">
+                    <span data-en="1.5×IQR Rule" data-bn="১.৫×IQR নিয়ম">১.৫×IQR নিয়ম</span>
+                </div>
+                <div class="method-option" data-method="zscore">
+                    <span data-en="Z-Score (3σ)" data-bn="Z-স্কোর (৩σ)">Z-স্কোর (৩σ)</span>
+                </div>
+                <div class="method-option" data-method="percentile">
+                    <span data-en="Percentile Method" data-bn="পার্সেন্টাইল পদ্ধতি">পার্সেন্টাইল পদ্ধতি</span>
+                </div>
+            </div>
+            
+            <div class="method-details show" id="iqrMethodDetails">
+                <h4 data-en="1.5×IQR Rule (Tukey's Fences)" data-bn="১.৫×IQR নিয়ম (টুকির ফেন্স)">১.৫×IQR নিয়ম (টুকির ফেন্স)</h4>
+                <p data-en="This is the most common method for detecting outliers in box plots. Any data point that falls below Q1 - 1.5×IQR or above Q3 + 1.5×IQR is considered an outlier." data-bn="বক্স প্লটে আউটলায়ার ডিটেকশনের সবচেয়ে প্রচলিত পদ্ধতি। কোনো ডেটা পয়েন্ট যদি Q1 - ১.৫×IQR এর নিচে বা Q3 + ১.৫×IQR এর উপরে পড়ে তবে তাকে আউটলায়ার হিসেবে বিবেচনা করা হয়।">
+                    বক্স প্লটে আউটলায়ার ডিটেকশনের সবচেয়ে প্রচলিত পদ্ধতি। কোনো ডেটা পয়েন্ট যদি Q1 - ১.৫×IQR এর নিচে বা Q3 + ১.৫×IQR এর উপরে পড়ে তবে তাকে আউটলায়ার হিসেবে বিবেচনা করা হয়।
+                </p>
+                <div class="formula">
+                    Lower Bound = Q₁ - 1.5 × IQR<br>
+                    Upper Bound = Q₃ + 1.5 × IQR<br>
+                    IQR = Q₃ - Q₁
+                </div>
+                <p data-en="Extreme outliers use 3×IQR instead of 1.5×IQR." data-bn="এক্সট্রিম আউটলায়ারের জন্য ১.৫×IQR এর পরিবর্তে ৩×IQR ব্যবহার করা হয়।">
+                    এক্সট্রিম আউটলায়ারের জন্য ১.৫×IQR এর পরিবর্তে ৩×IQR ব্যবহার করা হয়।
+                </p>
+            </div>
+            
+            <div class="method-details" id="zscoreMethodDetails">
+                <h4 data-en="Z-Score Method (3 Standard Deviations)" data-bn="Z-স্কোর পদ্ধতি (৩ স্ট্যান্ডার্ড ডেভিয়েশন)">Z-স্কোর পদ্ধতি (৩ স্ট্যান্ডার্ড ডেভিয়েশন)</h4>
+                <p data-en="Uses standard deviations from the mean. Data points with Z-scores beyond ±3 are considered outliers." data-bn="গড় থেকে স্ট্যান্ডার্ড ডেভিয়েশন ব্যবহার করে। Z-স্কোর ±৩ এর বাইরের ডেটা পয়েন্টগুলোকে আউটলায়ার হিসেবে বিবেচনা করা হয়।">
+                    গড় থেকে স্ট্যান্ডার্ড ডেভিয়েশন ব্যবহার করে। Z-স্কোর ±৩ এর বাইরের ডেটা পয়েন্টগুলোকে আউটলায়ার হিসেবে বিবেচনা করা হয়।
+                </p>
+                <div class="formula">
+                    Z = (x - μ) / σ<br>
+                    μ = Mean, σ = Standard Deviation<br>
+                    Outlier if |Z| > 3
+                </div>
+            </div>
+            
+            <div class="method-details" id="percentileMethodDetails">
+                <h4 data-en="Percentile Method" data-bn="পার্সেন্টাইল পদ্ধতি">পার্সেন্টাইল পদ্ধতি</h4>
+                <p data-en="Identifies outliers based on percentile thresholds. Typically uses 1st and 99th percentiles or 5th and 95th percentiles." data-bn="পার্সেন্টাইল থ্রেশহোল্ডের উপর ভিত্তি করে আউটলায়ার শনাক্ত করে। সাধারণত ১ম এবং ৯৯তম বা ৫ম এবং ৯৫তম পার্সেন্টাইল ব্যবহার করা হয়।">
+                    পার্সেন্টাইল থ্রেশহোল্ডের উপর ভিত্তি করে আউটলায়ার শনাক্ত করে। সাধারণত ১ম এবং ৯৯তম বা ৫ম এবং ৯৫তম পার্সেন্টাইল ব্যবহার করা হয়।
+                </p>
+                <div class="formula">
+                    Lower Bound = 5th Percentile<br>
+                    Upper Bound = 95th Percentile<br>
+                    or<br>
+                    Lower Bound = 1st Percentile<br>
+                    Upper Bound = 99th Percentile
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="statistics-panel">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Dataset Statistics & Outlier Analysis" data-bn="ডেটাসেট পরিসংখ্যান ও আউটলায়ার বিশ্লেষণ">ডেটাসেট পরিসংখ্যান ও আউটলায়ার বিশ্লেষণ</span>
+            </h2>
+            
+            <div class="stats-container" id="statsContainer">
+                <!-- Statistics for each dataset will be dynamically added -->
+                <div class="dataset-stats">
+                    <div class="dataset-title">
+                        <i class="fas fa-database"></i>
+                        <span data-en="Dataset 1 Statistics" data-bn="ডেটাসেট ১ পরিসংখ্যান">ডেটাসেট ১ পরিসংখ্যান</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="statQ1">--</div>
+                            <div class="stat-label" data-en="Q1 (25%)" data-bn="Q1 (২৫%)">Q1 (২৫%)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statMedian">--</div>
+                            <div class="stat-label" data-en="Median (Q2)" data-bn="মিডিয়ান (Q2)">মিডিয়ান (Q2)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statQ3">--</div>
+                            <div class="stat-label" data-en="Q3 (75%)" data-bn="Q3 (৭৫%)">Q3 (৭৫%)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statIQR">--</div>
+                            <div class="stat-label" data-en="IQR" data-bn="IQR">IQR</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statMin">--</div>
+                            <div class="stat-label" data-en="Minimum" data-bn="সর্বনিম্ন">সর্বনিম্ন</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statMax">--</div>
+                            <div class="stat-label" data-en="Maximum" data-bn="সর্বোচ্চ">সর্বোচ্চ</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statMean">--</div>
+                            <div class="stat-label" data-en="Mean" data-bn="গড়">গড়</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statStdDev">--</div>
+                            <div class="stat-label" data-en="Std Dev" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        </div>
+                    </div>
+                    
+                    <div class="outlier-list" id="outlierList">
+                        <h4 style="margin: 1rem 0 0.5rem; font-size: 1rem;" data-en="Outliers Detected" data-bn="শনাক্তকৃত আউটলায়ার">শনাক্তকৃত আউটলায়ার</h4>
+                        <div class="outlier-item">
+                            <span>No outliers detected</span>
+                            <span class="tooltip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltip-text" data-en="No outliers found using 1.5×IQR method" data-bn="১.৫×IQR পদ্ধতি ব্যবহার করে কোনো আউটলায়ার পাওয়া যায়নি">
+                                    ১.৫×IQR পদ্ধতি ব্যবহার করে কোনো আউটলায়ার পাওয়া যায়নি
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table">
+            <h2 class="section-title">
+                <i class="fas fa-balance-scale"></i>
+                <span data-en="Dataset Comparison" data-bn="ডেটাসেট তুলনা">ডেটাসেট তুলনা</span>
+            </h2>
+            
+            <div class="table-container">
+                <table id="comparisonTable">
+                    <thead>
+                        <tr>
+                            <th data-en="Statistic" data-bn="পরিসংখ্যান">পরিসংখ্যান</th>
+                            <th data-en="Dataset 1" data-bn="ডেটাসেট ১">ডেটাসেট ১</th>
+                            <!-- Additional dataset columns will be added dynamically -->
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <tr>
+                            <td data-en="Count" data-bn="সংখ্যা">সংখ্যা</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Minimum" data-bn="সর্বনিম্ন">সর্বনিম্ন</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Maximum" data-bn="সর্বোচ্চ">সর্বোচ্চ</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Range" data-bn="রেঞ্জ">রেঞ্জ</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Q1 (25%)" data-bn="Q1 (২৫%)">Q1 (২৫%)</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Median (Q2)" data-bn="মিডিয়ান (Q2)">মিডিয়ান (Q2)</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Q3 (75%)" data-bn="Q3 (৭৫%)">Q3 (৭৫%)</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="IQR" data-bn="IQR">IQR</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Mean" data-bn="গড়">গড়</td>
+                            <td>--</td>
+                        </tr>
+                        <tr>
+                            <td data-en="Std Dev" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</td>
+                            <td>--</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td data-en="Outliers Count" data-bn="আউটলায়ার সংখ্যা">আউটলায়ার সংখ্যা</td>
+                            <td>--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Example Datasets -->
+        <div class="examples-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bn="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bn="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="test-scores">
+                    <span data-en="Test Scores (Normal)" data-bn="পরীক্ষার স্কোর (নরমাল)">পরীক্ষার স্কোর (নরমাল)</span>
+                    <span class="example-data">45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130</span>
+                </button>
+                <button class="example-btn" data-example="income-data">
+                    <span data-en="Income Data (Skewed)" data-bন="আয় ডেটা (স্কিউড)">আয় ডেটা (স্কিউড)</span>
+                    <span class="example-data">30000, 35000, 40000, 45000, 50000, 60000, 70000, 80000, 90000, 100000, 150000, 200000</span>
+                </button>
+                <button class="example-btn" data-example="with-outliers">
+                    <span data-en="Data with Outliers" data-bন="আউটলায়ার সহ ডেটা">আউটলায়ার সহ ডেটা</span>
+                    <span class="example-data">10, 12, 14, 15, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 100</span>
+                </button>
+                <button class="example-btn" data-example="multiple-sets">
+                    <span data-en="Multiple Datasets" data-bন="একাধিক ডেটাসেট">একাধিক ডেটাসেট</span>
+                    <span class="example-data">Set A: 45-130, Set B: 30K-200K, Set C: 10-100</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            let currentLanguage = 'bn';
+            let boxPlotChart = null;
+            let datasets = [
+                {
+                    id: 1,
+                    name: 'Dataset 1',
+                    data: [45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130],
+                    color: '#6C63FF',
+                    outlierColor: '#FF6584'
+                }
+            ];
+            let activeDatasetId = 1;
+            let outlierMethod = 'iqr';
+            
+            // Example datasets
+            const examples = {
+                'test-scores': [45, 52, 61, 68, 72, 78, 85, 92, 98, 105, 110, 115, 120, 125, 130],
+                'income-data': [30000, 35000, 40000, 45000, 50000, 60000, 70000, 80000, 90000, 100000, 150000, 200000],
+                'with-outliers': [10, 12, 14, 15, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 100]
+            };
+
+            // Initialize the application
+            initializeApp();
+
+            function initializeApp() {
+                // Language Management
+                setupLanguageToggle();
+                
+                // Dataset Management
+                setupDatasetManagement();
+                
+                // Chart Configuration
+                setupChartConfiguration();
+                
+                // Control Buttons
+                setupControlButtons();
+                
+                // Export Functions
+                setupExportFunctions();
+                
+                // Outlier Detection Methods
+                setupOutlierMethods();
+                
+                // Example Datasets
+                setupExampleDatasets();
+                
+                // Set Bengali as default language
+                setLanguage('bn');
+                
+                // Generate initial box plot
+                updateDatasetTabs();
+                generateBoxPlot();
+            }
+
+            function setupLanguageToggle() {
+                const langBtns = document.querySelectorAll('.lang-btn');
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+                
+                // Update dataset names
+                updateDatasetNames();
+            }
+
+            function setupDatasetManagement() {
+                // Add dataset button
+                document.getElementById('addDatasetBtn').addEventListener('click', addDataset);
+                
+                // Remove dataset button
+                document.getElementById('removeDatasetBtn').addEventListener('click', removeDataset);
+                
+                // Update data input when tab changes
+                document.getElementById('dataInput').addEventListener('input', function() {
+                    const dataset = getActiveDataset();
+                    if (dataset) {
+                        dataset.data = parseInputData(this.value);
+                    }
+                });
+            }
+
+            function updateDatasetTabs() {
+                const tabsContainer = document.getElementById('datasetTabs');
+                tabsContainer.innerHTML = '';
+                
+                datasets.forEach(dataset => {
+                    const tab = document.createElement('div');
+                    tab.className = `dataset-tab ${dataset.id === activeDatasetId ? 'active' : ''}`;
+                    tab.dataset.id = dataset.id;
+                    tab.innerHTML = `
+                        <i class="fas fa-database"></i>
+                        <span class="dataset-name">${dataset.name}</span>
+                    `;
+                    
+                    tab.addEventListener('click', () => {
+                        setActiveDataset(dataset.id);
+                    });
+                    
+                    tabsContainer.appendChild(tab);
+                });
+                
+                // Update data input with active dataset data
+                const activeDataset = getActiveDataset();
+                if (activeDataset) {
+                    document.getElementById('dataInput').value = activeDataset.data.join(', ');
+                }
+            }
+
+            function updateDatasetNames() {
+                datasets.forEach((dataset, index) => {
+                    dataset.name = currentLanguage === 'bn' ? 
+                        `ডেটাসেট ${index + 1}` : 
+                        `Dataset ${index + 1}`;
+                });
+                updateDatasetTabs();
+                updateComparisonTable();
+            }
+
+            function setActiveDataset(id) {
+                activeDatasetId = id;
+                updateDatasetTabs();
+                
+                const activeDataset = getActiveDataset();
+                if (activeDataset) {
+                    document.getElementById('dataInput').value = activeDataset.data.join(', ');
+                    
+                    // Update color pickers
+                    document.querySelectorAll('.color-option').forEach(option => {
+                        option.classList.remove('active');
+                        if (option.dataset.color === activeDataset.color) {
+                            option.classList.add('active');
+                        }
+                    });
+                }
+            }
+
+            function getActiveDataset() {
+                return datasets.find(d => d.id === activeDatasetId);
+            }
+
+            function addDataset() {
+                const newId = datasets.length > 0 ? Math.max(...datasets.map(d => d.id)) + 1 : 1;
+                const newName = currentLanguage === 'bn' ? 
+                    `ডেটাসেট ${newId}` : 
+                    `Dataset ${newId}`;
+                
+                const colors = ['#6C63FF', '#FF6584', '#36D1DC', '#FF9A3D', '#5B86E5'];
+                const color = colors[(newId - 1) % colors.length];
+                
+                const newDataset = {
+                    id: newId,
+                    name: newName,
+                    data: generateSampleData(),
+                    color: color,
+                    outlierColor: '#FF6584'
+                };
+                
+                datasets.push(newDataset);
+                setActiveDataset(newId);
+                generateBoxPlot();
+            }
+
+            function generateSampleData() {
+                const count = Math.floor(Math.random() * 15) + 10;
+                const mean = Math.floor(Math.random() * 100) + 50;
+                const stdDev = Math.floor(Math.random() * 20) + 10;
+                
+                const data = [];
+                for (let i = 0; i < count; i++) {
+                    let value = mean + stdDev * (Math.random() * 2 - 1);
+                    value = Math.round(value);
+                    data.push(value);
+                }
+                return data;
+            }
+
+            function removeDataset() {
+                if (datasets.length <= 1) {
+                    alert(currentLanguage === 'bn' ? 
+                        'অন্তত একটি ডেটাসেট থাকা আবশ্যক' : 
+                        'At least one dataset is required');
+                    return;
+                }
+                
+                datasets = datasets.filter(d => d.id !== activeDatasetId);
+                setActiveDataset(datasets[0].id);
+                generateBoxPlot();
+            }
+
+            function setupChartConfiguration() {
+                // Box color picker
+                document.querySelectorAll('.color-picker .color-option').forEach((option, index) => {
+                    option.addEventListener('click', function() {
+                        const activeDataset = getActiveDataset();
+                        if (activeDataset) {
+                            // Update all box color options
+                            this.parentElement.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                            this.classList.add('active');
+                            
+                            activeDataset.color = this.dataset.color;
+                            if (boxPlotChart) {
+                                const datasetIndex = datasets.findIndex(d => d.id === activeDatasetId);
+                                if (datasetIndex !== -1) {
+                                    boxPlotChart.data.datasets[datasetIndex].backgroundColor = activeDataset.color;
+                                    boxPlotChart.data.datasets[datasetIndex].borderColor = activeDataset.color;
+                                    boxPlotChart.update();
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                // Configuration checkboxes
+                document.getElementById('showOutliers').addEventListener('change', generateBoxPlot);
+                document.getElementById('showMean').addEventListener('change', generateBoxPlot);
+                document.getElementById('showDataPoints').addEventListener('change', generateBoxPlot);
+                document.getElementById('showGrid').addEventListener('change', generateBoxPlot);
+            }
+
+            function setupControlButtons() {
+                document.getElementById('generateBtn').addEventListener('click', generateBoxPlot);
+                document.getElementById('clearBtn').addEventListener('click', clearAll);
+                
+                // Enter key support for data input
+                document.getElementById('dataInput').addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        generateBoxPlot();
+                    }
+                });
+            }
+
+            function setupExportFunctions() {
+                document.getElementById('exportPNG').addEventListener('click', exportAsPNG);
+                document.getElementById('exportCSV').addEventListener('click', exportAsCSV);
+            }
+
+            function setupOutlierMethods() {
+                const methodOptions = document.querySelectorAll('.method-option');
+                methodOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        methodOptions.forEach(o => o.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        outlierMethod = this.dataset.method;
+                        
+                        // Show corresponding method details
+                        document.querySelectorAll('.method-details').forEach(detail => {
+                            detail.classList.remove('show');
+                        });
+                        document.getElementById(`${outlierMethod}MethodDetails`).classList.add('show');
+                        
+                        // Regenerate box plot with new method
+                        generateBoxPlot();
+                    });
+                });
+            }
+
+            function setupExampleDatasets() {
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const example = this.dataset.example;
+                        loadExampleData(example);
+                    });
+                });
+            }
+
+            function loadExampleData(example) {
+                if (example === 'multiple-sets') {
+                    // Clear existing datasets
+                    datasets = [];
+                    
+                    // Add multiple example datasets
+                    const exampleDatasets = [
+                        {
+                            id: 1,
+                            name: currentLanguage === 'bn' ? 'পরীক্ষার স্কোর' : 'Test Scores',
+                            data: examples['test-scores'],
+                            color: '#6C63FF',
+                            outlierColor: '#FF6584'
+                        },
+                        {
+                            id: 2,
+                            name: currentLanguage === 'bn' ? 'আয় ডেটা' : 'Income Data',
+                            data: examples['income-data'],
+                            color: '#FF6584',
+                            outlierColor: '#36D1DC'
+                        },
+                        {
+                            id: 3,
+                            name: currentLanguage === 'bn' ? 'আউটলায়ার সহ' : 'With Outliers',
+                            data: examples['with-outliers'],
+                            color: '#36D1DC',
+                            outlierColor: '#FF9A3D'
+                        }
+                    ];
+                    
+                    datasets = exampleDatasets;
+                    setActiveDataset(1);
+                    generateBoxPlot();
+                } else if (examples[example]) {
+                    const activeDataset = getActiveDataset();
+                    if (activeDataset) {
+                        activeDataset.data = examples[example];
+                        document.getElementById('dataInput').value = activeDataset.data.join(', ');
+                        generateBoxPlot();
+                    }
+                }
+            }
+
+            function parseInputData(input) {
+                if (!input) return [];
+                
+                const numbers = input.split(/[,\s]+/).filter(item => item !== '');
+                
+                return numbers.map(num => {
+                    const n = parseFloat(num);
+                    return isNaN(n) ? null : n;
+                }).filter(num => num !== null);
+            }
+
+            function calculateBoxPlotStats(data) {
+                if (!data || data.length === 0) return null;
+                
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = sortedData.length;
+                
+                // Calculate quartiles
+                const q1 = calculatePercentile(sortedData, 25);
+                const median = calculatePercentile(sortedData, 50);
+                const q3 = calculatePercentile(sortedData, 75);
+                const iqr = q3 - q1;
+                
+                // Calculate mean and standard deviation
+                const mean = data.reduce((sum, val) => sum + val, 0) / n;
+                const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n;
+                const stdDev = Math.sqrt(variance);
+                
+                // Calculate whiskers and outliers based on selected method
+                let lowerWhisker, upperWhisker, outliers;
+                
+                switch(outlierMethod) {
+                    case 'iqr':
+                        // 1.5×IQR rule (Tukey's fences)
+                        const lowerBound = q1 - 1.5 * iqr;
+                        const upperBound = q3 + 1.5 * iqr;
+                        
+                        lowerWhisker = Math.max(sortedData[0], lowerBound);
+                        upperWhisker = Math.min(sortedData[n - 1], upperBound);
+                        
+                        outliers = sortedData.filter(x => x < lowerBound || x > upperBound);
+                        break;
+                        
+                    case 'zscore':
+                        // Z-score method (3 standard deviations)
+                        const zLowerBound = mean - 3 * stdDev;
+                        const zUpperBound = mean + 3 * stdDev;
+                        
+                        lowerWhisker = Math.max(sortedData[0], zLowerBound);
+                        upperWhisker = Math.min(sortedData[n - 1], zUpperBound);
+                        
+                        outliers = sortedData.filter(x => x < zLowerBound || x > zUpperBound);
+                        break;
+                        
+                    case 'percentile':
+                        // Percentile method (5th and 95th percentiles)
+                        const p5 = calculatePercentile(sortedData, 5);
+                        const p95 = calculatePercentile(sortedData, 95);
+                        
+                        lowerWhisker = Math.max(sortedData[0], p5);
+                        upperWhisker = Math.min(sortedData[n - 1], p95);
+                        
+                        outliers = sortedData.filter(x => x < p5 || x > p95);
+                        break;
+                }
+                
+                return {
+                    min: sortedData[0],
+                    q1: q1,
+                    median: median,
+                    q3: q3,
+                    max: sortedData[n - 1],
+                    mean: mean,
+                    stdDev: stdDev,
+                    iqr: iqr,
+                    lowerWhisker: lowerWhisker,
+                    upperWhisker: upperWhisker,
+                    outliers: outliers,
+                    count: n
+                };
+            }
+
+            function calculatePercentile(data, percentile) {
+                const n = data.length;
+                const position = (percentile / 100) * (n - 1) + 1;
+                const k = Math.floor(position) - 1;
+                const d = position - Math.floor(position);
+                
+                if (k < 0) return data[0];
+                if (k >= n - 1) return data[n - 1];
+                
+                return data[k] + d * (data[k + 1] - data[k]);
+            }
+
+            function generateBoxPlot() {
+                showLoading(true);
+                
+                // Update active dataset data
+                const activeDataset = getActiveDataset();
+                if (activeDataset) {
+                    activeDataset.data = parseInputData(document.getElementById('dataInput').value);
+                }
+                
+                if (datasets.length === 0 || datasets.some(d => d.data.length === 0)) {
+                    showError(currentLanguage === 'bn' ? 
+                        'দয়া করে সব ডেটাসেটে বৈধ ডেটা ইনপুট করুন' : 
+                        'Please enter valid data in all datasets');
+                    showLoading(false);
+                    return;
+                }
+                
+                // Calculate statistics for all datasets
+                const datasetStats = datasets.map(dataset => ({
+                    ...dataset,
+                    stats: calculateBoxPlotStats(dataset.data)
+                }));
+                
+                // Destroy existing chart if it exists
+                if (boxPlotChart) {
+                    boxPlotChart.destroy();
+                }
+                
+                // Get canvas context
+                const ctx = document.getElementById('boxPlotChart').getContext('2d');
+                
+                // Prepare chart data
+                const chartData = {
+                    labels: datasetStats.map(d => d.name),
+                    datasets: []
+                };
+                
+                // Add box plot datasets
+                datasetStats.forEach((dataset, index) => {
+                    const stats = dataset.stats;
+                    
+                    // Main box plot dataset
+                    chartData.datasets.push({
+                        label: dataset.name,
+                        data: [
+                            stats.lowerWhisker,
+                            stats.q1,
+                            stats.median,
+                            stats.q3,
+                            stats.upperWhisker
+                        ],
+                        backgroundColor: dataset.color,
+                        borderColor: dataset.color,
+                        borderWidth: 2,
+                        outlierColor: dataset.outlierColor,
+                        outlierRadius: 5,
+                        outlierBackgroundColor: dataset.outlierColor,
+                        itemRadius: 0,
+                        itemStyle: 'circle',
+                        itemBackgroundColor: '#000000'
+                    });
+                    
+                    // Add outliers as a separate dataset
+                    if (document.getElementById('showOutliers').checked && stats.outliers.length > 0) {
+                        chartData.datasets.push({
+                            label: `${dataset.name} - Outliers`,
+                            data: stats.outliers.map(outlier => ({
+                                x: index,
+                                y: outlier
+                            })),
+                            backgroundColor: dataset.outlierColor,
+                            borderColor: dataset.outlierColor,
+                            borderWidth: 1,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            type: 'scatter'
+                        });
+                    }
+                    
+                    // Add mean line
+                    if (document.getElementById('showMean').checked) {
+                        chartData.datasets.push({
+                            label: `${dataset.name} - Mean`,
+                            data: [
+                                { x: index - 0.2, y: stats.mean },
+                                { x: index + 0.2, y: stats.mean }
+                            ],
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            borderColor: 'rgba(0, 0, 0, 0.5)',
+                            borderWidth: 2,
+                            type: 'line',
+                            pointRadius: 0,
+                            fill: false
+                        });
+                    }
+                });
+                
+                // Create box plot chart
+                boxPlotChart = new Chart(ctx, {
+                    type: 'boxplot',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const datasetIndex = context.datasetIndex;
+                                        const label = context.dataset.label || '';
+                                        const value = context.parsed.y;
+                                        
+                                        if (label.includes('Outliers')) {
+                                            return `${label}: ${value}`;
+                                        } else if (label.includes('Mean')) {
+                                            return `${label}: ${value.toFixed(2)}`;
+                                        } else {
+                                            const stats = datasetStats[context.dataIndex]?.stats;
+                                            if (!stats) return label;
+                                            
+                                            const statLabels = [
+                                                currentLanguage === 'bn' ? 'নিম্ন হুইস্কার' : 'Lower Whisker',
+                                                currentLanguage === 'bn' ? 'Q₁ (২৫%)' : 'Q₁ (25%)',
+                                                currentLanguage === 'bn' ? 'মিডিয়ান (Q₂)' : 'Median (Q₂)',
+                                                currentLanguage === 'bn' ? 'Q₃ (৭৫%)' : 'Q₃ (75%)',
+                                                currentLanguage === 'bn' ? 'উচ্চ হুইস্কার' : 'Upper Whisker'
+                                            ];
+                                            
+                                            return `${label} - ${statLabels[context.dataIndex]}: ${value.toFixed(2)}`;
+                                        }
+                                    }
+                                },
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleFont: {
+                                    family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'ডেটাসেট' : 'Dataset',
+                                    font: {
+                                        size: 14,
+                                        weight: '600',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                },
+                                grid: {
+                                    display: document.getElementById('showGrid').checked,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: currentLanguage === 'bn' ? 'মান' : 'Value',
+                                    font: {
+                                        size: 14,
+                                        weight: '600',
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    },
+                                    color: 'var(--dark)'
+                                },
+                                grid: {
+                                    display: document.getElementById('showGrid').checked,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        family: "'Poppins', 'Hind Siliguri', sans-serif"
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+                
+                // Update statistics panels
+                updateStatisticsPanels(datasetStats);
+                
+                // Update comparison table
+                updateComparisonTable(datasetStats);
+                
+                // Hide placeholder
+                document.getElementById('chartPlaceholder').style.display = 'none';
+                
+                showLoading(false);
+            }
+
+            function updateStatisticsPanels(datasetStats) {
+                const statsContainer = document.getElementById('statsContainer');
+                statsContainer.innerHTML = '';
+                
+                datasetStats.forEach((dataset, index) => {
+                    const stats = dataset.stats;
+                    const datasetNumber = currentLanguage === 'bn' ? 
+                        `ডেটাসেট ${index + 1}` : 
+                        `Dataset ${index + 1}`;
+                    
+                    const statsHTML = `
+                        <div class="dataset-stats">
+                            <div class="dataset-title">
+                                <i class="fas fa-database"></i>
+                                <span>${dataset.name} ${currentLanguage === 'bn' ? 'পরিসংখ্যান' : 'Statistics'}</span>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.q1.toFixed(2)}</div>
+                                    <div class="stat-label">Q1 (${currentLanguage === 'bn' ? '২৫%' : '25%'})</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.median.toFixed(2)}</div>
+                                    <div class="stat-label">${currentLanguage === 'bn' ? 'মিডিয়ান (Q2)' : 'Median (Q2)'}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.q3.toFixed(2)}</div>
+                                    <div class="stat-label">Q3 (${currentLanguage === 'bn' ? '৭৫%' : '75%'})</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.iqr.toFixed(2)}</div>
+                                    <div class="stat-label">IQR</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.min.toFixed(2)}</div>
+                                    <div class="stat-label">${currentLanguage === 'bn' ? 'সর্বনিম্ন' : 'Minimum'}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.max.toFixed(2)}</div>
+                                    <div class="stat-label">${currentLanguage === 'bn' ? 'সর্বোচ্চ' : 'Maximum'}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.mean.toFixed(2)}</div>
+                                    <div class="stat-label">${currentLanguage === 'bn' ? 'গড়' : 'Mean'}</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${stats.stdDev.toFixed(2)}</div>
+                                    <div class="stat-label">${currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন' : 'Std Dev'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="outlier-list">
+                                <h4 style="margin: 1rem 0 0.5rem; font-size: 1rem;">
+                                    ${currentLanguage === 'bn' ? 'শনাক্তকৃত আউটলায়ার' : 'Outliers Detected'} 
+                                    (${stats.outliers.length})
+                                </h4>
+                                ${stats.outliers.length > 0 ? 
+                                    stats.outliers.map(outlier => `
+                                        <div class="outlier-item">
+                                            <span>${outlier.toFixed(2)}</span>
+                                            <span class="tooltip">
+                                                <i class="fas fa-info-circle"></i>
+                                                <span class="tooltip-text">
+                                                    ${currentLanguage === 'bn' ? 
+                                                        `${outlierMethod === 'iqr' ? '১.৫×IQR' : outlierMethod === 'zscore' ? 'Z-স্কোর' : 'পার্সেন্টাইল'} পদ্ধতি দ্বারা শনাক্ত` :
+                                                        `Detected by ${outlierMethod === 'iqr' ? '1.5×IQR' : outlierMethod} method`}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    `).join('') :
+                                    `<div class="outlier-item">
+                                        <span>${currentLanguage === 'bn' ? 'কোনো আউটলায়ার পাওয়া যায়নি' : 'No outliers detected'}</span>
+                                        <span class="tooltip">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span class="tooltip-text">
+                                                ${currentLanguage === 'bn' ? 
+                                                    `${outlierMethod === 'iqr' ? '১.৫×IQR' : outlierMethod === 'zscore' ? 'Z-স্কোর' : 'পার্সেন্টাইল'} পদ্ধতি ব্যবহার করে` :
+                                                    `Using ${outlierMethod === 'iqr' ? '1.5×IQR' : outlierMethod} method`}
+                                            </span>
+                                        </span>
+                                    </div>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                    
+                    statsContainer.innerHTML += statsHTML;
+                });
+            }
+
+            function updateComparisonTable(datasetStats) {
+                const tableBody = document.getElementById('comparisonTableBody');
+                const tableHead = document.querySelector('#comparisonTable thead tr');
+                
+                if (!datasetStats) {
+                    datasetStats = datasets.map(dataset => ({
+                        ...dataset,
+                        stats: calculateBoxPlotStats(dataset.data)
+                    }));
+                }
+                
+                // Update table headers
+                let headerHTML = `<th>${currentLanguage === 'bn' ? 'পরিসংখ্যান' : 'Statistic'}</th>`;
+                datasetStats.forEach(dataset => {
+                    headerHTML += `<th>${dataset.name}</th>`;
+                });
+                tableHead.innerHTML = headerHTML;
+                
+                // Update table body
+                const stats = datasetStats[0]?.stats;
+                if (!stats) return;
+                
+                const tableRows = [
+                    { label: currentLanguage === 'bn' ? 'সংখ্যা' : 'Count', value: d => d.stats.count },
+                    { label: currentLanguage === 'bn' ? 'সর্বনিম্ন' : 'Minimum', value: d => d.stats.min.toFixed(2) },
+                    { label: currentLanguage === 'bn' ? 'সর্বোচ্চ' : 'Maximum', value: d => d.stats.max.toFixed(2) },
+                    { label: currentLanguage === 'bn' ? 'রেঞ্জ' : 'Range', value: d => (d.stats.max - d.stats.min).toFixed(2) },
+                    { label: 'Q1 (25%)', value: d => d.stats.q1.toFixed(2) },
+                    { label: currentLanguage === 'bn' ? 'মিডিয়ান (Q2)' : 'Median (Q2)', value: d => d.stats.median.toFixed(2) },
+                    { label: 'Q3 (75%)', value: d => d.stats.q3.toFixed(2) },
+                    { label: 'IQR', value: d => d.stats.iqr.toFixed(2) },
+                    { label: currentLanguage === 'bn' ? 'গড়' : 'Mean', value: d => d.stats.mean.toFixed(2) },
+                    { label: currentLanguage === 'bn' ? 'স্ট্যান্ডার্ড ডেভিয়েশন' : 'Std Dev', value: d => d.stats.stdDev.toFixed(2) },
+                    { 
+                        label: currentLanguage === 'bn' ? 'আউটলায়ার সংখ্যা' : 'Outliers Count', 
+                        value: d => d.stats.outliers.length,
+                        highlight: true 
+                    }
+                ];
+                
+                let tableHTML = '';
+                tableRows.forEach(row => {
+                    tableHTML += `<tr${row.highlight ? ' class="highlight"' : ''}>`;
+                    tableHTML += `<td>${row.label}</td>`;
+                    datasetStats.forEach(dataset => {
+                        tableHTML += `<td>${row.value(dataset)}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+                
+                tableBody.innerHTML = tableHTML;
+            }
+
+            function exportAsPNG() {
+                if (!boxPlotChart) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে একটি বক্স প্লট তৈরি করুন' : 
+                        'Please generate a box plot first');
+                    return;
+                }
+                
+                const chartContainer = document.querySelector('.chart-container');
+                
+                html2canvas(chartContainer).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `boxplot_${new Date().getTime()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }
+
+            function exportAsCSV() {
+                if (datasets.length === 0) {
+                    showError(currentLanguage === 'bn' ? 
+                        'প্রথমে কিছু ডেটা ইনপুট করুন' : 
+                        'Please enter some data first');
+                    return;
+                }
+                
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Box Plot Data Export\n";
+                csvContent += `Generated: ${new Date().toLocaleString()}\n`;
+                csvContent += `Outlier Detection Method: ${outlierMethod}\n\n`;
+                
+                // Add statistics for each dataset
+                datasets.forEach((dataset, index) => {
+                    const stats = calculateBoxPlotStats(dataset.data);
+                    csvContent += `${dataset.name}\n`;
+                    csvContent += "Statistic,Value\n";
+                    csvContent += `Count,${stats.count}\n`;
+                    csvContent += `Minimum,${stats.min.toFixed(2)}\n`;
+                    csvContent += `Maximum,${stats.max.toFixed(2)}\n`;
+                    csvContent += `Range,${(stats.max - stats.min).toFixed(2)}\n`;
+                    csvContent += `Q1 (25%),${stats.q1.toFixed(2)}\n`;
+                    csvContent += `Median (Q2),${stats.median.toFixed(2)}\n`;
+                    csvContent += `Q3 (75%),${stats.q3.toFixed(2)}\n`;
+                    csvContent += `IQR,${stats.iqr.toFixed(2)}\n`;
+                    csvContent += `Mean,${stats.mean.toFixed(2)}\n`;
+                    csvContent += `Standard Deviation,${stats.stdDev.toFixed(2)}\n`;
+                    csvContent += `Outliers Count,${stats.outliers.length}\n`;
+                    csvContent += `Outliers,${stats.outliers.map(o => o.toFixed(2)).join('; ')}\n\n`;
+                    
+                    // Add raw data
+                    csvContent += "Raw Data\n";
+                    csvContent += dataset.data.join(',') + "\n\n";
+                });
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `boxplot_data_${new Date().getTime()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function clearAll() {
+                // Reset datasets to one empty dataset
+                datasets = [{
+                    id: 1,
+                    name: currentLanguage === 'bn' ? 'ডেটাসেট ১' : 'Dataset 1',
+                    data: [],
+                    color: '#6C63FF',
+                    outlierColor: '#FF6584'
+                }];
+                
+                activeDatasetId = 1;
+                
+                // Clear input
+                document.getElementById('dataInput').value = '';
+                
+                // Destroy chart
+                if (boxPlotChart) {
+                    boxPlotChart.destroy();
+                    boxPlotChart = null;
+                }
+                
+                // Show placeholder
+                document.getElementById('chartPlaceholder').style.display = 'flex';
+                
+                // Reset statistics
+                updateDatasetTabs();
+                updateStatisticsPanels([]);
+                updateComparisonTable([]);
+            }
+
+            function showLoading(show) {
+                const loadingElement = document.getElementById('chartLoading');
+                if (show) {
+                    loadingElement.classList.add('show');
+                } else {
+                    loadingElement.classList.remove('show');
+                }
+            }
+
+            function showError(message) {
+                alert(message);
+            }
+        });
+    </script>
+</body>
+</html>

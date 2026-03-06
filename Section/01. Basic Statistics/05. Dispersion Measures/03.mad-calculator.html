@@ -1,0 +1,2882 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মিন অ্যাবসলিউট ডেভিয়েশন (MAD) ক্যালকুলেটর | রোবাস্ট ডিসপারশন মেজার</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        :root {
+            --primary: #5D6BB0;
+            --secondary: #434C8C;
+            --accent: #FF8A5B;
+            --success: #4ECDC4;
+            --info: #5B86E5;
+            --warning: #FFD166;
+            --light: #ffffff;
+            --dark: #2D3748;
+            --gray: #718096;
+            --light-gray: #F7FAFC;
+            --border: #E2E8F0;
+            --mad-color: #5D6BB0;
+            --deviation-color: #FF8A5B;
+            --median-color: #4ECDC4;
+            --outlier-color: #FF6B6B;
+            --robust-color: #5B86E5;
+            --formula-bg: #f8f9fa;
+            --table-header: #e9ecef;
+            --chart-bg: #f8f9fa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Language Switcher */
+        .language-switcher-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .language-toggle {
+            display: inline-flex;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.3rem;
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(93, 107, 176, 0.3);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, var(--mad-color), var(--deviation-color), var(--robust-color));
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1200px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7rem;
+            }
+            .header .subtitle {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Main Calculator Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Input Methods */
+        .input-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .method-btn {
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Data Input */
+        .data-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: monospace;
+        }
+
+        .data-input textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(93, 107, 176, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Center Selection */
+        .center-selection {
+            margin: 1.5rem 0;
+        }
+
+        .center-toggle {
+            display: flex;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 480px) {
+            .center-toggle {
+                flex-direction: column;
+            }
+        }
+
+        .center-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 120px;
+        }
+
+        .center-btn.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .center-btn.mean {
+            color: var(--mad-color);
+        }
+
+        .center-btn.median {
+            color: var(--median-color);
+        }
+
+        .center-btn.both {
+            color: var(--primary);
+        }
+
+        /* Outlier Detection */
+        .outlier-section {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .outlier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .outlier-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .outlier-settings {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .outlier-settings.active {
+            display: block;
+        }
+
+        .threshold-input {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .threshold-input input {
+            width: 100px;
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .threshold-examples {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .threshold-example {
+            padding: 0.3rem 0.8rem;
+            background: var(--light-gray);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .threshold-example:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculate-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calculate-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(93, 107, 176, 0.3);
+        }
+
+        .clear-btn {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .clear-btn:hover {
+            background: var(--gray);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        /* Results Cards */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.mean::before { background: var(--mad-color); }
+        .result-card.median::before { background: var(--median-color); }
+        .result-card.robust::before { background: var(--robust-color); }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-card.mean .result-icon { color: var(--mad-color); }
+        .result-card.median .result-icon { color: var(--median-color); }
+        .result-card.robust .result-icon { color: var(--robust-color); }
+
+        .result-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            min-height: 2.5rem;
+        }
+
+        .result-unit {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-left: 0.25rem;
+        }
+
+        .result-description {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Deviation Results */
+        .deviation-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .deviation-results {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .deviation-card {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 4px solid var(--deviation-color);
+        }
+
+        /* Statistics Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-trend {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.25rem;
+        }
+
+        .trend-up { color: var(--accent); }
+        .trend-down { color: var(--success); }
+
+        /* Outlier Detection Results */
+        .outlier-results {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+            border-radius: 10px;
+            border: 2px solid #fed7d7;
+        }
+
+        .outlier-list {
+            margin-top: 1rem;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #fed7d7;
+        }
+
+        .outlier-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .outlier-item:last-child {
+            border-bottom: none;
+        }
+
+        .outlier-value {
+            font-weight: 600;
+            color: var(--outlier-color);
+        }
+
+        .outlier-deviation {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Robustness Indicator */
+        .robustness-indicator {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6f7ff 100%);
+            border-radius: 10px;
+            border: 2px solid #bee3f8;
+        }
+
+        .robustness-meter {
+            height: 20px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .robustness-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--success), var(--warning), var(--accent));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .robustness-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Visual Charts Section */
+        .visual-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: var(--primary);
+        }
+
+        /* Deviation Plot */
+        .deviation-plot {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            border-bottom: 2px solid var(--border);
+            border-left: 2px solid var(--border);
+            padding: 1rem;
+        }
+
+        .data-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--mad-color);
+            transform: translate(-50%, 50%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .data-point.outlier {
+            background: var(--outlier-color);
+            transform: translate(-50%, 50%) scale(1.5);
+            z-index: 10;
+        }
+
+        .data-point:hover {
+            transform: translate(-50%, 50%) scale(2);
+            box-shadow: 0 0 10px rgba(93, 107, 176, 0.5);
+        }
+
+        .center-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--success);
+            opacity: 0.7;
+        }
+
+        .mad-band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            background: rgba(255, 138, 91, 0.1);
+            border-top: 1px dashed var(--accent);
+            border-bottom: 1px dashed var(--accent);
+        }
+
+        .plot-axis-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .plot-axis-label.x {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .plot-axis-label.y {
+            top: 50%;
+            left: -40px;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        /* Comparison Chart */
+        .comparison-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+
+        .measure-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            max-width: 100px;
+            min-width: 40px;
+        }
+
+        .measure-bar.mad {
+            background: var(--mad-color);
+        }
+
+        .measure-bar.std {
+            background: var(--gray);
+        }
+
+        .measure-bar.iqr {
+            background: var(--median-color);
+        }
+
+        .measure-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+        }
+
+        .measure-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .measure-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Distribution Chart */
+        .distribution-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            padding: 1rem;
+        }
+
+        .distribution-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, var(--mad-color), var(--median-color));
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .distribution-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        /* Chart Legends */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.mean { background: var(--mad-color); }
+        .legend-color.median { background: var(--median-color); }
+        .legend-color.deviation { background: var(--deviation-color); }
+        .legend-color.outlier { background: var(--outlier-color); }
+        .legend-color.std { background: var(--gray); }
+        .legend-color.iqr { background: var(--robust-color); }
+
+        /* Detailed Calculation Section */
+        .detailed-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        /* Formula Cards */
+        .formula-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .formula-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .formula-card {
+            background: var(--formula-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid var(--border);
+        }
+
+        .formula-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .formula-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .mad-formula .formula-icon { background: var(--mad-color); }
+        .robust-formula .formula-icon { background: var(--robust-color); }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .formula-content {
+            margin-bottom: 1rem;
+        }
+
+        .formula-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .formula-steps {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .formula-steps li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .formula-steps li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+        }
+
+        /* MAD Calculation Steps */
+        .mad-steps {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .step-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .step-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                margin: 0 auto;
+            }
+        }
+
+        .step-content h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .step-details {
+            background: var(--light-gray);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+
+        .step-equation {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .step-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            min-width: 500px;
+        }
+
+        .step-table th, .step-table td {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .step-table th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+
+        .step-table .highlight {
+            background: #fff8e1;
+            font-weight: 600;
+        }
+
+        /* Robustness Comparison */
+        .robustness-comparison {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .comparison-table th {
+            background: var(--table-header);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover {
+            background: var(--light-gray);
+        }
+
+        .comparison-table .robust-cell {
+            text-align: center;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .comparison-table .sensitive-cell {
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Applications Section */
+        .applications-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .application-card {
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .application-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .application-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .application-desc {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Formula Key */
+        .formula-key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .formula-key {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .key-item {
+                min-width: 100%;
+            }
+        }
+
+        .key-symbol {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-width: 40px;
+        }
+
+        .key-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Chart Placeholder */
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px;
+            color: var(--gray);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Print Styles */
+        @media print {
+            .language-toggle,
+            .applications-section,
+            .controls,
+            .visual-section {
+                display: none;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header,
+            .input-section,
+            .results-section,
+            .detailed-section,
+            .robustness-comparison {
+                box-shadow: none;
+                border: 1px solid var(--border);
+                page-break-inside: avoid;
+            }
+            
+            .step-table,
+            .comparison-table {
+                min-width: 100%;
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher-container">
+            <div class="language-toggle">
+                <button class="lang-btn active" data-lang="bn">
+                    <i class="fas fa-language"></i>
+                    বাংলা
+                </button>
+                <button class="lang-btn" data-lang="en">
+                    <i class="fas fa-language"></i>
+                    English
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 data-en="Mean Absolute Deviation (MAD) Calculator" data-bn="মিন অ্যাবসলিউট ডেভিয়েশন (MAD) ক্যালকুলেটর">মিন অ্যাবসলিউট ডেভিয়েশন (MAD) ক্যালকুলেটর</h1>
+            <p class="subtitle" data-en="Calculate average absolute deviation from mean or median - robust dispersion measure resistant to outliers" data-bn="গড় বা মিডিয়ান থেকে গড় পরম বিচ্যুতি গণনা করুন - আউটলায়ার রেজিস্ট্যান্ট রোবাস্ট ডিসপারশন মেজার">
+                গড় বা মিডিয়ান থেকে গড় পরম বিচ্যুতি গণনা করুন - আউটলায়ার রেজিস্ট্যান্ট রোবাস্ট ডিসপারশন মেজার
+            </p>
+        </div>
+
+        <!-- Main Calculator Layout -->
+        <div class="main-layout">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-keyboard"></i>
+                    <span data-en="Data Input" data-bn="ডেটা ইনপুট">ডেটা ইনপুট</span>
+                </h2>
+                
+                <div class="input-methods">
+                    <button class="method-btn active" data-method="manual">
+                        <i class="fas fa-edit"></i>
+                        <span data-en="Manual Input" data-bn="ম্যানুয়াল ইনপুট">ম্যানুয়াল ইনপুট</span>
+                    </button>
+                    <button class="method-btn" data-method="random">
+                        <i class="fas fa-random"></i>
+                        <span data-en="Random Data" data-bn="র্যান্ডম ডেটা">র্যান্ডম ডেটা</span>
+                    </button>
+                    <button class="method-btn" data-method="outliers">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="With Outliers" data-bn="আউটলায়ার সহ">আউটলায়ার সহ</span>
+                    </button>
+                </div>
+
+                <div class="data-input">
+                    <textarea id="dataInput" placeholder="Enter data separated by commas, spaces, or new lines
+Example: 10, 20, 30, 40, 50
+or: 10 20 30 40 50
+or: 
+10
+20
+30
+40
+50" data-bn-placeholder="ডেটা ইনপুট করুন (কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন)
+উদাহরণ: 10, 20, 30, 40, 50
+বা: 10 20 30 40 50
+বা: 
+10
+20
+30
+40
+50"></textarea>
+                    <div class="input-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Separate numbers by commas, spaces, or new lines" data-bn="সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন">
+                            সংখ্যাগুলো কমা, স্পেস বা নতুন লাইন দ্বারা আলাদা করুন
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Center Selection -->
+                <div class="center-selection">
+                    <h3 style="color: var(--dark); margin-bottom: 0.8rem;">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Select Center Measure" data-bn="সেন্টার মেজার নির্বাচন করুন">সেন্টার মেজার নির্বাচন করুন</span>
+                    </h3>
+                    <div class="center-toggle">
+                        <button class="center-btn mean active" data-center="mean">
+                            <i class="fas fa-calculator"></i>
+                            <span data-en="Mean (Average)" data-bn="গড় (এভারেজ)">গড় (এভারেজ)</span>
+                        </button>
+                        <button class="center-btn median" data-center="median">
+                            <i class="fas fa-sort"></i>
+                            <span data-en="Median" data-bn="মিডিয়ান">মিডিয়ান</span>
+                        </button>
+                        <button class="center-btn both" data-center="both">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span data-en="Compare Both" data-bn="উভয় তুলনা করুন">উভয় তুলনা করুন</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Outlier Detection -->
+                <div class="outlier-section">
+                    <div class="outlier-header">
+                        <h3 style="color: var(--dark);">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span data-en="Outlier Detection" data-bn="আউটলায়ার ডিটেকশন">আউটলায়ার ডিটেকশন</span>
+                        </h3>
+                        <div class="outlier-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="outlierToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span data-en="Enable" data-bn="এনাবল">এনাবল</span>
+                        </div>
+                    </div>
+                    
+                    <div class="outlier-settings" id="outlierSettings">
+                        <div class="threshold-input">
+                            <label data-en="Threshold (MADs):" data-bn="থ্রেশহোল্ড (MAD):">থ্রেশহোল্ড (MAD):</label>
+                            <input type="number" id="outlierThreshold" min="1" max="10" step="0.5" value="3">
+                            <span data-en="MADs from center" data-bn="MAD সেন্টার থেকে">MAD সেন্টার থেকে</span>
+                        </div>
+                        <div class="threshold-examples">
+                            <div class="threshold-example" data-value="2">2 MAD (Moderate)</div>
+                            <div class="threshold-example" data-value="3">3 MAD (Standard)</div>
+                            <div class="threshold-example" data-value="4">4 MAD (Conservative)</div>
+                            <div class="threshold-example" data-value="5">5 MAD (Strict)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn calculate-btn" id="calculateBtn">
+                        <i class="fas fa-calculator"></i>
+                        <span data-en="Calculate MAD" data-bn="MAD গণনা করুন">MAD গণনা করুন</span>
+                    </button>
+                    <button class="control-btn clear-btn" id="clearBtn">
+                        <i class="fas fa-broom"></i>
+                        <span data-en="Clear All" data-bn="সব ক্লিয়ার করুন">সব ক্লিয়ার করুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-en="MAD Results" data-bn="MAD ফলাফল">MAD ফলাফল</span>
+                </h2>
+                
+                <div class="results-grid">
+                    <!-- Mean-based MAD -->
+                    <div class="result-card mean">
+                        <div class="result-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="result-title" data-en="MAD from Mean" data-bn="গড় থেকে MAD">গড় থেকে MAD</div>
+                        <div class="result-value" id="madMeanResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                        <div class="result-description" data-en="Average absolute deviation from mean" data-bn="গড় থেকে গড় পরম বিচ্যুতি">
+                            গড় থেকে গড় পরম বিচ্যুতি
+                        </div>
+                    </div>
+
+                    <!-- Median-based MAD -->
+                    <div class="result-card median">
+                        <div class="result-icon">
+                            <i class="fas fa-sort"></i>
+                        </div>
+                        <div class="result-title" data-en="MAD from Median" data-bn="মিডিয়ান থেকে MAD">মিডিয়ান থেকে MAD</div>
+                        <div class="result-value" id="madMedianResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                        <div class="result-description" data-en="Median absolute deviation (More robust)" data-bn="মিডিয়ান পরম বিচ্যুতি (আরও রোবাস্ট)">
+                            মিডিয়ান পরম বিচ্যুতি (আরও রোবাস্ট)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alternative Measures -->
+                <div class="deviation-results">
+                    <div class="deviation-card">
+                        <div class="result-title" data-en="Standard Deviation" data-bn="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</div>
+                        <div class="result-value" id="stdDevResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                    </div>
+                    <div class="deviation-card">
+                        <div class="result-title" data-en="Interquartile Range (IQR)" data-bn="ইন্টারকোয়ার্টাইল রেঞ্জ (IQR)">ইন্টারকোয়ার্টাইল রেঞ্জ (IQR)</div>
+                        <div class="result-value" id="iqrResult">--</div>
+                        <div class="result-unit" data-en="units" data-bn="একক">একক</div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Data Points (n)" data-bn="ডেটা পয়েন্ট (n)">ডেটা পয়েন্ট (n)</div>
+                        <div class="stat-value" id="dataCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Mean (μ)" data-bn="গড় (μ)">গড় (μ)</div>
+                        <div class="stat-value" id="meanValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Median (M)" data-bn="মিডিয়ান (M)">মিডিয়ান (M)</div>
+                        <div class="stat-value" id="medianValue">--</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label" data-en="Range" data-bn="রেঞ্জ">রেঞ্জ</div>
+                        <div class="stat-value" id="rangeValue">--</div>
+                    </div>
+                </div>
+
+                <!-- Outlier Detection Results -->
+                <div class="outlier-results" id="outlierResults" style="display: none;">
+                    <h4 style="color: var(--outlier-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span data-en="Detected Outliers" data-bn="শনাক্তকৃত আউটলায়ার">শনাক্তকৃত আউটলায়ার</span>
+                        <span id="outlierCount" style="font-size: 0.9rem; margin-left: 0.5rem;">(0)</span>
+                    </h4>
+                    <div class="outlier-list" id="outlierList">
+                        <p style="color: var(--gray); text-align: center; padding: 1rem;">
+                            <span data-en="No outliers detected" data-bn="কোন আউটলায়ার শনাক্ত হয়নি">কোন আউটলায়ার শনাক্ত হয়নি</span>
+                        </p>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--gray); margin-top: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <span data-en="Outliers are data points more than" data-bn="আউটলায়ারগুলি এমন ডেটা পয়েন্ট যা">
+                            আউটলায়ারগুলি এমন ডেটা পয়েন্ট যা
+                        </span>
+                        <span id="thresholdDisplay">3 MAD</span>
+                        <span data-en="from the center" data-bn="সেন্টার থেকে দূরে">সেন্টার থেকে দূরে</span>
+                    </p>
+                </div>
+
+                <!-- Robustness Indicator -->
+                <div class="robustness-indicator">
+                    <h4 style="color: var(--dark); margin-bottom: 0.5rem;">
+                        <i class="fas fa-shield-alt"></i>
+                        <span data-en="Robustness Indicator" data-bn="রোবাস্টনেস ইন্ডিকেটর">রোবাস্টনেস ইন্ডিকেটর</span>
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 0.5rem;" 
+                       data-en="How resistant is MAD to outliers compared to standard deviation?" 
+                       data-bn="স্ট্যান্ডার্ড ডেভিয়েশনের তুলনায় আউটলায়ারদের প্রতি MAD কতটা প্রতিরোধী?">
+                        স্ট্যান্ডার্ড ডেভিয়েশনের তুলনায় আউটলায়ারদের প্রতি MAD কতটা প্রতিরোধী?
+                    </p>
+                    <div class="robustness-meter">
+                        <div class="robustness-fill" id="robustnessFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="robustness-labels">
+                        <span data-en="Sensitive" data-bন="সেনসিটিভ">সেনসিটিভ</span>
+                        <span data-en="Moderate" data-bন="মডারেট">মডারেট</span>
+                        <span data-en="Robust" data-bন="রোবাস্ট">রোবাস্ট</span>
+                    </div>
+                    <p id="robustnessText" style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--dark); font-weight: 500;">
+                        <span data-en="Calculating robustness..." data-bন="রোবাস্টনেস গণনা করা হচ্ছে...">রোবাস্টনেস গণনা করা হচ্ছে...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Charts Section -->
+        <div class="visual-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <span data-en="Data Visualization" data-bন="ডেটা ভিজ্যুয়ালাইজেশন">ডেটা ভিজ্যুয়ালাইজেশন</span>
+            </h2>
+            
+            <div class="chart-container">
+                <!-- Deviation Plot -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        <span data-en="Deviation from Center" data-bন="সেন্টার থেকে বিচ্যুতি">সেন্টার থেকে বিচ্যুতি</span>
+                    </h3>
+                    <div id="deviationPlot" class="deviation-plot">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-bullseye"></i>
+                            <p data-en="Enter data to see deviation plot" data-bন="ডেটা ইনপুট করে বিচ্যুতি প্লট দেখুন">ডেটা ইনপুট করে বিচ্যুতি প্লট দেখুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="deviationPlotLegend"></div>
+                </div>
+
+                <!-- Measures Comparison -->
+                <div class="chart-box">
+                    <h3 class="chart-title">
+                        <i class="fas fa-balance-scale"></i>
+                        <span data-en="Dispersion Measures Comparison" data-bন="ডিসপারশন মেজার তুলনা">ডিসপারশন মেজার তুলনা</span>
+                    </h3>
+                    <div id="comparisonChart" class="comparison-chart">
+                        <div class="chart-placeholder">
+                            <i class="fas fa-balance-scale"></i>
+                            <p data-en="Enter data to compare dispersion measures" data-bন="ডিসপারশন মেজার তুলনা করতে ডেটা ইনপুট করুন">ডিসপারশন মেজার তুলনা করতে ডেটা ইনপুট করুন</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend" id="comparisonChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Section -->
+        <div class="detailed-section">
+            <h2 class="section-title">
+                <i class="fas fa-square-root-alt"></i>
+                <span data-en="MAD Formulas and Methods" data-bন="MAD সূত্র এবং পদ্ধতি">MAD সূত্র এবং পদ্ধতি</span>
+            </h2>
+            
+            <!-- Formula Key -->
+            <div class="formula-key">
+                <div class="key-item">
+                    <span class="key-symbol">MAD</span>
+                    <span class="key-label" data-en="Mean Absolute Deviation" data-bন="মিন অ্যাবসলিউট ডেভিয়েশন">মিন অ্যাবসলিউট ডেভিয়েশন</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">x̄</span>
+                    <span class="key-label" data-en="Sample Mean" data-bন="স্যাম্পল গড়">স্যাম্পল গড়</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">M</span>
+                    <span class="key-label" data-en="Median" data-bন="মিডিয়ান">মিডিয়ান</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">|x|</span>
+                    <span class="key-label" data-en="Absolute Value" data-bন="পরম মান">পরম মান</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">n</span>
+                    <span class="key-label" data-en="Sample Size" data-bন="স্যাম্পল সাইজ">স্যাম্পল সাইজ</span>
+                </div>
+                <div class="key-item">
+                    <span class="key-symbol">∑</span>
+                    <span class="key-label" data-en="Summation" data-bন="যোগফল">যোগফল</span>
+                </div>
+            </div>
+            
+            <div class="formula-cards">
+                <!-- Mean-based MAD Formula -->
+                <div class="formula-card mad-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="MAD from Mean" data-bন="গড় থেকে MAD">গড় থেকে MAD</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Average absolute deviation from the mean" data-bন="গড় থেকে গড় পরম বিচ্যুতি">
+                            গড় থেকে গড় পরম বিচ্যুতি
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="MAD = (1/n) * Σ|xᵢ - x̄|" data-bন="MAD = (1/n) * Σ|xᵢ - x̄|">MAD = (1/n) * Σ|xᵢ - x̄|</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="xᵢ = Each data point" data-bন="xᵢ = প্রতিটি ডেটা পয়েন্ট">xᵢ = প্রতিটি ডেটা পয়েন্ট</li>
+                            <li data-en="x̄ = Mean of data" data-bন="x̄ = ডেটার গড়">x̄ = ডেটার গড়</li>
+                            <li data-en="n = Number of data points" data-bন="n = ডেটা পয়েন্টের সংখ্যা">n = ডেটা পয়েন্টের সংখ্যা</li>
+                            <li data-en="|x| = Absolute value" data-bন="|x| = পরম মান">|x| = পরম মান</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Median-based MAD Formula -->
+                <div class="formula-card robust-formula">
+                    <div class="formula-header">
+                        <div class="formula-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="formula-title" data-en="MAD from Median" data-bন="মিডিয়ান থেকে MAD">মিডিয়ান থেকে MAD</h3>
+                    </div>
+                    <div class="formula-content">
+                        <p data-en="Median absolute deviation - more robust to outliers" data-bন="মিডিয়ান পরম বিচ্যুতি - আউটলায়ারদের প্রতি আরও রোবাস্ট">
+                            মিডিয়ান পরম বিচ্যুতি - আউটলায়ারদের প্রতি আরও রোবাস্ট
+                        </p>
+                        <div class="formula-equation">
+                            <span data-en="MAD = median(|xᵢ - M|)" data-bন="MAD = median(|xᵢ - M|)">MAD = median(|xᵢ - M|)</span>
+                        </div>
+                        <ul class="formula-steps">
+                            <li data-en="M = Median of data" data-bন="M = ডেটার মিডিয়ান">M = ডেটার মিডিয়ান</li>
+                            <li data-en="median = Middle value" data-bন="median = মধ্যবর্তী মান">median = মধ্যবর্তী মান</li>
+                            <li data-en="More resistant to extreme values" data-bন="চরম মানের প্রতি আরও প্রতিরোধী">চরম মানের প্রতি আরও প্রতিরোধী</li>
+                            <li data-en="Used in robust statistics" data-bন="রোবাস্ট পরিসংখ্যানে ব্যবহৃত">রোবাস্ট পরিসংখ্যানে ব্যবহৃত</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAD Calculation Steps -->
+            <div class="mad-steps">
+                <h3 class="section-title" style="font-size: 1.3rem;">
+                    <i class="fas fa-list-ol"></i>
+                    <span data-en="Step-by-Step MAD Calculation" data-bন="ধাপে ধাপে MAD গণনা">ধাপে ধাপে MAD গণনা</span>
+                </h3>
+                
+                <div id="madStepsContainer">
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;" id="madStepsPlaceholder" 
+                       data-en="Enter data and calculate to see MAD calculation steps" 
+                       data-bন="ডেটা ইনপুট করুন এবং MAD গণনার ধাপগুলো দেখতে গণনা করুন">
+                        ডেটা ইনপুট করুন এবং MAD গণনার ধাপগুলো দেখতে গণনা করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Robustness Comparison -->
+        <div class="robustness-comparison">
+            <h2 class="section-title">
+                <i class="fas fa-shield-alt"></i>
+                <span data-en="Robustness Comparison" data-bন="রোবাস্টনেস তুলনা">রোবাস্টনেস তুলনা</span>
+            </h2>
+            
+            <div id="robustnessTableContainer">
+                <p style="color: var(--gray); text-align: center; padding: 2rem;" id="robustnessTablePlaceholder" 
+                   data-en="Enter data to see robustness comparison table" 
+                   data-bন="রোবাস্টনেস তুলনা টেবিল দেখতে ডেটা ইনপুট করুন">
+                    রোবাস্টনেস তুলনা টেবিল দেখতে ডেটা ইনপুট করুন
+                </p>
+            </div>
+        </div>
+
+        <!-- Applications Section -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-rocket"></i>
+                <span data-en="Practical Applications of MAD" data-bন="MAD এর ব্যবহারিক প্রয়োগ">MAD এর ব্যবহারিক প্রয়োগ</span>
+            </h2>
+            
+            <div class="applications-grid">
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Financial Analysis" data-bন="আর্থিক বিশ্লেষণ">আর্থিক বিশ্লেষণ</h3>
+                    <p class="application-desc" data-en="Measure stock price volatility with outlier resistance" data-bন="আউটলায়ার প্রতিরোধের সাথে স্টক মূল্যের অস্থিরতা পরিমাপ করুন">
+                        আউটলায়ার প্রতিরোধের সাথে স্টক মূল্যের অস্থিরতা পরিমাপ করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Quality Control" data-bন="কোয়ালিটি কন্ট্রোল">কোয়ালিটি কন্ট্রোল</h3>
+                    <p class="application-desc" data-en="Monitor manufacturing process variability robustly" data-bন="উৎপাদন প্রক্রিয়ার পরিবর্তনশীলতা রোবাস্টলি পর্যবেক্ষণ করুন">
+                        উৎপাদন প্রক্রিয়ার পরিবর্তনশীলতা রোবাস্টলি পর্যবেক্ষণ করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Medical Research" data-bন="মেডিকেল গবেষণা">মেডিকেল গবেষণা</h3>
+                    <p class="application-desc" data-en="Analyze patient data with outlier resistance" data-bন="আউটলায়ার প্রতিরোধের সাথে রোগীর ডেটা বিশ্লেষণ করুন">
+                        আউটলায়ার প্রতিরোধের সাথে রোগীর ডেটা বিশ্লেষণ করুন
+                    </p>
+                </div>
+                
+                <div class="application-card">
+                    <div class="application-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="application-title" data-en="Educational Assessment" data-bন="শিক্ষামূলক মূল্যায়ন">শিক্ষামূলক মূল্যায়ন</h3>
+                    <p class="application-desc" data-en="Measure test score dispersion without extreme value influence" data-bন="চরম মানের প্রভাব ছাড়াই টেস্ট স্কোর ডিসপারশন পরিমাপ করুন">
+                        চরম মানের প্রভাব ছাড়াই টেস্ট স্কোর ডিসপারশন পরিমাপ করুন
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Data -->
+        <div class="applications-section">
+            <h2 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                <span data-en="Example Datasets" data-bন="উদাহরণ ডেটাসেট">উদাহরণ ডেটাসেট</span>
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 1rem;" data-en="Click on example buttons to load sample datasets:" data-bন="নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:">
+                নমুনা ডেটাসেট লোড করতে উদাহরণ বাটনে ক্লিক করুন:
+            </p>
+            
+            <div class="examples-grid">
+                <button class="example-btn" data-example="normal">
+                    <span data-en="Normal Distribution" data-bন="নরমাল ডিস্ট্রিবিউশন">নরমাল ডিস্ট্রিবিউশন</span>
+                    <span class="example-data">15, 18, 20, 22, 25, 28, 30</span>
+                </button>
+                <button class="example-btn" data-example="skewed">
+                    <span data-en="Skewed Data" data-bন="স্কিউড ডেটা">স্কিউড ডেটা</span>
+                    <span class="example-data">10, 12, 15, 18, 22, 30, 50</span>
+                </button>
+                <button class="example-btn" data-example="outliers">
+                    <span data-en="With Outliers" data-bন="আউটলায়ার সহ">আউটলায়ার সহ</span>
+                    <span class="example-data">18, 19, 20, 21, 22, 100</span>
+                </button>
+                <button class="example-btn" data-example="real-world">
+                    <span data-en="Real World Data" data-bন="বাস্তব জগতের ডেটা">বাস্তব জগতের ডেটা</span>
+                    <span class="example-data">House Prices, Salaries, etc.</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language Management
+            const langBtns = document.querySelectorAll('.lang-btn');
+            let currentLanguage = 'bn';
+
+            // Example Data Sets
+            const examples = {
+                'normal': {
+                    data: [15, 18, 20, 22, 25, 28, 30],
+                    description: 'সাধারণ বন্টন (নরমাল ডিস্ট্রিবিউশন)'
+                },
+                'skewed': {
+                    data: [10, 12, 15, 18, 22, 30, 50],
+                    description: 'বাঁকানো ডেটা (রাইট স্কিউড)'
+                },
+                'outliers': {
+                    data: [18, 19, 20, 21, 22, 100],
+                    description: 'আউটলায়ার সহ ডেটা'
+                },
+                'real-world': {
+                    data: [250000, 275000, 300000, 325000, 350000, 1000000],
+                    description: 'বাস্তব জগতের ডেটা (বাড়ির দাম)'
+                }
+            };
+
+            // Store data
+            let dataset = [];
+            let centerMeasure = 'mean';
+            let outlierDetectionEnabled = false;
+            let outlierThreshold = 3;
+
+            // Initialize
+            initCalculator();
+
+            function initCalculator() {
+                // Language Toggle
+                langBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lang = this.dataset.lang;
+                        setLanguage(lang);
+                    });
+                });
+
+                // Set Bengali as default
+                setLanguage('bn');
+
+                // Input Methods
+                const methodBtns = document.querySelectorAll('.method-btn');
+                methodBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        methodBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        if (this.dataset.method === 'random') {
+                            generateRandomData();
+                        } else if (this.dataset.method === 'outliers') {
+                            generateDataWithOutliers();
+                        }
+                    });
+                });
+
+                // Center Selection
+                const centerBtns = document.querySelectorAll('.center-btn');
+                centerBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        centerBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        centerMeasure = this.dataset.center;
+                    });
+                });
+
+                // Outlier Detection Toggle
+                const outlierToggle = document.getElementById('outlierToggle');
+                const outlierSettings = document.getElementById('outlierSettings');
+                
+                outlierToggle.addEventListener('change', function() {
+                    outlierDetectionEnabled = this.checked;
+                    if (outlierDetectionEnabled) {
+                        outlierSettings.classList.add('active');
+                    } else {
+                        outlierSettings.classList.remove('active');
+                        document.getElementById('outlierResults').style.display = 'none';
+                    }
+                });
+
+                // Outlier Threshold Examples
+                document.querySelectorAll('.threshold-example').forEach(example => {
+                    example.addEventListener('click', function() {
+                        const value = parseFloat(this.dataset.value);
+                        document.getElementById('outlierThreshold').value = value;
+                        outlierThreshold = value;
+                    });
+                });
+
+                // Outlier Threshold Input
+                document.getElementById('outlierThreshold').addEventListener('input', function() {
+                    outlierThreshold = parseFloat(this.value);
+                    if (dataset.length > 0) {
+                        calculateMAD();
+                    }
+                });
+
+                // Calculate Button
+                document.getElementById('calculateBtn').addEventListener('click', calculateMAD);
+
+                // Clear Button
+                document.getElementById('clearBtn').addEventListener('click', clearCalculator);
+
+                // Example Buttons
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        loadExampleData(this.dataset.example);
+                    });
+                });
+
+                // Generate initial random data
+                generateRandomData();
+            }
+
+            function setLanguage(lang) {
+                currentLanguage = lang;
+                
+                // Update active button
+                langBtns.forEach(btn => {
+                    if (btn.dataset.lang === lang) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update all translatable elements
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${lang}`)) {
+                        const text = element.getAttribute(`data-${lang}`);
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.hasAttribute(`data-${lang}-placeholder`)) {
+                                element.placeholder = element.getAttribute(`data-${lang}-placeholder`);
+                            } else {
+                                element.value = text;
+                            }
+                        } else {
+                            element.textContent = text;
+                        }
+                    }
+                });
+
+                // Update placeholder attributes separately
+                document.querySelectorAll('[data-bn-placeholder]').forEach(element => {
+                    if (lang === 'bn') {
+                        element.placeholder = element.getAttribute('data-bn-placeholder');
+                    }
+                });
+            }
+
+            function parseInputData() {
+                const input = document.getElementById('dataInput').value.trim();
+                if (!input) return [];
+                
+                const cleaned = input.replace(/\s+/g, ' ').trim();
+                return cleaned.split(/[,\s]+/)
+                    .map(item => parseFloat(item))
+                    .filter(item => !isNaN(item));
+            }
+
+            function calculateMean(data) {
+                if (data.length === 0) return 0;
+                return data.reduce((a, b) => a + b, 0) / data.length;
+            }
+
+            function calculateMedian(data) {
+                if (data.length === 0) return 0;
+                
+                const sorted = [...data].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                
+                if (sorted.length % 2 === 0) {
+                    return (sorted[mid - 1] + sorted[mid]) / 2;
+                } else {
+                    return sorted[mid];
+                }
+            }
+
+            function calculateMADFromMean(data) {
+                if (data.length === 0) return 0;
+                
+                const mean = calculateMean(data);
+                const absoluteDeviations = data.map(x => Math.abs(x - mean));
+                return calculateMean(absoluteDeviations);
+            }
+
+            function calculateMADFromMedian(data) {
+                if (data.length === 0) return 0;
+                
+                const median = calculateMedian(data);
+                const absoluteDeviations = data.map(x => Math.abs(x - median));
+                return calculateMedian(absoluteDeviations);
+            }
+
+            function calculateStandardDeviation(data) {
+                if (data.length < 2) return 0;
+                
+                const mean = calculateMean(data);
+                const squaredDeviations = data.map(x => Math.pow(x - mean, 2));
+                const variance = squaredDeviations.reduce((a, b) => a + b, 0) / data.length;
+                return Math.sqrt(variance);
+            }
+
+            function calculateIQR(data) {
+                if (data.length === 0) return 0;
+                
+                const sorted = [...data].sort((a, b) => a - b);
+                const q1 = calculatePercentile(sorted, 25);
+                const q3 = calculatePercentile(sorted, 75);
+                return q3 - q1;
+            }
+
+            function calculatePercentile(data, percentile) {
+                if (data.length === 0) return 0;
+                
+                const index = (percentile / 100) * (data.length - 1);
+                const lower = Math.floor(index);
+                const upper = Math.ceil(index);
+                
+                if (lower === upper) {
+                    return data[lower];
+                }
+                
+                const weight = index - lower;
+                return data[lower] * (1 - weight) + data[upper] * weight;
+            }
+
+            function detectOutliers(data, center, mad, threshold) {
+                const deviations = data.map(x => Math.abs(x - center));
+                return data.filter((x, i) => deviations[i] > threshold * mad);
+            }
+
+            function calculateRobustnessScore(madMean, madMedian, stdDev) {
+                if (stdDev === 0) return 50;
+                
+                // Calculate ratio of MAD to Std Dev (for normal distribution, MAD ≈ 0.8 * Std Dev)
+                const madRatio = madMean / stdDev;
+                
+                // Calculate difference between mean-based and median-based MAD
+                const madDifference = Math.abs(madMean - madMedian) / Math.max(madMean, madMedian);
+                
+                // Combine factors to get robustness score (0-100)
+                let score = 50;
+                
+                // Adjust based on MAD ratio
+                if (madRatio < 0.5) score -= 20;
+                else if (madRatio > 1.2) score += 20;
+                
+                // Adjust based on MAD difference
+                if (madDifference < 0.1) score += 15;
+                else if (madDifference > 0.3) score -= 15;
+                
+                // Ensure score is within 0-100 range
+                return Math.max(0, Math.min(100, score));
+            }
+
+            function getRobustnessText(score) {
+                if (score >= 80) {
+                    return {
+                        en: "Highly robust: MAD is very resistant to outliers",
+                        bn: "অত্যন্ত রোবাস্ট: আউটলায়ারদের প্রতি MAD অত্যন্ত প্রতিরোধী"
+                    };
+                } else if (score >= 60) {
+                    return {
+                        en: "Robust: MAD is resistant to most outliers",
+                        bn: "রোবাস্ট: বেশিরভাগ আউটলায়ারদের প্রতি MAD প্রতিরোধী"
+                    };
+                } else if (score >= 40) {
+                    return {
+                        en: "Moderate: MAD provides some outlier protection",
+                        bn: "মাঝারি: MAD কিছু আউটলায়ার সুরক্ষা প্রদান করে"
+                    };
+                } else if (score >= 20) {
+                    return {
+                        en: "Sensitive: MAD is somewhat affected by outliers",
+                        bn: "সেনসিটিভ: MAD কিছুটা আউটলায়ার দ্বারা প্রভাবিত হয়"
+                    };
+                } else {
+                    return {
+                        en: "Highly sensitive: MAD is strongly affected by outliers",
+                        bn: "অত্যন্ত সেনসিটিভ: আউটলায়ার দ্বারা MAD দৃঢ়ভাবে প্রভাবিত হয়"
+                    };
+                }
+            }
+
+            function calculateMAD() {
+                // Parse input data
+                dataset = parseInputData();
+                
+                if (dataset.length < 2) {
+                    alert(currentLanguage === 'bn' ? 
+                        'MAD গণনার জন্য কমপক্ষে ২টি সংখ্যা প্রয়োজন' : 
+                        'At least 2 numbers are required for MAD calculation');
+                    return;
+                }
+
+                // Calculate basic statistics
+                const meanValue = calculateMean(dataset);
+                const medianValue = calculateMedian(dataset);
+                const madMean = calculateMADFromMean(dataset);
+                const madMedian = calculateMADFromMedian(dataset);
+                const stdDev = calculateStandardDeviation(dataset);
+                const iqr = calculateIQR(dataset);
+                
+                // Update results
+                updateResults(meanValue, medianValue, madMean, madMedian, stdDev, iqr);
+                
+                // Update visualizations
+                updateCharts(dataset, meanValue, medianValue, madMean);
+                
+                // Update detailed calculations
+                updateDetailedCalculations(dataset, meanValue, medianValue, madMean, madMedian);
+                
+                // Update robustness comparison
+                updateRobustnessComparison(dataset, madMean, madMedian, stdDev);
+                
+                // Handle outlier detection
+                if (outlierDetectionEnabled) {
+                    const outliers = detectOutliers(dataset, meanValue, madMean, outlierThreshold);
+                    updateOutlierResults(outliers, meanValue, madMean);
+                }
+            }
+
+            function updateResults(mean, median, madMean, madMedian, stdDev, iqr) {
+                // Update based on selected center measure
+                if (centerMeasure === 'mean' || centerMeasure === 'both') {
+                    document.getElementById('madMeanResult').textContent = madMean.toFixed(4);
+                    document.getElementById('madMeanResult').parentElement.style.display = 'block';
+                } else {
+                    document.getElementById('madMeanResult').parentElement.style.display = 'none';
+                }
+                
+                if (centerMeasure === 'median' || centerMeasure === 'both') {
+                    document.getElementById('madMedianResult').textContent = madMedian.toFixed(4);
+                    document.getElementById('madMedianResult').parentElement.style.display = 'block';
+                } else {
+                    document.getElementById('madMedianResult').parentElement.style.display = 'none';
+                }
+                
+                // Update other statistics
+                document.getElementById('stdDevResult').textContent = stdDev.toFixed(4);
+                document.getElementById('iqrResult').textContent = iqr.toFixed(4);
+                
+                // Update summary statistics
+                document.getElementById('dataCount').textContent = dataset.length;
+                document.getElementById('meanValue').textContent = mean.toFixed(4);
+                document.getElementById('medianValue').textContent = median.toFixed(4);
+                
+                const minVal = Math.min(...dataset);
+                const maxVal = Math.max(...dataset);
+                const range = maxVal - minVal;
+                document.getElementById('rangeValue').textContent = range.toFixed(2);
+                
+                // Update robustness indicator
+                const robustnessScore = calculateRobustnessScore(madMean, madMedian, stdDev);
+                const robustnessText = getRobustnessText(robustnessScore);
+                
+                document.getElementById('robustnessFill').style.width = `${robustnessScore}%`;
+                document.getElementById('robustnessText').textContent = 
+                    currentLanguage === 'bn' ? robustnessText.bn : robustnessText.en;
+            }
+
+            function updateOutlierResults(outliers, center, mad) {
+                const outlierResults = document.getElementById('outlierResults');
+                const outlierCount = document.getElementById('outlierCount');
+                const outlierList = document.getElementById('outlierList');
+                const thresholdDisplay = document.getElementById('thresholdDisplay');
+                
+                if (outliers.length > 0) {
+                    outlierResults.style.display = 'block';
+                    outlierCount.textContent = `(${outliers.length})`;
+                    thresholdDisplay.textContent = `${outlierThreshold} MAD`;
+                    
+                    // Clear previous list
+                    outlierList.innerHTML = '';
+                    
+                    // Add outliers to list
+                    outliers.forEach(outlier => {
+                        const deviation = Math.abs(outlier - center);
+                        const outlierItem = document.createElement('div');
+                        outlierItem.className = 'outlier-item';
+                        outlierItem.innerHTML = `
+                            <span class="outlier-value">${outlier.toFixed(2)}</span>
+                            <span class="outlier-deviation">
+                                ${currentLanguage === 'bn' ? 'বিচ্যুতি:' : 'Deviation:'} ${deviation.toFixed(2)} 
+                                (${(deviation / mad).toFixed(1)} MAD)
+                            </span>
+                        `;
+                        outlierList.appendChild(outlierItem);
+                    });
+                } else {
+                    outlierResults.style.display = 'none';
+                    outlierList.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 1rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'কোন আউটলায়ার শনাক্ত হয়নি' : 
+                                'No outliers detected'}
+                        </p>
+                    `;
+                }
+            }
+
+            function updateCharts(data, mean, median, mad) {
+                updateDeviationPlot(data, mean, median, mad);
+                updateComparisonChart(data);
+                updateChartLegends();
+            }
+
+            function updateDeviationPlot(data, mean, median, mad) {
+                const plot = document.getElementById('deviationPlot');
+                
+                // Clear previous plot
+                plot.innerHTML = '';
+                
+                // Calculate plot dimensions
+                const plotWidth = plot.offsetWidth - 40;
+                const plotHeight = 210;
+                
+                // Find data ranges
+                const minVal = Math.min(...data);
+                const maxVal = Math.max(...data);
+                const range = maxVal - minVal;
+                
+                // Add axes labels
+                const xLabel = document.createElement('div');
+                xLabel.className = 'plot-axis-label x';
+                xLabel.textContent = currentLanguage === 'bn' ? 'ডেটা পয়েন্ট' : 'Data Points';
+                plot.appendChild(xLabel);
+                
+                const yLabel = document.createElement('div');
+                yLabel.className = 'plot-axis-label y';
+                yLabel.textContent = currentLanguage === 'bn' ? 'মান' : 'Values';
+                plot.appendChild(yLabel);
+                
+                // Add center lines
+                const meanLine = document.createElement('div');
+                meanLine.className = 'center-line';
+                const meanY = plotHeight - ((mean - minVal) / range * plotHeight);
+                meanLine.style.top = `${meanY}px`;
+                plot.appendChild(meanLine);
+                
+                const medianLine = document.createElement('div');
+                medianLine.className = 'center-line';
+                medianLine.style.background = 'var(--median-color)';
+                const medianY = plotHeight - ((median - minVal) / range * plotHeight);
+                medianLine.style.top = `${medianY}px`;
+                plot.appendChild(medianLine);
+                
+                // Add MAD bands
+                if (centerMeasure === 'mean' || centerMeasure === 'both') {
+                    const madBandUpper = document.createElement('div');
+                    madBandUpper.className = 'mad-band';
+                    const upperY = plotHeight - ((mean + mad - minVal) / range * plotHeight);
+                    const lowerY = plotHeight - ((mean - mad - minVal) / range * plotHeight);
+                    madBandUpper.style.top = `${Math.min(upperY, lowerY)}px`;
+                    madBandUpper.style.height = `${Math.abs(upperY - lowerY)}px`;
+                    plot.appendChild(madBandUpper);
+                }
+                
+                // Add data points
+                data.forEach((value, index) => {
+                    const point = document.createElement('div');
+                    point.className = 'data-point';
+                    
+                    // Check if point is outlier
+                    if (outlierDetectionEnabled) {
+                        const deviation = Math.abs(value - mean);
+                        if (deviation > outlierThreshold * mad) {
+                            point.classList.add('outlier');
+                        }
+                    }
+                    
+                    // Calculate position
+                    const xPos = (index / (data.length - 1)) * plotWidth + 20;
+                    const yPos = plotHeight - ((value - minVal) / range * plotHeight);
+                    
+                    point.style.left = `${xPos}px`;
+                    point.style.top = `${yPos}px`;
+                    
+                    // Add tooltip
+                    const deviationFromMean = Math.abs(value - mean);
+                    const deviationFromMedian = Math.abs(value - median);
+                    
+                    point.title = `${currentLanguage === 'bn' ? 'মান' : 'Value'}: ${value.toFixed(2)}\n` +
+                                 `${currentLanguage === 'bn' ? 'গড় থেকে বিচ্যুতি' : 'Deviation from mean'}: ${deviationFromMean.toFixed(2)}\n` +
+                                 `${currentLanguage === 'bn' ? 'মিডিয়ান থেকে বিচ্যুতি' : 'Deviation from median'}: ${deviationFromMedian.toFixed(2)}`;
+                    
+                    plot.appendChild(point);
+                });
+            }
+
+            function updateComparisonChart(data) {
+                const chart = document.getElementById('comparisonChart');
+                
+                // Clear previous chart
+                chart.innerHTML = '';
+                
+                // Calculate measures
+                const madMean = calculateMADFromMean(data);
+                const madMedian = calculateMADFromMedian(data);
+                const stdDev = calculateStandardDeviation(data);
+                const iqr = calculateIQR(data);
+                
+                // Find maximum for scaling
+                const measures = [madMean, madMedian, stdDev, iqr];
+                const maxMeasure = Math.max(...measures);
+                const chartHeight = 200;
+                
+                // Create bars for each measure
+                const measureData = [
+                    { name: 'MAD (Mean)', value: madMean, color: 'mad', key: 'madMean' },
+                    { name: 'MAD (Median)', value: madMedian, color: 'median', key: 'madMedian' },
+                    { name: 'Std Dev', value: stdDev, color: 'std', key: 'stdDev' },
+                    { name: 'IQR', value: iqr, color: 'iqr', key: 'iqr' }
+                ];
+                
+                measureData.forEach((measure, index) => {
+                    const barHeight = (measure.value / maxMeasure) * chartHeight;
+                    
+                    const barContainer = document.createElement('div');
+                    barContainer.style.display = 'flex';
+                    barContainer.style.flexDirection = 'column';
+                    barContainer.style.alignItems = 'center';
+                    barContainer.style.gap = '10px';
+                    
+                    const bar = document.createElement('div');
+                    bar.className = `measure-bar ${measure.color}`;
+                    bar.style.height = `${barHeight}px`;
+                    bar.title = `${measure.name}: ${measure.value.toFixed(4)}`;
+                    
+                    const barValue = document.createElement('div');
+                    barValue.className = 'measure-value';
+                    barValue.textContent = measure.value.toFixed(2);
+                    
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'measure-label';
+                    barLabel.textContent = measure.name;
+                    
+                    barContainer.appendChild(barValue);
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(barLabel);
+                    chart.appendChild(barContainer);
+                });
+            }
+
+            function updateChartLegends() {
+                const deviationLegend = document.getElementById('deviationPlotLegend');
+                const comparisonLegend = document.getElementById('comparisonChartLegend');
+                
+                // Deviation Plot Legend
+                deviationLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mean"></div>
+                        <span data-en="Data Points" data-bন="ডেটা পয়েন্ট">ডেটা পয়েন্ট</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color deviation"></div>
+                        <span data-en="Mean Line" data-bন="গড় লাইন">গড় লাইন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--median-color);"></div>
+                        <span data-en="Median Line" data-bন="মিডিয়ান লাইন">মিডিয়ান লাইন</span>
+                    </div>
+                    ${outlierDetectionEnabled ? `
+                    <div class="legend-item">
+                        <div class="legend-color outlier"></div>
+                        <span data-en="Outliers" data-bন="আউটলায়ার">আউটলায়ার</span>
+                    </div>
+                    ` : ''}
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(255, 138, 91, 0.1); border: 1px dashed var(--accent);"></div>
+                        <span data-en="±MAD Band" data-bন="±MAD ব্যান্ড">±MAD ব্যান্ড</span>
+                    </div>
+                `;
+                
+                // Comparison Chart Legend
+                comparisonLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-color mad"></div>
+                        <span data-en="MAD (from Mean)" data-bন="MAD (গড় থেকে)">MAD (গড় থেকে)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color median"></div>
+                        <span data-en="MAD (from Median)" data-bন="MAD (মিডিয়ান থেকে)">MAD (মিডিয়ান থেকে)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color std"></div>
+                        <span data-en="Standard Deviation" data-bন="স্ট্যান্ডার্ড ডেভিয়েশন">স্ট্যান্ডার্ড ডেভিয়েশন</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color iqr"></div>
+                        <span data-en="Interquartile Range" data-bন="ইন্টারকোয়ার্টাইল রেঞ্জ">ইন্টারকোয়ার্টাইল রেঞ্জ</span>
+                    </div>
+                `;
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function updateDetailedCalculations(data, mean, median, madMean, madMedian) {
+                updateMADSteps(data, mean, median, madMean, madMedian);
+            }
+
+            function updateMADSteps(data, mean, median, madMean, madMedian) {
+                const container = document.getElementById('madStepsContainer');
+                
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                            ${currentLanguage === 'bn' ? 
+                                'ডেটা ইনপুট করুন এবং MAD গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                                'Enter data and calculate to see MAD calculation steps'}
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const sortedData = [...data].sort((a, b) => a - b);
+                const n = data.length;
+                
+                let stepsHTML = '';
+                
+                if (centerMeasure === 'mean' || centerMeasure === 'both') {
+                    stepsHTML += `
+                        <div class="step-container">
+                            <div class="step-number">১</div>
+                            <div class="step-content">
+                                <h4 data-en="Step 1: Calculate the Mean" data-bন="ধাপ ১: গড় গণনা করুন">ধাপ ১: গড় গণনা করুন</h4>
+                                <p data-en="Find the average of all data points" data-bন="সমস্ত ডেটা পয়েন্টের গড় খুঁজুন">
+                                    সমস্ত ডেটা পয়েন্টের গড় খুঁজুন
+                                </p>
+                                <div class="step-details">
+                                    <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> x̄ = Σxᵢ / n</p>
+                                    <div class="step-equation">
+                                        x̄ = (${data.join(' + ')}) ÷ ${n}
+                                    </div>
+                                    <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> ${data.reduce((a,b) => a+b, 0)} ÷ ${n}</p>
+                                    <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${mean.toFixed(4)}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-container">
+                            <div class="step-number">২</div>
+                            <div class="step-content">
+                                <h4 data-en="Step 2: Calculate Absolute Deviations" data-bন="ধাপ ২: পরম বিচ্যুতি গণনা করুন">ধাপ ২: পরম বিচ্যুতি গণনা করুন</h4>
+                                <p data-en="Find absolute difference of each point from mean" data-bন="গড় থেকে প্রতিটি বিন্দুর পরম পার্থক্য খুঁজুন">
+                                    গড় থেকে প্রতিটি বিন্দুর পরম পার্থক্য খুঁজুন
+                                </p>
+                                <div class="step-details">
+                                    <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> |xᵢ - x̄|</p>
+                                    <table class="step-table">
+                                        <thead>
+                                            <tr>
+                                                <th data-en="Data Point (xᵢ)" data-bন="ডেটা পয়েন্ট (xᵢ)">ডেটা পয়েন্ট (xᵢ)</th>
+                                                <th data-en="Deviation (xᵢ - x̄)" data-bন="বিচ্যুতি (xᵢ - x̄)">বিচ্যুতি (xᵢ - x̄)</th>
+                                                <th data-en="Absolute Deviation |xᵢ - x̄|" data-bন="পরম বিচ্যুতি |xᵢ - x̄|">পরম বিচ্যুতি |xᵢ - x̄|</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    // Add first few rows
+                    const displayCount = Math.min(5, data.length);
+                    for (let i = 0; i < displayCount; i++) {
+                        const deviation = data[i] - mean;
+                        stepsHTML += `
+                            <tr>
+                                <td>${data[i].toFixed(2)}</td>
+                                <td>${deviation.toFixed(2)}</td>
+                                <td>${Math.abs(deviation).toFixed(2)}</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    if (data.length > 5) {
+                        stepsHTML += `
+                            <tr>
+                                <td colspan="3" style="text-align: center; font-style: italic;">
+                                    ${currentLanguage === 'bn' ? 
+                                        `${data.length - 5} টি অতিরিক্ত সারি...` : 
+                                        `${data.length - 5} additional rows...`}
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    stepsHTML += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-container">
+                            <div class="step-number">৩</div>
+                            <div class="step-content">
+                                <h4 data-en="Step 3: Calculate Mean of Absolute Deviations" data-bন="ধাপ ৩: পরম বিচ্যুতির গড় গণনা করুন">ধাপ ৩: পরম বিচ্যুতির গড় গণনা করুন</h4>
+                                <p data-en="Average the absolute deviations" data-bন="পরম বিচ্যুতিগুলোর গড় নির্ণয় করুন">
+                                    পরম বিচ্যুতিগুলোর গড় নির্ণয় করুন
+                                </p>
+                                <div class="step-details">
+                                    <p><strong>${currentLanguage === 'bn' ? 'সূত্র' : 'Formula'}:</strong> MAD = (1/n) * Σ|xᵢ - x̄|</p>
+                                    <div class="step-equation">
+                                        MAD = ${data.map(x => Math.abs(x - mean).toFixed(2)).join(' + ')} ÷ ${n}
+                                    </div>
+                                    <p><strong>${currentLanguage === 'bn' ? 'গণনা' : 'Calculation'}:</strong> 
+                                        ${data.reduce((sum, x) => sum + Math.abs(x - mean), 0).toFixed(2)} ÷ ${n}
+                                    </p>
+                                    <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${madMean.toFixed(4)}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (centerMeasure === 'median' || centerMeasure === 'both') {
+                    stepsHTML += `
+                        <div class="step-container">
+                            <div class="step-number">${centerMeasure === 'both' ? '৪' : '১'}</div>
+                            <div class="step-content">
+                                <h4 data-en="Step for Median-based MAD: Calculate Median" data-bন="মিডিয়ান-ভিত্তিক MAD এর ধাপ: মিডিয়ান গণনা করুন">মিডিয়ান-ভিত্তিক MAD এর ধাপ: মিডিয়ান গণনা করুন</h4>
+                                <p data-en="Find the middle value of sorted data" data-bন="সাজানো ডেটার মধ্যবর্তী মান খুঁজুন">
+                                    সাজানো ডেটার মধ্যবর্তী মান খুঁজুন
+                                </p>
+                                <div class="step-details">
+                                    <p><strong>${currentLanguage === 'bn' ? 'সাজানো ডেটা' : 'Sorted data'}:</strong> ${sortedData.join(', ')}</p>
+                                    <p><strong>${currentLanguage === 'bn' ? 'মিডিয়ান গণনা' : 'Median calculation'}:</strong></p>
+                                    <div class="step-equation">
+                                        ${n % 2 === 0 ? 
+                                            `M = (${sortedData[n/2 - 1]} + ${sortedData[n/2]}) ÷ 2` :
+                                            `M = ${sortedData[Math.floor(n/2)]}`
+                                        }
+                                    </div>
+                                    <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${median.toFixed(4)}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-container">
+                            <div class="step-number">${centerMeasure === 'both' ? '৫' : '২'}</div>
+                            <div class="step-content">
+                                <h4 data-en="Calculate Median of Absolute Deviations" data-bন="পরম বিচ্যুতির মিডিয়ান গণনা করুন">পরম বিচ্যুতির মিডিয়ান গণনা করুন</h4>
+                                <p data-en="Find median of absolute deviations from median" data-bন="মিডিয়ান থেকে পরম বিচ্যুতির মিডিয়ান খুঁজুন">
+                                    মিডিয়ান থেকে পরম বিচ্যুতির মিডিয়ান খুঁজুন
+                                </p>
+                                <div class="step-details">
+                                    <div class="step-equation">
+                                        MAD = median(|xᵢ - M|)
+                                    </div>
+                                    <p><strong>${currentLanguage === 'bn' ? 'ফলাফল' : 'Result'}:</strong> <strong>${madMedian.toFixed(4)}</strong></p>
+                                    <p style="margin-top: 1rem; color: var(--success);">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span data-en="This measure is more robust to outliers" data-bন="এই পরিমাপটি আউটলায়ারদের প্রতি আরও রোবাস্ট">
+                                            এই পরিমাপটি আউটলায়ারদের প্রতি আরও রোবাস্ট
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = stepsHTML;
+                updateDynamicContent();
+            }
+
+            function updateRobustnessComparison(data, madMean, madMedian, stdDev) {
+                const container = document.getElementById('robustnessTableContainer');
+                
+                const iqr = calculateIQR(data);
+                const range = Math.max(...data) - Math.min(...data);
+                const variance = stdDev * stdDev;
+                
+                // Calculate robustness for each measure
+                const measures = [
+                    {
+                        name: 'MAD (from Median)',
+                        value: madMedian,
+                        robustness: 'Very High',
+                        description: currentLanguage === 'bn' ? 
+                            'আউটলায়ারদের প্রতি অত্যন্ত প্রতিরোধী' : 
+                            'Highly resistant to outliers'
+                    },
+                    {
+                        name: 'Interquartile Range (IQR)',
+                        value: iqr,
+                        robustness: 'High',
+                        description: currentLanguage === 'bn' ? 
+                            'চরম মান উপেক্ষা করে' : 
+                            'Ignores extreme values'
+                    },
+                    {
+                        name: 'MAD (from Mean)',
+                        value: madMean,
+                        robustness: 'Medium',
+                        description: currentLanguage === 'bn' ? 
+                            'মাঝারি আউটলায়ার প্রতিরোধ' : 
+                            'Moderate outlier resistance'
+                    },
+                    {
+                        name: 'Standard Deviation',
+                        value: stdDev,
+                        robustness: 'Low',
+                        description: currentLanguage === 'bn' ? 
+                            'আউটলায়ার দ্বারা দৃঢ়ভাবে প্রভাবিত' : 
+                            'Strongly affected by outliers'
+                    },
+                    {
+                        name: 'Variance',
+                        value: variance,
+                        robustness: 'Very Low',
+                        description: currentLanguage === 'bn' ? 
+                            'বর্গ মানের কারণে অতিসংবেদনশীল' : 
+                            'Very sensitive due to squared values'
+                    },
+                    {
+                        name: 'Range',
+                        value: range,
+                        robustness: 'None',
+                        description: currentLanguage === 'bn' ? 
+                            'চরম মান দ্বারা সম্পূর্ণরূপে নির্ধারিত' : 
+                            'Completely determined by extremes'
+                    }
+                ];
+                
+                let tableHTML = `
+                    <div class="comparison-table-container">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th data-en="Dispersion Measure" data-bন="ডিসপারশন মেজার">ডিসপারশন মেজার</th>
+                                    <th data-en="Value" data-bন="মান">মান</th>
+                                    <th data-en="Robustness" data-bন="রোবাস্টনেস">রোবাস্টনেস</th>
+                                    <th data-en="Description" data-bন="বর্ণনা">বর্ণনা</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                measures.forEach(measure => {
+                    const robustnessClass = measure.robustness.includes('High') || measure.robustness.includes('Very High') ? 
+                        'robust-cell' : 'sensitive-cell';
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${measure.name}</td>
+                            <td>${measure.value.toFixed(4)}</td>
+                            <td class="${robustnessClass}">${measure.robustness}</td>
+                            <td>${measure.description}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="interpretation-guide" style="margin-top: 2rem;">
+                        <h4 style="color: var(--dark); margin-bottom: 1rem;">
+                            <i class="fas fa-lightbulb"></i>
+                            <span data-en="Key Insights" data-bন="প্রধান অন্তর্দৃষ্টি">প্রধান অন্তর্দৃষ্টি</span>
+                        </h4>
+                        <ul style="color: var(--gray); line-height: 1.6;">
+                            <li data-en="Use MAD from median when you suspect outliers in your data" data-bন="আপনার ডেটায় আউটলায়ার সন্দেহ হলে মিডিয়ান থেকে MAD ব্যবহার করুন">
+                                আপনার ডেটায় আউটলায়ার সন্দেহ হলে মিডিয়ান থেকে MAD ব্যবহার করুন
+                            </li>
+                            <li data-en="Standard deviation is more efficient for normally distributed data without outliers" data-bন="আউটলায়ার ছাড়া স্বাভাবিকভাবে বিতরণ করা ডেটার জন্য স্ট্যান্ডার্ড ডেভিয়েশন আরও কার্যকর">
+                                আউটলায়ার ছাড়া স্বাভাবিকভাবে বিতরণ করা ডেটার জন্য স্ট্যান্ডার্ড ডেভিয়েশন আরও কার্যকর
+                            </li>
+                            <li data-en="IQR is best for skewed distributions" data-bন="বাঁকানো বন্টনের জন্য IQR সবচেয়ে ভাল">
+                                বাঁকানো বন্টনের জন্য IQR সবচেয়ে ভাল
+                            </li>
+                            <li data-en="For financial or real-world data with outliers, prefer robust measures like MAD from median" data-bন="আউটলায়ার সহ আর্থিক বা বাস্তব-বিশ্বের ডেটার জন্য, মিডিয়ান থেকে MAD এর মতো রোবাস্ট মেজার পছন্দ করুন">
+                                আউটলায়ার সহ আর্থিক বা বাস্তব-বিশ্বের ডেটার জন্য, মিডিয়ান থেকে MAD এর মতো রোবাস্ট মেজার পছন্দ করুন
+                            </li>
+                        </ul>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+                updateDynamicContent();
+            }
+
+            function updateDynamicContent() {
+                // Update all newly created dynamic content with current language
+                document.querySelectorAll('[data-en]').forEach(element => {
+                    if (element.hasAttribute(`data-${currentLanguage}`)) {
+                        const text = element.getAttribute(`data-${currentLanguage}`);
+                        element.textContent = text;
+                    }
+                });
+            }
+
+            function generateRandomData() {
+                const count = Math.floor(Math.random() * 15) + 5;
+                const data = [];
+                
+                // Generate normally distributed data
+                for (let i = 0; i < count; i++) {
+                    // Generate data around 50 with some variation
+                    const value = 50 + (Math.random() - 0.5) * 20;
+                    data.push(Math.round(value * 10) / 10);
+                }
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                calculateMAD();
+            }
+
+            function generateDataWithOutliers() {
+                const count = Math.floor(Math.random() * 10) + 10;
+                const data = [];
+                
+                // Generate normal data
+                for (let i = 0; i < count - 2; i++) {
+                    const value = 50 + (Math.random() - 0.5) * 10;
+                    data.push(Math.round(value * 10) / 10);
+                }
+                
+                // Add outliers
+                data.push(10); // Low outlier
+                data.push(100); // High outlier
+                
+                document.getElementById('dataInput').value = data.join(', ');
+                
+                // Enable outlier detection
+                document.getElementById('outlierToggle').checked = true;
+                outlierDetectionEnabled = true;
+                document.getElementById('outlierSettings').classList.add('active');
+                
+                calculateMAD();
+            }
+
+            function loadExampleData(example) {
+                const data = examples[example];
+                if (!data) return;
+                
+                document.getElementById('dataInput').value = data.data.join(', ');
+                calculateMAD();
+            }
+
+            function clearCalculator() {
+                // Clear inputs
+                document.getElementById('dataInput').value = '';
+                
+                // Reset methods
+                document.querySelectorAll('.method-btn').forEach(btn => {
+                    if (btn.dataset.method === 'manual') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Reset center selection
+                document.querySelectorAll('.center-btn').forEach(btn => {
+                    if (btn.dataset.center === 'mean') {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                centerMeasure = 'mean';
+                
+                // Reset outlier detection
+                document.getElementById('outlierToggle').checked = false;
+                outlierDetectionEnabled = false;
+                document.getElementById('outlierSettings').classList.remove('active');
+                document.getElementById('outlierThreshold').value = 3;
+                outlierThreshold = 3;
+                
+                // Reset results
+                resetResults();
+                
+                // Update dynamic content
+                updateDynamicContent();
+            }
+
+            function resetResults() {
+                // Clear result values
+                document.getElementById('madMeanResult').textContent = '--';
+                document.getElementById('madMedianResult').textContent = '--';
+                document.getElementById('stdDevResult').textContent = '--';
+                document.getElementById('iqrResult').textContent = '--';
+                
+                // Clear statistics
+                document.getElementById('dataCount').textContent = '0';
+                document.getElementById('meanValue').textContent = '--';
+                document.getElementById('medianValue').textContent = '--';
+                document.getElementById('rangeValue').textContent = '--';
+                
+                // Show all result cards
+                document.querySelectorAll('.result-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                
+                // Hide outlier results
+                document.getElementById('outlierResults').style.display = 'none';
+                
+                // Reset robustness indicator
+                document.getElementById('robustnessFill').style.width = '0%';
+                document.getElementById('robustnessText').textContent = 
+                    currentLanguage === 'bn' ? 
+                    'রোবাস্টনেস গণনা করা হচ্ছে...' : 
+                    'Calculating robustness...';
+                
+                // Clear charts
+                document.getElementById('deviationPlot').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-bullseye"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডেটা ইনপুট করে বিচ্যুতি প্লট দেখুন' : 'Enter data to see deviation plot'}</p>
+                    </div>
+                `;
+                
+                document.getElementById('comparisonChart').innerHTML = `
+                    <div class="chart-placeholder">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>${currentLanguage === 'bn' ? 'ডিসপারশন মেজার তুলনা করতে ডেটা ইনপুট করুন' : 'Enter data to compare dispersion measures'}</p>
+                    </div>
+                `;
+                
+                // Clear legends
+                document.getElementById('deviationPlotLegend').innerHTML = '';
+                document.getElementById('comparisonChartLegend').innerHTML = '';
+                
+                // Clear detailed sections
+                document.getElementById('madStepsContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'ডেটা ইনপুট করুন এবং MAD গণনার ধাপগুলো দেখতে গণনা করুন' : 
+                            'Enter data and calculate to see MAD calculation steps'}
+                    </p>
+                `;
+                
+                document.getElementById('robustnessTableContainer').innerHTML = `
+                    <p style="color: var(--gray); text-align: center; padding: 2rem;">
+                        ${currentLanguage === 'bn' ? 
+                            'রোবাস্টনেস তুলনা টেবিল দেখতে ডেটা ইনপুট করুন' : 
+                            'Enter data to see robustness comparison table'}
+                    </p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
